@@ -21,10 +21,10 @@ This module separates three layers:
 The register dimension `n` is fixed externally.  This carrier is a
 complete continuous lattice, but it is deliberately not installed as an
 `IsQuantumPowerModel`: principal lower sets are compact, so pushforward
-fails local continuity at genuine outcome limits; moreover Scott-open
-event tests are not a congruence for value-dependent quantum bind.  The
-file therefore records a useful intermediate construction and the exact
-boundary that a rounded-ideal/TT redesign must cross.
+fails local continuity at genuine outcome limits.  The finite basis does
+use a bind-congruent weakest-precondition/TT refinement; what remains is
+to lift it through a rounded completion rather than this plain lower-set
+completion.
 -/
 
 open Matrix
@@ -157,6 +157,79 @@ namespace FiniteInstrumentComp
 
 variable {n : ℕ} {D E : Type u}
 
+/-- A quantum postcondition is a Kraus-valued predicate monotone in the
+residual CP order. -/
+structure KrausPost (n : ℕ) (D : Type u) [Preorder D] where
+  pred : D → KrausFamily n n
+  mono : ∀ ⦃d e⦄, d ≤ e → KrausFamily.Refines (pred d) (pred e)
+
+namespace KrausPost
+
+instance [Preorder D] : CoeFun (KrausPost n D) (fun _ => D → KrausFamily n n) :=
+  ⟨pred⟩
+
+/-- Pull a quantum postcondition back along a monotone map. -/
+def comap [Preorder D] [Preorder E] (P : KrausPost n E) (f : D →o E) :
+    KrausPost n D where
+  pred := P ∘ f
+  mono := fun _ _ h => P.mono (f.mono h)
+
+end KrausPost
+
+/-- Weakest-precondition aggregation: execute each branch and then its
+value-dependent quantum postcondition. -/
+noncomputable def wpKraus [Preorder D] (μ : FiniteInstrumentComp n D)
+    (P : D → KrausFamily n n) : KrausFamily n n := by
+  classical
+  exact Finset.univ.toList.flatMap fun o =>
+    KrausFamily.comp (P (μ.value o)) (μ.branch o)
+
+theorem applyMat_wpKraus [Preorder D] (μ : FiniteInstrumentComp n D)
+    (P : D → KrausFamily n n) (ρ : Matrix (Fin n) (Fin n) ℂ) :
+    KrausFamily.applyMat (μ.wpKraus P) ρ =
+      ∑ o : μ.Outcome,
+        KrausFamily.applyMat
+          (KrausFamily.comp (P (μ.value o)) (μ.branch o)) ρ := by
+  classical
+  unfold wpKraus
+  rw [KrausFamily.applyMat_flatMap]
+  simp
+
+theorem wpKraus_unit_semEq [Preorder D] (d : D)
+    (P : D → KrausFamily n n) :
+    KrausFamily.SemEq ((unit (n := n) d).wpKraus P) (P d) := by
+  intro ρ
+  rw [applyMat_wpKraus]
+  change (∑ _ : Unit,
+    KrausFamily.applyMat
+      (KrausFamily.comp (P d) (KrausFamily.identity n)) ρ) =
+    KrausFamily.applyMat (P d) ρ
+  simp
+
+theorem wpKraus_bind_semEq [Preorder D] [Preorder E]
+    (μ : FiniteInstrumentComp n D) (f : D → FiniteInstrumentComp n E)
+    (P : E → KrausFamily n n) :
+    KrausFamily.SemEq ((μ.bind f).wpKraus P)
+      (μ.wpKraus fun d => (f d).wpKraus P) := by
+  intro ρ
+  rw [applyMat_wpKraus, applyMat_wpKraus]
+  change
+    (∑ p : Σ o : μ.Outcome, (f (μ.value o)).Outcome,
+      KrausFamily.applyMat
+        (KrausFamily.comp
+          (P ((f (μ.value p.1)).value p.2))
+          (KrausFamily.comp
+            ((f (μ.value p.1)).branch p.2)
+            (μ.branch p.1))) ρ) =
+      ∑ o : μ.Outcome,
+        KrausFamily.applyMat
+          (KrausFamily.comp ((f (μ.value o)).wpKraus P) (μ.branch o)) ρ
+  rw [Fintype.sum_sigma]
+  apply Finset.sum_congr rfl
+  intro o _
+  rw [KrausFamily.applyMat_comp, applyMat_wpKraus]
+  simp only [KrausFamily.applyMat_comp]
+
 /-- Kraus branches whose returned values lie in `U`.  Their concatenation
 denotes the sum of those CP branches and is independent of list order at
 the Choi level. -/
@@ -172,72 +245,178 @@ noncomputable def testChoi (μ : FiniteInstrumentComp n D) (U : Set D) :
   exact ∑ o : μ.Outcome,
     if μ.value o ∈ U then KrausFamily.choi (μ.branch o) else 0
 
-/-- Observational refinement of finite instruments.  Every Scott-open
-outcome test must receive a smaller CP map in Choi/Loewner order. -/
-def Refines [CompleteLattice D] (μ ν : FiniteInstrumentComp n D) : Prop :=
-  ∀ U : Set D, ScottOpen U → μ.testChoi U ≤ ν.testChoi U
+/-- Weakest-precondition/TT refinement.  It quantifies over all monotone
+Kraus-valued postconditions, making the order stable under monotone
+value-dependent quantum continuations. -/
+def Refines [Preorder D] (μ ν : FiniteInstrumentComp n D) : Prop :=
+  ∀ P : KrausPost n D, KrausFamily.Refines (μ.wpKraus P) (ν.wpKraus P)
 
-theorem refines_refl [CompleteLattice D] (μ : FiniteInstrumentComp n D) :
+theorem refines_refl [Preorder D] (μ : FiniteInstrumentComp n D) :
     Refines μ μ :=
-  fun _ _ => le_rfl
+  fun _ => KrausFamily.residualRefines_refl _
 
-theorem refines_trans [CompleteLattice D] {μ ν ξ : FiniteInstrumentComp n D}
+theorem refines_trans [Preorder D] {μ ν ξ : FiniteInstrumentComp n D}
     (hμν : Refines μ ν) (hνξ : Refines ν ξ) : Refines μ ξ :=
-  fun U hU => (hμν U hU).trans (hνξ U hU)
+  fun P => KrausFamily.residualRefines_trans (hμν P) (hνξ P)
 
-noncomputable instance instPreorderFiniteInstrumentComp [CompleteLattice D] :
+noncomputable instance instPreorderFiniteInstrumentComp [Preorder D] :
     Preorder (FiniteInstrumentComp n D) where
   le := Refines
   le_refl := refines_refl
   le_trans _ _ _ := refines_trans
 
-theorem le_def [CompleteLattice D] {μ ν : FiniteInstrumentComp n D} :
-    μ ≤ ν ↔ ∀ U : Set D, ScottOpen U → μ.testChoi U ≤ ν.testChoi U :=
+theorem le_def [Preorder D] {μ ν : FiniteInstrumentComp n D} :
+    μ ≤ ν ↔ ∀ P : KrausPost n D,
+      KrausFamily.Refines (μ.wpKraus P) (ν.wpKraus P) :=
   Iff.rfl
 
-theorem selectedKraus_map [CompleteLattice D] [CompleteLattice E]
-    (f : ScottMap D E) (μ : FiniteInstrumentComp n D) (U : Set E) :
-    (μ.map f).selectedKraus U = μ.selectedKraus (f ⁻¹' U) := by
+namespace KrausPost
+
+/-- Pull a postcondition backwards through a refinement-monotone finite
+instrument continuation. -/
+noncomputable def bind [Preorder D] [Preorder E] (P : KrausPost n E)
+    (f : D → FiniteInstrumentComp n E) (hf : Monotone f) :
+    KrausPost n D where
+  pred := fun d => (f d).wpKraus P
+  mono := fun _ _ h => hf h P
+
+end KrausPost
+
+theorem wpKraus_mono_pred [Preorder D] (μ : FiniteInstrumentComp n D)
+    {P Q : D → KrausFamily n n}
+    (hPQ : ∀ d, KrausFamily.Refines (P d) (Q d)) :
+    KrausFamily.Refines (μ.wpKraus P) (μ.wpKraus Q) := by
   classical
+  unfold wpKraus
+  apply KrausFamily.residualRefines_flatMap
+  intro o _
+  exact KrausFamily.residualRefines_comp_right (μ.branch o) (hPQ (μ.value o))
+
+theorem wpKraus_semEq_pred [Preorder D] (μ : FiniteInstrumentComp n D)
+    {P Q : D → KrausFamily n n}
+    (hPQ : ∀ d, KrausFamily.SemEq (P d) (Q d)) :
+    KrausFamily.SemEq (μ.wpKraus P) (μ.wpKraus Q) := by
+  intro ρ
+  rw [applyMat_wpKraus, applyMat_wpKraus]
+  apply Finset.sum_congr rfl
+  intro o _
+  simp only [KrausFamily.applyMat_comp]
+  exact hPQ (μ.value o) (KrausFamily.applyMat (μ.branch o) ρ)
+
+theorem wpKraus_map [Preorder D] [Preorder E]
+    (f : D → E) (μ : FiniteInstrumentComp n D) (P : E → KrausFamily n n) :
+    (μ.map f).wpKraus P = μ.wpKraus (P ∘ f) := by
   rfl
 
-theorem testChoi_map [CompleteLattice D] [CompleteLattice E]
-    (f : ScottMap D E) (μ : FiniteInstrumentComp n D) (U : Set E) :
-    (μ.map f).testChoi U = μ.testChoi (f ⁻¹' U) := by
-  rfl
-
-/-- Pushforward of finite instruments respects observational refinement. -/
-theorem map_mono [CompleteLattice D] [CompleteLattice E] (f : ScottMap D E) :
+/-- Pushforward respects TT refinement along monotone maps. -/
+theorem map_mono [Preorder D] [Preorder E] (f : D →o E) :
     Monotone (FiniteInstrumentComp.map (n := n) (f : D → E)) := by
-  intro μ ν hμν U hU
-  rw [testChoi_map (n := n), testChoi_map (n := n)]
-  exact hμν (f ⁻¹' U)
-    (scottOpen_preimage ((proposition_2_5 (f : D → E)).mp f.continuous) hU)
+  intro μ ν hμν P
+  rw [wpKraus_map, wpKraus_map]
+  exact hμν (P.comap f)
 
 /-- Pointwise larger result maps produce observationally larger
 pushforwards. -/
-theorem map_le_map [CompleteLattice D] [CompleteLattice E]
-    {f g : ScottMap D E} (hfg : f ≤ g) (μ : FiniteInstrumentComp n D) :
+theorem map_le_map [Preorder D] [Preorder E]
+    {f g : D →o E} (hfg : f ≤ g) (μ : FiniteInstrumentComp n D) :
     μ.map f ≤ μ.map g := by
-  intro U hU
-  classical
-  unfold testChoi
-  apply Finset.sum_le_sum
-  intro o _
-  change (if f (μ.value o) ∈ U then KrausFamily.choi (μ.branch o) else 0) ≤
-    if g (μ.value o) ∈ U then KrausFamily.choi (μ.branch o) else 0
-  by_cases hf : f (μ.value o) ∈ U
-  · have hg : g (μ.value o) ∈ U := hU.1 (hfg (μ.value o)) hf
-    simp [hf, hg]
-  · simp only [hf, ↓reduceIte]
-    by_cases hg : g (μ.value o) ∈ U
-    · simp [hg, KrausFamily.choi_nonneg]
-    · simp [hg]
+  intro P
+  rw [wpKraus_map, wpKraus_map]
+  exact wpKraus_mono_pred μ fun d => P.mono (hfg d)
+
+/-- Deterministic return is monotone in its returned value. -/
+theorem unit_mono [Preorder D] :
+    Monotone (unit (n := n) : D → FiniteInstrumentComp n D) := by
+  intro d e hde P
+  exact KrausFamily.residualRefines_trans
+    (KrausFamily.residualRefines_of_semEq (wpKraus_unit_semEq d P))
+    (KrausFamily.residualRefines_trans
+      (P.mono hde)
+      (KrausFamily.residualRefines_of_semEq
+        (KrausFamily.applySemEq_symm (wpKraus_unit_semEq e P))))
+
+/-- Bind is monotone in its computation argument when the continuation
+is monotone in TT refinement. -/
+theorem bind_mono_left [Preorder D] [Preorder E]
+    (f : D → FiniteInstrumentComp n E) (hf : Monotone f) :
+    Monotone fun μ : FiniteInstrumentComp n D => μ.bind f := by
+  intro μ ν hμν P
+  exact KrausFamily.residualRefines_trans
+    (KrausFamily.residualRefines_of_semEq (wpKraus_bind_semEq μ f P))
+    (KrausFamily.residualRefines_trans
+      (hμν (P.bind f hf))
+      (KrausFamily.residualRefines_of_semEq
+        (KrausFamily.applySemEq_symm (wpKraus_bind_semEq ν f P))))
+
+/-- Bind is monotone in a pointwise-refined continuation. -/
+theorem bind_mono_right [Preorder D] [Preorder E]
+    (μ : FiniteInstrumentComp n D)
+    {f g : D → FiniteInstrumentComp n E} (hfg : ∀ d, f d ≤ g d) :
+    μ.bind f ≤ μ.bind g := by
+  intro P
+  exact KrausFamily.residualRefines_trans
+    (KrausFamily.residualRefines_of_semEq (wpKraus_bind_semEq μ f P))
+    (KrausFamily.residualRefines_trans
+      (wpKraus_mono_pred μ fun d => hfg d P)
+      (KrausFamily.residualRefines_of_semEq
+        (KrausFamily.applySemEq_symm (wpKraus_bind_semEq μ g P))))
+
+/-- Two-sided bind congruence for monotone continuations. -/
+theorem bind_mono [Preorder D] [Preorder E]
+    {μ ν : FiniteInstrumentComp n D} (hμν : μ ≤ ν)
+    {f g : D → FiniteInstrumentComp n E} (hf : Monotone f)
+    (hfg : ∀ d, f d ≤ g d) :
+    μ.bind f ≤ ν.bind g :=
+  (bind_mono_left f hf hμν).trans (bind_mono_right ν hfg)
+
+/-- Mutual TT refinement, used to state finite monad laws before
+antisymmetrization. -/
+def Equiv [Preorder D] (μ ν : FiniteInstrumentComp n D) : Prop :=
+  μ ≤ ν ∧ ν ≤ μ
+
+theorem equiv_of_wpKraus_semEq [Preorder D]
+    {μ ν : FiniteInstrumentComp n D}
+    (h : ∀ P : KrausPost n D,
+      KrausFamily.SemEq (μ.wpKraus P) (ν.wpKraus P)) :
+    Equiv μ ν := by
+  constructor <;> intro P
+  · exact KrausFamily.residualRefines_of_semEq (h P)
+  · exact KrausFamily.residualRefines_of_semEq
+      (KrausFamily.applySemEq_symm (h P))
+
+theorem unit_bind_equiv [Preorder D] [Preorder E]
+    (d : D) (f : D → FiniteInstrumentComp n E) :
+    Equiv ((unit (n := n) d).bind f) (f d) := by
+  apply equiv_of_wpKraus_semEq
+  intro P
+  exact KrausFamily.applySemEq_trans
+    (wpKraus_bind_semEq (unit (n := n) d) f P)
+    (wpKraus_unit_semEq d fun x => (f x).wpKraus P)
+
+theorem bind_unit_equiv [Preorder D] (μ : FiniteInstrumentComp n D) :
+    Equiv (μ.bind (unit (n := n))) μ := by
+  apply equiv_of_wpKraus_semEq
+  intro P
+  exact KrausFamily.applySemEq_trans
+    (wpKraus_bind_semEq μ (unit (n := n)) P)
+    (wpKraus_semEq_pred μ fun d => wpKraus_unit_semEq d P)
+
+theorem map_equiv_bind_unit [Preorder D] [Preorder E]
+    (f : D → E) (μ : FiniteInstrumentComp n D) :
+    Equiv (μ.map f) (μ.bind fun d => unit (n := n) (f d)) := by
+  apply equiv_of_wpKraus_semEq
+  intro P
+  rw [wpKraus_map]
+  exact KrausFamily.applySemEq_symm <|
+    KrausFamily.applySemEq_trans
+      (wpKraus_bind_semEq μ (fun d => unit (n := n) (f d)) P)
+      (wpKraus_semEq_pred μ fun d => wpKraus_unit_semEq (f d) P)
 
 /-- Pushforward as an order homomorphism on finite presentations. -/
 noncomputable def mapHom [CompleteLattice D] [CompleteLattice E] (f : ScottMap D E) :
     FiniteInstrumentComp n D →o FiniteInstrumentComp n E :=
-  ⟨FiniteInstrumentComp.map (n := n) (f : D → E), map_mono (n := n) f⟩
+  ⟨FiniteInstrumentComp.map (n := n) (f : D → E),
+    map_mono (n := n) ⟨f, f.monotone⟩⟩
 
 end FiniteInstrumentComp
 
@@ -275,7 +454,8 @@ theorem basisMap_le {f g : ScottMap D E} (hfg : f ≤ g) :
     OrderHom.antisymmetrization_apply_mk,
     OrderHom.antisymmetrization_apply_mk,
     toAntisymmetrization_le_toAntisymmetrization_iff]
-  exact FiniteInstrumentComp.map_le_map hfg μ
+  exact FiniteInstrumentComp.map_le_map
+    (f := ⟨f, f.monotone⟩) (g := ⟨g, g.monotone⟩) hfg μ
 
 @[simp] theorem basisMap_id :
     basisMap (n := n) (ScottMap.idMap : ScottMap D D) = OrderHom.id := by

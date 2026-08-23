@@ -171,11 +171,31 @@ theorem applyMat_append (K L : KrausFamily n m)
   | cons A K ih =>
     simp [applyMat_cons, ih, add_assoc]
 
+theorem applyMat_flatMap {α : Type*} (xs : List α)
+    (f : α → KrausFamily n m) (ρ : Matrix (Fin n) (Fin n) ℂ) :
+    applyMat (xs.flatMap f) ρ = (xs.map fun x => applyMat (f x) ρ).sum := by
+  induction xs with
+  | nil => simp [applyMat]
+  | cons x xs ih =>
+      simp only [List.flatMap_cons, List.map_cons, List.sum_cons]
+      rw [applyMat_append, ih]
+
 theorem residualRefines_refl (K : KrausFamily n m) :
     ResidualRefines K K := by
   refine ⟨[], ?_⟩
   intro ρ
   simp
+
+theorem residualRefines_of_semEq {K L : KrausFamily n m}
+    (hKL : SemEq K L) : ResidualRefines K L := by
+  refine ⟨[], fun ρ => ?_⟩
+  simpa using (hKL ρ).symm
+
+theorem residualRefines_antisymmRel_of_semEq {K L : KrausFamily n m}
+    (hKL : SemEq K L) :
+    AntisymmRel ResidualRefines K L :=
+  ⟨residualRefines_of_semEq hKL,
+    residualRefines_of_semEq (applySemEq_symm hKL)⟩
 
 theorem residualRefines_trans {K L M : KrausFamily n m}
     (hKL : ResidualRefines K L) (hLM : ResidualRefines L M) :
@@ -354,6 +374,80 @@ theorem comp_assoc {ℓ r : ℕ} (M : KrausFamily ℓ r)
         comp (comp (C :: M) L) K
     rw [map_comp, ih, ← comp_append]
     rfl
+
+/-- Residual CP refinement is preserved by postcomposition. -/
+theorem residualRefines_comp_left {ℓ : ℕ} (M : KrausFamily m ℓ)
+    {K L : KrausFamily n m} (hKL : ResidualRefines K L) :
+    ResidualRefines (comp M K) (comp M L) := by
+  obtain ⟨R, hR⟩ := hKL
+  refine ⟨comp M R, fun ρ => ?_⟩
+  rw [applyMat_append, applyMat_comp, applyMat_comp, applyMat_comp]
+  calc
+    applyMat M (applyMat L ρ) =
+        applyMat M (applyMat (K ++ R) ρ) := congrArg (applyMat M) (hR ρ)
+    _ = applyMat M (applyMat K ρ + applyMat R ρ) := by
+      rw [applyMat_append]
+    _ = applyMat M (applyMat K ρ) + applyMat M (applyMat R ρ) :=
+      applyMat_add M _ _
+
+/-- Residual CP refinement is preserved by precomposition. -/
+theorem residualRefines_comp_right {ℓ : ℕ} (M : KrausFamily ℓ n)
+    {K L : KrausFamily n m} (hKL : ResidualRefines K L) :
+    ResidualRefines (comp K M) (comp L M) := by
+  obtain ⟨R, hR⟩ := hKL
+  refine ⟨comp R M, fun ρ => ?_⟩
+  rw [← comp_append, applyMat_comp, applyMat_comp]
+  exact hR (applyMat M ρ)
+
+/-- Residual refinement is additive in the left summand. -/
+theorem residualRefines_append_left (M : KrausFamily n m)
+    {K L : KrausFamily n m} (hKL : ResidualRefines K L) :
+    ResidualRefines (M ++ K) (M ++ L) := by
+  obtain ⟨R, hR⟩ := hKL
+  refine ⟨R, fun ρ => ?_⟩
+  have hRρ := hR ρ
+  rw [applyMat_append] at hRρ
+  simp only [applyMat_append]
+  calc
+    applyMat M ρ + applyMat L ρ =
+        applyMat M ρ + (applyMat K ρ + applyMat R ρ) :=
+      congrArg (applyMat M ρ + ·) hRρ
+    _ = (applyMat M ρ + applyMat K ρ) + applyMat R ρ :=
+      (add_assoc _ _ _).symm
+
+/-- Residual refinement is additive in the right summand. -/
+theorem residualRefines_append_right (M : KrausFamily n m)
+    {K L : KrausFamily n m} (hKL : ResidualRefines K L) :
+    ResidualRefines (K ++ M) (L ++ M) := by
+  obtain ⟨R, hR⟩ := hKL
+  refine ⟨R, fun ρ => ?_⟩
+  simp only [applyMat_append]
+  calc
+    applyMat L ρ + applyMat M ρ =
+        (applyMat K ρ + applyMat R ρ) + applyMat M ρ := by
+          rw [← applyMat_append K R, ← hR ρ]
+    _ = (applyMat K ρ + applyMat M ρ) + applyMat R ρ := by
+      ac_rfl
+
+theorem residualRefines_append {K₁ K₂ L₁ L₂ : KrausFamily n m}
+    (h₁ : ResidualRefines K₁ L₁) (h₂ : ResidualRefines K₂ L₂) :
+    ResidualRefines (K₁ ++ K₂) (L₁ ++ L₂) :=
+  residualRefines_trans
+    (residualRefines_append_right K₂ h₁)
+    (residualRefines_append_left L₁ h₂)
+
+theorem residualRefines_flatMap {α : Type*} (xs : List α)
+    {f g : α → KrausFamily n m}
+    (hfg : ∀ x ∈ xs, ResidualRefines (f x) (g x)) :
+    ResidualRefines (xs.flatMap f) (xs.flatMap g) := by
+  induction xs with
+  | nil =>
+      exact residualRefines_refl []
+  | cons x xs ih =>
+      simp only [List.flatMap_cons]
+      exact residualRefines_append
+        (hfg x (by simp))
+        (ih fun y hy => hfg y (by simp [hy]))
 
 /-- If `A` is an isometry (`A† A = I`), the one-element family is
 trace-preserving. -/
