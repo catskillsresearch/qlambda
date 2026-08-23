@@ -17,6 +17,6 @@ CKL 2026 paper in `sources/`.
 Palomar packaging (Apache-2.0, Zenodo/arXiv scripts, Challenge /
 Solution / comparator / formalization.yaml) is in place. `lake build`
 typechecks `QLambda`, `Challenge`, and `Solution` under
-`leanprover/lean4:v4.30.0`. Proof modules in `Quantum/` and
+`leanprover/lean4:v4.33.0`. Proof modules in `Quantum/` and
 `QuantumStateSpace.lean` are sorry-free. `Challenge.lean` may `sorry`.
 `bash scripts/compare_challenge_solution_types.sh` reports a type match.

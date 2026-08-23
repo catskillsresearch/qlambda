@@ -155,7 +155,7 @@ automation:
         Palomar packaging, vendoring of scott1972, scaffolding of
         Quantum/ and the capstone statement.
         Generated Lean is provisional until it compiles under
-        leanprover/lean4:v4.30.0.
+        leanprover/lean4:v4.33.0.
     - method: manual
       models: []
       role: >-
