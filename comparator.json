@@ -3,21 +3,17 @@
   "solution_module": "Solution",
   "theorem_names": [
     "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved",
-    "Scott1972.ContinuousLattice.qDInf_isOmegaQVA",
     "Scott1972.ContinuousLattice.finitelySeparated_wayBelow"
   ],
   "definition_names": [
-    "Scott1972.ContinuousLattice.QDomain",
+    "Scott1972.ContinuousLattice.qDInf_isOmegaQVA",
     "Scott1972.ContinuousLattice.QuantumFunctor",
     "Scott1972.ContinuousLattice.qTower",
     "Scott1972.ContinuousLattice.QDInf",
-    "Scott1972.ContinuousLattice.IsOmegaQVA",
-    "Scott1972.ContinuousLattice.QFactorable",
     "Scott1972.ContinuousLattice.FinitelySeparated",
     "Scott1972.ContinuousLattice.IsContinuousLattice",
     "Scott1972.ContinuousLattice.WayBelow",
-    "Scott1972.ContinuousLattice.ScottOpen",
-    "SubNormalizedDensity"
+    "Scott1972.ContinuousLattice.ScottOpen"
   ],
   "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]
 }
