@@ -7,6 +7,8 @@ import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Rat.Encodable
 import Mathlib.Logic.Equiv.Fin.Basic
 import Mathlib.Logic.Encodable.Pi
+import Mathlib.Topology.Instances.Complex
+import Mathlib.Topology.Instances.Rat
 
 /-!
 # Gaussian-rational test vectors
@@ -110,6 +112,33 @@ instance : Coe RatComplex ℂ := ⟨toComplex⟩
 @[simp] theorem toComplex_star (z : RatComplex) :
     ((star z : RatComplex) : ℂ) = star (z : ℂ) := by
   apply Complex.ext <;> simp [toComplex]
+
+/-- Gaussian rationals are dense in the complex numbers. -/
+theorem denseRange_toComplex : DenseRange toComplex := by
+  let f : ℚ × ℚ → ℝ × ℝ := Prod.map Rat.cast Rat.cast
+  have hf : DenseRange f := Rat.denseRange_cast.prodMap Rat.denseRange_cast
+  let g : ℝ × ℝ → ℂ :=
+    fun p => Complex.ofReal p.1 + Complex.I * Complex.ofReal p.2
+  have hg : Function.Surjective g := by
+    intro z
+    exact ⟨(z.re, z.im), by apply Complex.ext <;> simp [g]⟩
+  have hgc : Continuous g :=
+    (Complex.continuous_ofReal.comp continuous_fst).add
+      (continuous_const.mul (Complex.continuous_ofReal.comp continuous_snd))
+  have h := hg.denseRange.comp hf hgc
+  rw [denseRange_iff_closure_range]
+  rw [show Set.range toComplex =
+      Set.range (fun p : ℚ × ℚ => (p.1 : ℂ) + Complex.I * (p.2 : ℂ)) by
+    ext z
+    constructor
+    · rintro ⟨q, rfl⟩
+      exact ⟨(q.re, q.im), by
+        apply Complex.ext <;> simp [toComplex]⟩
+    · rintro ⟨p, rfl⟩
+      exact ⟨(⟨p.1, p.2⟩ : RatComplex), by
+        apply Complex.ext <;> simp [toComplex]⟩]
+  exact denseRange_iff_closure_range.mp
+    (by simpa [f, g, Function.comp_def] using h)
 
 instance : Countable RatComplex :=
   Encodable.countable

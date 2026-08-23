@@ -10,6 +10,7 @@ import QLambda.Monad
 import QLambda.ObservationBasis
 import QLambda.OmegaQVA
 import QLambda.Operational
+import QLambda.PhysicalTheory
 import QLambda.QDomain
 import QLambda.QuantumDomainEquation
 import QLambda.QuantumInstrument

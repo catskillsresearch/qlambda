@@ -67,6 +67,111 @@ theorem eval_mono {n : ℕ} (t : ChoiTest n)
   rw [eval_sub] at hnonneg
   linarith
 
+/-- Continuity of a finite-dimensional Choi quadratic form in its
+vector argument. -/
+theorem continuous_quadratic {n : ℕ}
+    (J : Matrix (Fin n × Fin n) (Fin n × Fin n) ℂ) :
+    Continuous (fun x : Fin n × Fin n → ℂ =>
+      (star x ⬝ᵥ (J *ᵥ x)).re) := by
+  apply Complex.continuous_re.comp
+  apply continuous_finsetSum Finset.univ
+  intro i hi
+  apply (continuous_apply i).star.mul
+  apply continuous_finsetSum Finset.univ
+  intro j hj
+  exact continuous_const.mul (continuous_apply j)
+
+/-- Inequalities on Gaussian-rational vectors extend to all complex
+vectors by density and continuity. -/
+theorem all_quadratic_le_of_rational {n : ℕ}
+    (J K : Matrix (Fin n × Fin n) (Fin n × Fin n) ℂ)
+    (h : ∀ v : RatChoiVec n,
+      eval (v, ⟨0, le_rfl⟩) J ≤ eval (v, ⟨0, le_rfl⟩) K) :
+    ∀ x : Fin n × Fin n → ℂ,
+      (star x ⬝ᵥ (J *ᵥ x)).re ≤
+        (star x ⬝ᵥ (K *ᵥ x)).re := by
+  let f : (Fin n × Fin n → RatComplex) →
+      (Fin n × Fin n → ℂ) :=
+    Pi.map fun _ => RatComplex.toComplex
+  have hf : DenseRange f :=
+    DenseRange.piMap fun _ => RatComplex.denseRange_toComplex
+  intro x
+  refine DenseRange.induction_on (p := fun y =>
+      (star y ⬝ᵥ (J *ᵥ y)).re ≤ (star y ⬝ᵥ (K *ᵥ y)).re)
+    hf x (isClosed_le (continuous_quadratic J) (continuous_quadratic K)) ?_
+  intro q
+  let v : RatChoiVec n := fun k => q (finProdFinEquiv.symm k)
+  have hv : v.toComplex = f q := by
+    funext i
+    change (q (finProdFinEquiv.symm (finProdFinEquiv i))).toComplex =
+      (q i).toComplex
+    rw [Equiv.symm_apply_apply]
+  simpa [eval, vector, hv] using h v
+
+theorem hermitian_quadratic_star {m : Type*} [Fintype m] [DecidableEq m]
+    (A : Matrix m m ℂ) (hA : A.IsHermitian) (x : m → ℂ) :
+    star (star x ⬝ᵥ (A *ᵥ x)) = star x ⬝ᵥ (A *ᵥ x) := by
+  change (starRingEnd ℂ) (∑ i, star (x i) * ∑ j, A i j * x j) =
+    ∑ i, star (x i) * ∑ j, A i j * x j
+  rw [map_sum]
+  calc
+    (∑ i, (starRingEnd ℂ) (star (x i) * ∑ j, A i j * x j)) =
+        ∑ i, ∑ j, x i * star (A i j) * star (x j) := by
+      apply Finset.sum_congr rfl
+      intro i hi
+      rw [map_mul]
+      have hss : (starRingEnd ℂ) (star (x i)) = x i := star_star (x i)
+      rw [hss, map_sum, Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro j hj
+      rw [map_mul]
+      change x i * (star (A i j) * star (x j)) = _
+      ring
+    _ = ∑ i, ∑ j, star (x i) * A i j * x j := by
+      rw [Finset.sum_comm]
+      apply Finset.sum_congr rfl
+      intro i hi
+      apply Finset.sum_congr rfl
+      intro j hj
+      rw [hA.apply]
+      ring
+    _ = ∑ i, star (x i) * ∑ j, A i j * x j := by
+      apply Finset.sum_congr rfl
+      intro i hi
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro j hj
+      ring
+
+theorem posSemidef_of_re_quadratic_nonneg {m : Type*}
+    [Fintype m] [DecidableEq m]
+    (A : Matrix m m ℂ) (hA : A.IsHermitian)
+    (h : ∀ x : m → ℂ, 0 ≤ (star x ⬝ᵥ (A *ᵥ x)).re) :
+    A.PosSemidef := by
+  apply Matrix.PosSemidef.of_dotProduct_mulVec_nonneg hA
+  intro x
+  rw [Complex.nonneg_iff]
+  constructor
+  · exact h x
+  · have hs := hermitian_quadratic_star A hA x
+    have him := congrArg Complex.im hs
+    rw [RCLike.star_def, Complex.conj_im] at him
+    linarith
+
+/-- Gaussian-rational quadratic inequalities characterize Loewner order
+on Hermitian matrices. -/
+theorem le_of_rational_quadratic_le {n : ℕ}
+    {J K : Matrix (Fin n × Fin n) (Fin n × Fin n) ℂ}
+    (hJ : J.IsHermitian) (hK : K.IsHermitian)
+    (h : ∀ v : RatChoiVec n,
+      eval (v, ⟨0, le_rfl⟩) J ≤ eval (v, ⟨0, le_rfl⟩) K) :
+    J ≤ K := by
+  rw [Matrix.le_iff]
+  apply posSemidef_of_re_quadratic_nonneg (K - J) (hK.sub hJ)
+  intro x
+  have hx := all_quadratic_le_of_rational J K h x
+  simpa [Matrix.sub_mulVec, dotProduct_sub] using sub_nonneg.mpr hx
+
 end ChoiTest
 
 /-- A Scott-open observation of returned values.  It is intentionally
@@ -499,6 +604,69 @@ theorem exists_coded_observationChoi_eq [IsOmegaQVA D]
   intro o ho
   exact if_congr (hmem o) rfl rfl
 
+/-- One coded sub-observation can simultaneously select the same
+branches as an arbitrary Scott open for two finite instruments. -/
+theorem exists_pair_coded_observationChoi_eq [IsOmegaQVA D]
+    (μ ν : FiniteInstrumentComp n D) (U : OutputObservation D) :
+    ∃ k,
+      ((CountableOutputBasis.ofOmegaQVAFiniteUnion
+        (D := D)).code.observe k : Set D) ⊆ U ∧
+      μ.observationChoi
+          ((CountableOutputBasis.ofOmegaQVAFiniteUnion
+            (D := D)).code.observe k : Set D) =
+        μ.observationChoi U ∧
+      ν.observationChoi
+          ((CountableOutputBasis.ofOmegaQVAFiniteUnion
+            (D := D)).code.observe k : Set D) =
+        ν.observationChoi U := by
+  classical
+  let xsμ : List D :=
+    ((Finset.univ.filter fun o : μ.Outcome => μ.value o ∈ U).toList).map μ.value
+  let xsν : List D :=
+    ((Finset.univ.filter fun o : ν.Outcome => ν.value o ∈ U).toList).map ν.value
+  have hxs : ∀ d ∈ xsμ ++ xsν, d ∈ U := by
+    intro d hd
+    rcases List.mem_append.mp hd with hd | hd
+    · obtain ⟨o, ho, rfl⟩ := List.mem_map.mp hd
+      simpa using ho
+    · obtain ⟨o, ho, rfl⟩ := List.mem_map.mp hd
+      simpa using ho
+  obtain ⟨k, hkcover, hkU⟩ :=
+    CountableOutputBasis.ofOmegaQVAFiniteUnion_finite_cover U (xsμ ++ xsν) hxs
+  refine ⟨k, hkU, ?_, ?_⟩
+  · rw [observationChoi_eq_testChoi, observationChoi_eq_testChoi]
+    unfold testChoi
+    apply Finset.sum_congr rfl
+    intro o ho
+    apply if_congr
+    · constructor
+      · intro hV
+        exact hkU hV
+      · intro hoU
+        change μ.value o ∈ U at hoU
+        apply hkcover (μ.value o)
+        apply List.mem_append_left xsν
+        apply List.mem_map.mpr
+        exact ⟨o, by simp [hoU], rfl⟩
+    · rfl
+    · rfl
+  · rw [observationChoi_eq_testChoi, observationChoi_eq_testChoi]
+    unfold testChoi
+    apply Finset.sum_congr rfl
+    intro o ho
+    apply if_congr
+    · constructor
+      · intro hV
+        exact hkU hV
+      · intro hoU
+        change ν.value o ∈ U at hoU
+        apply hkcover (ν.value o)
+        apply List.mem_append_right xsμ
+        apply List.mem_map.mpr
+        exact ⟨o, by simp [hoU], rfl⟩
+    · rfl
+    · rfl
+
 end FiniteInstrumentComp
 
 namespace ObservationAtom
@@ -776,6 +944,16 @@ def toObservation (C : OutputCode ι D) (t : CodedToken n ι) :
 def Holds (C : OutputCode ι D) (t : CodedToken n ι)
     (μ : FiniteInstrumentComp n D) : Prop :=
   (toObservation C t).Holds μ
+
+theorem holds_iff (C : OutputCode ι D) (t : CodedToken n ι)
+    (μ : FiniteInstrumentComp n D) :
+    Holds C t μ ↔ ∀ a ∈ t, CodedAtom.Holds C a μ := by
+  constructor
+  · intro ht a ha
+    exact ht _ (List.mem_map.mpr ⟨a, ha, rfl⟩)
+  · intro ht x hx
+    obtain ⟨a, ha, rfl⟩ := List.mem_map.mp hx
+    exact ht a ha
 
 end CodedToken
 

@@ -54,9 +54,13 @@ status:
     covering lemma for finitely many points in one Scott open.
     QLambda/RoundedTheory.lean constructs the semantic-entailment
     saturated rounded completion of the coded strict tokens and proves
-    it is a continuous lattice. Its comparison with TT/Choi refinement
-    and the model instance remain open. Nothing in the compared
-    statements is imported from a prior Palomar entry.
+    it is a continuous lattice. QLambda/PhysicalTheory.lean maps finite
+    instruments to their satisfied rounded theories and proves that
+    theory inclusion is equivalent to pointwise Choi observational
+    refinement, using Gaussian-rational density and finite-union branch
+    selection. Comparison with the stronger TT refinement and the model
+    instance remain open. Nothing in the compared statements is
+    imported from a prior Palomar entry.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -201,7 +205,7 @@ review:
     review has been performed.
 
 known_gaps:
-  - "Prove that the token order reconstructs TT/Choi refinement and that physical trace-nonincreasing instruments embed as ideals or form a continuous retract."
+  - "Relate the proved token-theory/Choi observational order correspondence to the stronger TT refinement and determine whether the physical image forms a continuous retract."
   - "Lift finite unit, pushforward, and bind to tokens and prove continuity and local continuity of their Scott-closed extensions."
   - "Construct QFactorable finitely separated approximants for the token completion and only then instantiate IsQuantumPowerModel and IsQuantumMonad."
   - "Formalize the rank-one Choi-ray obstruction showing why Scott closure or rational attenuation of the exact physical basis alone cannot establish omegaQVA for register dimension at least two."
