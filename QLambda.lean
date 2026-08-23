@@ -17,6 +17,7 @@ import QLambda.QuantumInstrument
 import QLambda.QuantumPower
 import QLambda.QuantumStateSpace
 import QLambda.RationalComplex
+import QLambda.RefinementCounterexample
 import QLambda.RoundedTheory
 import QLambda.Saturation
 import QLambda.ScottLowerSet
