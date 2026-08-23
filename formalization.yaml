@@ -26,16 +26,31 @@ classification:
 
 status:
   scope: >-
-    Compared claim is D_∞ ≅ [D_∞ → Q(D_∞)] for the quantum tower
-    D_{n+1} = [D_n → Q(D_n)]. QuantumPower and ωQVA-closure under Q
-    and function space are definition holes. Saturation flattening is
-    a mechanization of Chen–Kou–Lyu Lemmas 6.8–6.9. Nothing in the
-    compared statements is imported from a prior Palomar entry.
+    Compared claim is the capstone parameterized by a QuantumPowerModel
+    (a Q that is an instance of the spec class IsQuantumPowerModel),
+    then applied to QuantumValuationPower (V) and
+    QuantumSaturationPower (S). The tower is D_{n+1} = [D_n → Q(D_n)].
+    The class-instance fields and function-space closure remain holes.
+    Saturation flattening is a mechanization of Chen–Kou–Lyu Lemmas
+    6.8–6.9. Nothing in the compared statements is imported from a
+    prior Palomar entry.
   sorry_count: 1
   sorry_in_definitions: 1
   axioms: ["propext", "Quot.sound", "Classical.choice"]
   main_results:
     - declaration: "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved_valuation"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved_saturation"
       file: "Solution.lean"
       sorry_count: 0
       axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -185,12 +200,11 @@ limitations:
     Classical.choice is permitted (1972 topological ≪). There is no
     project-defined axiom and no native_decide in the compared proofs.
   - >-
-    QuantumPower (Q(D)), omegaQVA_closed_under_quantumPower, and
-    omegaQVA_closed_under_functionSpace are definition holes. The
-    compared capstone is typed as D_∞ ≅ [D_∞ → Q(D_∞)]; the iso and
-    the maps qEmbInfInf / qProjInfInf are sorry. qTowerProj is sorry.
-    ωQVA membership of the limit is the retract-of-product argument
-    once those holes are filled.
+    IsQuantumPowerModel is the spec; both carriers are instances.
+    The instance fields (lattice, functoriality, ωQVA-closure) are
+    sorry. The iso and the maps qEmbInfInf / qProjInfInf are sorry.
+    qTowerProj is sorry. ωQVA membership of the limit is the
+    retract-of-product argument once those holes are filled.
   - >-
     Saturation Lean in this repo is an original mechanization of
     arXiv:2608.03073 Lemmas 6.5–6.7. Cartesian closure of function
@@ -204,10 +218,11 @@ alignment:
       module: "Challenge (statement), Solution / Quantum.QuantumDomainEquation (proof)"
       status: stated
       note: >-
-        Compared by Comparator as a theorem. The type is
-        D_∞ ≅ [D_∞ → Q(D_∞)]. The iso and qEmbInfInf / qProjInfInf
-        are unproved; the last conjunct is Scott's inverse-limit
-        identity on the quantum tower.
+        Compared by Comparator as a theorem parameterized by a
+        QuantumPowerModel. Applications to valuationModel and
+        saturationModel are also compared. The iso and qEmbInfInf /
+        qProjInfInf are unproved; the last conjunct is Scott's
+        inverse-limit identity on the quantum tower.
 
     - source: "The quantum inverse limit is an ωQVA object (arxiv.md, §6–8)"
       lean: "qDInf_isOmegaQVA"

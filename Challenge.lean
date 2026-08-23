@@ -20,9 +20,10 @@ import Mathlib.Topology.Order.ScottTopology
 # Palomar statement of record (ωQVA quantum domain equation)
 
 This module states the compared capstone and its type surface. It imports
-only Mathlib. Challenge is allowed `sorry`. The intended claim is
-`D_∞ ≅ [D_∞ → Q(D_∞)]` for a quantum powerdomain `Q`, not Scott's
-`[D_∞ → D_∞]`.
+only Mathlib. Challenge is allowed `sorry`. `IsQuantumPowerModel` is the
+spec of a quantum powerdomain. Both unweakened carriers of `arxiv.md` §5
+are instances. The capstone is parameterized by a bundled
+`QuantumPowerModel` and applied to (V) and (S).
 -/
 
 open Matrix
@@ -46,6 +47,12 @@ instance : PartialOrder (SubNormalizedDensity n) where
   le_antisymm ρ σ hρσ hσρ := by
     cases ρ; cases σ; congr
     exact le_antisymm hρσ hσρ
+
+instance : OrderBot (SubNormalizedDensity n) where
+  bot := ⟨0, PosSemidef.zero, by simp [Matrix.trace_zero]⟩
+  bot_le ρ := by
+    change (ρ.mat - 0).PosSemidef
+    simpa using ρ.posSemidef
 
 end SubNormalizedDensity
 
@@ -175,6 +182,12 @@ instance instPartialOrder : (ns : List ℕ) → PartialOrder (DensityVec ns)
     haveI := instPartialOrder ns
     inferInstanceAs (PartialOrder (_ × _))
 
+instance instOrderBot : (ns : List ℕ) → OrderBot (DensityVec ns)
+  | [] => { bot := ⟨⟩, bot_le := fun _ => trivial }
+  | _ :: ns =>
+    haveI := instOrderBot ns
+    inferInstanceAs (OrderBot (_ × _))
+
 end DensityVec
 
 variable {D E : Type*} [CompleteLattice D] [CompleteLattice E]
@@ -202,28 +215,91 @@ class IsOmegaQVA (D : Type*) [CompleteLattice D] where
   monotone_approx : Monotone approx
   iSup_approx : (⨆ n, approx n) = ScottMap.idMap
 
-/-- Quantum state powerdomain `Q(D)`. -/
-noncomputable def QuantumPower (D : Type u) [CompleteLattice D] : Type u := by
+/-- The empty set is Scott-open. -/
+theorem scottOpen_empty : ScottOpen (∅ : Set D) :=
+  ⟨isUpperSet_empty, fun _ _ _ hmem => False.elim hmem⟩
+
+/-- Scott-opens of `D`, ordered by inclusion. -/
+abbrev ScottOpens (D : Type*) [CompleteLattice D] := { U : Set D // ScottOpen U }
+
+/-- **(V)** A quantum valuation on `D` valued in a fixed finite `DensityVec`. -/
+structure QuantumValuation (D : Type*) [CompleteLattice D] (dims : List ℕ) where
+  val : ScottOpens D → DensityVec dims
+  monotone : Monotone val
+  map_empty : val ⟨∅, scottOpen_empty⟩ = ⊥
+
+/-- **(V)** Quantum valuations with a varying finite algebra. -/
+def QuantumValuationPower (D : Type u) [CompleteLattice D] : Type u :=
+  Σ dims : List ℕ, QuantumValuation D dims
+
+/-- **(S)** The saturation carrier as an endofunctor on complete lattices. -/
+noncomputable def QuantumSaturationPower (D : Type u) [CompleteLattice D] : Type u := by
   sorry
 
-noncomputable instance instCompleteLatticeQuantumPower (D : Type u) [CompleteLattice D] :
-    CompleteLattice (QuantumPower D) := by
+/-- Spec of a quantum powerdomain model. Both (V) and (S) are instances. -/
+class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) where
+  str : ∀ (D : Type u) [CompleteLattice D], CompleteLattice (Q D)
+  map : ∀ {D E : Type u} [CompleteLattice D] [CompleteLattice E],
+    ScottMap D E →
+      letI := str D
+      letI := str E
+      ScottMap (Q D) (Q E)
+  map_id : ∀ {D : Type u} [CompleteLattice D],
+    letI := str D
+    map (ScottMap.idMap : ScottMap D D) = ScottMap.idMap
+  map_comp : ∀ {D E F : Type u} [CompleteLattice D] [CompleteLattice E] [CompleteLattice F]
+      (f : ScottMap E F) (g : ScottMap D E),
+    letI := str D
+    letI := str E
+    letI := str F
+    map (f.comp g) = (map f).comp (map g)
+  closed : ∀ {D : Type u} [CompleteLattice D] (h : IsOmegaQVA D),
+    letI := str D
+    IsOmegaQVA (Q D)
+
+attribute [instance] IsQuantumPowerModel.str
+
+noncomputable instance instIsQuantumPowerModelValuation :
+    IsQuantumPowerModel QuantumValuationPower := by
   sorry
 
-/-- `[D → Q(D)]`. -/
-abbrev QuantumFunctor (D : Type u) [CompleteLattice D] : Type u :=
-  ScottMap D (QuantumPower D)
-
-/-- `ωQVA` is closed under the quantum powerdomain. -/
-noncomputable def omegaQVA_closed_under_quantumPower {D : Type u} [CompleteLattice D]
-    (h : IsOmegaQVA D) : IsOmegaQVA (QuantumPower D) := by
+noncomputable instance instIsQuantumPowerModelSaturation :
+    IsQuantumPowerModel QuantumSaturationPower := by
   sorry
 
-/-- `ωQVA` is Cartesian closed. -/
+/-- A bundled quantum powerdomain: a `Q` that satisfies the spec. -/
+structure QuantumPowerModel where
+  Power : (D : Type u) → [CompleteLattice D] → Type u
+  [spec : IsQuantumPowerModel Power]
+
+attribute [instance] QuantumPowerModel.spec
+
+/-- Carrier of the model at `D`. -/
+abbrev QuantumPower (M : QuantumPowerModel) (D : Type u) [CompleteLattice D] : Type u :=
+  M.Power D
+
+/-- `[D → Q(D)]` for the chosen model. -/
+abbrev QuantumFunctor (M : QuantumPowerModel) (D : Type u) [CompleteLattice D] : Type u :=
+  ScottMap D (M.Power D)
+
+/-- `ωQVA` is closed under the model's powerdomain. -/
+abbrev omegaQVA_closed_under_quantumPower (M : QuantumPowerModel) {D : Type u}
+    [CompleteLattice D] (h : IsOmegaQVA D) : IsOmegaQVA (M.Power D) :=
+  IsQuantumPowerModel.closed (Q := M.Power) h
+
+/-- `ωQVA` is Cartesian closed (not a field of the spec). -/
 noncomputable def omegaQVA_closed_under_functionSpace {D E : Type u}
     [CompleteLattice D] [CompleteLattice E]
     (hD : IsOmegaQVA D) (hE : IsOmegaQVA E) : IsOmegaQVA (ScottMap D E) := by
   sorry
+
+/-- **(V)** bundled as a quantum model. -/
+noncomputable def valuationModel : QuantumPowerModel :=
+  ⟨QuantumValuationPower⟩
+
+/-- **(S)** bundled as a quantum model. -/
+noncomputable def saturationModel : QuantumPowerModel :=
+  ⟨QuantumSaturationPower⟩
 
 /-- A pointed object of `ωQVA`. -/
 structure QDomain : Type (u + 1) where
@@ -234,67 +310,108 @@ structure QDomain : Type (u + 1) where
 attribute [instance] QDomain.str
 
 /-- The quantum tower `D_{n+1} = [D_n → Q(D_n)]` as bundled lattices. -/
-noncomputable def qTowerCLat (D₀ : CLat.{u}) : ℕ → CLat.{u}
+noncomputable def qTowerCLat (M : QuantumPowerModel) (D₀ : CLat.{u}) : ℕ → CLat.{u}
   | 0 => D₀
   | n + 1 =>
-    ⟨ScottMap (qTowerCLat D₀ n).carrier (QuantumPower (qTowerCLat D₀ n).carrier)⟩
+    ⟨ScottMap (qTowerCLat M D₀ n).carrier (QuantumPower M (qTowerCLat M D₀ n).carrier)⟩
 
 /-- The carrier `Dₙ` of the quantum tower. -/
-def qTowerType (D₀ : CLat.{u}) (n : ℕ) : Type u := (qTowerCLat D₀ n).carrier
+def qTowerType (M : QuantumPowerModel) (D₀ : CLat.{u}) (n : ℕ) : Type u :=
+  (qTowerCLat M D₀ n).carrier
 
-noncomputable instance qTowerCompleteLattice (D₀ : CLat.{u}) (n : ℕ) :
-    CompleteLattice (qTowerType D₀ n) := (qTowerCLat D₀ n).str
+noncomputable instance qTowerCompleteLattice (M : QuantumPowerModel) (D₀ : CLat.{u})
+    (n : ℕ) : CompleteLattice (qTowerType M D₀ n) :=
+  (qTowerCLat M D₀ n).str
 
 /-- The quantum tower as a sequence of `QDomain`s. -/
-noncomputable def qTower (D₀ : QDomain.{u}) : ℕ → QDomain.{u}
+noncomputable def qTower (M : QuantumPowerModel) (D₀ : QDomain.{u}) : ℕ → QDomain.{u}
   | 0 => D₀
   | n + 1 =>
-    { carrier := ScottMap (qTower D₀ n).carrier (QuantumPower (qTower D₀ n).carrier)
+    { carrier := ScottMap (qTower M D₀ n).carrier (QuantumPower M (qTower M D₀ n).carrier)
       omega :=
-        omegaQVA_closed_under_functionSpace (qTower D₀ n).omega
-          (omegaQVA_closed_under_quantumPower (qTower D₀ n).omega) }
+        omegaQVA_closed_under_functionSpace (qTower M D₀ n).omega
+          (omegaQVA_closed_under_quantumPower M (qTower M D₀ n).omega) }
 
 /-- Bonding projections `j_{n+1} = F(j_n)` for `F(X) = [X → Q(X)]`. -/
-noncomputable def qTowerProj (D₀ : CLat.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor D₀.carrier)) :
-    ∀ n, IsContinuousLatticeProjection (qTowerType D₀ n) (qTowerType D₀ (n + 1)) := by
+noncomputable def qTowerProj (M : QuantumPowerModel) (D₀ : CLat.{u})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :
+    ∀ n, IsContinuousLatticeProjection (qTowerType M D₀ n) (qTowerType M D₀ (n + 1)) := by
   sorry
 
 /-- Inverse limit of the quantum tower. -/
-abbrev QDInf (D₀ : QDomain.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor D₀.carrier)) :
+abbrev QDInf (M : QuantumPowerModel) (D₀ : QDomain.{u})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :
     Type u :=
-  InverseLimit (qTowerType ⟨D₀.carrier⟩) (qTowerProj ⟨D₀.carrier⟩ j₀)
+  InverseLimit (qTowerType M ⟨D₀.carrier⟩) (qTowerProj M ⟨D₀.carrier⟩ j₀)
 
 /-- Embedding `i_∞ : D_∞ → [D_∞ → Q(D_∞)]`. -/
-noncomputable def qEmbInfInf (D₀ : QDomain.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor D₀.carrier)) :
-    ScottMap (QDInf D₀ j₀) (QuantumFunctor (QDInf D₀ j₀)) := by
+noncomputable def qEmbInfInf (M : QuantumPowerModel) (D₀ : QDomain.{u})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :
+    ScottMap (QDInf M D₀ j₀) (QuantumFunctor M (QDInf M D₀ j₀)) := by
   sorry
 
 /-- Projection `j_∞ : [D_∞ → Q(D_∞)] → D_∞`. -/
-noncomputable def qProjInfInf (D₀ : QDomain.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor D₀.carrier)) :
-    ScottMap (QuantumFunctor (QDInf D₀ j₀)) (QDInf D₀ j₀) := by
+noncomputable def qProjInfInf (M : QuantumPowerModel) (D₀ : QDomain.{u})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :
+    ScottMap (QuantumFunctor M (QDInf M D₀ j₀)) (QDInf M D₀ j₀) := by
   sorry
 
-/-- Compared capstone: `D_∞` is in `ωQVA` and `D_∞ ≅ [D_∞ → Q(D_∞)]`. -/
+/-- Compared capstone, parameterized by a quantum powerdomain model. -/
 theorem omegaQVA_quantum_domain_equation_solved
-    (D₀ : QDomain.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor D₀.carrier)) :
-    Nonempty (IsOmegaQVA (QDInf D₀ j₀)) ∧
-    (qProjInfInf D₀ j₀).comp (qEmbInfInf D₀ j₀) = ScottMap.idMap ∧
-    (qEmbInfInf D₀ j₀).comp (qProjInfInf D₀ j₀) = ScottMap.idMap ∧
-    Nonempty (QDInf D₀ j₀ ≃o ScottMap (QDInf D₀ j₀) (QuantumPower (QDInf D₀ j₀))) ∧
-    (ScottMap.idMap : ScottMap (QDInf D₀ j₀) (QDInf D₀ j₀)) =
-      ⨆ n, (embInf (qTowerType ⟨D₀.carrier⟩) (qTowerProj ⟨D₀.carrier⟩ j₀) n).comp
-            (projInf (qTowerType ⟨D₀.carrier⟩) (qTowerProj ⟨D₀.carrier⟩ j₀) n) := by
+    (M : QuantumPowerModel) (D₀ : QDomain.{u})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :
+    Nonempty (IsOmegaQVA (QDInf M D₀ j₀)) ∧
+    (qProjInfInf M D₀ j₀).comp (qEmbInfInf M D₀ j₀) = ScottMap.idMap ∧
+    (qEmbInfInf M D₀ j₀).comp (qProjInfInf M D₀ j₀) = ScottMap.idMap ∧
+    Nonempty (QDInf M D₀ j₀ ≃o ScottMap (QDInf M D₀ j₀) (QuantumPower M (QDInf M D₀ j₀))) ∧
+    (ScottMap.idMap : ScottMap (QDInf M D₀ j₀) (QDInf M D₀ j₀)) =
+      ⨆ n, (embInf (qTowerType M ⟨D₀.carrier⟩) (qTowerProj M ⟨D₀.carrier⟩ j₀) n).comp
+            (projInf (qTowerType M ⟨D₀.carrier⟩) (qTowerProj M ⟨D₀.carrier⟩ j₀) n) := by
   sorry
 
-@[reducible] noncomputable def qDInf_isOmegaQVA
+/-- **Corollary (V).** The capstone at the quantum-valuation model. -/
+theorem omegaQVA_quantum_domain_equation_solved_valuation
     (D₀ : QDomain.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor D₀.carrier)) :
-    IsOmegaQVA (QDInf D₀ j₀) := by
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor valuationModel D₀.carrier)) :
+    Nonempty (IsOmegaQVA (QDInf valuationModel D₀ j₀)) ∧
+    (qProjInfInf valuationModel D₀ j₀).comp (qEmbInfInf valuationModel D₀ j₀) =
+      ScottMap.idMap ∧
+    (qEmbInfInf valuationModel D₀ j₀).comp (qProjInfInf valuationModel D₀ j₀) =
+      ScottMap.idMap ∧
+    Nonempty (QDInf valuationModel D₀ j₀ ≃o
+      ScottMap (QDInf valuationModel D₀ j₀)
+        (QuantumPower valuationModel (QDInf valuationModel D₀ j₀))) ∧
+    (ScottMap.idMap : ScottMap (QDInf valuationModel D₀ j₀) (QDInf valuationModel D₀ j₀)) =
+      ⨆ n, (embInf (qTowerType valuationModel ⟨D₀.carrier⟩)
+              (qTowerProj valuationModel ⟨D₀.carrier⟩ j₀) n).comp
+            (projInf (qTowerType valuationModel ⟨D₀.carrier⟩)
+              (qTowerProj valuationModel ⟨D₀.carrier⟩ j₀) n) := by
+  sorry
+
+/-- **Corollary (S).** The capstone at the saturation model. -/
+theorem omegaQVA_quantum_domain_equation_solved_saturation
+    (D₀ : QDomain.{u})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor saturationModel D₀.carrier)) :
+    Nonempty (IsOmegaQVA (QDInf saturationModel D₀ j₀)) ∧
+    (qProjInfInf saturationModel D₀ j₀).comp (qEmbInfInf saturationModel D₀ j₀) =
+      ScottMap.idMap ∧
+    (qEmbInfInf saturationModel D₀ j₀).comp (qProjInfInf saturationModel D₀ j₀) =
+      ScottMap.idMap ∧
+    Nonempty (QDInf saturationModel D₀ j₀ ≃o
+      ScottMap (QDInf saturationModel D₀ j₀)
+        (QuantumPower saturationModel (QDInf saturationModel D₀ j₀))) ∧
+    (ScottMap.idMap : ScottMap (QDInf saturationModel D₀ j₀) (QDInf saturationModel D₀ j₀)) =
+      ⨆ n, (embInf (qTowerType saturationModel ⟨D₀.carrier⟩)
+              (qTowerProj saturationModel ⟨D₀.carrier⟩ j₀) n).comp
+            (projInf (qTowerType saturationModel ⟨D₀.carrier⟩)
+              (qTowerProj saturationModel ⟨D₀.carrier⟩ j₀) n) := by
+  sorry
+
+@[reducible] noncomputable def qDInf_isOmegaQVA (M : QuantumPowerModel) (D₀ : QDomain.{u})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :
+    IsOmegaQVA (QDInf M D₀ j₀) := by
   sorry
 
 /-- **Chen–Kou–Lyu Lemma 6.8.** A finitely separated Scott map satisfies `f x ≪ x`. -/

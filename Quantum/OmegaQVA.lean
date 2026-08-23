@@ -38,6 +38,12 @@ instance instPartialOrder : (ns : List ℕ) → PartialOrder (DensityVec ns)
     haveI := instPartialOrder ns
     inferInstanceAs (PartialOrder (_ × _))
 
+instance instOrderBot : (ns : List ℕ) → OrderBot (DensityVec ns)
+  | [] => { bot := ⟨⟩, bot_le := fun _ => trivial }
+  | _ :: ns =>
+    haveI := instOrderBot ns
+    inferInstanceAs (OrderBot (_ × _))
+
 end DensityVec
 
 /-- `a` factors through `DensityVec dims` via monotone encoding and
