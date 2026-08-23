@@ -1,0 +1,221 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+version: "v0.4"
+
+project:
+  name: "Quantum-valuation approximable domains and the untyped quantum λ-calculus"
+  description: >-
+    Lean 4 development of the category ωQVA of quantum-valuation
+    approximable domains, extending Scott 1972 continuous lattices and
+    the Chen–Kou–Lyu saturation pattern to the non-commutative setting.
+    The compared statement is the capstone
+    omegaQVA_quantum_domain_equation_solved: the inverse limit of the
+    quantum tower D_{n+1} = [D_n → Q(D_n)] lies in ωQVA and is
+    order-isomorphic to its own function space. Account: arxiv.md.
+  authors:
+    - "Lars Warren Ericson"
+  license: "Apache-2.0"
+  responsible_maintainers:
+    - "Lars Warren Ericson"
+
+repository:
+  role: substantive-development
+
+classification:
+  arxiv: [cs.LO, math.LO, quant-ph]
+  msc2020: ["06B35", "68Q55", "81P68"]
+
+status:
+  scope: >-
+    Initial Palomar registration of the capstone
+    omegaQVA_quantum_domain_equation_solved together with the supporting
+    type surface (QDomain, QuantumFunctor, qTower, QDInf, IsOmegaQVA,
+    QFactorable, FinitelySeparated, SubNormalizedDensity). The 1972
+    inverse-limit half (embInfInf / projInfInf / theorem_4_4_orderIso /
+    idInf_eq_iSup) is imported from vendor/scott1972. Saturation
+    flattening is a mechanization of Chen–Kou–Lyu Lemmas 6.8–6.9.
+    Nothing in the compared statements is imported from a prior Palomar
+    entry.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: ["propext", "Quot.sound", "Classical.choice"]
+  main_results:
+    - declaration: "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "Scott1972.ContinuousLattice.qDInf_isOmegaQVA"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "Scott1972.ContinuousLattice.finitelySeparated_wayBelow"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+
+fidelity:
+  divergences: >-
+    QuantumFunctor is the Scott function space [D → D], standing for
+    [D → Q(D)] at the carrier level used by Scott 1972 Theorem 4.4.
+    QFactorable factors through a finite product of Loewner
+    spectrahedra (DensityVec), the state space of ⊕ M_{d_k}(ℂ) with
+    per-block trace ≤ 1; the paper's S_≤1(⊕ A_i) shares one trace
+    budget. Spectral depletion is implemented as the uniform contraction
+    Φ_t(ρ) = e^{-max(t,0)} ρ, which is Loewner-monotone; the paper also
+    discusses projection-valued erosion. QDomain includes a
+    function-space closure field so every tower stage remains in ωQVA
+    (CKL Cartesian closure, not re-proved here). The inverse-limit
+    instance qDInf_isOmegaQVA is obtained as a Scott-continuous retract
+    of the countable product of stages (omegaQVA_pi), which is the
+    CKL 6.10(ii) pattern; saturation_flattening (Lemmas 6.8–6.9) is
+    mechanized independently. The capstone first conjunct is
+    Nonempty (IsOmegaQVA …) because IsOmegaQVA is a data-bearing class.
+    vendor/scott1972 is a frozen copy of the author's 1972 remote.
+    vendor/ckl2026 is a literature artifact: the claimed ChanYuxu
+    GitHub URL returned 404 on 2026-08-22.
+
+sources:
+  - title: "Finite-Valuation Approximable Structures, Quantum λ-Calculus, and the Jung–Tix Problem"
+    authors: ["Lars Warren Ericson"]
+    type: "notes"
+    id: "https://github.com/catskillsresearch/qlambda/blob/main/arxiv.md"
+    relationship: other
+    author_endorsement: participated
+    note: >-
+      Write-up of this formalization (arxiv.md). Challenge.lean is
+      checked against the named capstone, not against a transcription
+      of Chen–Kou–Lyu or Scott 1972 in full.
+
+  - title: "Continuous Lattices"
+    authors: ["Dana Scott"]
+    type: "article"
+    location: "In F. W. Lawvere (ed.), Toposes, Algebraic Geometry and Logic, LNM 274, Springer, 1972"
+    relationship: background
+    note: >-
+      Source of IsContinuousLattice, ≪, inverse limits, and Theorem 4.4.
+      Imported from vendor/scott1972. This package does not re-prove
+      Scott's internal theorems.
+
+  - title: "Finite-valuation approximable structures: a solution to the Jung–Tix problem of probabilistic powerdomains"
+    authors: ["Yuxu Chen", "Hui Kou", "Zhenchao Lyu"]
+    type: "article"
+    id: "https://arxiv.org/abs/2608.03073"
+    relationship: independently-proves
+    note: >-
+      Source of finite separation (Def. 2.1), Lemma 6.8 (f(x) ≪ x),
+      and the 2-level flattening / saturation lemmas (6.3 / 6.9 / 6.10).
+      This package independently mechanizes those lemmas in the Scott1972
+      continuous-lattice setting and lifts them to ωQVA. The classical
+      ωFVA development is not re-formalized in full.
+
+  - title: "The troublesome probabilistic powerdomain"
+    authors: ["Achim Jung", "Regina Tix"]
+    type: "article"
+    location: "ENTCS 13:70–91, 1998"
+    relationship: background
+
+  - title: "A linear-non-linear model for a quantum lambda calculus"
+    authors: ["Peter Selinger", "Benoît Valiron"]
+    type: "article"
+    location: "Information and Computation 207(5):603–629, 2009"
+    relationship: background
+
+related_formalizations:
+  - id: "https://github.com/catskillsresearch/scott1972/tree/36bf01f99f00fcb78b999052212372ba026521ba"
+    relationship: other
+    note: >-
+      Same-author per-paper home for Scott 1972, frozen at
+      36bf01f99f00fcb78b999052212372ba026521ba and copied into
+      vendor/scott1972. The remote remains the 1972 development.
+
+  - id: "https://github.com/catskillsresearch/scott_models"
+    relationship: other
+    note: >-
+      Same-author Palomar packaging pattern (Challenge / Solution /
+      formalization.yaml) and presentation bridges. Not a dependency
+      of the compared ωQVA statements.
+
+  - id: "https://github.com/ChanYuxu/Recent-Progress-on-Domain-Theory"
+    relationship: other
+    note: >-
+      Claimed home of a Chen–Kou–Lyu Lean 4 tree. The URL returned 404
+      on 2026-08-22; see vendor/ckl2026/NOTICE. No third-party Lean was
+      copied.
+
+automation:
+  methods:
+    - method: agent
+      models: ["Cursor Grok 4.6 (SpaceXAI / Cursor)"]
+      framework: "Cursor"
+      role: >-
+        Palomar packaging, vendoring of scott1972, literature vendor for
+        Chen–Kou–Lyu, scaffolding of Quantum/ and the capstone statement.
+        Generated Lean is provisional until it compiles under
+        leanprover/lean4:v4.30.0.
+    - method: manual
+      models: []
+      role: >-
+        The author chose the formalization route, reviews every
+        definition and claim, and takes sole responsibility for the
+        mathematical content. No large language model is listed as a
+        co-author.
+  notes: >-
+    Initial Palomar draft. related_formalizations records scott1972 and
+    the unavailable ChanYuxu URL. See limitations.
+
+review:
+  status: self-assessed
+  reviewers:
+    - "Lars Warren Ericson"
+  notes: >-
+    The author directed and reviewed the development. No external
+    review has been performed.
+
+known_gaps: []
+
+limitations:
+  - >-
+    The compared claim is the named capstone and supporting surface,
+    not a formalization of Chen–Kou–Lyu 2026 in full, not a Qiskit
+    compiler, and not a Mathlib ingest.
+  - >-
+    Challenge.lean states the family but does not prove it (Comparator
+    convention). Solution.lean re-exports the Quantum/ proofs.
+  - >-
+    Classical.choice is permitted (1972 topological ≪). There is no
+    project-defined axiom and no native_decide in the compared proofs.
+  - >-
+    QDomain.functionSpace_omega is an explicit Cartesian-closure
+    hypothesis so the tower stages stay in ωQVA; it is not discharged
+    by a function-space saturation proof in this snapshot.
+  - >-
+    The ChanYuxu GitHub URL in earlier notes was unpublished at
+    packaging time; vendor/ckl2026 holds attribution and a lemma digest
+    only.
+
+alignment:
+  namespace: "Scott1972.ContinuousLattice"
+  statements:
+    - source: "D_∞ of the quantum tower is in ωQVA and D_∞ ≅ [D_∞ → Q(D_∞)] (arxiv.md, §8)"
+      lean: "omegaQVA_quantum_domain_equation_solved"
+      module: "Challenge (statement), Solution / Quantum.QuantumDomainEquation (proof)"
+      status: proved
+      note: >-
+        Compared by Comparator as a theorem. Inverse-limit identities
+        are Scott 1972 Theorem 4.4; ωQVA membership is saturation of
+        the embedding–projection sequence.
+
+    - source: "The quantum inverse limit is an ωQVA object (arxiv.md, §6–8)"
+      lean: "qDInf_isOmegaQVA"
+      module: "Challenge (statement), Solution / Quantum.QuantumDomainEquation (proof)"
+      status: proved
+
+    - source: "Finite separation implies f(x) ≪ x (CKL Lemma 6.8)"
+      lean: "finitelySeparated_wayBelow"
+      module: "Challenge (statement), Solution / Quantum.Saturation (proof)"
+      status: proved

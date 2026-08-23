@@ -1,0 +1,17 @@
+# Frozen checkouts vendored for one Palomar SHA.
+# Copied 2026-08-23 (UTC). No .git / .lake directories.
+
+vendor/scott1972
+  origin: https://github.com/catskillsresearch/scott1972
+  rev:    36bf01f99f00fcb78b999052212372ba026521ba
+  from:   /home/catskills/Desktop/scott1972
+  date:   2026-08-23
+
+vendor/ckl2026
+  origin: https://github.com/ChanYuxu/Recent-Progress-on-Domain-Theory
+  status: GitHub URL returned 404 on 2026-08-23; no public Lean tree was obtainable.
+  arxiv:  https://arxiv.org/abs/2608.03073
+  note:   Literature artifact (Chen–Kou–Lyu 2026) plus a Lean interface for
+          Lemmas 6.8–6.10. Saturation proofs live in Quantum/Saturation.lean
+          (mechanization by Lars Warren Ericson of the published lemmas).
+  date:   2026-08-23

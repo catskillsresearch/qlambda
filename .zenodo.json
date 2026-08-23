@@ -1,0 +1,81 @@
+{
+  "title": "ωQVA: Quantum-valuation approximable domains and the untyped quantum λ-calculus (Lean 4)",
+  "upload_type": "software",
+  "access_right": "open",
+  "language": "eng",
+  "version": "0.1.0",
+  "description": "Initial Lean 4 / Palomar snapshot of the category ωQVA of quantum-valuation approximable domains, the Loewner spectrahedron S_≤1(M_n), Chen–Kou–Lyu saturation flattening, and the capstone inverse-limit theorem D_∞ ≅ [D_∞ → Q(D_∞)] inside ωQVA. Builds on a vendored copy of the author's scott1972 formalization of Dana Scott, Continuous Lattices (1972). Sorry-free target; classical footprint {propext, Classical.choice, Quot.sound}. Narrative: arxiv.md.",
+  "creators": [
+    {
+      "name": "Ericson, Lars Warren",
+      "affiliation": "Catskills Research Company",
+      "orcid": "0000-0001-8299-9361"
+    }
+  ],
+  "keywords": [
+    "Lean 4",
+    "mathlib",
+    "formal verification",
+    "domain theory",
+    "continuous lattices",
+    "Jung-Tix problem",
+    "quantum lambda calculus",
+    "denotational semantics",
+    "omega-QVA"
+  ],
+  "subjects": [
+    {
+      "term": "Lambda calculus",
+      "identifier": "http://id.loc.gov/authorities/subjects/sh85074216",
+      "scheme": "url"
+    },
+    {
+      "term": "Lattice theory",
+      "identifier": "http://id.loc.gov/authorities/subjects/sh85074991",
+      "scheme": "url"
+    },
+    {
+      "term": "Denotational semantics",
+      "identifier": "http://id.loc.gov/authorities/subjects/sh85036781",
+      "scheme": "url"
+    },
+    {
+      "term": "Quantum computing",
+      "identifier": "http://id.loc.gov/authorities/subjects/sh2018002914",
+      "scheme": "url"
+    },
+    {
+      "term": "Automatic theorem proving",
+      "identifier": "http://id.loc.gov/authorities/subjects/sh85010112",
+      "scheme": "url"
+    }
+  ],
+  "license": "Apache-2.0",
+  "notes": "Software and Lean sources are Apache-2.0 (see LICENSE). vendor/scott1972 is the author's 1972 library (Apache-2.0). vendor/ckl2026 is attribution for Chen–Kou–Lyu arXiv:2608.03073 (no third-party Lean copied; their GitHub URL returned 404). Prepared with LLM assistance; authors remain responsible for mathematical content.",
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/catskillsresearch/qlambda",
+      "relation": "isSupplementTo",
+      "scheme": "url",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://github.com/catskillsresearch/scott1972",
+      "relation": "isSupplementTo",
+      "scheme": "url",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "2608.03073",
+      "relation": "cites",
+      "scheme": "arxiv",
+      "resource_type": "publication-preprint"
+    },
+    {
+      "identifier": "2606.30782",
+      "relation": "cites",
+      "scheme": "arxiv",
+      "resource_type": "publication-preprint"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+name = "qlambda"
+version = "0.1.0"
+keywords = ["domain-theory", "quantum-lambda", "omega-qva", "lean4"]
+defaultTargets = ["QLambda", "Challenge", "Solution"]
+
+# QLambda is the proof library. Challenge / Solution are the Palomar
+# Comparator pair. scott1972 lives in vendor/ so one Palomar SHA has the
+# 1972 foundation. It is compiled as this package's lean_lib (srcDir), not
+# as a Lake path dep: Comparator's landrun sandbox may write only under
+# .lake/, and path packages try to write vendor/<pkg>/.lake (EACCES).
+# The remote remains the 1972 home; see vendor/FROZEN.txt and PROVENANCE.md.
+
+[leanOptions]
+pp.unicode.fun = true
+relaxedAutoImplicit = true
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.30.0"
+
+[[lean_lib]]
+name = "Scott1972"
+srcDir = "vendor/scott1972"
+
+[[lean_lib]]
+name = "QLambda"
+globs = ["QLambda", "QuantumStateSpace", "Quantum.+"]
+
+[[lean_lib]]
+name = "Challenge"
+
+[[lean_lib]]
+name = "Solution"

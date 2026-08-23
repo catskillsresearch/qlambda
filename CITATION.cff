@@ -1,0 +1,37 @@
+# Citation File Format — GitHub “Cite this repository.”
+# Authoritative Zenodo metadata: .zenodo.json
+
+cff-version: 1.2.0
+title: "ωQVA: Quantum-valuation approximable domains (Lean 4)"
+message: "If you use this formalization, please cite it as below."
+type: software
+authors:
+  - family-names: Ericson
+    given-names: Lars Warren
+    affiliation: Catskills Research Company
+    orcid: "https://orcid.org/0000-0001-8299-9361"
+abstract: >-
+  Initial Lean 4 / Palomar snapshot of ωQVA, Loewner spectrahedra,
+  Chen–Kou–Lyu saturation flattening, and the capstone
+  D_∞ ≅ [D_∞ → Q(D_∞)] inside ωQVA, building on scott1972.
+keywords:
+  - Lean 4
+  - domain theory
+  - quantum lambda calculus
+  - Jung-Tix
+  - formal verification
+repository-code: "https://github.com/catskillsresearch/qlambda"
+license: Apache-2.0
+version: 0.1.0
+date-released: 2026-08-22
+url: "https://github.com/catskillsresearch/qlambda"
+preferred-citation:
+  type: software
+  title: "ωQVA: Quantum-valuation approximable domains (Lean 4)"
+  authors:
+    - family-names: Ericson
+      given-names: Lars Warren
+  year: 2026
+  version: 0.1.0
+  url: "https://github.com/catskillsresearch/qlambda"
+  notes: "Deposit dist/qlambda-zenodo.zip on Zenodo for a DOI; source lives on GitHub."
