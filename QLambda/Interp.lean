@@ -15,9 +15,13 @@ Paper §2 and §7. A term is interpreted in the inverse limit
 `D_∞ ≅ [D_∞ → Q(D_∞)]`:
 
 * application uses the order iso;
-* `⊕_p` uses the quantum powerdomain `Q`;
+* `⊕_p` uses convex combination in the computation object;
 * `⊓` uses `NondetPower`;
 * `□` uses `HasExternalChoice`.
+
+The current declarations are a specification boundary: the concrete
+interpretation is added only after the instrument powerdomain and its
+choice operations have been constructed.
 -/
 
 namespace QLambda
@@ -35,11 +39,12 @@ noncomputable def interp (M : QuantumPowerModel) (D₀ : QDomain.{u})
     (_ρ : Env (QDInf M D₀ j₀)) : Term → QDInf M D₀ j₀ := by
   sorry
 
-/-- Soundness: a one-step reduct is below the redex in `D_∞`. -/
-theorem interp_step_le (M : QuantumPowerModel) (D₀ : QDomain.{u})
+/-- Soundness specification: an internal one-step reduct refines the
+denotation of its redex. -/
+theorem interp_step_sound (M : QuantumPowerModel) (D₀ : QDomain.{u})
     (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier))
     (ρ : Env (QDInf M D₀ j₀)) {t t' : Term} (_h : Step t t') :
-    interp M D₀ j₀ ρ t ≤ interp M D₀ j₀ ρ t' := by
+    interp M D₀ j₀ ρ t' ≤ interp M D₀ j₀ ρ t := by
   sorry
 
 end QLambda

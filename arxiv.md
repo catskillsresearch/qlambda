@@ -4,7 +4,7 @@
 ---
 
 ### Abstract
-We present a unified denotational semantics and formal Lean 4 verification framework for an untyped $\lambda$-calculus extended with a quantum interpretation of concurrent and probabilistic choice operators ($q\lambda$). For over three decades, establishing reflexive domain models $D \cong [D \to T(D)]$ for higher-order languages with probabilistic or quantum effects was obstructed by the Jung–Tix problem: the absence of a Cartesian closed category of continuous domains closed under valuation powerdomains. Leveraging the recent resolution of the Jung–Tix problem by Chen, Kou, and Lyu (2026) via finite-valuation approximable structures ($\omega\mathbf{FVA}$), we generalize their construction to the non-commutative setting. We introduce the category $\omega\mathbf{QVA}$ of Quantum-Valuation Approximable domains, where approximating maps factor through sub-normalized density operator spaces $\mathcal{S}_{\le 1}(A)$ of finite-dimensional $C^*$-algebras endowed with the Loewner partial order. The finite spectrahedron $\mathcal{S}_{\le 1}(A)$ is the approximating *factor* in this definition, not a choice of $\mathcal{Q}(D)$ for a general continuous lattice. For the unweakened equation $D \cong [D \to \mathcal{Q}(D)]$ we isolate two carriers for $\mathcal{Q}$: Jones–Plotkin-style quantum valuations on Scott-opens, and saturation of those finite spectrahedra along an $\omega\mathbf{QVA}$ approximate identity. Classically these are the definition of $\mathcal{V}_{\le 1}(D)$ and a representation theorem for $D \in \omega\mathbf{FVA}$; here they are two definitions until an isomorphism is proved. The intended theorem is that $\omega\mathbf{QVA}$ is Cartesian closed and closed under retracts, products, and either carrier. We also give a back-and-forth operational correspondence between $q\lambda$ constructs and executable Qiskit patterns. The correspondence is observational rather than a claim of literal source-to-source compilation: both operational presentations are intended to denote the same completely positive channel or instrument, and hence to produce the same outcome probabilities and post-measurement states. The capstone isomorphism theorem is formalized in Lean 4, building on a mechanized foundation of Scott's 1972 continuous lattice theory and on the mathematics of Chen, Kou, and Lyu (2026).
+We develop a Lean 4 framework toward denotational semantics for an untyped $\lambda$-calculus with probabilistic, internal, and external choice, controlled by finite quantum instruments. Inspired by Chen, Kou, and Lyu’s finite-valuation approximable structures, we define $\omega\mathbf{QVA}$ by requiring its approximate identity to factor through finite products of sub-normalized density-operator spaces with the Loewner order. The finite spectrahedra are approximation factors; they are not themselves a quantum powerdomain $\mathcal Q(D)$. We formalize a parameterized inverse-limit theorem: any locally continuous endofunctor $\mathcal Q$ that preserves $\omega\mathbf{QVA}$ yields a solution of $D_\infty\cong[D_\infty\to\mathcal Q(D_\infty)]$. This theorem does not by itself supply such a quantum endofunctor. Earlier valuation and saturation proposals are retained only as exploratory carriers because their complete-lattice, functoriality, and presentation-independence obligations are unresolved. The concrete route developed here instead starts from Kraus-presented completely positive trace-nonincreasing maps and finite instruments, with untyped $\lambda$-calculus providing classical higher-order control over a finite quantum register. The accompanying $q\lambda$/Qiskit tables state an observational correspondence: matching operational realizations must induce the same outcome probabilities and conditional post-measurement states. Constructing the continuous instrument powerdomain and proving that it satisfies the abstract endofunctor specification remain the principal open steps.
 
 ---
 
@@ -161,8 +161,8 @@ graph LR
     subgraph "Higher-Order Control Layer (Cartesian Closed Category: ωQVA)"
         CC["Functions, Recursion, Closures, Post-Measurement ⊕_p"]
     end
-    subgraph "Quantum State Powerdomain Monad Q"
-        QD["Qubits, Superpositions, Unitaries, CPTP Channels"]
+    subgraph "Quantum Computation Monad Q"
+        QD["Finite registers, CP trace-nonincreasing maps, instruments"]
     end
     CC -->|Monad Q| QD
 ```
@@ -183,29 +183,25 @@ graph LR
 1. **Finite State Spaces:** Let $A = \bigoplus_{k=1}^m M_{d_k}(\mathbb{C})$. Its sub-normalized density operator space is $\mathcal{S}_{\le 1}(A) = \{ \rho \in A^*_+ \mid \operatorname{Tr}(\rho) \le 1 \}$ equipped with the Loewner partial order $\rho \le_L \sigma \iff \sigma - \rho \ge 0$.
 2. **Spectral Depletion Semigroup:** For $\rho = \sum \lambda_i E_i$, $\Phi_t(\rho)$ scales down maximal eigenspace projections, preserving the Loewner order ($\rho \le_L \sigma \implies \Phi_t(\rho) \le_L \Phi_t(\sigma)$) and establishing that $\mathcal{S}_{\le 1}(A)$ is an FS-domain.
 3. **Definition ($\omega\mathbf{QVA}$):** A domain $D$ is in $\omega\mathbf{QVA}$ if $\mathrm{id}_D = \sup_n a_n$ where each $a_n$ factors through $\mathcal{S}_{\le 1}(A_n)$ for finite-dimensional $C^*$-algebras $A_n$.
-4. **Saturation:** The 2-level flattening lemma (Lemma 6.6) depends only on way-below interpolation ($\ll$) and finite separation, so the bilimit $D_\infty = \operatorname{colim}_n D_n$ lies in $\omega\mathbf{QVA}$. The isomorphism $D_\infty \cong [D_\infty \to \mathcal{Q}(D_\infty)]$ additionally requires a locally continuous endofunctor $\mathcal{Q}$ on $\omega\mathbf{QVA}$. Two unweakened carriers for $\mathcal{Q}$ are enumerated next.
+4. **Saturation:** The 2-level flattening lemma (Lemma 6.6) depends only on way-below interpolation ($\ll$) and finite separation, so the bilimit $D_\infty = \operatorname{colim}_n D_n$ lies in $\omega\mathbf{QVA}$. The isomorphism $D_\infty \cong [D_\infty \to \mathcal{Q}(D_\infty)]$ additionally requires a locally continuous endofunctor $\mathcal{Q}$ on $\omega\mathbf{QVA}$.
 
-### Two carriers for $\mathcal{Q}(D)$
+### From exploratory carriers to instruments
 
 The finite spectrahedron $\mathcal{S}_{\le 1}(A)$ is the approximating factor in the definition of $\omega\mathbf{QVA}$, analogous to $\mathcal{V}_{\le 1}(P)$ for a finite poset $P$. It is not itself an element of $\mathcal{Q}(D)$ for a general continuous lattice $D$. Jones and Plotkin define $\mathcal{V}_{\le 1}(D)$ as continuous valuations on Scott-opens; Selinger and Valiron’s $Q$ is a linear/monadic type constructor. Neither source fixes a unique endofunctor $\mathcal{Q}$ on continuous lattices.
 
-Scott’s inverse-limit machine will solve $D_\infty \cong [D_\infty \to \mathcal{Q}(D_\infty)]$ for *any* locally continuous endofunctor $\mathcal{Q}$ that preserves $\omega\mathbf{QVA}$. That is a weaker claim than the one this paper makes. The stand-ins $\mathcal{Q}(D) := D$ (Scott 1972) and $\mathcal{Q}(D) := \mathcal{V}_{\le 1}(D)$ (Chen–Kou–Lyu) are adequate for the equation and inadequate for a quantum powerdomain. The constant choice $\mathcal{Q}(D) := \mathcal{S}_{\le 1}(A)$ for a fixed finite $A$ solves $D \cong [D \to \mathcal{S}]$, a quantum ground type, not a powerdomain of $D$.
+Scott’s inverse-limit machine solves $D_\infty \cong [D_\infty \to \mathcal{Q}(D_\infty)]$ for *any* locally continuous endofunctor $\mathcal{Q}$ that preserves $\omega\mathbf{QVA}$. This is a conditional domain-theoretic theorem, not a construction of the required quantum effect. The stand-ins $\mathcal{Q}(D) := D$ and $\mathcal{Q}(D) := \mathcal{V}_{\le 1}(D)$ do not model quantum computation. The constant choice $\mathcal{Q}(D) := \mathcal{S}_{\le 1}(A)$ for fixed finite $A$ is a quantum ground type, not a powerdomain of computations returning values in $D$.
 
-For the unweakened claim — $\mathcal{Q}$ a non-commutative analogue of $\mathcal{V}_{\le 1}$ that holds quantum states — two carriers are live. They are two *definitions* until an isomorphism is proved.
+Two earlier candidates exposed useful obligations but do not currently define models:
 
-```mermaid
-graph TD
-    Q["Unweakened Q(D)"] --> V["(V) Quantum valuations: O(D) → S≤1(A)"]
-    Q --> S["(S) Saturation: compatible families in S≤1(A_n)"]
-    V -.-> V1["Classical analogue: definition of V≤1(D)"]
-    S -.-> S1["Classical analogue: representation for D in ωFVA"]
-```
-
-**(V) Quantum valuations.** An element of $\mathcal{Q}_V(D)$ is a Scott-continuous assignment of subnormalized densities to Scott-opens of $D$:
+**(V) Exploratory quantum valuations.** A proposed element was a Scott-continuous assignment
 $$\nu : \mathcal{O}(D) \longrightarrow \mathcal{S}_{\le 1}(A),$$
-monotone for inclusion of opens and the Loewner order, continuous for directed unions, with $\nu(\emptyset) = 0$ and $\nu(D) \le 1$. Meaning is immediate: a quantum measure on $D$. The remaining work is to show that $\mathcal{Q}_V(D)$ is a continuous lattice and that $\omega\mathbf{QVA}$ is closed under $\mathcal{Q}_V$. A size parameter remains inside this model: $A$ may be fixed, or $\nu$ may take values in a directed system of finite-dimensional algebras (the Lean `DensityVec`). That is a size choice, not a third model.
+monotone for inclusion and the Loewner order. This is not yet an operator-valued valuation: additivity/modularity and compatibility of outcome probabilities were not supplied, and the bounded Loewner carrier is not automatically a complete lattice. The Lean type `QuantumValuationPower` therefore remains exploratory and has no `IsQuantumPowerModel` instance.
 
-**(S) Saturation of the finite factors.** An element of $\mathcal{Q}_S(D)$ is a compatible family of points of $\mathcal{S}_{\le 1}(A_n)$ along an $\omega\mathbf{QVA}$ approximate identity of $D$. The carrier is assembled from the same spectrahedra that appear in the definition of $\omega\mathbf{QVA}$. This model is a priori defined on objects of $\omega\mathbf{QVA}$, because it needs an approximate identity. The remaining work is functoriality on Scott maps, and then arguing that such a family still represents a quantum measure on $D$.
+**(S) Exploratory saturation.** A proposed element was a compatible family of points in the finite spectrahedra selected by one approximate identity of $D$. Its definition depends on that presentation, and no presentation-independence or functorial action on arbitrary Scott maps has been proved. Lean retains only the object-relative `QuantumSaturationFamily`; no endofunctor or model instance is claimed.
+
+**Working concrete route.** Fix a finite quantum register. A quantum operation is represented by Kraus operators $\{K_i\}$ and acts by
+$$\Phi(\rho)=\sum_i K_i\rho K_i^\dagger,$$
+subject to trace non-increase. A finite instrument is a finite family $(\Phi_o)_o$ whose sum is trace non-increasing; measurement probabilities are $\operatorname{Tr}(\Phi_o(\rho))$, and normalization gives the conditional post-measurement state. A future $\mathcal Q(D)$ must combine such instruments with Scott-continuous $D$-valued outcomes and support unit, Kleisli extension, directed suprema, and $\omega\mathbf{QVA}$ approximation.
 
 **Spec (`IsQuantumPowerModel`).** A *quantum powerdomain model* is an assignment $Q$ of types to complete lattices such that:
 
@@ -214,11 +210,11 @@ monotone for inclusion of opens and the Loewner order, continuous for directed u
 3. $Q$ is order-enriched and locally continuous on monotone $\mathbb{N}$-families ($f \le g$ implies $Q(f) \le Q(g)$, and $Q(\bigsqcup_n F_n) = \bigsqcup_n Q(F_n)$), so projections lift and $i_\infty \circ j_\infty = \mathrm{id}$ collapses;
 4. $D \in \omega\mathbf{QVA}$ implies $Q(D) \in \omega\mathbf{QVA}$.
 
-Both unweakened carriers are instances of this one spec: $\mathcal{Q}_V$ as `QuantumValuationPower`, $\mathcal{Q}_S$ as `QuantumSaturationPower`. A bundled `QuantumPowerModel` is a $Q$ together with its instance. Cartesian closure of $[D \to E]$ is not a field of the spec (it does not depend on $Q$).
+A bundled `QuantumPowerModel` is a $Q$ together with an instance of this specification. Neither exploratory carrier is presently bundled. Cartesian closure of $[D \to E]$ is independent of $Q$; the Lean proof constructs finite joins of step maps sampled at the finite separators of $D$ and uses the approximants of $E$.
 
 **Theorem (parameterized).** Let $Q$ be an instance of the spec, let $D_0 \in \omega\mathbf{QVA}$, and let $j_0 : [D_0 \to Q(D_0)] \to D_0$ be a continuous lattice projection. Let $D_\infty$ be the inverse limit of $D_{n+1} = [D_n \to Q(D_n)]$. Then $D_\infty \in \omega\mathbf{QVA}$ and $D_\infty \cong [D_\infty \to Q(D_\infty)]$.
 
-**Corollary (V).** The theorem applies to $\mathcal{Q}_V$. **Corollary (S).** The theorem applies to $\mathcal{Q}_S$. Each corollary is discharged once that instance's remaining fields (lattice structure, functoriality, local continuity, and $\omega\mathbf{QVA}$-closure) are filled. The mixed tower maps and $D_\infty \cong [D_\infty \to Q(D_\infty)]$ identities are proved from the spec.
+The mixed tower maps and the isomorphism identities are proved from the specification. A concrete instrument corollary will be stated only after the instrument powerdomain discharges every field.
 
 ---
 
@@ -259,7 +255,7 @@ Thus the “back-and-forth” is between operational realizations at matching se
 
 ## 7. Formal Verification in Lean 4 & Capstone Theorem
 
-The formalization is constructed in Lean 4 on top of the `Scott1972` continuous lattice library (`https://github.com/catskillsresearch/scott1972`). Chen–Kou–Lyu saturation (arXiv:2608.03073, v1 Lemmas 6.5–6.7) is mechanized in `QLambda/Saturation.lean`. The spec is the class `IsQuantumPowerModel`. Both carriers are instances. The compared capstone `omegaQVA_quantum_domain_equation_solved` is parameterized by a bundled `QuantumPowerModel`. The two applications are `omegaQVA_quantum_domain_equation_solved_valuation` (`valuationModel := ⟨QuantumValuationPower⟩`) and `omegaQVA_quantum_domain_equation_solved_saturation` (`saturationModel := ⟨QuantumSaturationPower⟩`). The instance fields are not yet discharged.
+The formalization is constructed in Lean 4 on top of the `Scott1972` continuous lattice library (`https://github.com/catskillsresearch/scott1972`). Chen–Kou–Lyu-style finite-separation and saturation lemmas are mechanized in `QLambda/Saturation.lean`, and `omegaQVA_closed_under_functionSpace` proves Cartesian closure by finite-separator step-map sampling. The compared capstone `omegaQVA_quantum_domain_equation_solved` is parameterized by a bundled `QuantumPowerModel`; there is deliberately no valuation or saturation corollary. `QLambda/QuantumInstrument.lean` develops the finite computational layer: Kraus operator-sum (composition, positivity, Loewner monotonicity, isometries), sequential composition of trace-nonincreasing operations, action on sub-normalized densities, and a Type-level monad `FiniteInstrumentComp` of finite instruments with classical outcomes in `D`. Pauli-$X$ and computational-basis measurement are instances. The Scott-complete instrument carrier and its `IsQuantumPowerModel`/`IsQuantumMonad` instances remain open.
 
 ```lean
 class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) where
@@ -271,12 +267,6 @@ class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) 
   map_iSup : ...
   closed : ∀ {D} [CompleteLattice D], IsOmegaQVA D → IsOmegaQVA (Q D)
 
-instance : IsQuantumPowerModel QuantumValuationPower := by sorry
-instance : IsQuantumPowerModel QuantumSaturationPower := by sorry
-
-def valuationModel : QuantumPowerModel := ⟨QuantumValuationPower⟩
-def saturationModel : QuantumPowerModel := ⟨QuantumSaturationPower⟩
-
 theorem omegaQVA_quantum_domain_equation_solved
     (M : QuantumPowerModel) (D₀ : QDomain.{u})
     (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :
@@ -284,11 +274,20 @@ theorem omegaQVA_quantum_domain_equation_solved
     ... ∧
     Nonempty (QDInf M D₀ j₀ ≃o ScottMap (QDInf M D₀ j₀) (QuantumPower M (QDInf M D₀ j₀)))
 
-theorem omegaQVA_quantum_domain_equation_solved_valuation :=
-  omegaQVA_quantum_domain_equation_solved valuationModel
+structure QuantumOperation (n m : ℕ) where
+  kraus : List (Matrix (Fin m) (Fin n) ℂ)
+  trace_nonincreasing : ...
 
-theorem omegaQVA_quantum_domain_equation_solved_saturation :=
-  omegaQVA_quantum_domain_equation_solved saturationModel
+structure QuantumInstrument (n m outcomes : ℕ) where
+  branch : Fin outcomes → List (Matrix (Fin m) (Fin n) ℂ)
+  trace_nonincreasing : ...
+
+structure FiniteInstrumentComp (n : ℕ) (D : Type*) where
+  Outcome : Type
+  [outcomeFintype : Fintype Outcome]
+  branch : Outcome → List (Matrix (Fin n) (Fin n) ℂ)
+  value : Outcome → D
+  trace_nonincreasing : ...
 ```
 
 ---

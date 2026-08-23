@@ -10,6 +10,7 @@ import QLambda.OmegaQVA
 import QLambda.Operational
 import QLambda.QDomain
 import QLambda.QuantumDomainEquation
+import QLambda.QuantumInstrument
 import QLambda.QuantumPower
 import QLambda.QuantumStateSpace
 import QLambda.Saturation

@@ -3,8 +3,6 @@
   "solution_module": "Solution",
   "theorem_names": [
     "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved",
-    "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved_valuation",
-    "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved_saturation",
     "Scott1972.ContinuousLattice.finitelySeparated_wayBelow"
   ],
   "definition_names": [
@@ -14,9 +12,6 @@
     "Scott1972.ContinuousLattice.omegaQVA_closed_under_quantumPower",
     "Scott1972.ContinuousLattice.omegaQVA_closed_under_functionSpace",
     "Scott1972.ContinuousLattice.QuantumValuationPower",
-    "Scott1972.ContinuousLattice.QuantumSaturationPower",
-    "Scott1972.ContinuousLattice.valuationModel",
-    "Scott1972.ContinuousLattice.saturationModel",
     "Scott1972.ContinuousLattice.qTower",
     "Scott1972.ContinuousLattice.qTowerType",
     "Scott1972.ContinuousLattice.QDInf",

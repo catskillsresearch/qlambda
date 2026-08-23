@@ -11,9 +11,8 @@ import QLambda.Saturation
 
 Importing the QLambda proof modules supplies the compared capstone
 `omegaQVA_quantum_domain_equation_solved` (parameterized by a bundled
-`QuantumPowerModel`), its applications to the two instances of
-`IsQuantumPowerModel` (`valuationModel` / `QuantumValuationPower` and
-`saturationModel` / `QuantumSaturationPower`), `qDInf_isOmegaQVA`, and
+`QuantumPowerModel`), `qDInf_isOmegaQVA`, and
 `finitelySeparated_wayBelow`, with the same names and types as in
-`Challenge.lean`. The class-instance fields remain holes.
+`Challenge.lean`. A concrete CP-instrument instance is not claimed
+until its domain-theoretic closure proof is available.
 -/

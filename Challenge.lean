@@ -21,9 +21,9 @@ import Mathlib.Topology.Order.ScottTopology
 
 This module states the compared capstone and its type surface. It imports
 only Mathlib. Challenge is allowed `sorry`. `IsQuantumPowerModel` is the
-spec of a quantum powerdomain. Both unweakened carriers of `arxiv.md` §5
-are instances. The capstone is parameterized by a bundled
-`QuantumPowerModel` and applied to (V) and (S).
+conditional specification of a quantum powerdomain. The capstone is
+parameterized by a bundled `QuantumPowerModel`; no concrete instance is
+claimed until the CP-instrument powerdomain is constructed.
 -/
 
 open Matrix
@@ -232,11 +232,7 @@ structure QuantumValuation (D : Type*) [CompleteLattice D] (dims : List ℕ) whe
 def QuantumValuationPower (D : Type u) [CompleteLattice D] : Type u :=
   Σ dims : List ℕ, QuantumValuation D dims
 
-/-- **(S)** The saturation carrier as an endofunctor on complete lattices. -/
-noncomputable def QuantumSaturationPower (D : Type u) [CompleteLattice D] : Type u := by
-  sorry
-
-/-- Spec of a quantum powerdomain model. Both (V) and (S) are instances. -/
+/-- Conditional specification of a quantum powerdomain model. -/
 class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) where
   str : ∀ (D : Type u) [CompleteLattice D], CompleteLattice (Q D)
   map : ∀ {D E : Type u} [CompleteLattice D] [CompleteLattice E],
@@ -269,14 +265,6 @@ class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) 
 
 attribute [instance] IsQuantumPowerModel.str
 
-noncomputable instance instIsQuantumPowerModelValuation :
-    IsQuantumPowerModel QuantumValuationPower := by
-  sorry
-
-noncomputable instance instIsQuantumPowerModelSaturation :
-    IsQuantumPowerModel QuantumSaturationPower := by
-  sorry
-
 /-- A bundled quantum powerdomain: a `Q` that satisfies the spec. -/
 structure QuantumPowerModel where
   Power : (D : Type u) → [CompleteLattice D] → Type u
@@ -302,14 +290,6 @@ noncomputable def omegaQVA_closed_under_functionSpace {D E : Type u}
     [CompleteLattice D] [CompleteLattice E]
     (hD : IsOmegaQVA D) (hE : IsOmegaQVA E) : IsOmegaQVA (ScottMap D E) := by
   sorry
-
-/-- **(V)** bundled as a quantum model. -/
-noncomputable def valuationModel : QuantumPowerModel :=
-  ⟨QuantumValuationPower⟩
-
-/-- **(S)** bundled as a quantum model. -/
-noncomputable def saturationModel : QuantumPowerModel :=
-  ⟨QuantumSaturationPower⟩
 
 /-- A pointed object of `ωQVA`. -/
 structure QDomain : Type (u + 1) where
@@ -377,46 +357,6 @@ theorem omegaQVA_quantum_domain_equation_solved
     (ScottMap.idMap : ScottMap (QDInf M D₀ j₀) (QDInf M D₀ j₀)) =
       ⨆ n, (embInf (qTowerType M ⟨D₀.carrier⟩) (qTowerProj M ⟨D₀.carrier⟩ j₀) n).comp
             (projInf (qTowerType M ⟨D₀.carrier⟩) (qTowerProj M ⟨D₀.carrier⟩ j₀) n) := by
-  sorry
-
-/-- **Corollary (V).** The capstone at the quantum-valuation model. -/
-theorem omegaQVA_quantum_domain_equation_solved_valuation
-    (D₀ : QDomain.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier
-      (QuantumFunctor valuationModel D₀.carrier)) :
-    Nonempty (IsOmegaQVA (QDInf valuationModel D₀ j₀)) ∧
-    (qProjInfInf valuationModel D₀ j₀).comp (qEmbInfInf valuationModel D₀ j₀) =
-      ScottMap.idMap ∧
-    (qEmbInfInf valuationModel D₀ j₀).comp (qProjInfInf valuationModel D₀ j₀) =
-      ScottMap.idMap ∧
-    Nonempty (QDInf valuationModel D₀ j₀ ≃o
-      ScottMap (QDInf valuationModel D₀ j₀)
-        (QuantumPower valuationModel (QDInf valuationModel D₀ j₀))) ∧
-    (ScottMap.idMap : ScottMap (QDInf valuationModel D₀ j₀) (QDInf valuationModel D₀ j₀)) =
-      ⨆ n, (embInf (qTowerType valuationModel ⟨D₀.carrier⟩)
-              (qTowerProj valuationModel ⟨D₀.carrier⟩ j₀) n).comp
-            (projInf (qTowerType valuationModel ⟨D₀.carrier⟩)
-              (qTowerProj valuationModel ⟨D₀.carrier⟩ j₀) n) := by
-  sorry
-
-/-- **Corollary (S).** The capstone at the saturation model. -/
-theorem omegaQVA_quantum_domain_equation_solved_saturation
-    (D₀ : QDomain.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier
-      (QuantumFunctor saturationModel D₀.carrier)) :
-    Nonempty (IsOmegaQVA (QDInf saturationModel D₀ j₀)) ∧
-    (qProjInfInf saturationModel D₀ j₀).comp (qEmbInfInf saturationModel D₀ j₀) =
-      ScottMap.idMap ∧
-    (qEmbInfInf saturationModel D₀ j₀).comp (qProjInfInf saturationModel D₀ j₀) =
-      ScottMap.idMap ∧
-    Nonempty (QDInf saturationModel D₀ j₀ ≃o
-      ScottMap (QDInf saturationModel D₀ j₀)
-        (QuantumPower saturationModel (QDInf saturationModel D₀ j₀))) ∧
-    (ScottMap.idMap : ScottMap (QDInf saturationModel D₀ j₀) (QDInf saturationModel D₀ j₀)) =
-      ⨆ n, (embInf (qTowerType saturationModel ⟨D₀.carrier⟩)
-              (qTowerProj saturationModel ⟨D₀.carrier⟩ j₀) n).comp
-            (projInf (qTowerType saturationModel ⟨D₀.carrier⟩)
-              (qTowerProj saturationModel ⟨D₀.carrier⟩ j₀) n) := by
   sorry
 
 @[reducible] noncomputable def qDInf_isOmegaQVA (M : QuantumPowerModel) (D₀ : QDomain.{u})

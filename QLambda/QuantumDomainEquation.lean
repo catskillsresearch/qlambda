@@ -13,7 +13,8 @@ import Scott1972.ContinuousLattice.InverseLimits
 
 Parameterized theorem: for any `QuantumPowerModel`, the inverse limit
 of `D_{n+1} = [D_n → Q(D_n)]` lies in `ωQVA` and solves
-`D_∞ ≅ [D_∞ → Q(D_∞)]`. The two applications are (V) and (S).
+`D_∞ ≅ [D_∞ → Q(D_∞)]`. A concrete instrument instance is not
+claimed until the Scott-complete carrier is constructed.
 -/
 
 namespace Scott1972.ContinuousLattice
@@ -593,45 +594,5 @@ theorem omegaQVA_quantum_domain_equation_solved
     qEmbInfInf_comp_qProjInfInf M D₀ j₀,
     ⟨qDInf_orderIso M D₀ j₀⟩,
     idInf_eq_iSup (qTowerType M ⟨D₀.carrier⟩) (qTowerProj M ⟨D₀.carrier⟩ j₀)⟩
-
-/-- **Corollary (V).** The capstone at the quantum-valuation model. -/
-theorem omegaQVA_quantum_domain_equation_solved_valuation
-    (D₀ : QDomain.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier
-      (QuantumFunctor valuationModel D₀.carrier)) :
-    Nonempty (IsOmegaQVA (QDInf valuationModel D₀ j₀)) ∧
-    (qProjInfInf valuationModel D₀ j₀).comp (qEmbInfInf valuationModel D₀ j₀) =
-      ScottMap.idMap ∧
-    (qEmbInfInf valuationModel D₀ j₀).comp (qProjInfInf valuationModel D₀ j₀) =
-      ScottMap.idMap ∧
-    Nonempty (QDInf valuationModel D₀ j₀ ≃o
-      ScottMap (QDInf valuationModel D₀ j₀)
-        (QuantumPower valuationModel (QDInf valuationModel D₀ j₀))) ∧
-    (ScottMap.idMap : ScottMap (QDInf valuationModel D₀ j₀) (QDInf valuationModel D₀ j₀)) =
-      ⨆ n, (embInf (qTowerType valuationModel ⟨D₀.carrier⟩)
-              (qTowerProj valuationModel ⟨D₀.carrier⟩ j₀) n).comp
-            (projInf (qTowerType valuationModel ⟨D₀.carrier⟩)
-              (qTowerProj valuationModel ⟨D₀.carrier⟩ j₀) n) :=
-  omegaQVA_quantum_domain_equation_solved valuationModel D₀ j₀
-
-/-- **Corollary (S).** The capstone at the saturation model. -/
-theorem omegaQVA_quantum_domain_equation_solved_saturation
-    (D₀ : QDomain.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier
-      (QuantumFunctor saturationModel D₀.carrier)) :
-    Nonempty (IsOmegaQVA (QDInf saturationModel D₀ j₀)) ∧
-    (qProjInfInf saturationModel D₀ j₀).comp (qEmbInfInf saturationModel D₀ j₀) =
-      ScottMap.idMap ∧
-    (qEmbInfInf saturationModel D₀ j₀).comp (qProjInfInf saturationModel D₀ j₀) =
-      ScottMap.idMap ∧
-    Nonempty (QDInf saturationModel D₀ j₀ ≃o
-      ScottMap (QDInf saturationModel D₀ j₀)
-        (QuantumPower saturationModel (QDInf saturationModel D₀ j₀))) ∧
-    (ScottMap.idMap : ScottMap (QDInf saturationModel D₀ j₀) (QDInf saturationModel D₀ j₀)) =
-      ⨆ n, (embInf (qTowerType saturationModel ⟨D₀.carrier⟩)
-              (qTowerProj saturationModel ⟨D₀.carrier⟩ j₀) n).comp
-            (projInf (qTowerType saturationModel ⟨D₀.carrier⟩)
-              (qTowerProj saturationModel ⟨D₀.carrier⟩ j₀) n) :=
-  omegaQVA_quantum_domain_equation_solved saturationModel D₀ j₀
 
 end Scott1972.ContinuousLattice

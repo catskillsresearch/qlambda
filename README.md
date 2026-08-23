@@ -2,8 +2,9 @@
 
 # qlambda
 
-Denotational semantics of an untyped quantum λ-calculus in the category
-**ωQVA** (quantum-valuation approximable domains). Lean 4 library on top
+Lean 4 development toward denotational semantics of an untyped quantum
+λ-calculus using **ωQVA** (quantum-valuation approximable domains) and
+finite CP instruments. The library builds on top
 of a vendored [`scott1972`](https://github.com/catskillsresearch/scott1972)
 formalization of Dana Scott, *Continuous Lattices* (LNM 274).
 
@@ -11,10 +12,15 @@ The **Palomar statement of record** is the capstone
 
 `omegaQVA_quantum_domain_equation_solved` :
 
-the inverse limit `D_∞` of the quantum tower `D_{n+1} = [D_n → Q(D_n)]`
-is an object of ωQVA and is order-isomorphic to its own function space
+for any bundled `Q` satisfying `IsQuantumPowerModel`, the inverse limit
+`D_∞` of the tower `D_{n+1} = [D_n → Q(D_n)]` is an object of ωQVA and
+is order-isomorphic to its own function space
 (`D_∞ ≅ [D_∞ → Q(D_∞)]`), together with the supporting surface
 `qDInf_isOmegaQVA` and `finitelySeparated_wayBelow`.
+
+No concrete quantum-powerdomain instance is currently claimed. The
+active construction starts from Kraus-presented trace-nonincreasing
+operations and finite instruments.
 
 Narrative: `arxiv.md`. Palomar metadata: `comparator.json`,
 `formalization.yaml`. Vendor / attribution: `PROVENANCE.md`,
@@ -29,7 +35,8 @@ lake build
 
 `lake build` typechecks `QLambda`, `Challenge`, and `Solution`.
 `Challenge.lean` may contain `sorry`. `Solution.lean` re-exports the
-sorry-free `QLambda/` proofs.
+sorry-free compared proofs; unfinished semantics modules are outside
+that compared surface.
 
 Palomar type check (green `lake build` is not enough):
 
@@ -55,4 +62,4 @@ ArXiv / Zenodo: `bash scripts/build_arxiv_pdf.sh` and
    * Quantum process calculi and programming: P. Selinger & B. Valiron (2009); M. Ying (2016).
 
 4. **AI Tooling Disclosure:**
-   * Large language models (Cursor Grok 4.6 and others) were used as assistive tools for scaffolding, LaTeX/Markdown, and literature cross-checking. All formal Lean 4 proof scripts remain the author's responsibility; generated Lean is provisional until it compiles under the pinned toolchain.
+   * Large language models (Cursor Grok 4.6, GPT-5.6 Sol Medium, and others) were used as assistive tools for scaffolding, proof exploration, LaTeX/Markdown, and literature cross-checking. All formal Lean 4 proof scripts remain the author's responsibility; generated Lean is provisional until it compiles under the pinned toolchain.

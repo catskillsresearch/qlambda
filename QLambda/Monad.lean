@@ -6,13 +6,13 @@ Authors: Lars Warren Ericson.
 import QLambda.QuantumPower
 
 /-!
-# Quantum powerdomain as a monad (LNL)
+# Quantum computation as a lawful monad (LNL)
 
-Paper §5. Selinger–Valiron treat `Q` as a monad on a linear-nonlinear
-layer. `IsQuantumPowerModel` is only an endofunctor spec. This chapter
-adds unit and bind (Kleisli extension) so `Q` can interpret
-measurement and mixed states, not only the domain equation
-`D ≅ [D → Q(D)]`.
+Paper §5. Selinger–Valiron treat quantum computation as a monad on a
+linear-nonlinear layer. `IsQuantumPowerModel` is only an endofunctor
+spec. This chapter records the additional operations and laws needed
+for a computation-valued interpretation. No concrete instance is
+claimed until the CP-instrument carrier is constructed.
 -/
 
 namespace QLambda
@@ -21,7 +21,7 @@ open Scott1972.ContinuousLattice
 
 universe u
 
-/-- A quantum powerdomain that is a monad on Scott maps. -/
+/-- A locally continuous quantum computation model with lawful Kleisli extension. -/
 class IsQuantumMonad (Q : (D : Type u) → [CompleteLattice D] → Type u)
     extends IsQuantumPowerModel Q where
   unit : ∀ {D : Type u} [CompleteLattice D],
@@ -31,15 +31,26 @@ class IsQuantumMonad (Q : (D : Type u) → [CompleteLattice D] → Type u)
     letI := str D
     letI := str E
     ScottMap D (Q E) → ScottMap (Q D) (Q E)
-
-/-- (V) as a monad. -/
-noncomputable instance instIsQuantumMonadValuation :
-    IsQuantumMonad QuantumValuationPower := by
-  sorry
-
-/-- (S) as a monad. -/
-noncomputable instance instIsQuantumMonadSaturation :
-    IsQuantumMonad QuantumSaturationPower := by
-  sorry
+  bind_unit : ∀ {D : Type u} [CompleteLattice D],
+    letI := str D
+    bind (unit (D := D)) = ScottMap.idMap
+  unit_bind : ∀ {D E : Type u} [CompleteLattice D] [CompleteLattice E]
+      (f : letI := str E; ScottMap D (Q E)),
+    letI := str D
+    letI := str E
+    (bind f).comp unit = f
+  bind_assoc : ∀ {D E F : Type u}
+      [CompleteLattice D] [CompleteLattice E] [CompleteLattice F]
+      (f : letI := str E; ScottMap D (Q E))
+      (g : letI := str F; ScottMap E (Q F)),
+    letI := str D
+    letI := str E
+    letI := str F
+    (bind g).comp (bind f) = bind ((bind g).comp f)
+  map_eq_bind_unit : ∀ {D E : Type u} [CompleteLattice D] [CompleteLattice E]
+      (f : ScottMap D E),
+    letI := str D
+    letI := str E
+    map f = bind (unit.comp f)
 
 end QLambda

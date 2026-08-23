@@ -27,32 +27,20 @@ classification:
 status:
   scope: >-
     Compared claim is the capstone parameterized by a QuantumPowerModel
-    (a Q that is an instance of the spec class IsQuantumPowerModel),
-    then applied to QuantumValuationPower (V) and
-    QuantumSaturationPower (S). The tower is D_{n+1} = [D_n → Q(D_n)].
-    The class-instance fields (lattice, functoriality, local continuity,
-    ωQVA-closure) and function-space closure remain holes. The tower
-    maps qTowerProj / qEmbInfInf / qProjInfInf and the iso are defined.
-    Saturation flattening is a mechanization of Chen–Kou–Lyu Lemmas
-    6.8–6.9. Nothing in the compared statements is imported from a
-    prior Palomar entry.
-  sorry_count: 1
-  sorry_in_definitions: 1
+    (a Q satisfying IsQuantumPowerModel). No concrete quantum-powerdomain
+    instance is currently claimed. QuantumValuationPower and the
+    object-relative QuantumSaturationFamily are exploratory only. The tower is
+    D_{n+1} = [D_n → Q(D_n)]; qTowerProj, qEmbInfInf, qProjInfInf, and
+    the parameterized order isomorphism are defined. Finite Kraus
+    families, TNI operations, instruments, and the Type-level monad
+    FiniteInstrumentComp are defined and proved; the Scott-complete
+    instrument powerdomain and model instance remain open. Nothing in
+    the compared statements is imported from a prior Palomar entry.
+  sorry_count: 0
+  sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
   main_results:
     - declaration: "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved"
-      file: "Solution.lean"
-      sorry_count: 0
-      axioms: ["propext", "Quot.sound", "Classical.choice"]
-      comparator_config: "comparator.json"
-      literature_dependencies: []
-    - declaration: "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved_valuation"
-      file: "Solution.lean"
-      sorry_count: 0
-      axioms: ["propext", "Quot.sound", "Classical.choice"]
-      comparator_config: "comparator.json"
-      literature_dependencies: []
-    - declaration: "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved_saturation"
       file: "Solution.lean"
       sorry_count: 0
       axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -73,16 +61,15 @@ status:
 
 fidelity:
   divergences: >-
-    QuantumFunctor is the Scott function space [D → D], standing for
-    [D → Q(D)] at the carrier level used by Scott 1972 Theorem 4.4.
+    QuantumFunctor is the Scott function space [D → Q(D)].
     QFactorable factors through a finite product of Loewner
     spectrahedra (DensityVec), the state space of ⊕ M_{d_k}(ℂ) with
     per-block trace ≤ 1; the paper's S_≤1(⊕ A_i) shares one trace
     budget. Spectral depletion is implemented as the uniform contraction
     Φ_t(ρ) = e^{-max(t,0)} ρ, which is Loewner-monotone; the paper also
-    discusses projection-valued erosion. QDomain includes a
-    function-space closure field so every tower stage remains in ωQVA
-    (CKL Cartesian closure, not re-proved here). The inverse-limit
+    discusses projection-valued erosion. Function-space closure is
+    proved independently by finite-separator step-map sampling; it is
+    not a field of the quantum functor. The inverse-limit
     instance qDInf_isOmegaQVA is obtained as a Scott-continuous retract
     of the countable product of stages (omegaQVA_pi), which is the
     CKL 6.10(ii) pattern; saturation_flattening (Lemmas 6.8–6.9) is
@@ -192,7 +179,10 @@ review:
     The author directed and reviewed the development. No external
     review has been performed.
 
-known_gaps: []
+known_gaps:
+  - "Complete FiniteInstrumentComp to a Scott-continuous instrument powerdomain on complete lattices."
+  - "Prove that completion is a lawful locally continuous monad preserving ωQVA, and instantiate IsQuantumPowerModel."
+  - "Complete the computation-valued interpretation and operational adequacy proofs."
 
 limitations:
   - >-
@@ -206,15 +196,15 @@ limitations:
     Classical.choice is permitted (1972 topological ≪). There is no
     project-defined axiom and no native_decide in the compared proofs.
   - >-
-    IsQuantumPowerModel is the spec; both carriers are instances.
-    The instance fields (lattice, functoriality, local continuity,
-    ωQVA-closure) are sorry. The tower maps, inverse identities, and
-    order iso are defined from the spec (map, map_mono, map_iSup).
+    IsQuantumPowerModel is a conditional specification. The exploratory
+    valuation and saturation carriers have no instances and no concrete
+    corollaries. The tower maps, inverse identities, and order iso are
+    defined from the spec (map, map_mono, map_iSup).
     ωQVA membership of the limit is the retract-of-product argument.
   - >-
     Saturation Lean in this repo is an original mechanization of
-    arXiv:2608.03073 Lemmas 6.5–6.7. Cartesian closure of function
-    spaces and closure under Q are not discharged.
+    arXiv:2608.03073 Lemmas 6.5–6.7. Closure under a concrete quantum
+    instrument powerdomain is not discharged.
 
 alignment:
   namespace: "Scott1972.ContinuousLattice"
@@ -225,11 +215,11 @@ alignment:
       status: stated
       note: >-
         Compared by Comparator as a theorem parameterized by a
-        QuantumPowerModel. Applications to valuationModel and
-        saturationModel are also compared. The iso is constructed
-        from qEmbInfInf / qProjInfInf; those maps and the inverse
-        identities are proved from the spec. The last conjunct is
-        Scott's inverse-limit identity on the quantum tower.
+        QuantumPowerModel. No concrete quantum-powerdomain application
+        is currently compared. The iso is constructed from qEmbInfInf /
+        qProjInfInf; those maps and the inverse identities are proved
+        from the spec. The last conjunct is Scott's inverse-limit
+        identity on the quantum tower.
 
     - source: "The quantum inverse limit is an ωQVA object (arxiv.md, §6–8)"
       lean: "qDInf_isOmegaQVA"
