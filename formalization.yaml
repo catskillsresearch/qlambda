@@ -76,8 +76,8 @@ fidelity:
     mechanized independently. The capstone first conjunct is
     Nonempty (IsOmegaQVA …) because IsOmegaQVA is a data-bearing class.
     vendor/scott1972 is a frozen copy of the author's 1972 remote.
-    vendor/ckl2026 is a literature artifact: the claimed ChanYuxu
-    GitHub URL returned 404 on 2026-08-22.
+    Chen–Kou–Lyu arXiv:2608.03073 is literature in sources/; there is
+    no third-party Lean dependency.
 
 sources:
   - title: "Finite-Valuation Approximable Structures, Quantum λ-Calculus, and the Jung–Tix Problem"
@@ -140,12 +140,11 @@ related_formalizations:
       formalization.yaml) and presentation bridges. Not a dependency
       of the compared ωQVA statements.
 
-  - id: "https://github.com/ChanYuxu/Recent-Progress-on-Domain-Theory"
+  - id: "https://arxiv.org/abs/2608.03073"
     relationship: other
     note: >-
-      Claimed home of a Chen–Kou–Lyu Lean 4 tree. The URL returned 404
-      on 2026-08-22; see vendor/ckl2026/NOTICE. No third-party Lean was
-      copied.
+      Chen–Kou–Lyu 2026 (ωFVA / Jung–Tix). Literature in sources/.
+      Lemmas used here are re-proved in Quantum/Saturation.lean.
 
 automation:
   methods:
@@ -153,8 +152,8 @@ automation:
       models: ["Cursor Grok 4.6 (SpaceXAI / Cursor)"]
       framework: "Cursor"
       role: >-
-        Palomar packaging, vendoring of scott1972, literature vendor for
-        Chen–Kou–Lyu, scaffolding of Quantum/ and the capstone statement.
+        Palomar packaging, vendoring of scott1972, scaffolding of
+        Quantum/ and the capstone statement.
         Generated Lean is provisional until it compiles under
         leanprover/lean4:v4.30.0.
     - method: manual
@@ -166,7 +165,7 @@ automation:
         co-author.
   notes: >-
     Initial Palomar draft. related_formalizations records scott1972 and
-    the unavailable ChanYuxu URL. See limitations.
+    arXiv:2608.03073. See limitations.
 
 review:
   status: self-assessed
@@ -194,9 +193,11 @@ limitations:
     hypothesis so the tower stages stay in ωQVA; it is not discharged
     by a function-space saturation proof in this snapshot.
   - >-
-    The ChanYuxu GitHub URL in earlier notes was unpublished at
-    packaging time; vendor/ckl2026 holds attribution and a lemma digest
-    only.
+    Saturation Lean in this repo is an original mechanization of
+    arXiv:2608.03073 Lemmas 6.5–6.7. Cartesian closure of function
+    spaces is the QDomain.functionSpace_omega hypothesis, not a
+    discharged theorem. QuantumFunctor is [D → D], not a constructed
+    quantum powerdomain.
 
 alignment:
   namespace: "Scott1972.ContinuousLattice"

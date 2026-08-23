@@ -2,8 +2,8 @@
 
 Palomar statement of record: `omegaQVA_quantum_domain_equation_solved`.
 Narrative: `arxiv.md`. Metadata: `formalization.yaml`, `comparator.json`.
-Vendors: `vendor/scott1972` (frozen SHA in `vendor/FROZEN.txt`),
-`vendor/ckl2026` (CKL literature; GitHub URL was 404).
+Vendor: `vendor/scott1972` (frozen SHA in `vendor/FROZEN.txt`).
+CKL 2026 paper in `sources/`.
 
 ## Resume
 

@@ -16,25 +16,17 @@ Lars Warren Ericson (Catskills Research Company, 2026). They extend
 Scott 1972 inverse limits (`embInf`, `projInf`, Theorem 4.4) from
 `D_∞ ≅ [D_∞ → D_∞]` to the quantum functor `[D → Q(D)]`.
 
-## Vendored third-party mathematics (`vendor/ckl2026/`)
+## Literature used in the proofs
 
 Chen, Kou, and Lyu, *Finite-valuation approximable structures*
 (arXiv:2608.03073, 2026) supply the classical saturation pattern
-(Lemmas 6.8–6.10: finite separation ⇒ `f(x) ≪ x`; 2-level flattening of
-squares). The GitHub URL recorded in earlier notes,
+(v1 Lemmas 6.5–6.7). The paper is in `sources/`. The lemmas are
+mechanized in `Quantum/Saturation.lean`.
 
-`https://github.com/ChanYuxu/Recent-Progress-on-Domain-Theory`,
-
-returned **404** on 2026-08-22; no public Lean tree was obtainable.
-This snapshot therefore vendors the published lemmas as a literature
-artifact (`vendor/ckl2026/`) and mechanizes them in
-`Quantum/Saturation.lean` under Apache-2.0, with attribution to the
-authors of the mathematics.
-
-## Related remotes (not vendored)
+## Related remotes
 
 | Remote | Role |
 | --- | --- |
-| [`scott1972`](https://github.com/catskillsresearch/scott1972) | Continuous lattices; Theorem 4.4 |
+| [`scott1972`](https://github.com/catskillsresearch/scott1972) | Continuous lattices; Theorem 4.4 (vendored) |
 | [`scott_models`](https://github.com/catskillsresearch/scott_models) | Presentation bridges (1972 / 1980 / 1982) |
-| arXiv:2608.03073 | Chen–Kou–Lyu ω**FVA** / Jung–Tix |
+| arXiv:2608.03073 | Chen–Kou–Lyu ω**FVA** / Jung–Tix (`sources/`) |

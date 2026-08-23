@@ -4,7 +4,7 @@
 ---
 
 ### Abstract
-We present a unified denotational semantics and formal Lean 4 verification framework for an untyped $\lambda$-calculus extended with a quantum interpretation of concurrent and probabilistic choice operators ($q\lambda$). For over three decades, establishing reflexive domain models $D \cong [D \to T(D)]$ for higher-order languages with probabilistic or quantum effects was obstructed by the Jung–Tix problem: the absence of a Cartesian closed category of continuous domains closed under valuation powerdomains. Leveraging the recent resolution of the Jung–Tix problem by Chen, Kou, and Lyu (2026) via finite-valuation approximable structures ($\omega\mathbf{FVA}$), we generalize their construction to the non-commutative setting. We introduce the category $\omega\mathbf{QVA}$ of Quantum-Valuation Approximable domains, where approximating maps factor through sub-normalized density operator spaces $\mathcal{S}_{\le 1}(A)$ of finite-dimensional $C^*$-algebras endowed with the Loewner partial order. We prove that $\omega\mathbf{QVA}$ is Cartesian closed and closed under retracts, products, and continuous quantum state powerdomains $\mathcal{Q}$. Furthermore, we mechanically translate the core calculus into executable Qiskit circuit structures and formalize the capstone isomorphism theorem in Lean 4, building on a mechanized foundation of Scott's 1972 continuous lattice theory and the finite-valuation domain formalizations of Chen, Kou, and Lyu (2026).
+We present a unified denotational semantics and formal Lean 4 verification framework for an untyped $\lambda$-calculus extended with a quantum interpretation of concurrent and probabilistic choice operators ($q\lambda$). For over three decades, establishing reflexive domain models $D \cong [D \to T(D)]$ for higher-order languages with probabilistic or quantum effects was obstructed by the Jung–Tix problem: the absence of a Cartesian closed category of continuous domains closed under valuation powerdomains. Leveraging the recent resolution of the Jung–Tix problem by Chen, Kou, and Lyu (2026) via finite-valuation approximable structures ($\omega\mathbf{FVA}$), we generalize their construction to the non-commutative setting. We introduce the category $\omega\mathbf{QVA}$ of Quantum-Valuation Approximable domains, where approximating maps factor through sub-normalized density operator spaces $\mathcal{S}_{\le 1}(A)$ of finite-dimensional $C^*$-algebras endowed with the Loewner partial order. We prove that $\omega\mathbf{QVA}$ is Cartesian closed and closed under retracts, products, and continuous quantum state powerdomains $\mathcal{Q}$. Furthermore, we mechanically translate the core calculus into executable Qiskit circuit structures and formalize the capstone isomorphism theorem in Lean 4, building on a mechanized foundation of Scott's 1972 continuous lattice theory and on the mathematics of Chen, Kou, and Lyu (2026).
 
 ---
 
@@ -140,30 +140,7 @@ graph TD
 
 ---
 
-## 5. Architectural Context: The Sichuan Topology & Domain School
-
-The resolution of the Jung–Tix problem builds on foundational research surveyed by Kou, Luo, and Zhang (July 2026, *Scientia Sinica Mathematica*, DOI: `10.1360/SSM-2026-0092`):
-
-```mermaid
-graph TD
-    Root["Sichuan University School (Liu Yingming Lineage)"] --> P1["1. Topology"]
-    Root --> P2["2. Order"]
-    Root --> P3["3. Formal Calculus"]
-    Root --> P4["4. Logic"]
-    P1 --> P1a["Lattice-valued & Pointfree Topology, Quantale Enrichment"]
-    P2 --> P2a["Continuous DCPOs, Meet-Continuity, Jung-Tix Resolution"]
-    P3 --> P3a["Process Algebras, CSP, Fixed-Point Semantics"]
-    P4 --> P4a["Many-Valued Logics, t-Norms, Domain Logic"]
-```
-
-* **Structure vs. Process:** Connects static domain equations with dynamic execution and reactive calculi.
-* **Quantale Enrichment:** Unifies order theory and Lawvere metric spaces beyond classical dcpos.
-* **Precedents to $\omega\mathbf{FVA}$:** Synthesizes why quasi-continuous domains (Jia, Jung, Kou, Li, Zhao 2015) and pure RB-domains were insufficient, motivating the transition to finite-valuation factorizations.
-* **Connection to Quantum Concurrency:** Highlights **Mingsheng Ying**, pioneer of Quantum Process Calculi (qCSP) and quantum programming semantics.
-
----
-
-## 6. The Quantum Extension: From Classical Probability to $\omega\mathbf{QVA}$
+## 5. The Quantum Extension: From Classical Probability to $\omega\mathbf{QVA}$
 
 In quantum mechanics, measurement via Born's rule collapses a coherent quantum superposition into a probabilistic choice:
 
@@ -203,7 +180,7 @@ graph LR
 
 ---
 
-## 7. Compilation & Operational Mapping to Qiskit
+## 6. Compilation & Operational Mapping to Qiskit
 
 ### Table 1: Quantum Primitives mapped to Qiskit and qλ
 | # | Concept | Notation | Qiskit | qλ |
@@ -227,9 +204,9 @@ graph LR
 
 ---
 
-## 8. Formal Verification in Lean 4 & Capstone Theorem
+## 7. Formal Verification in Lean 4 & Capstone Theorem
 
-The formalization is constructed in Lean 4 on top of the `Scott1972` continuous lattice library (`https://github.com/catskillsresearch/scott1972`), vendoring the Chen–Kou–Lyu saturation core (`vendor/ckl2026/`).
+The formalization is constructed in Lean 4 on top of the `Scott1972` continuous lattice library (`https://github.com/catskillsresearch/scott1972`). Chen–Kou–Lyu saturation (arXiv:2608.03073, v1 Lemmas 6.5–6.7) is mechanized in `Quantum/Saturation.lean`.
 
 ```lean
 import Scott1972.ContinuousLattice.OmegaQVA
@@ -281,7 +258,7 @@ end Scott1972.ContinuousLattice
 
 ---
 
-## 9. Acknowledgments & Provenance
+## 8. Acknowledgments & Provenance
 
 * **Software & AI Tooling:** The formalization was mechanized using **Lean 4** and **Mathlib**. The author utilized the **Cursor** development environment, **Grok 4.6 High Fast**, and **Gemini 3.7 Flash** as assistive tools for code scaffolding, proof exploration, and document drafting.
 * **Integrity Statement:** All formal definitions, proofs, and synthesized results were verified under the Lean 4 compiler. Authors retain full and exclusive responsibility for the mathematical correctness of the mechanized proofs and the contents of this manuscript.
@@ -296,8 +273,7 @@ end Scott1972.ContinuousLattice
 4. G. Gierz, K. H. Hofmann, K. Keimel, J. D. Lawson, M. Mislove, and D. S. Scott. *Continuous Lattices and Domains*. Cambridge University Press, Cambridge, 2003.
 5. C. Jones and G. D. Plotkin. *A probabilistic powerdomain of evaluations*. In *Proceedings of the 4th Annual IEEE Symposium on Logic in Computer Science (LICS)*, pages 186–195, 1989.
 6. A. Jung and R. Tix. *The troublesome probabilistic powerdomain*. *Electronic Notes in Theoretical Computer Science*, 13:70–91, 1998.
-7. H. Kou, M. Luo, and D. Zhang. *Basic structure and process: Studies on topology, order, formal calculus, and logic by the Lattice Topology Group at Sichuan University* (in Chinese). *Scientia Sinica Mathematica*, 56:1–18, 2026. doi:10.1360/SSM-2026-0092.
-8. D. S. Scott. *Continuous lattices*. In *Toposes, Algebraic Geometry and Logic*, Lecture Notes in Mathematics, vol. 274, pages 97–136. Springer, Berlin, 1972.
-9. P. Selinger and B. Valiron. *A linear-non-linear model for a quantum lambda calculus*. *Information and Computation*, 207(5):603–629, 2009.
-10. M. B. Smyth and G. D. Plotkin. *The category-theoretic solution of recursive domain equations*. *SIAM Journal on Computing*, 11(4):761–783, 1982.
-11. M. Ying. *Foundations of Quantum Programming*. Morgan Kaufmann / Elsevier, 2016.
+7. D. S. Scott. *Continuous lattices*. In *Toposes, Algebraic Geometry and Logic*, Lecture Notes in Mathematics, vol. 274, pages 97–136. Springer, Berlin, 1972.
+8. P. Selinger and B. Valiron. *A linear-non-linear model for a quantum lambda calculus*. *Information and Computation*, 207(5):603–629, 2009.
+9. M. B. Smyth and G. D. Plotkin. *The category-theoretic solution of recursive domain equations*. *SIAM Journal on Computing*, 11(4):761–783, 1982.
+10. M. Ying. *Foundations of Quantum Programming*. Morgan Kaufmann / Elsevier, 2016.

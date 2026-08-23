@@ -72,7 +72,7 @@ find Quantum -type f -name '*.lean' -print0 | while IFS= read -r -d '' f; do
   mkdir -p "$(dirname "$dest")"
   cp -f "$f" "$dest"
 done
-cp -R vendor/FROZEN.txt vendor/ckl2026 "${STAGE}/vendor/" 2>/dev/null || true
+cp -R vendor/FROZEN.txt "${STAGE}/vendor/" 2>/dev/null || true
 
 rm -f "$ZIP"
 (

@@ -46,8 +46,8 @@ ArXiv / Zenodo: `bash scripts/build_arxiv_pdf.sh` and
    * The core formalization of D. S. Scott's 1972 *Continuous Lattices* in `vendor/scott1972/` is the original work of Lars Warren Ericson (Catskills Research, 2026); the remote remains [`scott1972`](https://github.com/catskillsresearch/scott1972).
    * The non-commutative operator extension (ω**QVA**), spectrahedral state-space formalization, and quantum domain equation in `Quantum/` were designed and mechanized by Lars Warren Ericson.
 
-2. **Vendored Academic Artifacts (`vendor/ckl2026/`):**
-   * Chen, Kou, and Lyu, *Finite-valuation approximable structures* (arXiv:2608.03073, 2026). The URL `https://github.com/ChanYuxu/Recent-Progress-on-Domain-Theory` returned 404 on 2026-08-22; no third-party Lean was copied. Saturation lemmas are mechanized in `Quantum/Saturation.lean` under Apache-2.0, with attribution in `vendor/ckl2026/NOTICE`.
+2. **Literature (not a Lean dependency):**
+   * Chen, Kou, and Lyu, *Finite-valuation approximable structures* (arXiv:2608.03073, 2026), in `sources/`. Saturation lemmas are mechanized in `Quantum/Saturation.lean`.
 
 3. **Literature Citations:**
    * Foundational domain theory: D. S. Scott (1972, LNM 274); M. B. Smyth & G. D. Plotkin (1982).

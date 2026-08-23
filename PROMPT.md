@@ -1,6 +1,6 @@
 Format this repo for Palomar in terms of licensing and production of Arxiv/Zenodo papers similar to ../scott_models and vendor in ../scott1972 and this Chinese repo:
 
-https://github.com/ChanYuxu/Recent-Progress-on-Domain-Theory
+https://github.com/ChanYuxu/Recent-Progress-on--Domain-Theory
 
 You are an expert in Lean 4, Mathlib, and Domain Theory (Denotational Semantics, Continuous Lattices, and Operator Algebras).
 

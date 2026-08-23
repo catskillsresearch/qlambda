@@ -51,7 +51,7 @@
     }
   ],
   "license": "Apache-2.0",
-  "notes": "Software and Lean sources are Apache-2.0 (see LICENSE). vendor/scott1972 is the author's 1972 library (Apache-2.0). vendor/ckl2026 is attribution for Chen–Kou–Lyu arXiv:2608.03073 (no third-party Lean copied; their GitHub URL returned 404). Prepared with LLM assistance; authors remain responsible for mathematical content.",
+  "notes": "Software and Lean sources are Apache-2.0 (see LICENSE). vendor/scott1972 is the author's 1972 library (Apache-2.0). Chen–Kou–Lyu arXiv:2608.03073 is cited literature in sources/. Prepared with LLM assistance; authors remain responsible for mathematical content.",
   "related_identifiers": [
     {
       "identifier": "https://github.com/catskillsresearch/qlambda",

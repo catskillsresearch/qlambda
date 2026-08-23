@@ -10,7 +10,9 @@ import Scott1972.ContinuousLattice.WayBelow
 # Finite separation and 2-level saturation flattening
 
 Mechanization of Chen–Kou–Lyu (arXiv:2608.03073) Lemmas 6.8 and 6.9
-in the `Scott1972` continuous-lattice setting. See `vendor/ckl2026/`.
+in the `Scott1972` continuous-lattice setting. The mathematics is
+Chen–Kou–Lyu arXiv:2608.03073 (v1 Lemmas 6.5–6.7); see
+`sources/Finite-valuation-approximable-structures-a-solution-to-the-Jung--Tix-problem-of-probabilistic-powerdomains.md`.
 -/
 
 namespace Scott1972.ContinuousLattice
