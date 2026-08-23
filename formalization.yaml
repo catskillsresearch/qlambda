@@ -35,14 +35,18 @@ status:
     FiniteInstrumentComp are defined and proved. Its semantic preorder
     is now weakest-precondition/TT refinement over monotone Kraus-valued
     postconditions; finite unit, pushforward, and bind congruence are
-    proved using residual CP refinement. InstrumentPower antisymmetrizes
-    this basis and takes its lower-set completion; its complete lattice,
-    Scott-continuous pushforward, identity/composition laws, order
-    enrichment, and continuous-lattice property are proved. This carrier
-    cannot satisfy the remaining model fields: plain lower-set joins
-    make map_iSup false, and uncountably many compact scalar instruments
-    contradict omegaQVA finite separation. Nothing in the compared
-    statements is imported from a prior Palomar entry.
+    proved using residual CP refinement. InstrumentPower now
+    antisymmetrizes this basis and takes its Scott-closed lower
+    completion. The generic Scott closure operator, complete lattice,
+    principal embedding, and conditional direct-image functor laws are
+    proved in QLambda/ScottLowerSet.lean. The current exact-CP basis is
+    still insufficient: monotone TT observations need not preserve
+    directed outcome limits, and for register dimension at least two
+    uncountably many rank-one Choi rays obstruct any countable sequence
+    of finite separators. The next redesign must use countable finite
+    observational tokens rather than exact physical CP maps as basis
+    elements. Nothing in the compared statements is imported from a
+    prior Palomar entry.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -187,9 +191,11 @@ review:
     review has been performed.
 
 known_gaps:
-  - "Replace the disproved plain lower-set completion by a countable rounded-ideal/Scott-closed completion in which limit instruments are not compact principals."
-  - "Lift the proved finite TT unit/bind operations through the redesigned rounded completion."
-  - "For the redesigned carrier, prove local continuity and omegaQVA closure before instantiating IsQuantumPowerModel and IsQuantumMonad."
+  - "Replace exact TT-ordered CP instruments as the approximation basis by countable finite observational tokens, for example rational quadratic-form constraints on Choi matrices combined with countable output-domain observations."
+  - "Prove that the token order reconstructs TT/Choi refinement and that physical trace-nonincreasing instruments embed as ideals or form a continuous retract."
+  - "Lift finite unit, pushforward, and bind to tokens and prove continuity and local continuity of their Scott-closed extensions."
+  - "Construct QFactorable finitely separated approximants for the token completion and only then instantiate IsQuantumPowerModel and IsQuantumMonad."
+  - "Formalize the rank-one Choi-ray obstruction showing why Scott closure or rational attenuation of the exact physical basis alone cannot establish omegaQVA for register dimension at least two."
   - "Complete the computation-valued interpretation and operational adequacy proofs."
 
 limitations:
