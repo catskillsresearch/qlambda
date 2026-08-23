@@ -58,9 +58,11 @@ status:
     instruments to their satisfied rounded theories and proves that
     theory inclusion is equivalent to pointwise Choi observational
     refinement, using Gaussian-rational density and finite-union branch
-    selection. Comparison with the stronger TT refinement and the model
-    instance remain open. Nothing in the compared statements is
-    imported from a prior Palomar entry.
+    selection. TT refinement is proved to imply this Choi/token order
+    using Scott-open indicator postconditions and intrinsic Choi
+    reconstruction from CP-map action. The converse and the model
+    instance remain open. Nothing in the compared statements is imported
+    from a prior Palomar entry.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -205,7 +207,7 @@ review:
     review has been performed.
 
 known_gaps:
-  - "Relate the proved token-theory/Choi observational order correspondence to the stronger TT refinement and determine whether the physical image forms a continuous retract."
+  - "Determine whether Choi observational refinement implies the stronger TT refinement for general omegaQVA output orders (equivalently, whether CP-valued stochastic dominance is stable under all monotone outcome-dependent CP postconditions), and whether the physical image forms a continuous retract."
   - "Lift finite unit, pushforward, and bind to tokens and prove continuity and local continuity of their Scott-closed extensions."
   - "Construct QFactorable finitely separated approximants for the token completion and only then instantiate IsQuantumPowerModel and IsQuantumMonad."
   - "Formalize the rank-one Choi-ray obstruction showing why Scott closure or rational attenuation of the exact physical basis alone cannot establish omegaQVA for register dimension at least two."

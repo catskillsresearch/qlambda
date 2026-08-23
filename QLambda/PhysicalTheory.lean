@@ -18,6 +18,30 @@ open Scott1972.ContinuousLattice
 
 universe u v
 
+namespace FiniteInstrumentComp.KrausPost
+
+variable {n : ℕ} {D : Type u} [CompleteLattice D]
+
+/-- The quantum indicator of a Scott-open output observation. -/
+noncomputable def indicator (U : OutputObservation D) : KrausPost n D := by
+  classical
+  exact
+    { pred := fun d =>
+        if d ∈ U then KrausFamily.identity n else KrausFamily.zero
+      mono := by
+        intro d e hde
+        by_cases hd : d ∈ U
+        · have he : e ∈ U := U.isScottOpen.1 hde hd
+          simp [hd, he, KrausFamily.residualRefines_refl]
+        · by_cases he : e ∈ U
+          · simp only [hd, he, ↓reduceIte]
+            refine ⟨KrausFamily.identity n, ?_⟩
+            intro ρ
+            simp [KrausFamily.zero]
+          · simp [hd, he, KrausFamily.residualRefines_refl] }
+
+end FiniteInstrumentComp.KrausPost
+
 namespace CodedAtom
 
 variable {n : ℕ} {ι : Type v} {D : Type u} [CompleteLattice D]
@@ -94,6 +118,44 @@ namespace FiniteInstrumentComp
 variable {n : ℕ} {D : Type u} [CompleteLattice D]
 variable {ι : Type v}
 
+/-- The weakest precondition against a Scott-open indicator has exactly
+the Choi denotation selected by that observation. -/
+theorem choi_wpKraus_indicator (μ : FiniteInstrumentComp n D)
+    (U : OutputObservation D) :
+    KrausFamily.choi (μ.wpKraus (KrausPost.indicator U)) =
+      μ.observationChoi U := by
+  classical
+  rw [observationChoi_eq_testChoi]
+  unfold wpKraus testChoi KrausPost.indicator
+  rw [choi_flatMap]
+  rw [← List.sum_toFinset
+    (fun o : μ.Outcome =>
+      KrausFamily.choi
+        (KrausFamily.comp
+          (if μ.value o ∈ U then KrausFamily.identity n else KrausFamily.zero)
+          (μ.branch o)))
+    (Finset.nodup_toList Finset.univ)]
+  have huniv : (Finset.univ.toList.toFinset : Finset μ.Outcome) =
+      Finset.univ := by
+    ext o
+    simp
+  rw [huniv]
+  apply Finset.sum_congr rfl
+  intro o ho
+  by_cases hU : μ.value o ∈ U
+  · simp [hU]
+  · simp [hU, KrausFamily.zero, KrausFamily.comp]
+
+/-- TT refinement implies pointwise Choi observational refinement. -/
+theorem observationRefines_of_refines {μ ν : FiniteInstrumentComp n D}
+    (hμν : Refines μ ν) : ObservationRefines μ ν := by
+  intro U
+  have hwp := hμν (KrausPost.indicator U)
+  have hchoi := KrausFamily.choiRefines_of_residualRefines hwp
+  rw [KrausFamily.ChoiRefines, choi_wpKraus_indicator,
+    choi_wpKraus_indicator] at hchoi
+  exact hchoi
+
 /-- The rounded theory of all coded strict observations satisfied by a
 finite physical instrument. -/
 def satisfiedTheory (C : OutputCode ι D) (μ : FiniteInstrumentComp n D) :
@@ -123,6 +185,15 @@ theorem observationRefines_satisfiedTheory_le
   intro t ht
   change CodedToken.Holds C t ν
   exact hμν.token_holds ht
+
+/-- TT refinement therefore implies inclusion of every satisfied token
+theory. -/
+theorem satisfiedTheory_le_of_refines
+    (C : OutputCode ι D) {μ ν : FiniteInstrumentComp n D}
+    (hμν : Refines μ ν) :
+    μ.satisfiedTheory C ≤ ν.satisfiedTheory C :=
+  observationRefines_satisfiedTheory_le C
+    (observationRefines_of_refines hμν)
 
 /-- Inclusion of satisfied theories over the finite-union output basis
 recovers pointwise Choi refinement. -/

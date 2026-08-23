@@ -55,6 +55,11 @@ def applyMat (K : KrausFamily n m) (ρ : Matrix (Fin n) (Fin n) ℂ) :
     Matrix (Fin m) (Fin m) ℂ :=
   (K.map fun A => A * ρ * Aᴴ).sum
 
+/-- A matrix unit, used to recover Choi entries from the represented CP
+map. -/
+def matrixUnit (i j : Fin n) : Matrix (Fin n) (Fin n) ℂ :=
+  fun k l => if k = i then if l = j then 1 else 0 else 0
+
 /-- The empty family is the zero CP map. -/
 def zero : KrausFamily n m :=
   []
@@ -87,6 +92,20 @@ theorem choi_cons (A : KrausOperator n m) (K : KrausFamily n m) :
 theorem choi_append (K L : KrausFamily n m) :
     choi (K ++ L) = choi K + choi L := by
   simp [choi, List.map_append, List.sum_append]
+
+/-- Each Choi entry is an output matrix entry obtained by applying the
+represented CP map to a matrix unit. -/
+theorem applyMat_matrixUnit (K : KrausFamily n m) (p q : Fin m × Fin n) :
+    applyMat K (matrixUnit p.2 q.2) p.1 q.1 = choi K p q := by
+  induction K with
+  | nil => simp [applyMat, choi]
+  | cons A K ih =>
+    change (A * matrixUnit p.2 q.2 * Aᴴ) p.1 q.1 +
+        applyMat K (matrixUnit p.2 q.2) p.1 q.1 =
+      choiTerm A p q + choi K p q
+    rw [ih]
+    congr 1
+    simp [matrixUnit, choiTerm, Matrix.mul_apply]
 
 theorem choiTerm_posSemidef (A : KrausOperator n m) :
     (choiTerm A).PosSemidef := by
@@ -127,6 +146,21 @@ def Refines (K L : KrausFamily n m) : Prop :=
 
 abbrev ApplySemEq := @SemEq
 abbrev ResidualRefines := @Refines
+
+/-- Extensional equality of operator-sum maps implies equality of their
+intrinsic Choi matrices. -/
+theorem choi_eq_of_semEq {K L : KrausFamily n m} (hKL : SemEq K L) :
+    choi K = choi L := by
+  ext p q
+  rw [← applyMat_matrixUnit K p q, ← applyMat_matrixUnit L p q, hKL]
+
+/-- Residual CP refinement implies Loewner refinement of Choi
+denotations. -/
+theorem choiRefines_of_residualRefines {K L : KrausFamily n m}
+    (hKL : ResidualRefines K L) : ChoiRefines K L := by
+  obtain ⟨R, hR⟩ := hKL
+  rw [ChoiRefines, choi_eq_of_semEq hR, choi_append]
+  exact le_add_of_nonneg_right (choi_nonneg R)
 
 theorem applySemEq_refl (K : KrausFamily n m) : ApplySemEq K K :=
   fun _ => rfl
