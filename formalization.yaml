@@ -43,10 +43,13 @@ status:
     still insufficient: monotone TT observations need not preserve
     directed outcome limits, and for register dimension at least two
     uncountably many rank-one Choi rays obstruct any countable sequence
-    of finite separators. The next redesign must use countable finite
-    observational tokens rather than exact physical CP maps as basis
-    elements. Nothing in the compared statements is imported from a
-    prior Palomar entry.
+    of finite separators. Gaussian-rational Choi vectors, strict
+    rational quadratic tests, universal Scott-open output observations,
+    countably coded output families, finite-token entailment, and
+    physical Choi monotonicity are now defined in
+    QLambda/RationalComplex.lean and QLambda/ObservationBasis.lean.
+    Their completion and model instance remain open. Nothing in the
+    compared statements is imported from a prior Palomar entry.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -191,7 +194,9 @@ review:
     review has been performed.
 
 known_gaps:
-  - "Replace exact TT-ordered CP instruments as the approximation basis by countable finite observational tokens, for example rational quadratic-form constraints on Choi matrices combined with countable output-domain observations."
+  - "Discharge RationalQuadraticSeparation: prove that Gaussian-rational quadratic forms separate finite-dimensional Hermitian Choi matrices."
+  - "Construct a CountableOutputBasis from an IsOmegaQVA witness and prove its coded Scott opens are cofinal among output observations."
+  - "Build the saturated rounded-theory completion of the implemented strict rational Choi/output tokens and prove it is a continuous lattice."
   - "Prove that the token order reconstructs TT/Choi refinement and that physical trace-nonincreasing instruments embed as ideals or form a continuous retract."
   - "Lift finite unit, pushforward, and bind to tokens and prove continuity and local continuity of their Scott-closed extensions."
   - "Construct QFactorable finitely separated approximants for the token completion and only then instantiate IsQuantumPowerModel and IsQuantumMonad."
