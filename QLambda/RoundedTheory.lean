@@ -364,12 +364,12 @@ theorem TokenTheory.exists_rounding
 basis of an `ωQVA`. -/
 noncomputable abbrev OmegaTokenTheory
     (n : ℕ) (D : Type u) [CompleteLattice D] [IsOmegaQVA D] :=
-  TokenTheory n (CountableOutputBasis.ofOmegaQVA (D := D)).code
+  TokenTheory n (CountableOutputBasis.ofOmegaQVAFiniteUnion (D := D)).code
 
 theorem omegaTokenTheory_isContinuousLattice
     (n : ℕ) (D : Type u) [CompleteLattice D] [IsOmegaQVA D] :
     IsContinuousLattice (OmegaTokenTheory n D) :=
   tokenTheory_isContinuousLattice n
-    (CountableOutputBasis.ofOmegaQVA (D := D)).code
+    (CountableOutputBasis.ofOmegaQVAFiniteUnion (D := D)).code
 
 end QLambda

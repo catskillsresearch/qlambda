@@ -50,6 +50,8 @@ status:
     Hermitian Choi matrices, and the construction of a cofinal countable
     output basis from every IsOmegaQVA witness are now proved in
     QLambda/RationalComplex.lean and QLambda/ObservationBasis.lean.
+    The output code is closed under finite unions, with a proved finite
+    covering lemma for finitely many points in one Scott open.
     QLambda/RoundedTheory.lean constructs the semantic-entailment
     saturated rounded completion of the coded strict tokens and proves
     it is a continuous lattice. Its comparison with TT/Choi refinement

@@ -95,9 +95,58 @@ instance {D : Type u} [CompleteLattice D] : SetLike (OutputObservation D) D wher
 def univ (D : Type u) [CompleteLattice D] : OutputObservation D :=
   ⟨Set.univ, scottOpen_univ⟩
 
+def empty (D : Type u) [CompleteLattice D] : OutputObservation D :=
+  ⟨∅, by
+    constructor
+    · intro a b hab ha
+      exact False.elim ha
+    · intro S hS hdir hmem
+      exact False.elim hmem⟩
+
+@[simp]
+theorem not_mem_empty {D : Type u} [CompleteLattice D] (d : D) :
+    d ∉ empty D :=
+  id
+
 def inter {D : Type u} [CompleteLattice D]
     (U V : OutputObservation D) : OutputObservation D :=
   ⟨U ∩ V, scottOpen_inter U.isScottOpen V.isScottOpen⟩
+
+def union {D : Type u} [CompleteLattice D]
+    (U V : OutputObservation D) : OutputObservation D :=
+  ⟨U ∪ V, by
+    constructor
+    · intro a b hab ha
+      rcases ha with ha | ha
+      · exact Or.inl (U.isScottOpen.1 hab ha)
+      · exact Or.inr (V.isScottOpen.1 hab ha)
+    · intro S hS hdir hmem
+      rcases hmem with hmem | hmem
+      · obtain ⟨s, hs, hsU⟩ := U.isScottOpen.2 hS hdir hmem
+        exact ⟨s, hs, Or.inl hsU⟩
+      · obtain ⟨s, hs, hsV⟩ := V.isScottOpen.2 hS hdir hmem
+        exact ⟨s, hs, Or.inr hsV⟩⟩
+
+@[simp]
+theorem mem_union {D : Type u} [CompleteLattice D]
+    {d : D} {U V : OutputObservation D} :
+    d ∈ union U V ↔ d ∈ U ∨ d ∈ V :=
+  Iff.rfl
+
+/-- A finite union of Scott-open output observations. -/
+def listUnion {D : Type u} [CompleteLattice D] :
+    List (OutputObservation D) → OutputObservation D
+  | [] => empty D
+  | U :: Us => union U (listUnion Us)
+
+@[simp]
+theorem mem_listUnion {D : Type u} [CompleteLattice D]
+    {d : D} {Us : List (OutputObservation D)} :
+    d ∈ listUnion Us ↔ ∃ U ∈ Us, d ∈ U := by
+  induction Us with
+  | nil => simp [listUnion]
+  | cons U Us ih =>
+      simp [listUnion, ih]
 
 /-- Pull an output observation back along a Scott map. -/
 def preimage {D E : Type u} [CompleteLattice D] [CompleteLattice E]
@@ -114,6 +163,32 @@ semantic domain itself. -/
 structure OutputCode (ι : Type v) (D : Type u) [CompleteLattice D] where
   observe : ι → OutputObservation D
 
+namespace OutputCode
+
+/-- Close an output code under finite unions.  Lists preserve
+countability whenever the original code is countable. -/
+def finiteUnion {ι : Type v} {D : Type u} [CompleteLattice D]
+    (C : OutputCode ι D) : OutputCode (List ι) D :=
+  ⟨fun is => OutputObservation.listUnion (is.map C.observe)⟩
+
+@[simp]
+theorem mem_finiteUnion {ι : Type v} {D : Type u} [CompleteLattice D]
+    (C : OutputCode ι D) {is : List ι} {d : D} :
+    d ∈ (finiteUnion C).observe is ↔ ∃ i ∈ is, d ∈ C.observe i := by
+  simp [finiteUnion, OutputObservation.mem_listUnion]
+
+theorem finiteUnion_subset {ι : Type v} {D : Type u} [CompleteLattice D]
+    (C : OutputCode ι D) {is : List ι} {U : Set D}
+    (h : ∀ i ∈ is, (C.observe i : Set D) ⊆ U) :
+    ((finiteUnion C).observe is : Set D) ⊆ U := by
+  intro d hd
+  change d ∈ (finiteUnion C).observe is at hd
+  rw [mem_finiteUnion] at hd
+  obtain ⟨i, hi, hdi⟩ := hd
+  exact h i hi hdi
+
+end OutputCode
+
 /-- A countable topological basis of output observations.  This is the
 interface required from an `ωQVA` witness; it is deliberately separate
 from the universal definition above. -/
@@ -124,7 +199,85 @@ structure CountableOutputBasis (D : Type u) [CompleteLattice D] where
 
 namespace CountableOutputBasis
 
-variable {D : Type u} [CompleteLattice D] [IsOmegaQVA D]
+variable {D : Type u} [CompleteLattice D]
+
+/-- Decode a natural number as a finite list of natural-number codes. -/
+noncomputable def decodedList (k : ℕ) : List ℕ :=
+  match Encodable.decode (α := List ℕ) k with
+  | some is => is
+  | none => []
+
+@[simp]
+theorem decodedList_encode (is : List ℕ) :
+    decodedList (Encodable.encode is) = is := by
+  rw [decodedList, Encodable.encodek]
+
+/-- Close a countable output basis under finite unions while retaining a
+natural-number code type. -/
+noncomputable def finiteUnionClosure (B : CountableOutputBasis D) :
+    CountableOutputBasis D where
+  code := ⟨fun k => (OutputCode.finiteUnion B.code).observe (decodedList k)⟩
+  cofinal := by
+    intro U d hd
+    obtain ⟨i, hdi, hiU⟩ := B.cofinal U hd
+    refine ⟨Encodable.encode [i], ?_, ?_⟩
+    · change d ∈ (OutputCode.finiteUnion B.code).observe
+        (decodedList (Encodable.encode [i]))
+      rw [decodedList_encode, OutputCode.mem_finiteUnion]
+      exact ⟨i, by simp, hdi⟩
+    · change ((OutputCode.finiteUnion B.code).observe
+        (decodedList (Encodable.encode [i])) : Set D) ⊆ U
+      rw [decodedList_encode]
+      apply OutputCode.finiteUnion_subset
+      intro j hj
+      simp only [List.mem_singleton] at hj
+      subst j
+      exact hiU
+
+private theorem exists_covering_codes (B : CountableOutputBasis D)
+    (U : OutputObservation D) (xs : List D)
+    (hxs : ∀ d ∈ xs, d ∈ U) :
+    ∃ is : List ℕ,
+      (∀ d ∈ xs, ∃ i ∈ is, d ∈ B.code.observe i) ∧
+      (∀ i ∈ is, (B.code.observe i : Set D) ⊆ U) := by
+  induction xs with
+  | nil =>
+      exact ⟨[], by simp, by simp⟩
+  | cons d ds ih =>
+      obtain ⟨i, hdi, hiU⟩ := B.cofinal U (hxs d (by simp))
+      obtain ⟨is, hcover, hisU⟩ :=
+        ih (fun x hx => hxs x (by simp [hx]))
+      refine ⟨i :: is, ?_, ?_⟩
+      · intro x hx
+        rcases List.mem_cons.mp hx with rfl | hx
+        · exact ⟨i, by simp, hdi⟩
+        · obtain ⟨j, hj, hxj⟩ := hcover x hx
+          exact ⟨j, by simp [hj], hxj⟩
+      · intro j hj
+        rcases List.mem_cons.mp hj with rfl | hj
+        · exact hiU
+        · exact hisU j hj
+
+/-- A finite family of points in one Scott open is contained in one
+coded finite-union neighbourhood lying inside that open. -/
+theorem finiteUnionClosure_finite_cover (B : CountableOutputBasis D)
+    (U : OutputObservation D) (xs : List D)
+    (hxs : ∀ d ∈ xs, d ∈ U) :
+    ∃ k, (∀ d ∈ xs, d ∈ (finiteUnionClosure B).code.observe k) ∧
+      ((finiteUnionClosure B).code.observe k : Set D) ⊆ U := by
+  obtain ⟨is, hcover, hisU⟩ := exists_covering_codes B U xs hxs
+  refine ⟨Encodable.encode is, ?_, ?_⟩
+  · intro d hd
+    change d ∈ (OutputCode.finiteUnion B.code).observe
+      (decodedList (Encodable.encode is))
+    rw [decodedList_encode, OutputCode.mem_finiteUnion]
+    exact hcover d hd
+  · change ((OutputCode.finiteUnion B.code).observe
+      (decodedList (Encodable.encode is)) : Set D) ⊆ U
+    rw [decodedList_encode]
+    exact OutputCode.finiteUnion_subset B.code hisU
+
+variable [IsOmegaQVA D]
 
 /-- A chosen finite separator for the `n`th approximant. -/
 noncomputable def omegaSeparator (n : ℕ) : Finset D :=
@@ -230,6 +383,19 @@ noncomputable def ofOmegaQVA : CountableOutputBasis D where
       apply haU
       exact Set.mem_Ici.2 (hai.trans hx.le)
 
+/-- The canonical `ωQVA` output basis closed under finite unions. -/
+noncomputable def ofOmegaQVAFiniteUnion : CountableOutputBasis D :=
+  finiteUnionClosure (ofOmegaQVA (D := D))
+
+/-- Finitely many points of an `ωQVA` Scott open admit one coded
+finite-union neighbourhood contained in that open. -/
+theorem ofOmegaQVAFiniteUnion_finite_cover
+    (U : OutputObservation D) (xs : List D)
+    (hxs : ∀ d ∈ xs, d ∈ U) :
+    ∃ k, (∀ d ∈ xs, d ∈ (ofOmegaQVAFiniteUnion (D := D)).code.observe k) ∧
+      ((ofOmegaQVAFiniteUnion (D := D)).code.observe k : Set D) ⊆ U :=
+  finiteUnionClosure_finite_cover (ofOmegaQVA (D := D)) U xs hxs
+
 end CountableOutputBasis
 
 /-- A universal atomic observation. -/
@@ -290,6 +456,48 @@ theorem observationChoi_eq_testChoi (μ : FiniteInstrumentComp n D) (U : Set D) 
   classical
   rw [observationChoi, selectedKraus, choi_flatMap]
   simp [testChoi, Finset.sum_filter]
+
+/-- For a finite instrument, every Scott-open observation can be
+replaced by one coded finite-union observation that selects exactly the
+same branches and lies inside the original open. -/
+theorem exists_coded_observationChoi_eq [IsOmegaQVA D]
+    (μ : FiniteInstrumentComp n D) (U : OutputObservation D) :
+    ∃ k,
+      ((CountableOutputBasis.ofOmegaQVAFiniteUnion
+        (D := D)).code.observe k : Set D) ⊆ U ∧
+      μ.observationChoi
+          ((CountableOutputBasis.ofOmegaQVAFiniteUnion
+            (D := D)).code.observe k : Set D) =
+        μ.observationChoi U := by
+  classical
+  let xs : List D :=
+    ((Finset.univ.filter fun o : μ.Outcome => μ.value o ∈ U).toList).map μ.value
+  have hxs : ∀ d ∈ xs, d ∈ U := by
+    intro d hd
+    obtain ⟨o, ho, rfl⟩ := List.mem_map.mp hd
+    simpa using ho
+  obtain ⟨k, hkcover, hkU⟩ :=
+    CountableOutputBasis.ofOmegaQVAFiniteUnion_finite_cover U xs hxs
+  refine ⟨k, hkU, ?_⟩
+  have hmem (o : μ.Outcome) :
+      μ.value o ∈
+          ((CountableOutputBasis.ofOmegaQVAFiniteUnion
+            (D := D)).code.observe k : Set D) ↔
+        μ.value o ∈ (U : Set D) := by
+    constructor
+    · intro hV
+      apply hkU
+      exact hV
+    · intro hoU
+      change μ.value o ∈ U at hoU
+      apply hkcover (μ.value o)
+      apply List.mem_map.mpr
+      exact ⟨o, by simp [hoU], rfl⟩
+  rw [observationChoi_eq_testChoi, observationChoi_eq_testChoi]
+  unfold testChoi
+  apply Finset.sum_congr rfl
+  intro o ho
+  exact if_congr (hmem o) rfl rfl
 
 end FiniteInstrumentComp
 
