@@ -271,6 +271,74 @@ theorem ObservationRefines.token_holds {μ ν : FiniteInstrumentComp n D}
 
 end FiniteInstrumentComp
 
+namespace RatChoiVec
+
+/-- The rational vector `e_p + e_q`, used to recover real parts by
+polarization. -/
+def realPair {n : ℕ} (p q : Fin n × Fin n) : RatChoiVec n :=
+  single (finProdFinEquiv p) + single (finProdFinEquiv q)
+
+/-- The rational vector `e_p + i e_q`, used to recover imaginary parts
+by polarization. -/
+def imagPair {n : ℕ} (p q : Fin n × Fin n) : RatChoiVec n :=
+  fun k => single (finProdFinEquiv p) k +
+    RatComplex.I * single (finProdFinEquiv q) k
+
+@[simp]
+theorem toComplex_realPair {n : ℕ} (p q : Fin n × Fin n) :
+    (realPair p q).toComplex =
+      Pi.single p (1 : ℂ) + Pi.single q (1 : ℂ) := by
+  simp [realPair]
+
+@[simp]
+theorem toComplex_imagPair {n : ℕ} (p q : Fin n × Fin n) :
+    (imagPair p q).toComplex =
+      Pi.single p (1 : ℂ) + Complex.I • Pi.single q (1 : ℂ) := by
+  funext i
+  by_cases hip : i = p
+  · subst i
+    by_cases hpq : p = q
+    · subst q
+      simp [imagPair, RatChoiVec.toComplex, RatChoiVec.single]
+    · simp [imagPair, RatChoiVec.toComplex, RatChoiVec.single, hpq]
+  · by_cases hiq : i = q
+    · subst i
+      have hqp : q ≠ p := fun h => hip h
+      simp [imagPair, RatChoiVec.toComplex, RatChoiVec.single, hqp]
+    · simp [imagPair, RatChoiVec.toComplex, RatChoiVec.single, hip, hiq]
+
+end RatChoiVec
+
+namespace ChoiTest
+
+theorem eval_single {n : ℕ}
+    (J : Matrix (Fin n × Fin n) (Fin n × Fin n) ℂ)
+    (p : Fin n × Fin n) :
+    eval (RatChoiVec.single (finProdFinEquiv p), ⟨0, le_rfl⟩) J =
+      (J p p).re := by
+  simp [eval, vector, single_dotProduct]
+
+theorem eval_realPair {n : ℕ}
+    (J : Matrix (Fin n × Fin n) (Fin n × Fin n) ℂ)
+    (p q : Fin n × Fin n) :
+    eval (RatChoiVec.realPair p q, ⟨0, le_rfl⟩) J =
+      (J p p + J p q + J q p + J q q).re := by
+  simp only [eval, vector, RatChoiVec.toComplex_realPair]
+  simp [add_dotProduct, dotProduct_add, Matrix.mulVec_add, single_dotProduct]
+  ring
+
+theorem eval_imagPair {n : ℕ}
+    (J : Matrix (Fin n × Fin n) (Fin n × Fin n) ℂ)
+    (p q : Fin n × Fin n) :
+    eval (RatChoiVec.imagPair p q, ⟨0, le_rfl⟩) J =
+      (J p p + Complex.I * J p q - Complex.I * J q p + J q q).re := by
+  simp only [eval, vector, RatChoiVec.toComplex_imagPair]
+  simp [add_dotProduct, dotProduct_add, Matrix.mulVec_add, Matrix.mulVec_smul,
+    star_smul, single_dotProduct]
+  ring
+
+end ChoiTest
+
 /-- Exact analytic checkpoint for the countable quantum tests.  It says
 that Gaussian-rational quadratic forms separate Hermitian matrices.
 The finite-coordinate algebra needed to discharge this proposition is
@@ -283,18 +351,56 @@ def RationalQuadraticSeparation (n : ℕ) : Prop :=
         ChoiTest.eval (v, ⟨0, le_rfl⟩) K) →
     J = K
 
+/-- Gaussian-rational quadratic forms separate finite-dimensional
+Hermitian matrices.  Coordinate vectors recover the diagonal, while
+`e_p + e_q` and `e_p + i e_q` recover the real and imaginary parts of
+each off-diagonal entry by polarization. -/
+theorem rationalQuadraticSeparation (n : ℕ) :
+    RationalQuadraticSeparation n := by
+  intro J K hJ hK h
+  ext p q
+  apply Complex.ext
+  · have hdp := h (RatChoiVec.single (finProdFinEquiv p))
+    have hdq := h (RatChoiVec.single (finProdFinEquiv q))
+    have hr := h (RatChoiVec.realPair p q)
+    rw [ChoiTest.eval_single, ChoiTest.eval_single] at hdp hdq
+    rw [ChoiTest.eval_realPair, ChoiTest.eval_realPair] at hr
+    have hJqp : J q p = star (J p q) := (hJ.apply q p).symm
+    have hKqp : K q p = star (K p q) := (hK.apply q p).symm
+    rw [hJqp, hKqp] at hr
+    have hJstar : (star (J p q)).re = (J p q).re := by
+      rw [RCLike.star_def, Complex.conj_re]
+    have hKstar : (star (K p q)).re = (K p q).re := by
+      rw [RCLike.star_def, Complex.conj_re]
+    simp only [Complex.add_re, hJstar, hKstar] at hr
+    linarith
+  · have hdp := h (RatChoiVec.single (finProdFinEquiv p))
+    have hdq := h (RatChoiVec.single (finProdFinEquiv q))
+    have hi := h (RatChoiVec.imagPair p q)
+    rw [ChoiTest.eval_single, ChoiTest.eval_single] at hdp hdq
+    rw [ChoiTest.eval_imagPair, ChoiTest.eval_imagPair] at hi
+    have hJqp : J q p = star (J p q) := (hJ.apply q p).symm
+    have hKqp : K q p = star (K p q) := (hK.apply q p).symm
+    rw [hJqp, hKqp] at hi
+    have hJstar : (star (J p q)).im = -(J p q).im := by
+      rw [RCLike.star_def, Complex.conj_im]
+    have hKstar : (star (K p q)).im = -(K p q).im := by
+      rw [RCLike.star_def, Complex.conj_im]
+    simp only [Complex.add_re, Complex.sub_re, Complex.mul_re,
+      Complex.I_re, Complex.I_im, zero_mul, one_mul, zero_sub,
+      hJstar, hKstar, neg_neg] at hi
+    linarith
+
 theorem choi_eq_of_rational_tests {n : ℕ}
-    (hsep : RationalQuadraticSeparation n)
     (K L : KrausFamily n n)
     (h : ∀ v : RatChoiVec n,
       ChoiTest.eval (v, ⟨0, le_rfl⟩) (KrausFamily.choi K) =
         ChoiTest.eval (v, ⟨0, le_rfl⟩) (KrausFamily.choi L)) :
     KrausFamily.choi K = KrausFamily.choi L :=
-  hsep _ _ (KrausFamily.choi_posSemidef K).1
+  rationalQuadraticSeparation n _ _ (KrausFamily.choi_posSemidef K).1
     (KrausFamily.choi_posSemidef L).1 h
 
 theorem exists_strict_rational_test_of_nonzero {n : ℕ}
-    (hsep : RationalQuadraticSeparation n)
     {J : Matrix (Fin n × Fin n) (Fin n × Fin n) ℂ}
     (hJ : J.PosSemidef) (hne : J ≠ 0) :
     ∃ v : RatChoiVec n,
@@ -309,7 +415,7 @@ theorem exists_strict_rational_test_of_nonzero {n : ℕ}
       by_contra hv
       exact h ⟨v, hv⟩
     apply hne
-    apply hsep J 0 hJ.1 Matrix.isHermitian_zero
+    apply rationalQuadraticSeparation n J 0 hJ.1 Matrix.isHermitian_zero
     intro v
     simpa [ChoiTest.eval] using hall v
   obtain ⟨v, hv⟩ := hex

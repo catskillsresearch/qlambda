@@ -29,6 +29,9 @@ deriving DecidableEq
 
 namespace RatComplex
 
+/-- The Gaussian-rational imaginary unit. -/
+def I : RatComplex := ⟨0, 1⟩
+
 def equivProd : RatComplex ≃ ℚ × ℚ where
   toFun z := (z.re, z.im)
   invFun p := ⟨p.1, p.2⟩
@@ -71,11 +74,22 @@ def toComplex (z : RatComplex) : ℂ :=
 
 instance : Coe RatComplex ℂ := ⟨toComplex⟩
 
+@[simp] theorem toComplex_re (z : RatComplex) :
+    ((z : ℂ).re) = z.re := by
+  simp [toComplex]
+
+@[simp] theorem toComplex_im (z : RatComplex) :
+    ((z : ℂ).im) = z.im := by
+  simp [toComplex]
+
 @[simp] theorem toComplex_zero : ((0 : RatComplex) : ℂ) = 0 := by
   apply Complex.ext <;> simp [toComplex]
 
 @[simp] theorem toComplex_one : ((1 : RatComplex) : ℂ) = 1 := by
   apply Complex.ext <;> simp [toComplex]
+
+@[simp] theorem toComplex_I : ((I : RatComplex) : ℂ) = Complex.I := by
+  apply Complex.ext <;> simp [I, toComplex]
 
 @[simp] theorem toComplex_add (z w : RatComplex) :
     ((z + w : RatComplex) : ℂ) = (z : ℂ) + (w : ℂ) := by
@@ -118,6 +132,19 @@ def RatChoiVec.toComplex {n : ℕ} (v : RatChoiVec n) :
     Fin n × Fin n → ℂ :=
   fun i => v (finProdFinEquiv i)
 
+@[simp]
+theorem RatChoiVec.toComplex_add {n : ℕ} (v w : RatChoiVec n) :
+    RatChoiVec.toComplex (v + w) =
+      RatChoiVec.toComplex v + RatChoiVec.toComplex w := by
+  funext i
+  exact RatComplex.toComplex_add _ _
+
+@[simp]
+theorem RatChoiVec.toComplex_neg {n : ℕ} (v : RatChoiVec n) :
+    RatChoiVec.toComplex (-v) = -RatChoiVec.toComplex v := by
+  funext i
+  exact RatComplex.toComplex_neg _
+
 /-- A rational coordinate vector. -/
 def RatChoiVec.single {n : ℕ} (i : Fin (n * n)) : RatChoiVec n :=
   fun j => if j = i then 1 else 0
@@ -126,5 +153,13 @@ def RatChoiVec.single {n : ℕ} (i : Fin (n * n)) : RatChoiVec n :=
 theorem RatChoiVec.single_apply_self {n : ℕ} (i : Fin (n * n)) :
     RatChoiVec.single i i = 1 := by
   simp [RatChoiVec.single]
+
+@[simp]
+theorem RatChoiVec.toComplex_single {n : ℕ} (p : Fin n × Fin n) :
+    (RatChoiVec.single (finProdFinEquiv p)).toComplex =
+      Pi.single p (1 : ℂ) := by
+  funext i
+  by_cases h : i = p <;>
+    simp [RatChoiVec.toComplex, RatChoiVec.single, h]
 
 end QLambda

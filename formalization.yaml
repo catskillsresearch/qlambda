@@ -45,8 +45,9 @@ status:
     uncountably many rank-one Choi rays obstruct any countable sequence
     of finite separators. Gaussian-rational Choi vectors, strict
     rational quadratic tests, universal Scott-open output observations,
-    countably coded output families, finite-token entailment, and
-    physical Choi monotonicity are now defined in
+    countably coded output families, finite-token entailment, physical
+    Choi monotonicity, and Gaussian-rational quadratic separation of
+    Hermitian Choi matrices are now proved in
     QLambda/RationalComplex.lean and QLambda/ObservationBasis.lean.
     Their completion and model instance remain open. Nothing in the
     compared statements is imported from a prior Palomar entry.
@@ -194,7 +195,6 @@ review:
     review has been performed.
 
 known_gaps:
-  - "Discharge RationalQuadraticSeparation: prove that Gaussian-rational quadratic forms separate finite-dimensional Hermitian Choi matrices."
   - "Construct a CountableOutputBasis from an IsOmegaQVA witness and prove its coded Scott opens are cofinal among output observations."
   - "Build the saturated rounded-theory completion of the implemented strict rational Choi/output tokens and prove it is a continuous lattice."
   - "Prove that the token order reconstructs TT/Choi refinement and that physical trace-nonincreasing instruments embed as ideals or form a continuous retract."
