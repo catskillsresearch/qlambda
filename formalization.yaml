@@ -27,8 +27,9 @@ classification:
 status:
   scope: >-
     Compared claim is the capstone parameterized by a QuantumPowerModel
-    (a Q satisfying IsQuantumPowerModel). No concrete quantum-powerdomain
-    instance is currently claimed. The tower is
+    (a Q satisfying IsQuantumPowerModel). A concrete fixed-register
+    Scott-continuation instance is now bundled as TTContinuation.model;
+    it also has a lawful IsQuantumMonad instance. The tower is
     D_{n+1} = [D_n → Q(D_n)]; qTowerProj, qEmbInfInf, qProjInfInf, and
     the parameterized order isomorphism are defined. Finite Kraus
     families, TNI operations, instruments, and the Type-level monad
@@ -63,9 +64,18 @@ status:
     reconstruction from CP-map action. A rational qubit counterexample
     over the Bool × Bool diamond proves that the converse fails: every
     Scott-open cumulative Choi difference is positive semidefinite, but
-    one monotone Kraus-valued postcondition violates TT refinement. The
-    model instance remains open. Nothing in the compared statements is
-    imported from a prior Palomar entry.
+    one monotone Kraus-valued postcondition violates TT refinement.
+    Rational CP-valued finite-step postconditions now induce the
+    Scott-continuous FinitaryTTRefines order, exactly characterized by
+    inclusion of satisfied TT token theories. The saturated completion
+    is a continuous lattice and an omegaQVA: finite-prefix membership
+    gates are explicitly QFactorable through one-dimensional density
+    blocks and finitely separated. Rounded extension is Scott-continuous.
+    The concrete power is the continuation carrier [[D → R_n] → R_n]
+    over the fixed TT result theory R_n; functoriality, local continuity,
+    omegaQVA closure, and monad laws are proved. Physical embedding into
+    this carrier and operational adequacy remain open. Nothing in the
+    compared statements is imported from a prior Palomar entry.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -210,9 +220,8 @@ review:
     review has been performed.
 
 known_gaps:
-  - "Redesign or strengthen the observational token order in light of the finite diamond counterexample to Choi-observational ⇒ TT refinement, and determine whether the resulting physical image forms a continuous retract."
-  - "Lift finite unit, pushforward, and bind to tokens and prove continuity and local continuity of their Scott-closed extensions."
-  - "Construct QFactorable finitely separated approximants for the token completion and only then instantiate IsQuantumPowerModel and IsQuantumMonad."
+  - "Embed finite CP instruments into TTContinuationPower, prove that the embedding realizes FinitaryTTRefines, and determine whether its physical image forms a continuous retract."
+  - "Construct probabilistic, internal, and external choice algebras on TTContinuationPower and connect them to the corresponding finite-instrument operations."
   - "Formalize the rank-one Choi-ray obstruction showing why Scott closure or rational attenuation of the exact physical basis alone cannot establish omegaQVA for register dimension at least two."
   - "Complete the computation-valued interpretation and operational adequacy proofs."
 
@@ -228,15 +237,16 @@ limitations:
     Classical.choice is permitted (1972 topological ≪). There is no
     project-defined axiom and no native_decide in the compared proofs.
   - >-
-    IsQuantumPowerModel is a conditional specification. No concrete
-    quantum-powerdomain instance is claimed. The tower maps, inverse
-    identities, and order iso are
+    IsQuantumPowerModel remains the abstract specification used by the
+    compared theorem. TTContinuation.model is a concrete instance, but
+    the finite physical instrument embedding into that carrier is not
+    yet proved. The tower maps, inverse identities, and order iso are
     defined from the spec (map, map_mono, map_iSup).
     ωQVA membership of the limit is the retract-of-product argument.
   - >-
     Saturation Lean in this repo is an original mechanization of
-    arXiv:2608.03073 Lemmas 6.5–6.7. Closure under a concrete quantum
-    instrument powerdomain is not discharged.
+    arXiv:2608.03073 Lemmas 6.5–6.7. The concrete continuation power
+    satisfies omegaQVA closure; physical adequacy is not discharged.
 
 alignment:
   namespace: "Scott1972.ContinuousLattice"
@@ -247,8 +257,9 @@ alignment:
       status: stated
       note: >-
         Compared by Comparator as a theorem parameterized by a
-        QuantumPowerModel. No concrete quantum-powerdomain application
-        is currently compared. The iso is constructed from qEmbInfInf /
+        QuantumPowerModel. TTContinuation.model is now available, but no
+        concrete quantum-powerdomain application is currently compared.
+        The iso is constructed from qEmbInfInf /
         qProjInfInf; those maps and the inverse identities are proved
         from the spec. The last conjunct is Scott's inverse-limit
         identity on the quantum tower.

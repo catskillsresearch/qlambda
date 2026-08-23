@@ -5,6 +5,7 @@ Authors: Lars Warren Ericson.
 -/
 import Mathlib.Data.Fintype.Sigma
 import Mathlib.Analysis.Real.Sqrt
+import Mathlib.Analysis.InnerProductSpace.Positive
 import QLambda.QuantumStateSpace
 
 /-!
@@ -107,6 +108,29 @@ theorem applyMat_matrixUnit (K : KrausFamily n m) (p q : Fin m × Fin n) :
     congr 1
     simp [matrixUnit, choiTerm, Matrix.mul_apply]
 
+/-- Every output coordinate is the contraction of the input matrix with
+the corresponding block of the Choi matrix. -/
+theorem applyMat_apply (K : KrausFamily n m)
+    (ρ : Matrix (Fin n) (Fin n) ℂ) (a b : Fin m) :
+    applyMat K ρ a b =
+      ∑ i, ∑ j, choi K (a, i) (b, j) * ρ i j := by
+  induction K with
+  | nil => simp [applyMat, choi]
+  | cons A K ih =>
+      change (A * ρ * Aᴴ) a b + applyMat K ρ a b =
+        ∑ i, ∑ j, choi (A :: K) (a, i) (b, j) * ρ i j
+      rw [choi_cons, ih]
+      simp only [Matrix.add_apply, choiTerm, add_mul, Finset.sum_add_distrib]
+      congr 1
+      simp only [Matrix.mul_apply, conjTranspose_apply]
+      simp_rw [Finset.sum_mul]
+      rw [Finset.sum_comm]
+      apply Finset.sum_congr rfl
+      intro i _
+      apply Finset.sum_congr rfl
+      intro j _
+      ring
+
 theorem choiTerm_posSemidef (A : KrausOperator n m) :
     (choiTerm A).PosSemidef := by
   let v : Fin m × Fin n → ℂ := fun p => A p.1 p.2
@@ -125,6 +149,24 @@ theorem choi_posSemidef (K : KrausFamily n m) :
 theorem choi_nonneg (K : KrausFamily n m) : 0 ≤ choi K := by
   rw [Matrix.le_iff]
   simpa using choi_posSemidef K
+
+/-- Every positive semidefinite matrix on the Choi coordinate space has
+a finite Kraus presentation. -/
+theorem exists_krausFamily_choi_eq
+    {M : Matrix (Fin m × Fin n) (Fin m × Fin n) ℂ}
+    (hM : M.PosSemidef) :
+    ∃ K : KrausFamily n m, choi K = M := by
+  obtain ⟨k, v, hv⟩ :=
+    Matrix.posSemidef_iff_eq_sum_vecMulVec.mp hM
+  let A : Fin k → KrausOperator n m :=
+    fun r i j => v r (i, j)
+  refine ⟨List.ofFn A, ?_⟩
+  rw [choi, List.map_ofFn, List.sum_ofFn, hv]
+  apply Finset.sum_congr rfl
+  intro r _
+  ext p q
+  change v r p * star (v r q) = v r p * star (v r q)
+  rfl
 
 /-- Equality of Choi denotations. -/
 def ChoiSemEq (K L : KrausFamily n m) : Prop :=
@@ -154,6 +196,20 @@ theorem choi_eq_of_semEq {K L : KrausFamily n m} (hKL : SemEq K L) :
   ext p q
   rw [← applyMat_matrixUnit K p q, ← applyMat_matrixUnit L p q, hKL]
 
+/-- Equality of Choi matrices implies extensional equality of the
+represented operator-sum maps. -/
+theorem semEq_of_choi_eq {K L : KrausFamily n m}
+    (hKL : choi K = choi L) : SemEq K L := by
+  intro ρ
+  ext a b
+  rw [applyMat_apply, applyMat_apply, hKL]
+
+/-- Choi equality exactly characterizes extensional equality of finite
+Kraus presentations. -/
+theorem semEq_iff_choi_eq (K L : KrausFamily n m) :
+    SemEq K L ↔ choi K = choi L :=
+  ⟨choi_eq_of_semEq, semEq_of_choi_eq⟩
+
 /-- Residual CP refinement implies Loewner refinement of Choi
 denotations. -/
 theorem choiRefines_of_residualRefines {K L : KrausFamily n m}
@@ -161,6 +217,22 @@ theorem choiRefines_of_residualRefines {K L : KrausFamily n m}
   obtain ⟨R, hR⟩ := hKL
   rw [ChoiRefines, choi_eq_of_semEq hR, choi_append]
   exact le_add_of_nonneg_right (choi_nonneg R)
+
+/-- Loewner refinement of Choi denotations is witnessed by a residual
+finite Kraus family. -/
+theorem residualRefines_of_choiRefines {K L : KrausFamily n m}
+    (hKL : ChoiRefines K L) : ResidualRefines K L := by
+  have hdiff : (choi L - choi K).PosSemidef := hKL
+  obtain ⟨R, hR⟩ := exists_krausFamily_choi_eq hdiff
+  refine ⟨R, semEq_of_choi_eq ?_⟩
+  rw [choi_append, hR]
+  abel
+
+/-- Residual refinement and Choi/Loewner refinement coincide for finite
+Kraus families. -/
+theorem residualRefines_iff_choiRefines (K L : KrausFamily n m) :
+    ResidualRefines K L ↔ ChoiRefines K L :=
+  ⟨choiRefines_of_residualRefines, residualRefines_of_choiRefines⟩
 
 theorem applySemEq_refl (K : KrausFamily n m) : ApplySemEq K K :=
   fun _ => rfl
@@ -325,6 +397,19 @@ theorem applyMat_comp {ℓ : ℕ} (L : KrausFamily m ℓ) (K : KrausFamily n m)
     change B * applyMat K ρ * Bᴴ + applyMat (comp L K) ρ =
       applyMat (B :: L) (applyMat K ρ)
     rw [ih, applyMat_cons]
+
+/-- Coordinate formula for the Choi matrix of sequential composition. -/
+theorem choi_comp_apply {ℓ : ℕ} (L : KrausFamily m ℓ)
+    (K : KrausFamily n m) (a b : Fin ℓ) (i j : Fin n) :
+    choi (comp L K) (a, i) (b, j) =
+      ∑ x, ∑ y, choi L (a, x) (b, y) * choi K (x, i) (y, j) := by
+  rw [← applyMat_matrixUnit (comp L K) (a, i) (b, j), applyMat_comp,
+    applyMat_apply]
+  apply Finset.sum_congr rfl
+  intro x _
+  apply Finset.sum_congr rfl
+  intro y _
+  rw [applyMat_matrixUnit K (x, i) (y, j)]
 
 theorem applyMat_scale (c : ℂ) (K : KrausFamily n m)
     (ρ : Matrix (Fin n) (Fin n) ℂ) :

@@ -17,8 +17,16 @@ import QLambda.QuantumInstrument
 import QLambda.QuantumPower
 import QLambda.QuantumStateSpace
 import QLambda.RationalComplex
+import QLambda.RationalCP
 import QLambda.RefinementCounterexample
 import QLambda.RoundedTheory
+import QLambda.RoundedTheoryMorphisms
+import QLambda.RoundedTheoryOmega
 import QLambda.Saturation
 import QLambda.ScottLowerSet
 import QLambda.Syntax
+import QLambda.TTObservationBasis
+import QLambda.TTContinuationMonad
+import QLambda.TTRefinement
+import QLambda.TTRoundedTheory
+import QLambda.TTTokenTheoryOperations

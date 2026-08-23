@@ -11,8 +11,8 @@ import QLambda.QuantumPower
 Paper §5. Selinger–Valiron treat quantum computation as a monad on a
 linear-nonlinear layer. `IsQuantumPowerModel` is only an endofunctor
 spec. This chapter records the additional operations and laws needed
-for a computation-valued interpretation. No concrete instance is
-claimed until the CP-instrument carrier is constructed.
+for a computation-valued interpretation. Concrete instances are supplied
+by later modules, notably `QLambda.TTContinuationMonad`.
 -/
 
 namespace QLambda

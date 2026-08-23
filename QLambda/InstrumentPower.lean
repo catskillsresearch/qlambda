@@ -280,6 +280,24 @@ theorem bind_unit_equiv [Preorder D] (μ : FiniteInstrumentComp n D) :
     (wpKraus_bind_semEq μ (unit (n := n)) P)
     (wpKraus_semEq_pred μ fun d => wpKraus_unit_semEq d P)
 
+/-- Associativity of finite instrument bind, modulo mutual TT refinement. -/
+theorem bind_assoc_equiv [Preorder D] [Preorder E] {F : Type u} [Preorder F]
+    (μ : FiniteInstrumentComp n D)
+    (f : D → FiniteInstrumentComp n E)
+    (g : E → FiniteInstrumentComp n F) :
+    Equiv ((μ.bind f).bind g) (μ.bind fun d => (f d).bind g) := by
+  apply equiv_of_wpKraus_semEq
+  intro P
+  exact KrausFamily.applySemEq_trans
+    (wpKraus_bind_semEq (μ.bind f) g P)
+    (KrausFamily.applySemEq_trans
+      (wpKraus_bind_semEq μ f fun e => (g e).wpKraus P)
+      (KrausFamily.applySemEq_trans
+        (wpKraus_semEq_pred μ fun d =>
+          KrausFamily.applySemEq_symm (wpKraus_bind_semEq (f d) g P))
+        (KrausFamily.applySemEq_symm
+          (wpKraus_bind_semEq μ (fun d => (f d).bind g) P))))
+
 theorem map_equiv_bind_unit [Preorder D] [Preorder E]
     (f : D → E) (μ : FiniteInstrumentComp n D) :
     Equiv (μ.map f) (μ.bind fun d => unit (n := n) (f d)) := by
