@@ -20,6 +20,9 @@ namespace Scott1972.ContinuousLattice
 
 universe u
 
+set_option autoImplicit false
+set_option relaxedAutoImplicit false
+
 /-- A pointed object of `ωQVA`. -/
 structure QDomain : Type (u + 1) where
   carrier : Type u

@@ -28,9 +28,14 @@ namespace Scott1972.ContinuousLattice
 
 universe u
 
-variable {D E F : Type u} [CompleteLattice D] [CompleteLattice E] [CompleteLattice F]
+set_option autoImplicit false
+set_option relaxedAutoImplicit false
 
 open DensityVec
+
+section Carriers
+
+variable {D E F : Type u} [CompleteLattice D] [CompleteLattice E] [CompleteLattice F]
 
 /-- The empty set is Scott-open. -/
 theorem scottOpen_empty : ScottOpen (∅ : Set D) :=
@@ -68,6 +73,8 @@ extension off `ωQVA` is not yet constructed. -/
 noncomputable def QuantumSaturationPower (D : Type u) [CompleteLattice D] : Type u := by
   sorry
 
+end Carriers
+
 /-- Spec of a quantum powerdomain model. Both (V) and (S) are instances. -/
 class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) where
   str : ∀ (D : Type u) [CompleteLattice D], CompleteLattice (Q D)
@@ -85,7 +92,7 @@ class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) 
     letI := str E
     letI := str F
     map (f.comp g) = (map f).comp (map g)
-  closed : ∀ {D : Type u} [CompleteLattice D] (h : IsOmegaQVA D),
+  closed : ∀ {D : Type u} [CompleteLattice D] (_h : IsOmegaQVA D),
     letI := str D
     IsOmegaQVA (Q D)
 
@@ -106,28 +113,23 @@ structure QuantumPowerModel where
 
 attribute [instance] QuantumPowerModel.spec
 
-section ModelAPI
-
-variable (M : QuantumPowerModel)
-
 /-- Carrier of the model at `D`. -/
-abbrev QuantumPower (D : Type u) [CompleteLattice D] : Type u :=
+abbrev QuantumPower (M : QuantumPowerModel) (D : Type u) [CompleteLattice D] : Type u :=
   M.Power D
 
 /-- `[D → Q(D)]` for the chosen model. -/
-abbrev QuantumFunctor (D : Type u) [CompleteLattice D] : Type u :=
+abbrev QuantumFunctor (M : QuantumPowerModel) (D : Type u) [CompleteLattice D] : Type u :=
   ScottMap D (M.Power D)
 
 /-- `ωQVA` is closed under the model's powerdomain. -/
-abbrev omegaQVA_closed_under_quantumPower {D : Type u} [CompleteLattice D]
-    (h : IsOmegaQVA D) : IsOmegaQVA (M.Power D) :=
+abbrev omegaQVA_closed_under_quantumPower (M : QuantumPowerModel) {D : Type u}
+    [CompleteLattice D] (h : IsOmegaQVA D) : IsOmegaQVA (M.Power D) :=
   IsQuantumPowerModel.closed (Q := M.Power) h
 
-end ModelAPI
-
 /-- `ωQVA` is Cartesian closed (not a field of the spec). -/
-noncomputable def omegaQVA_closed_under_functionSpace (hD : IsOmegaQVA D) (hE : IsOmegaQVA E) :
-    IsOmegaQVA (ScottMap D E) := by
+noncomputable def omegaQVA_closed_under_functionSpace {D E : Type u}
+    [CompleteLattice D] [CompleteLattice E]
+    (hD : IsOmegaQVA D) (hE : IsOmegaQVA E) : IsOmegaQVA (ScottMap D E) := by
   sorry
 
 /-- **(V)** bundled as a quantum model. -/

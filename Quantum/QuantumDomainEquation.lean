@@ -3,6 +3,7 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
+import Quantum.QuantumPower
 import Quantum.QDomain
 import Scott1972.ContinuousLattice.FunctionSpaceTower
 import Scott1972.ContinuousLattice.InverseLimits
@@ -18,6 +19,9 @@ of `D_{n+1} = [D_n → Q(D_n)]` lies in `ωQVA` and solves
 namespace Scott1972.ContinuousLattice
 
 universe u
+
+set_option autoImplicit false
+set_option relaxedAutoImplicit false
 
 /-- `ωQVA` structure on the inverse limit: retract of a countable
 product of `ωQVA` stages. Requires `qTowerProj`. -/
