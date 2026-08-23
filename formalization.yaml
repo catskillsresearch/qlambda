@@ -50,8 +50,11 @@ status:
     Hermitian Choi matrices, and the construction of a cofinal countable
     output basis from every IsOmegaQVA witness are now proved in
     QLambda/RationalComplex.lean and QLambda/ObservationBasis.lean.
-    Their completion and model instance remain open. Nothing in the
-    compared statements is imported from a prior Palomar entry.
+    QLambda/RoundedTheory.lean constructs the semantic-entailment
+    saturated rounded completion of the coded strict tokens and proves
+    it is a continuous lattice. Its comparison with TT/Choi refinement
+    and the model instance remain open. Nothing in the compared
+    statements is imported from a prior Palomar entry.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -196,7 +199,6 @@ review:
     review has been performed.
 
 known_gaps:
-  - "Build the saturated rounded-theory completion of the implemented strict rational Choi/output tokens and prove it is a continuous lattice."
   - "Prove that the token order reconstructs TT/Choi refinement and that physical trace-nonincreasing instruments embed as ideals or form a continuous retract."
   - "Lift finite unit, pushforward, and bind to tokens and prove continuity and local continuity of their Scott-closed extensions."
   - "Construct QFactorable finitely separated approximants for the token completion and only then instantiate IsQuantumPowerModel and IsQuantumMonad."
