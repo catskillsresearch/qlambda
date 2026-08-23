@@ -26,17 +26,13 @@ classification:
 
 status:
   scope: >-
-    Initial Palomar registration of the capstone
-    omegaQVA_quantum_domain_equation_solved together with the supporting
-    type surface (QDomain, QuantumFunctor, qTower, QDInf, IsOmegaQVA,
-    QFactorable, FinitelySeparated, SubNormalizedDensity). The 1972
-    inverse-limit half (embInfInf / projInfInf / theorem_4_4_orderIso /
-    idInf_eq_iSup) is imported from vendor/scott1972. Saturation
-    flattening is a mechanization of Chen–Kou–Lyu Lemmas 6.8–6.9.
-    Nothing in the compared statements is imported from a prior Palomar
-    entry.
-  sorry_count: 0
-  sorry_in_definitions: 0
+    Compared claim is D_∞ ≅ [D_∞ → Q(D_∞)] for the quantum tower
+    D_{n+1} = [D_n → Q(D_n)]. QuantumPower and ωQVA-closure under Q
+    and function space are definition holes. Saturation flattening is
+    a mechanization of Chen–Kou–Lyu Lemmas 6.8–6.9. Nothing in the
+    compared statements is imported from a prior Palomar entry.
+  sorry_count: 1
+  sorry_in_definitions: 1
   axioms: ["propext", "Quot.sound", "Classical.choice"]
   main_results:
     - declaration: "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved"
@@ -189,15 +185,16 @@ limitations:
     Classical.choice is permitted (1972 topological ≪). There is no
     project-defined axiom and no native_decide in the compared proofs.
   - >-
-    QDomain.functionSpace_omega is an explicit Cartesian-closure
-    hypothesis so the tower stages stay in ωQVA; it is not discharged
-    by a function-space saturation proof in this snapshot.
+    QuantumPower (Q(D)), omegaQVA_closed_under_quantumPower, and
+    omegaQVA_closed_under_functionSpace are definition holes. The
+    compared capstone is typed as D_∞ ≅ [D_∞ → Q(D_∞)]; the iso and
+    the maps qEmbInfInf / qProjInfInf are sorry. qTowerProj is sorry.
+    ωQVA membership of the limit is the retract-of-product argument
+    once those holes are filled.
   - >-
     Saturation Lean in this repo is an original mechanization of
     arXiv:2608.03073 Lemmas 6.5–6.7. Cartesian closure of function
-    spaces is the QDomain.functionSpace_omega hypothesis, not a
-    discharged theorem. QuantumFunctor is [D → D], not a constructed
-    quantum powerdomain.
+    spaces and closure under Q are not discharged.
 
 alignment:
   namespace: "Scott1972.ContinuousLattice"
@@ -205,11 +202,12 @@ alignment:
     - source: "D_∞ of the quantum tower is in ωQVA and D_∞ ≅ [D_∞ → Q(D_∞)] (arxiv.md, §8)"
       lean: "omegaQVA_quantum_domain_equation_solved"
       module: "Challenge (statement), Solution / Quantum.QuantumDomainEquation (proof)"
-      status: proved
+      status: stated
       note: >-
-        Compared by Comparator as a theorem. Inverse-limit identities
-        are Scott 1972 Theorem 4.4; ωQVA membership is saturation of
-        the embedding–projection sequence.
+        Compared by Comparator as a theorem. The type is
+        D_∞ ≅ [D_∞ → Q(D_∞)]. The iso and qEmbInfInf / qProjInfInf
+        are unproved; the last conjunct is Scott's inverse-limit
+        identity on the quantum tower.
 
     - source: "The quantum inverse limit is an ωQVA object (arxiv.md, §6–8)"
       lean: "qDInf_isOmegaQVA"

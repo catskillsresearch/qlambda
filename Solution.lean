@@ -10,7 +10,8 @@ import Quantum.Saturation
 # Solutions to the Challenge
 
 Importing the QLambda proof modules supplies the compared capstone
-`omegaQVA_quantum_domain_equation_solved`, `qDInf_isOmegaQVA`, and
-`finitelySeparated_wayBelow`, with the same names and types as in
-`Challenge.lean`.
+`omegaQVA_quantum_domain_equation_solved` (`D_∞ ≅ [D_∞ → Q(D_∞)]`),
+`qDInf_isOmegaQVA`, and `finitelySeparated_wayBelow`, with the same
+names and types as in `Challenge.lean`. `QuantumPower` and the two
+`ωQVA` closure maps are definition holes.
 -/

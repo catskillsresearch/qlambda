@@ -20,12 +20,9 @@ import Mathlib.Topology.Order.ScottTopology
 # Palomar statement of record (ωQVA quantum domain equation)
 
 This module states the compared capstone and its type surface. It imports
-only Mathlib. Sorry-free proofs live in `Quantum/` and are exposed through
-`Solution.lean`. Challenge is allowed `sorry`.
-
-The type surface uses the same fully-qualified names as `Quantum/` and
-`vendor/scott1972`, so Comparator can identify the constants. It is not a
-copy of the proof modules.
+only Mathlib. Challenge is allowed `sorry`. The intended claim is
+`D_∞ ≅ [D_∞ → Q(D_∞)]` for a quantum powerdomain `Q`, not Scott's
+`[D_∞ → D_∞]`.
 -/
 
 open Matrix
@@ -153,23 +150,6 @@ structure CLat : Type (u + 1) where
 
 attribute [instance] CLat.str
 
-/-- The tower `D₀, [D₀→D₀], [[D₀→D₀]→[D₀→D₀]], …` as bundled complete lattices. -/
-noncomputable def towerCLat (D₀ : CLat.{u}) : ℕ → CLat.{u}
-  | 0 => D₀
-  | (n + 1) => ⟨ScottMap (towerCLat D₀ n).carrier (towerCLat D₀ n).carrier⟩
-
-/-- The carrier `Dₙ` of the function-space tower. -/
-def towerType (D₀ : CLat.{u}) (n : ℕ) : Type u := (towerCLat D₀ n).carrier
-
-noncomputable instance towerCompleteLattice (D₀ : CLat.{u}) (n : ℕ) :
-    CompleteLattice (towerType D₀ n) := (towerCLat D₀ n).str
-
-/-- The projection tower `j_{n+1} = [j_n → j_n]`. -/
-noncomputable def towerProj (D₀ : CLat.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (ScottMap D₀.carrier D₀.carrier)) :
-    ∀ n, IsContinuousLatticeProjection (towerType D₀ n) (towerType D₀ (n + 1)) := by
-  sorry
-
 /-- The embedding `i_{n∞} : Dₙ → D_∞`, Scott-continuous. -/
 noncomputable def embInf (D : ℕ → Type u) [∀ n, CompleteLattice (D n)]
     (P : ∀ n, IsContinuousLatticeProjection (D n) (D (n + 1))) (n : ℕ) :
@@ -180,28 +160,6 @@ noncomputable def embInf (D : ℕ → Type u) [∀ n, CompleteLattice (D n)]
 noncomputable def projInf (D : ℕ → Type u) [∀ n, CompleteLattice (D n)]
     (P : ∀ n, IsContinuousLatticeProjection (D n) (D (n + 1))) (n : ℕ) :
     ScottMap (InverseLimit D P) (D n) := by
-  sorry
-
-/-- The inverse limit `D_∞` of the function-space tower `⟨Dₙ, jₙ⟩`. -/
-abbrev DInf (D₀ : CLat.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (ScottMap D₀.carrier D₀.carrier)) : Type u :=
-  InverseLimit (towerType D₀) (towerProj D₀ j₀)
-
-/-- The function space `[D_∞ → D_∞]`. -/
-abbrev DInfFn (D₀ : CLat.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (ScottMap D₀.carrier D₀.carrier)) : Type u :=
-  ScottMap (DInf D₀ j₀) (DInf D₀ j₀)
-
-/-- **Scott 1972, Theorem 4.4.** The embedding `i_∞ : D_∞ → [D_∞ → D_∞]`. -/
-noncomputable def embInfInf (D₀ : CLat.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (ScottMap D₀.carrier D₀.carrier)) :
-    ScottMap (DInf D₀ j₀) (DInfFn D₀ j₀) := by
-  sorry
-
-/-- **Scott 1972, Theorem 4.4.** The projection `j_∞ : [D_∞ → D_∞] → D_∞`. -/
-noncomputable def projInfInf (D₀ : CLat.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (ScottMap D₀.carrier D₀.carrier)) :
-    ScottMap (DInfFn D₀ j₀) (DInf D₀ j₀) := by
   sorry
 
 /-- Finite product of Loewner spectrahedra, one block per matrix size. -/
@@ -244,48 +202,93 @@ class IsOmegaQVA (D : Type*) [CompleteLattice D] where
   monotone_approx : Monotone approx
   iSup_approx : (⨆ n, approx n) = ScottMap.idMap
 
-/-- Bundled continuous lattice in `ωQVA`, closed under the quantum
-function-space functor. -/
+/-- Quantum state powerdomain `Q(D)`. -/
+noncomputable def QuantumPower (D : Type u) [CompleteLattice D] : Type u := by
+  sorry
+
+noncomputable instance instCompleteLatticeQuantumPower (D : Type u) [CompleteLattice D] :
+    CompleteLattice (QuantumPower D) := by
+  sorry
+
+/-- `[D → Q(D)]`. -/
+abbrev QuantumFunctor (D : Type u) [CompleteLattice D] : Type u :=
+  ScottMap D (QuantumPower D)
+
+/-- `ωQVA` is closed under the quantum powerdomain. -/
+noncomputable def omegaQVA_closed_under_quantumPower {D : Type u} [CompleteLattice D]
+    (h : IsOmegaQVA D) : IsOmegaQVA (QuantumPower D) := by
+  sorry
+
+/-- `ωQVA` is Cartesian closed. -/
+noncomputable def omegaQVA_closed_under_functionSpace {D E : Type u}
+    [CompleteLattice D] [CompleteLattice E]
+    (hD : IsOmegaQVA D) (hE : IsOmegaQVA E) : IsOmegaQVA (ScottMap D E) := by
+  sorry
+
+/-- A pointed object of `ωQVA`. -/
 structure QDomain : Type (u + 1) where
   carrier : Type u
   [str : CompleteLattice carrier]
   omega : IsOmegaQVA carrier
-  functionSpace_omega :
-    ∀ {E : Type u} [CompleteLattice E],
-      IsOmegaQVA E → IsOmegaQVA (ScottMap E E)
 
 attribute [instance] QDomain.str
 
-/-- `[D → Q(D)]` as a Scott function space on the carrier. -/
-abbrev QuantumFunctor (D : Type u) [CompleteLattice D] : Type u :=
-  ScottMap D D
+/-- The quantum tower `D_{n+1} = [D_n → Q(D_n)]` as bundled lattices. -/
+noncomputable def qTowerCLat (D₀ : CLat.{u}) : ℕ → CLat.{u}
+  | 0 => D₀
+  | n + 1 =>
+    ⟨ScottMap (qTowerCLat D₀ n).carrier (QuantumPower (qTowerCLat D₀ n).carrier)⟩
 
-/-- The quantum tower `D_{n+1} = [D_n → Q(D_n)]`. -/
+/-- The carrier `Dₙ` of the quantum tower. -/
+def qTowerType (D₀ : CLat.{u}) (n : ℕ) : Type u := (qTowerCLat D₀ n).carrier
+
+noncomputable instance qTowerCompleteLattice (D₀ : CLat.{u}) (n : ℕ) :
+    CompleteLattice (qTowerType D₀ n) := (qTowerCLat D₀ n).str
+
+/-- The quantum tower as a sequence of `QDomain`s. -/
 noncomputable def qTower (D₀ : QDomain.{u}) : ℕ → QDomain.{u}
   | 0 => D₀
   | n + 1 =>
-    { carrier := ScottMap (qTower D₀ n).carrier (qTower D₀ n).carrier
-      omega := D₀.functionSpace_omega (qTower D₀ n).omega
-      functionSpace_omega := D₀.functionSpace_omega }
+    { carrier := ScottMap (qTower D₀ n).carrier (QuantumPower (qTower D₀ n).carrier)
+      omega :=
+        omegaQVA_closed_under_functionSpace (qTower D₀ n).omega
+          (omegaQVA_closed_under_quantumPower (qTower D₀ n).omega) }
+
+/-- Bonding projections `j_{n+1} = F(j_n)` for `F(X) = [X → Q(X)]`. -/
+noncomputable def qTowerProj (D₀ : CLat.{u})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor D₀.carrier)) :
+    ∀ n, IsContinuousLatticeProjection (qTowerType D₀ n) (qTowerType D₀ (n + 1)) := by
+  sorry
 
 /-- Inverse limit of the quantum tower. -/
 abbrev QDInf (D₀ : QDomain.{u})
     (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor D₀.carrier)) :
     Type u :=
-  InverseLimit (towerType ⟨D₀.carrier⟩) (towerProj ⟨D₀.carrier⟩ j₀)
+  InverseLimit (qTowerType ⟨D₀.carrier⟩) (qTowerProj ⟨D₀.carrier⟩ j₀)
 
-/-- Compared capstone: the quantum inverse limit is in `ωQVA` and solves
-`D_∞ ≅ [D_∞ → Q(D_∞)]`. -/
+/-- Embedding `i_∞ : D_∞ → [D_∞ → Q(D_∞)]`. -/
+noncomputable def qEmbInfInf (D₀ : QDomain.{u})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor D₀.carrier)) :
+    ScottMap (QDInf D₀ j₀) (QuantumFunctor (QDInf D₀ j₀)) := by
+  sorry
+
+/-- Projection `j_∞ : [D_∞ → Q(D_∞)] → D_∞`. -/
+noncomputable def qProjInfInf (D₀ : QDomain.{u})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor D₀.carrier)) :
+    ScottMap (QuantumFunctor (QDInf D₀ j₀)) (QDInf D₀ j₀) := by
+  sorry
+
+/-- Compared capstone: `D_∞` is in `ωQVA` and `D_∞ ≅ [D_∞ → Q(D_∞)]`. -/
 theorem omegaQVA_quantum_domain_equation_solved
     (D₀ : QDomain.{u})
     (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor D₀.carrier)) :
     Nonempty (IsOmegaQVA (QDInf D₀ j₀)) ∧
-    (projInfInf ⟨D₀.carrier⟩ j₀).comp (embInfInf ⟨D₀.carrier⟩ j₀) = ScottMap.idMap ∧
-    (embInfInf ⟨D₀.carrier⟩ j₀).comp (projInfInf ⟨D₀.carrier⟩ j₀) = ScottMap.idMap ∧
-    Nonempty (QDInf D₀ j₀ ≃o ScottMap (QDInf D₀ j₀) (QDInf D₀ j₀)) ∧
+    (qProjInfInf D₀ j₀).comp (qEmbInfInf D₀ j₀) = ScottMap.idMap ∧
+    (qEmbInfInf D₀ j₀).comp (qProjInfInf D₀ j₀) = ScottMap.idMap ∧
+    Nonempty (QDInf D₀ j₀ ≃o ScottMap (QDInf D₀ j₀) (QuantumPower (QDInf D₀ j₀))) ∧
     (ScottMap.idMap : ScottMap (QDInf D₀ j₀) (QDInf D₀ j₀)) =
-      ⨆ n, (embInf (towerType ⟨D₀.carrier⟩) (towerProj ⟨D₀.carrier⟩ j₀) n).comp
-            (projInf (towerType ⟨D₀.carrier⟩) (towerProj ⟨D₀.carrier⟩ j₀) n) := by
+      ⨆ n, (embInf (qTowerType ⟨D₀.carrier⟩) (qTowerProj ⟨D₀.carrier⟩ j₀) n).comp
+            (projInf (qTowerType ⟨D₀.carrier⟩) (qTowerProj ⟨D₀.carrier⟩ j₀) n) := by
   sorry
 
 @[reducible] noncomputable def qDInf_isOmegaQVA

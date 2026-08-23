@@ -7,8 +7,12 @@
   ],
   "definition_names": [
     "Scott1972.ContinuousLattice.qDInf_isOmegaQVA",
+    "Scott1972.ContinuousLattice.QuantumPower",
     "Scott1972.ContinuousLattice.QuantumFunctor",
+    "Scott1972.ContinuousLattice.omegaQVA_closed_under_quantumPower",
+    "Scott1972.ContinuousLattice.omegaQVA_closed_under_functionSpace",
     "Scott1972.ContinuousLattice.qTower",
+    "Scott1972.ContinuousLattice.qTowerType",
     "Scott1972.ContinuousLattice.QDInf",
     "Scott1972.ContinuousLattice.FinitelySeparated",
     "Scott1972.ContinuousLattice.IsContinuousLattice",
