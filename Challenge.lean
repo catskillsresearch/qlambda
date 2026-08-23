@@ -215,23 +215,6 @@ class IsOmegaQVA (D : Type*) [CompleteLattice D] where
   monotone_approx : Monotone approx
   iSup_approx : (⨆ n, approx n) = ScottMap.idMap
 
-/-- The empty set is Scott-open. -/
-theorem scottOpen_empty : ScottOpen (∅ : Set D) :=
-  ⟨isUpperSet_empty, fun _ _ _ hmem => False.elim hmem⟩
-
-/-- Scott-opens of `D`, ordered by inclusion. -/
-abbrev ScottOpens (D : Type*) [CompleteLattice D] := { U : Set D // ScottOpen U }
-
-/-- **(V)** A quantum valuation on `D` valued in a fixed finite `DensityVec`. -/
-structure QuantumValuation (D : Type*) [CompleteLattice D] (dims : List ℕ) where
-  val : ScottOpens D → DensityVec dims
-  monotone : Monotone val
-  map_empty : val ⟨∅, scottOpen_empty⟩ = ⊥
-
-/-- **(V)** Quantum valuations with a varying finite algebra. -/
-def QuantumValuationPower (D : Type u) [CompleteLattice D] : Type u :=
-  Σ dims : List ℕ, QuantumValuation D dims
-
 /-- Conditional specification of a quantum powerdomain model. -/
 class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) where
   str : ∀ (D : Type u) [CompleteLattice D], CompleteLattice (Q D)

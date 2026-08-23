@@ -14,13 +14,9 @@ powerdomain: `Q` sends complete lattices to complete lattices, is a
 Scott functor (including monotonicity and local continuity on monotone
 `ℕ`-families), and preserves `ωQVA`.
 
-`QuantumValuationPower` and `QuantumSaturationFamily` record two
-exploratory carrier ideas. Neither is claimed to satisfy the spec. The
-concrete development now starts from CP instruments in
-`QLambda.QuantumInstrument`.
-
-A `QuantumPowerModel` is a bundled `Q` with its instance. The capstone
-is parameterized by that bundle.
+The concrete computational layer starts from CP instruments in
+`QLambda.QuantumInstrument`. A `QuantumPowerModel` is a bundled `Q`
+with its instance. The capstone is parameterized by that bundle.
 -/
 
 namespace Scott1972.ContinuousLattice
@@ -31,45 +27,6 @@ set_option autoImplicit false
 set_option relaxedAutoImplicit false
 
 open DensityVec
-
-section Carriers
-
-variable {D E F : Type u} [CompleteLattice D] [CompleteLattice E] [CompleteLattice F]
-
-/-- The empty set is Scott-open. -/
-theorem scottOpen_empty : ScottOpen (∅ : Set D) :=
-  ⟨isUpperSet_empty, fun _ _ _ hmem => False.elim hmem⟩
-
-/-- Scott-opens of `D`, ordered by inclusion. -/
-abbrev ScottOpens (D : Type*) [CompleteLattice D] := { U : Set D // ScottOpen U }
-
-/-- **(V)** A quantum valuation on `D` valued in a fixed finite
-`DensityVec dims` (the size parameter: one algebra, or a finite
-direct sum). Directed-union continuity is the remaining axiom. -/
-structure QuantumValuation (D : Type*) [CompleteLattice D] (dims : List ℕ) where
-  val : ScottOpens D → DensityVec dims
-  monotone : Monotone val
-  map_empty : val ⟨∅, scottOpen_empty⟩ = ⊥
-
-/-- **(V)** Quantum valuations with a varying finite algebra. -/
-def QuantumValuationPower (D : Type u) [CompleteLattice D] : Type u :=
-  Σ dims : List ℕ, QuantumValuation D dims
-
-/-- Bonding of finite densities along the `ωQVA` approximate identity:
-the reconstructed points satisfy `recon_n(ρ_n) = a_n(recon_{n+1}(ρ_{n+1}))`. -/
-def QuantumSaturationCompatible [IsOmegaQVA D]
-    (ρ : ∀ n, DensityVec (IsOmegaQVA.qfactorable (D := D) n).dims) : Prop :=
-  ∀ n,
-    (IsOmegaQVA.qfactorable (D := D) n).recon (ρ n) =
-      (IsOmegaQVA.approx n : D → D)
-        ((IsOmegaQVA.qfactorable (D := D) (n + 1)).recon (ρ (n + 1)))
-
-/-- Compatible families of finite densities, on `ωQVA` objects. -/
-def QuantumSaturationFamily [IsOmegaQVA D] :=
-  { ρ : ∀ n, DensityVec (IsOmegaQVA.qfactorable (D := D) n).dims //
-    QuantumSaturationCompatible ρ }
-
-end Carriers
 
 /-- Conditional specification of a quantum powerdomain model. -/
 class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) where

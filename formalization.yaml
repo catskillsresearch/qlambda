@@ -28,8 +28,7 @@ status:
   scope: >-
     Compared claim is the capstone parameterized by a QuantumPowerModel
     (a Q satisfying IsQuantumPowerModel). No concrete quantum-powerdomain
-    instance is currently claimed. QuantumValuationPower and the
-    object-relative QuantumSaturationFamily are exploratory only. The tower is
+    instance is currently claimed. The tower is
     D_{n+1} = [D_n → Q(D_n)]; qTowerProj, qEmbInfInf, qProjInfInf, and
     the parameterized order isomorphism are defined. Finite Kraus
     families, TNI operations, instruments, and the Type-level monad
@@ -196,9 +195,9 @@ limitations:
     Classical.choice is permitted (1972 topological ≪). There is no
     project-defined axiom and no native_decide in the compared proofs.
   - >-
-    IsQuantumPowerModel is a conditional specification. The exploratory
-    valuation and saturation carriers have no instances and no concrete
-    corollaries. The tower maps, inverse identities, and order iso are
+    IsQuantumPowerModel is a conditional specification. No concrete
+    quantum-powerdomain instance is claimed. The tower maps, inverse
+    identities, and order iso are
     defined from the spec (map, map_mono, map_iSup).
     ωQVA membership of the limit is the retract-of-product argument.
   - >-
