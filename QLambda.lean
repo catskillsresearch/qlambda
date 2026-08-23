@@ -5,6 +5,7 @@ Authors: Lars Warren Ericson.
 -/
 import QLambda.Effects
 import QLambda.Interp
+import QLambda.InstrumentPower
 import QLambda.Monad
 import QLambda.OmegaQVA
 import QLambda.Operational

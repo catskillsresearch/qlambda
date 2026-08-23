@@ -32,9 +32,16 @@ status:
     D_{n+1} = [D_n → Q(D_n)]; qTowerProj, qEmbInfInf, qProjInfInf, and
     the parameterized order isomorphism are defined. Finite Kraus
     families, TNI operations, instruments, and the Type-level monad
-    FiniteInstrumentComp are defined and proved; the Scott-complete
-    instrument powerdomain and model instance remain open. Nothing in
-    the compared statements is imported from a prior Palomar entry.
+    FiniteInstrumentComp are defined and proved. InstrumentPower now
+    antisymmetrizes Scott-open/Choi observational refinement and takes
+    its lower-set completion; its complete lattice, Scott-continuous
+    pushforward, identity/composition laws, and order enrichment are
+    proved, including a direct continuous-lattice proof. This carrier
+    cannot satisfy the remaining model fields: plain lower-set joins
+    make map_iSup false, Scott-open event tests are not congruent for
+    value-dependent quantum bind, and uncountably many compact scalar
+    instruments contradict omegaQVA finite separation. Nothing in the
+    compared statements is imported from a prior Palomar entry.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -179,8 +186,9 @@ review:
     review has been performed.
 
 known_gaps:
-  - "Complete FiniteInstrumentComp to a Scott-continuous instrument powerdomain on complete lattices."
-  - "Prove that completion is a lawful locally continuous monad preserving ωQVA, and instantiate IsQuantumPowerModel."
+  - "Replace the disproved plain lower-set completion by a countable rounded-ideal/Scott-closed completion in which limit instruments are not compact principals."
+  - "Replace Scott-open event refinement by a bind-congruent weakest-precondition/TT refinement over monotone Kraus-valued predicates."
+  - "For the redesigned carrier, prove local continuity and omegaQVA closure before instantiating IsQuantumPowerModel or IsQuantumMonad."
   - "Complete the computation-valued interpretation and operational adequacy proofs."
 
 limitations:

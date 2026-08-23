@@ -39,6 +39,17 @@ namespace KrausFamily
 
 variable {n m : ℕ}
 
+/-- Rank-one Choi contribution of one Kraus operator. -/
+def choiTerm (A : KrausOperator n m) :
+    Matrix (Fin m × Fin n) (Fin m × Fin n) ℂ :=
+  fun p q => A p.1 p.2 * star (A q.1 q.2)
+
+/-- Choi matrix of a Kraus presentation.  Unlike the Kraus list, this
+matrix is intrinsic to the represented completely positive map. -/
+def choi (K : KrausFamily n m) :
+    Matrix (Fin m × Fin n) (Fin m × Fin n) ℂ :=
+  (K.map choiTerm).sum
+
 /-- The matrix action `ρ ↦ Σᵢ Kᵢ ρ Kᵢ†` of a finite Kraus family. -/
 def applyMat (K : KrausFamily n m) (ρ : Matrix (Fin n) (Fin n) ℂ) :
     Matrix (Fin m) (Fin m) ℂ :=
@@ -60,6 +71,79 @@ def comp {ℓ : ℕ} (L : KrausFamily m ℓ) (K : KrausFamily n m) :
 /-- Scale every Kraus operator by a scalar. -/
 def scale (c : ℂ) (K : KrausFamily n m) : KrausFamily n m :=
   K.map (c • ·)
+
+@[simp] theorem choi_nil :
+    choi ([] : KrausFamily n m) = 0 := by
+  simp [choi]
+
+@[simp] theorem choi_single (A : KrausOperator n m) :
+    choi [A] = choiTerm A := by
+  simp [choi]
+
+theorem choi_cons (A : KrausOperator n m) (K : KrausFamily n m) :
+    choi (A :: K) = choiTerm A + choi K := by
+  simp [choi]
+
+theorem choi_append (K L : KrausFamily n m) :
+    choi (K ++ L) = choi K + choi L := by
+  simp [choi, List.map_append, List.sum_append]
+
+theorem choiTerm_posSemidef (A : KrausOperator n m) :
+    (choiTerm A).PosSemidef := by
+  let v : Fin m × Fin n → ℂ := fun p => A p.1 p.2
+  change (Matrix.vecMulVec v (star v)).PosSemidef
+  exact Matrix.posSemidef_vecMulVec_self_star v
+
+theorem choi_posSemidef (K : KrausFamily n m) :
+    (choi K).PosSemidef := by
+  induction K with
+  | nil => simpa using (Matrix.PosSemidef.zero :
+      (0 : Matrix (Fin m × Fin n) (Fin m × Fin n) ℂ).PosSemidef)
+  | cons A K ih =>
+      rw [choi_cons]
+      exact (choiTerm_posSemidef A).add ih
+
+theorem choi_nonneg (K : KrausFamily n m) : 0 ≤ choi K := by
+  rw [Matrix.le_iff]
+  simpa using choi_posSemidef K
+
+/-- Equality of Choi denotations. -/
+def ChoiSemEq (K L : KrausFamily n m) : Prop :=
+  choi K = choi L
+
+/-- The CP order: `K ⊑ L` when the Choi difference is positive
+semidefinite. -/
+def ChoiRefines (K L : KrausFamily n m) : Prop :=
+  choi K ≤ choi L
+
+/-- Extensional equality of the represented operator-sum maps. -/
+def SemEq (K L : KrausFamily n m) : Prop :=
+  ∀ ρ, applyMat K ρ = applyMat L ρ
+
+/-- Presentation-independent CP refinement witnessed by a residual
+Kraus family.  Thus `K ⊑ᵣ L` means `L = K + R` as CP maps. -/
+def Refines (K L : KrausFamily n m) : Prop :=
+  ∃ R : KrausFamily n m, SemEq L (K ++ R)
+
+abbrev ApplySemEq := @SemEq
+abbrev ResidualRefines := @Refines
+
+theorem applySemEq_refl (K : KrausFamily n m) : ApplySemEq K K :=
+  fun _ => rfl
+
+theorem applySemEq_symm {K L : KrausFamily n m} :
+    ApplySemEq K L → ApplySemEq L K :=
+  fun h ρ => (h ρ).symm
+
+theorem applySemEq_trans {K L M : KrausFamily n m}
+    (hKL : ApplySemEq K L) (hLM : ApplySemEq L M) :
+    ApplySemEq K M :=
+  fun ρ => (hKL ρ).trans (hLM ρ)
+
+theorem choiSemEq_iff_choiRefines (K L : KrausFamily n m) :
+    ChoiSemEq K L ↔ ChoiRefines K L ∧ ChoiRefines L K := by
+  simp only [ChoiSemEq, ChoiRefines]
+  exact ⟨fun h => ⟨h.le, h.ge⟩, fun h => le_antisymm h.1 h.2⟩
 
 @[simp] theorem applyMat_zero (ρ : Matrix (Fin n) (Fin n) ℂ) :
     applyMat (zero : KrausFamily n m) ρ = 0 := by
@@ -86,6 +170,31 @@ theorem applyMat_append (K L : KrausFamily n m)
   | nil => simp [applyMat]
   | cons A K ih =>
     simp [applyMat_cons, ih, add_assoc]
+
+theorem residualRefines_refl (K : KrausFamily n m) :
+    ResidualRefines K K := by
+  refine ⟨[], ?_⟩
+  intro ρ
+  simp
+
+theorem residualRefines_trans {K L M : KrausFamily n m}
+    (hKL : ResidualRefines K L) (hLM : ResidualRefines L M) :
+    ResidualRefines K M := by
+  obtain ⟨R, hR⟩ := hKL
+  obtain ⟨S, hS⟩ := hLM
+  refine ⟨R ++ S, fun ρ => ?_⟩
+  rw [← List.append_assoc, applyMat_append, applyMat_append]
+  calc
+    applyMat M ρ = applyMat (L ++ S) ρ := hS ρ
+    _ = applyMat L ρ + applyMat S ρ := applyMat_append L S ρ
+    _ = applyMat (K ++ R) ρ + applyMat S ρ := congrArg (· + applyMat S ρ) (hR ρ)
+    _ = (applyMat K ρ + applyMat R ρ) + applyMat S ρ := by
+      rw [applyMat_append]
+
+instance instIsPreorderResidualRefines :
+    IsPreorder (KrausFamily n m) ResidualRefines where
+  refl := residualRefines_refl
+  trans _ _ _ := residualRefines_trans
 
 @[simp] theorem applyMat_identity (ρ : Matrix (Fin n) (Fin n) ℂ) :
     applyMat (identity n) ρ = ρ := by
