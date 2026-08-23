@@ -6,11 +6,11 @@ Authors: Lars Warren Ericson.
 import QLambda.Effects
 import QLambda.Interp
 import QLambda.Monad
+import QLambda.OmegaQVA
 import QLambda.Operational
+import QLambda.QDomain
+import QLambda.QuantumDomainEquation
+import QLambda.QuantumPower
+import QLambda.QuantumStateSpace
+import QLambda.Saturation
 import QLambda.Syntax
-import Quantum.OmegaQVA
-import Quantum.QDomain
-import Quantum.QuantumDomainEquation
-import Quantum.QuantumPower
-import Quantum.Saturation
-import QuantumStateSpace

@@ -21,7 +21,7 @@ Scott 1972 inverse limits (`embInf`, `projInf`, Theorem 4.4) from
 Chen, Kou, and Lyu, *Finite-valuation approximable structures*
 (arXiv:2608.03073, 2026) supply the classical saturation pattern
 (v1 Lemmas 6.5–6.7). The paper is in `sources/`. The lemmas are
-mechanized in `Quantum/Saturation.lean`.
+mechanized in `QLambda/Saturation.lean`.
 
 ## Related remotes
 

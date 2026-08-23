@@ -29,7 +29,7 @@ lake build
 
 `lake build` typechecks `QLambda`, `Challenge`, and `Solution`.
 `Challenge.lean` may contain `sorry`. `Solution.lean` re-exports the
-sorry-free `Quantum/` proofs.
+sorry-free `QLambda/` proofs.
 
 Palomar type check (green `lake build` is not enough):
 
@@ -44,10 +44,10 @@ ArXiv / Zenodo: `bash scripts/build_arxiv_pdf.sh` and
 
 1. **Original Mathematical Formalizations (Author: Lars Warren Ericson):**
    * The core formalization of D. S. Scott's 1972 *Continuous Lattices* in `vendor/scott1972/` is the original work of Lars Warren Ericson (Catskills Research, 2026); the remote remains [`scott1972`](https://github.com/catskillsresearch/scott1972).
-   * The non-commutative operator extension (ω**QVA**), spectrahedral state-space formalization, and quantum domain equation in `Quantum/` were designed and mechanized by Lars Warren Ericson.
+   * The non-commutative operator extension (ω**QVA**), spectrahedral state-space formalization, and quantum domain equation in `QLambda/` were designed and mechanized by Lars Warren Ericson.
 
 2. **Literature (not a Lean dependency):**
-   * Chen, Kou, and Lyu, *Finite-valuation approximable structures* (arXiv:2608.03073, 2026), in `sources/`. Saturation lemmas are mechanized in `Quantum/Saturation.lean`.
+   * Chen, Kou, and Lyu, *Finite-valuation approximable structures* (arXiv:2608.03073, 2026), in `sources/`. Saturation lemmas are mechanized in `QLambda/Saturation.lean`.
 
 3. **Literature Citations:**
    * Foundational domain theory: D. S. Scott (1972, LNM 274); M. B. Smyth & G. D. Plotkin (1982).

@@ -240,7 +240,7 @@ Both unweakened carriers are instances of this one spec: $\mathcal{Q}_V$ as `Qua
 
 ## 7. Formal Verification in Lean 4 & Capstone Theorem
 
-The formalization is constructed in Lean 4 on top of the `Scott1972` continuous lattice library (`https://github.com/catskillsresearch/scott1972`). Chen–Kou–Lyu saturation (arXiv:2608.03073, v1 Lemmas 6.5–6.7) is mechanized in `Quantum/Saturation.lean`. The spec is the class `IsQuantumPowerModel`. Both carriers are instances. The compared capstone `omegaQVA_quantum_domain_equation_solved` is parameterized by a bundled `QuantumPowerModel`. The two applications are `omegaQVA_quantum_domain_equation_solved_valuation` (`valuationModel := ⟨QuantumValuationPower⟩`) and `omegaQVA_quantum_domain_equation_solved_saturation` (`saturationModel := ⟨QuantumSaturationPower⟩`). The instance fields are not yet discharged.
+The formalization is constructed in Lean 4 on top of the `Scott1972` continuous lattice library (`https://github.com/catskillsresearch/scott1972`). Chen–Kou–Lyu saturation (arXiv:2608.03073, v1 Lemmas 6.5–6.7) is mechanized in `QLambda/Saturation.lean`. The spec is the class `IsQuantumPowerModel`. Both carriers are instances. The compared capstone `omegaQVA_quantum_domain_equation_solved` is parameterized by a bundled `QuantumPowerModel`. The two applications are `omegaQVA_quantum_domain_equation_solved_valuation` (`valuationModel := ⟨QuantumValuationPower⟩`) and `omegaQVA_quantum_domain_equation_solved_saturation` (`saturationModel := ⟨QuantumSaturationPower⟩`). The instance fields are not yet discharged.
 
 ```lean
 class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) where

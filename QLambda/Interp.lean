@@ -6,7 +6,7 @@ Authors: Lars Warren Ericson.
 import QLambda.Effects
 import QLambda.Operational
 import QLambda.Syntax
-import Quantum.QuantumDomainEquation
+import QLambda.QuantumDomainEquation
 
 /-!
 # Denotational interpretation of `qλ`

@@ -23,8 +23,8 @@ for req in "$PDF" arxiv.md LICENSE README.md lean-toolchain lakefile.toml \
     missing=1
   fi
 done
-if [[ ! -d Quantum ]]; then
-  echo "error: missing Quantum/" >&2
+if [[ ! -d QLambda ]]; then
+  echo "error: missing QLambda/" >&2
   missing=1
 fi
 if [[ "$missing" -ne 0 ]]; then
@@ -63,11 +63,10 @@ EOF
 cp -f "$PDF" "${STAGE}/arxiv.pdf"
 cp -f arxiv.md LICENSE README.md .zenodo.json CITATION.cff PROVENANCE.md NOTICE \
   formalization.yaml comparator.json "${STAGE}/"
-cp -f lean-toolchain lakefile.toml QLambda.lean Challenge.lean Solution.lean \
-  QuantumStateSpace.lean "${STAGE}/"
+cp -f lean-toolchain lakefile.toml QLambda.lean Challenge.lean Solution.lean "${STAGE}/"
 [[ -e lake-manifest.json ]] && cp -f lake-manifest.json "${STAGE}/"
-mkdir -p "${STAGE}/Quantum" "${STAGE}/vendor"
-find Quantum -type f -name '*.lean' -print0 | while IFS= read -r -d '' f; do
+mkdir -p "${STAGE}/QLambda" "${STAGE}/vendor"
+find QLambda -type f -name '*.lean' -print0 | while IFS= read -r -d '' f; do
   dest="${STAGE}/${f}"
   mkdir -p "$(dirname "$dest")"
   cp -f "$f" "$dest"

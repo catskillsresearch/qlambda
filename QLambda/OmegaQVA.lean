@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import Mathlib.Data.Fintype.Pi
-import Quantum.Saturation
-import QuantumStateSpace
+import QLambda.Saturation
+import QLambda.QuantumStateSpace
 import Scott1972.ContinuousLattice.Constructions
 import Scott1972.ContinuousLattice.FunctionSpaces
 

@@ -3,7 +3,7 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import Quantum.QuantumPower
+import QLambda.QuantumPower
 import Scott1972.ContinuousLattice.FunctionSpaceTower
 import Scott1972.ContinuousLattice.InverseLimits
 

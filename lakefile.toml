@@ -25,7 +25,7 @@ srcDir = "vendor/scott1972"
 
 [[lean_lib]]
 name = "QLambda"
-globs = ["QLambda", "QLambda.+", "QuantumStateSpace", "Quantum.+"]
+globs = ["QLambda", "QLambda.+"]
 
 [[lean_lib]]
 name = "Challenge"

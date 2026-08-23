@@ -17,7 +17,7 @@ Produce fully working, complete Lean 4 code with NO `sorry`, NO `admit`, and NO 
 
 ---
 
-### File 1: `Quantum/Saturation.lean`
+### File 1: `QLambda/Saturation.lean`
 - Import `Scott1972.ContinuousLattice.WayBelow` and `Scott1972.ContinuousLattice.FunctionSpaces`.
 - Define `FinitelySeparated (f : ScottMap D D) : Prop := ∃ M : Finset D, ∀ x, ∃ m ∈ M, (f : D → D) x ≤ m ∧ m ≤ x`.
 - Prove `finitelySeparated_wayBelow`: if `f` is finitely separated from id, then `(f : D → D) x ≪ x`.
@@ -25,7 +25,7 @@ Produce fully working, complete Lean 4 code with NO `sorry`, NO `admit`, and NO 
 
 ---
 
-### File 2: `QuantumStateSpace.lean`
+### File 2: `QLambda/QuantumStateSpace.lean`
 - Import `Mathlib.LinearAlgebra.Matrix.PosDef` and `Mathlib.Analysis.InnerProductSpace.Basic`.
 - Define `SubNormalizedDensity (n : ℕ)` as `{ mat : Matrix (Fin n) (Fin n) ℂ // mat.PosSemidef ∧ (trace mat).re ≤ 1 }`.
 - Provide the `PartialOrder` instance on `SubNormalizedDensity n` via the Loewner order: `ρ ≤ σ ↔ (σ.mat - ρ.mat).PosSemidef`.
@@ -35,7 +35,7 @@ Produce fully working, complete Lean 4 code with NO `sorry`, NO `admit`, and NO 
 
 ---
 
-### File 3: `Quantum/OmegaQVA.lean`
+### File 3: `QLambda/OmegaQVA.lean`
 - Define `QFactorable (a : ScottMap D E)` asserting `a` factors through `SubNormalizedDensity dim` via monotone maps `enc` and `rec`.
 - Define the typeclass `IsOmegaQVA (D : Type*) [CompleteLattice D]` as an `IsContinuousLattice D` whose identity is the supremum of an increasing sequence of `QFactorable` approximants.
 - Prove `omegaQVA_of_retract`: `ωQVA` is closed under Scott-continuous retracts (`IsContinuousLatticeRetraction`).
@@ -43,7 +43,7 @@ Produce fully working, complete Lean 4 code with NO `sorry`, NO `admit`, and NO 
 
 ---
 
-### File 4: `Quantum/QuantumDomainEquation.lean`
+### File 4: `QLambda/QuantumDomainEquation.lean`
 - Define `QuantumFunctor D := ScottMap D D` (representing `[D → Q(D)]`).
 - Define the tower `qTower : ℕ → QDomain` by `D_{n+1} = [D_n → Q(D_n)]`.
 - Form the inverse limit `QDInf D₀ j₀ := InverseLimit (qTower D₀) (towerProj D₀ j₀)`.

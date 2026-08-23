@@ -155,7 +155,7 @@ related_formalizations:
     relationship: other
     note: >-
       Chen–Kou–Lyu 2026 (ωFVA / Jung–Tix). Literature in sources/.
-      Lemmas used here are re-proved in Quantum/Saturation.lean.
+      Lemmas used here are re-proved in QLambda/Saturation.lean.
 
 automation:
   methods:
@@ -164,7 +164,7 @@ automation:
       framework: "Cursor"
       role: >-
         Palomar packaging, vendoring of scott1972, scaffolding of
-        Quantum/ and the capstone statement.
+        QLambda/ and the capstone statement.
         Generated Lean is provisional until it compiles under
         leanprover/lean4:v4.33.0.
     - method: manual
@@ -195,7 +195,7 @@ limitations:
     compiler, and not a Mathlib ingest.
   - >-
     Challenge.lean states the family but does not prove it (Comparator
-    convention). Solution.lean re-exports the Quantum/ proofs.
+    convention). Solution.lean re-exports the QLambda/ proofs.
   - >-
     Classical.choice is permitted (1972 topological ≪). There is no
     project-defined axiom and no native_decide in the compared proofs.
@@ -215,7 +215,7 @@ alignment:
   statements:
     - source: "D_∞ of the quantum tower is in ωQVA and D_∞ ≅ [D_∞ → Q(D_∞)] (arxiv.md, §8)"
       lean: "omegaQVA_quantum_domain_equation_solved"
-      module: "Challenge (statement), Solution / Quantum.QuantumDomainEquation (proof)"
+      module: "Challenge (statement), Solution / QLambda.QuantumDomainEquation (proof)"
       status: stated
       note: >-
         Compared by Comparator as a theorem parameterized by a
@@ -226,10 +226,10 @@ alignment:
 
     - source: "The quantum inverse limit is an ωQVA object (arxiv.md, §6–8)"
       lean: "qDInf_isOmegaQVA"
-      module: "Challenge (statement), Solution / Quantum.QuantumDomainEquation (proof)"
+      module: "Challenge (statement), Solution / QLambda.QuantumDomainEquation (proof)"
       status: proved
 
     - source: "Finite separation implies f(x) ≪ x (CKL Lemma 6.8)"
       lean: "finitelySeparated_wayBelow"
-      module: "Challenge (statement), Solution / Quantum.Saturation (proof)"
+      module: "Challenge (statement), Solution / QLambda.Saturation (proof)"
       status: proved
