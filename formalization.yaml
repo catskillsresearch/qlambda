@@ -162,11 +162,15 @@ related_formalizations:
 automation:
   methods:
     - method: agent
-      models: ["Cursor Grok 4.6 (SpaceXAI / Cursor)"]
+      models:
+        - "Cursor Grok 4.6 (SpaceXAI / Cursor)"
+        - "GPT-5.6 Sol Medium (OpenAI / Cursor)"
       framework: "Cursor"
       role: >-
         Palomar packaging, vendoring of scott1972, scaffolding of
-        QLambda/ and the capstone statement.
+        QLambda/ and the capstone statement; semantic review,
+        CP-instrument redesign planning, proof development, and
+        documentation revision.
         Generated Lean is provisional until it compiles under
         leanprover/lean4:v4.33.0.
     - method: manual

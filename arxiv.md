@@ -4,7 +4,7 @@
 ---
 
 ### Abstract
-We present a unified denotational semantics and formal Lean 4 verification framework for an untyped $\lambda$-calculus extended with a quantum interpretation of concurrent and probabilistic choice operators ($q\lambda$). For over three decades, establishing reflexive domain models $D \cong [D \to T(D)]$ for higher-order languages with probabilistic or quantum effects was obstructed by the Jung–Tix problem: the absence of a Cartesian closed category of continuous domains closed under valuation powerdomains. Leveraging the recent resolution of the Jung–Tix problem by Chen, Kou, and Lyu (2026) via finite-valuation approximable structures ($\omega\mathbf{FVA}$), we generalize their construction to the non-commutative setting. We introduce the category $\omega\mathbf{QVA}$ of Quantum-Valuation Approximable domains, where approximating maps factor through sub-normalized density operator spaces $\mathcal{S}_{\le 1}(A)$ of finite-dimensional $C^*$-algebras endowed with the Loewner partial order. The finite spectrahedron $\mathcal{S}_{\le 1}(A)$ is the approximating *factor* in this definition, not a choice of $\mathcal{Q}(D)$ for a general continuous lattice. For the unweakened equation $D \cong [D \to \mathcal{Q}(D)]$ we isolate two carriers for $\mathcal{Q}$: Jones–Plotkin-style quantum valuations on Scott-opens, and saturation of those finite spectrahedra along an $\omega\mathbf{QVA}$ approximate identity. Classically these are the definition of $\mathcal{V}_{\le 1}(D)$ and a representation theorem for $D \in \omega\mathbf{FVA}$; here they are two definitions until an isomorphism is proved. The intended theorem is that $\omega\mathbf{QVA}$ is Cartesian closed and closed under retracts, products, and either carrier. Furthermore, we mechanically translate the core calculus into executable Qiskit circuit structures and formalize the capstone isomorphism theorem in Lean 4, building on a mechanized foundation of Scott's 1972 continuous lattice theory and on the mathematics of Chen, Kou, and Lyu (2026).
+We present a unified denotational semantics and formal Lean 4 verification framework for an untyped $\lambda$-calculus extended with a quantum interpretation of concurrent and probabilistic choice operators ($q\lambda$). For over three decades, establishing reflexive domain models $D \cong [D \to T(D)]$ for higher-order languages with probabilistic or quantum effects was obstructed by the Jung–Tix problem: the absence of a Cartesian closed category of continuous domains closed under valuation powerdomains. Leveraging the recent resolution of the Jung–Tix problem by Chen, Kou, and Lyu (2026) via finite-valuation approximable structures ($\omega\mathbf{FVA}$), we generalize their construction to the non-commutative setting. We introduce the category $\omega\mathbf{QVA}$ of Quantum-Valuation Approximable domains, where approximating maps factor through sub-normalized density operator spaces $\mathcal{S}_{\le 1}(A)$ of finite-dimensional $C^*$-algebras endowed with the Loewner partial order. The finite spectrahedron $\mathcal{S}_{\le 1}(A)$ is the approximating *factor* in this definition, not a choice of $\mathcal{Q}(D)$ for a general continuous lattice. For the unweakened equation $D \cong [D \to \mathcal{Q}(D)]$ we isolate two carriers for $\mathcal{Q}$: Jones–Plotkin-style quantum valuations on Scott-opens, and saturation of those finite spectrahedra along an $\omega\mathbf{QVA}$ approximate identity. Classically these are the definition of $\mathcal{V}_{\le 1}(D)$ and a representation theorem for $D \in \omega\mathbf{FVA}$; here they are two definitions until an isomorphism is proved. The intended theorem is that $\omega\mathbf{QVA}$ is Cartesian closed and closed under retracts, products, and either carrier. We also give a back-and-forth operational correspondence between $q\lambda$ constructs and executable Qiskit patterns. The correspondence is observational rather than a claim of literal source-to-source compilation: both operational presentations are intended to denote the same completely positive channel or instrument, and hence to produce the same outcome probabilities and post-measurement states. The capstone isomorphism theorem is formalized in Lean 4, building on a mechanized foundation of Scott's 1972 continuous lattice theory and on the mathematics of Chen, Kou, and Lyu (2026).
 
 ---
 
@@ -142,9 +142,16 @@ graph TD
 
 ## 5. The Quantum Extension: From Classical Probability to $\omega\mathbf{QVA}$
 
-In quantum mechanics, measurement via Born's rule collapses a coherent quantum superposition into a probabilistic choice:
+In quantum mechanics, unitary evolution creates coherent superposition, while measurement turns that coherence into a classical distribution of outcomes. For a computational-basis measurement,
 
-$$\text{Coherent Superposition } (\alpha\vert M \rangle + \beta\vert N \rangle) \xrightarrow{\text{Measurement}} M \mathbin{\oplus_{\vert\alpha\vert^2}} N \xrightarrow{\text{Scheduler}} M \sqcap N \xrightarrow{\text{Environment}} M \mathbin{\Box} N$$
+$$\alpha\vert 0 \rangle + \beta\vert 1 \rangle
+  \xrightarrow{\{\rho\mapsto P_i\rho P_i\}_{i=0,1}}
+  \begin{cases}
+    0 & \text{with probability } |\alpha|^2,\\
+    1 & \text{with probability } |\beta|^2.
+  \end{cases}$$
+
+The superposition before measurement is not the probabilistic term $M\oplus_p N$: the latter denotes classical randomized control. Internal scheduler choice $M\sqcap N$ and external guarded choice $M\mathbin{\Box}N$ are two further, independent effects. They do not occur as successive stages after measurement.
 
 ### The No-Cloning Barrier and the LNL Architecture
 Because the **No-Cloning Theorem** ($|\psi\rangle \not\to |\psi\rangle \otimes |\psi\rangle$) forbids diagonal copy maps $\Delta = \langle \mathrm{id}, \mathrm{id} \rangle$, pure quantum states cannot live directly in a Cartesian Closed Category. Instead, following Selinger and Valiron (2006/2009), we employ a **Linear-Nonlinear (LNL) / Monadic architecture**:
@@ -215,27 +222,38 @@ Both unweakened carriers are instances of this one spec: $\mathcal{Q}_V$ as `Qua
 
 ---
 
-## 6. Compilation & Operational Mapping to Qiskit
+## 6. Back-and-Forth Operational Correspondence with Qiskit
 
-### Table 1: Quantum Primitives mapped to Qiskit and qλ
-| # | Concept | Notation | Qiskit | qλ |
-| :-: | :--- | :--- | :--- | :--- |
-| **1** | **Basis State 0** | $\vert 0 \rangle$ | `qc = QuantumCircuit(1)` | $\lambda x. \lambda y. x$ |
-| **2** | **NOT Gate (Pauli-$X$)** | $X = \begin{pmatrix}0 & 1 \\ 1 & 0\end{pmatrix}$ | `qc.x(q)` | $\lambda b. \lambda x. \lambda y. b \, y \, x$ |
-| **3** | **Basis State 1** | $\vert 1 \rangle = X\vert 0 \rangle$ | `qc = QuantumCircuit(1); qc.x(0)` | $\lambda x. \lambda y. y$ |
-| **4** | **Hadamard / Superposition** | $H\vert 0 \rangle = \frac{1}{\sqrt{2}}\vert 0 \rangle + \frac{1}{\sqrt{2}}\vert 1 \rangle$ | `qc.h(q)` | $(\lambda x. \lambda y. x) \mathbin{\oplus_{0.5}} (\lambda x. \lambda y. y)$ |
-| **5** | **CNOT Gate ($CX$)** | $\text{CNOT}\vert c \rangle\vert t \rangle = \vert c \rangle\vert t \oplus c \rangle$ | `qc.cx(c, t)` | $\lambda c. \lambda t. \lambda f. c \, (f \, c \, ((\lambda b. \lambda x. \lambda y. b \, y \, x) \, t)) \, (f \, c \, t)$ |
-| **6** | **Measurement (Born Rule)** | $\mathcal{M}(\alpha\vert M \rangle + \beta\vert N \rangle) \implies M \ (\text{prob } \vert\alpha\vert^2), \; N \ (\text{prob } \vert\beta\vert^2)$ | `qc.measure(q, c)` | $M \mathbin{\oplus_{\vert\alpha\vert^2}} N$ |
+The tables in this section ground the denotational semantics by relating two operational presentations. They are not intended as a literal compiler specification. Each row is a commuting correspondence
 
-### Table 2: Syntax-Directed Compilation of qλ to Qiskit
-| Concept | qλ | Quantum notation | Qiskit Mechanical Translation |
+$$\text{$q\lambda$ construct}\longrightarrow
+  \text{CP channel or instrument}
+  \longleftarrow\text{Qiskit execution pattern}.$$
+
+For a fixed initial quantum state, the desired equivalence is observational: both sides have the same classical outcome probabilities and, conditioned on an outcome, the same post-measurement quantum state. The quantum forms below are intended primitives extending the classical control syntax of §2; they are not Church encodings. Church booleans remain useful classical data, but they are duplicable and therefore cannot stand for qubits.
+
+### Table 1: Quantum primitives with a shared denotation
+| Concept | Intended $q\lambda$ operational form | Qiskit execution pattern | Shared CP denotation |
 | :--- | :--- | :--- | :--- |
-| **Variable / Wire Reference** | $x$ | Qubit state / wire label $\vert x \rangle$ | `x` |
-| **Functional Abstraction** | $\lambda x. M$ | Parameterized operator / Unitary map $U_x$ | `lambda x: M` |
-| **Application / Action** | $M \, N$ | Operator application $M\vert N \rangle$ | `M(N)` |
-| **Probabilistic Choice** | $M \oplus_p N$ | Measurement collapse $\mathcal{M}(\sqrt{p}\vert M \rangle + \sqrt{1-p}\vert N \rangle)$ | `theta = 2 * np.arccos(np.sqrt(p)); qc.ry(theta, q); qc.measure(q, c); with qc.if_test((c, 0)): M; with qc.if_test((c, 1)): N` |
-| **Internal Choice** | $M \sqcap N$ | Mixed state ensemble $\rho = \frac{1}{2}\vert M \rangle\langle M \vert + \frac{1}{2}\vert N \rangle\langle N \vert$ | `M if scheduler() else N` |
-| **External Choice** | $M \mathbin{\Box} N$ | Feed-forward branch / Controlled unitary $U_c$ | `with qc.if_test((c, 0)): M; with qc.if_test((c, 1)): N` |
+| **Prepare $\vert0\rangle$** | $\operatorname{new0}(q);\,M$ | `qc.reset(q)` (or a fresh circuit qubit) | Preparation channel with output $\vert0\rangle\langle0\vert$ |
+| **Pauli-$X$** | $X(q);\,M$ | `qc.x(q)` | $\rho\mapsto X\rho X^\dagger$ |
+| **Prepare $\vert1\rangle$** | $\operatorname{new0}(q);\,X(q);\,M$ | fresh/reset `q`; `qc.x(q)` | Preparation channel with output $\vert1\rangle\langle1\vert$ |
+| **Hadamard** | $H(q);\,M$ | `qc.h(q)` | $\rho\mapsto H\rho H^\dagger$; on $\vert0\rangle$ the output is coherent $\vert+\rangle$, not a probabilistic mixture |
+| **CNOT** | $\operatorname{CX}(q,r);\,M$ | `qc.cx(q, r)` | $\rho\mapsto \operatorname{CX}\rho\operatorname{CX}^\dagger$ |
+| **Measurement** | $\operatorname{measure}\ q\ \operatorname{with}\ 0\Rightarrow M\mid1\Rightarrow N$ | `qc.measure(q, c)` followed by `if_test` branches | Instrument $\Phi_i(\rho)=P_i\rho P_i$; probability $\operatorname{Tr}(\Phi_i(\rho))$ |
+| **Classical probabilistic choice** | $M\oplus_p N$ | host RNG, or an ancilla rotation followed by measurement and `if_test` | Branches $p\,\mathrm{id}$ and $(1-p)\,\mathrm{id}$ followed by the denotations of $M,N$ |
+
+### Table 2: Higher-order control and choice
+| Concept | $q\lambda$ operational role | Qiskit / host-language counterpart | Denotational correspondence |
+| :--- | :--- | :--- | :--- |
+| **Variable** | $x$ is classical data or an opaque register handle | Python parameter, classical value, or register index | Environment lookup; a quantum register is threaded by the instrument semantics rather than copied as a Church value |
+| **Abstraction** | $\lambda x.M$ packages higher-order classical control | circuit factory, closure, or parameterized subroutine | Scott-continuous function producing a computation; not necessarily a unitary |
+| **Application** | $M\,N$ invokes higher-order control | call a factory/subroutine and compose its result | Evaluation followed by Kleisli/instrument composition |
+| **Probabilistic choice** | $M\oplus_p N$ resolves by a classical coin | host RNG or measured ancilla controlling dynamic branches | Convex combination of the two computation denotations |
+| **Internal choice** | $M\sqcap N$ is selected by an unobservable scheduler | host/runtime scheduler chooses a branch | Nondeterministic powerdomain layer; no fixed 50/50 probability is implied |
+| **External choice** | $M\mathbin{\Box}N$ waits for an environment-selected guard/event | runtime input, callback, or guarded `if_test` | Environment-indexed family of computations; not inherently a controlled unitary |
+
+Thus the “back-and-forth” is between operational realizations at matching semantic layers. Quantum gates and measurements meet as channels and instruments. Untyped $\lambda$ abstraction and application meet Qiskit through the surrounding classical host language as circuit-producing higher-order control. Some terms require dynamic circuits or runtime interaction rather than one static circuit, but the common denotation still supplies the mental bijection used to guide the formal semantics.
 
 ---
 
@@ -277,7 +295,7 @@ theorem omegaQVA_quantum_domain_equation_solved_saturation :=
 
 ## 8. Acknowledgments & Provenance
 
-* **Software & AI Tooling:** The formalization was mechanized using **Lean 4** and **Mathlib**. The author utilized the **Cursor** development environment, **Grok 4.6 High Fast**, and **Gemini 3.7 Flash** as assistive tools for code scaffolding, proof exploration, and document drafting.
+* **Software & AI Tooling:** The formalization was mechanized using **Lean 4** and **Mathlib**. The author utilized the **Cursor** development environment, **Grok 4.6 High Fast**, **Gemini 3.7 Flash**, and **GPT-5.6 Sol Medium** as assistive tools for code scaffolding, proof exploration, semantic review, redesign planning, and document drafting.
 * **Integrity Statement:** All formal definitions, proofs, and synthesized results were verified under the Lean 4 compiler. Authors retain full and exclusive responsibility for the mathematical correctness of the mechanized proofs and the contents of this manuscript.
 
 ---
