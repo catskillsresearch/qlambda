@@ -3,15 +3,17 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
+import Mathlib.Order.UpperLower.CompleteLattice
 import Scott1972.ContinuousLattice.FunctionSpaces
 
 /-!
 # Effect powerdomains besides `Q`
 
 Paper §1–2. Internal choice `⊓` is interpreted by a nondeterministic
-powerdomain `𝒫`. External choice `□` needs an environment / synchrony
-structure. The classical slogan is `D ≅ [D → 𝒫(𝒱_{≤1}(D))]`; the
-ωQVA capstone only solves the `Q` half.
+powerdomain `𝒫`. Here `𝒫(D)` is the complete lattice of upper sets
+(a Smyth-style carrier; Scott-closed convex Plotkin is not yet built).
+External choice `□` needs an environment / synchrony structure and is
+only a class, with no global instance.
 -/
 
 namespace QLambda
@@ -20,13 +22,13 @@ open Scott1972.ContinuousLattice
 
 universe u
 
-/-- Plotkin / Smyth / Hoare powerdomain of `D` (not yet constructed). -/
-noncomputable def NondetPower (D : Type u) [CompleteLattice D] : Type u := by
-  sorry
+/-- Upper-set powerdomain of `D` (Smyth carrier, inclusion order). -/
+abbrev NondetPower (D : Type u) [Preorder D] : Type u :=
+  UpperSet D
 
 noncomputable instance instCompleteLatticeNondetPower (D : Type u)
-    [CompleteLattice D] : CompleteLattice (NondetPower D) := by
-  sorry
+    [CompleteLattice D] : CompleteLattice (NondetPower D) :=
+  inferInstance
 
 /-- Algebra of internal choice on a domain. -/
 class HasInternalChoice (D : Type u) [CompleteLattice D] where
@@ -36,14 +38,9 @@ class HasInternalChoice (D : Type u) [CompleteLattice D] where
 class HasExternalChoice (D : Type u) [CompleteLattice D] where
   extern : D → D → D
 
-/-- `𝒫(D)` carries internal choice. -/
-noncomputable instance instHasInternalChoiceNondet (D : Type u)
-    [CompleteLattice D] : HasInternalChoice (NondetPower D) := by
-  sorry
-
-/-- External choice on `D` (not yet constructed). -/
-noncomputable instance instHasExternalChoice (D : Type u)
-    [CompleteLattice D] : HasExternalChoice D := by
-  sorry
+/-- Internal choice on `𝒫(D)` is the join of upper sets. -/
+instance instHasInternalChoiceNondet (D : Type u)
+    [CompleteLattice D] : HasInternalChoice (NondetPower D) where
+  intern := (· ⊔ ·)
 
 end QLambda

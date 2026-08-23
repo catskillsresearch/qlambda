@@ -204,13 +204,14 @@ monotone for inclusion of opens and the Loewner order, continuous for directed u
 
 1. $Q(D)$ is a complete lattice whenever $D$ is;
 2. $Q$ is a functor on Scott maps ($Q(\mathrm{id}) = \mathrm{id}$, $Q(f \circ g) = Q(f) \circ Q(g)$);
-3. $D \in \omega\mathbf{QVA}$ implies $Q(D) \in \omega\mathbf{QVA}$.
+3. $Q$ is order-enriched and locally continuous on monotone $\mathbb{N}$-families ($f \le g$ implies $Q(f) \le Q(g)$, and $Q(\bigsqcup_n F_n) = \bigsqcup_n Q(F_n)$), so projections lift and $i_\infty \circ j_\infty = \mathrm{id}$ collapses;
+4. $D \in \omega\mathbf{QVA}$ implies $Q(D) \in \omega\mathbf{QVA}$.
 
 Both unweakened carriers are instances of this one spec: $\mathcal{Q}_V$ as `QuantumValuationPower`, $\mathcal{Q}_S$ as `QuantumSaturationPower`. A bundled `QuantumPowerModel` is a $Q$ together with its instance. Cartesian closure of $[D \to E]$ is not a field of the spec (it does not depend on $Q$).
 
 **Theorem (parameterized).** Let $Q$ be an instance of the spec, let $D_0 \in \omega\mathbf{QVA}$, and let $j_0 : [D_0 \to Q(D_0)] \to D_0$ be a continuous lattice projection. Let $D_\infty$ be the inverse limit of $D_{n+1} = [D_n \to Q(D_n)]$. Then $D_\infty \in \omega\mathbf{QVA}$ and $D_\infty \cong [D_\infty \to Q(D_\infty)]$.
 
-**Corollary (V).** The theorem applies to $\mathcal{Q}_V$. **Corollary (S).** The theorem applies to $\mathcal{Q}_S$. Each corollary is discharged once that instance's remaining fields (lattice structure, functoriality, $\omega\mathbf{QVA}$-closure, and lifted projections) are filled.
+**Corollary (V).** The theorem applies to $\mathcal{Q}_V$. **Corollary (S).** The theorem applies to $\mathcal{Q}_S$. Each corollary is discharged once that instance's remaining fields (lattice structure, functoriality, local continuity, and $\omega\mathbf{QVA}$-closure) are filled. The mixed tower maps and $D_\infty \cong [D_\infty \to Q(D_\infty)]$ identities are proved from the spec.
 
 ---
 
@@ -248,6 +249,8 @@ class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) 
   map : ∀ {D E} [CompleteLattice D] [CompleteLattice E], ScottMap D E → ScottMap (Q D) (Q E)
   map_id : ...
   map_comp : ...
+  map_mono : ...
+  map_iSup : ...
   closed : ∀ {D} [CompleteLattice D], IsOmegaQVA D → IsOmegaQVA (Q D)
 
 instance : IsQuantumPowerModel QuantumValuationPower := by sorry

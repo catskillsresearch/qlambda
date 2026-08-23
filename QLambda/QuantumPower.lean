@@ -10,8 +10,10 @@ import Scott1972.ContinuousLattice.FunctionSpaces
 # The quantum state powerdomain `Q(D)`
 
 `IsQuantumPowerModel Q` is the spec of a quantum powerdomain: `Q`
-sends complete lattices to complete lattices, is a Scott functor, and
-preserves `ωQVA`. Both unweakened carriers are instances (arxiv.md, §5):
+sends complete lattices to complete lattices, is a Scott functor
+(including monotonicity and local continuity on monotone `ℕ`-families),
+and preserves `ωQVA`. Both unweakened carriers are instances
+(arxiv.md, §5):
 
 * **(V)** `QuantumValuationPower` — Jones–Plotkin-style quantum
   valuations: monotone maps from Scott-opens of `D` to a finite
@@ -56,11 +58,14 @@ structure QuantumValuation (D : Type*) [CompleteLattice D] (dims : List ℕ) whe
 def QuantumValuationPower (D : Type u) [CompleteLattice D] : Type u :=
   Σ dims : List ℕ, QuantumValuation D dims
 
-/-- Bonding of finite densities along the `ωQVA` approximate identity.
-The maps between `DensityVec` stages are not yet constructed. -/
+/-- Bonding of finite densities along the `ωQVA` approximate identity:
+the reconstructed points satisfy `recon_n(ρ_n) = a_n(recon_{n+1}(ρ_{n+1}))`. -/
 def QuantumSaturationCompatible [IsOmegaQVA D]
-    (_ρ : ∀ n, DensityVec (IsOmegaQVA.qfactorable (D := D) n).dims) : Prop := by
-  sorry
+    (ρ : ∀ n, DensityVec (IsOmegaQVA.qfactorable (D := D) n).dims) : Prop :=
+  ∀ n,
+    (IsOmegaQVA.qfactorable (D := D) n).recon (ρ n) =
+      (IsOmegaQVA.approx n : D → D)
+        ((IsOmegaQVA.qfactorable (D := D) (n + 1)).recon (ρ (n + 1)))
 
 /-- Compatible families of finite densities, on `ωQVA` objects. -/
 def QuantumSaturationFamily [IsOmegaQVA D] :=
@@ -92,11 +97,71 @@ class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) 
     letI := str E
     letI := str F
     map (f.comp g) = (map f).comp (map g)
+  /-- Order-enriched: `Q` is monotone on Scott maps. Needed so that a
+  projection `A ◃ B` lifts to `Q(A) ◃ Q(B)` (`mapProjection`). -/
+  map_mono : ∀ {D E : Type u} [CompleteLattice D] [CompleteLattice E]
+      {f g : ScottMap D E},
+    letI := str D
+    letI := str E
+    f ≤ g → map f ≤ map g
+  /-- Local continuity on monotone `ℕ`-families: `Q(⨆ F n) = ⨆ Q(F n)`.
+  This is the fragment of local continuity used to collapse
+  `i_∞ ∘ j_∞ = id` on `[D_∞ → Q(D_∞)]`. -/
+  map_iSup : ∀ {D E : Type u} [CompleteLattice D] [CompleteLattice E]
+      (F : ℕ → ScottMap D E) (_hF : Monotone F),
+    letI := str D
+    letI := str E
+    map (⨆ n, F n) = ⨆ n, map (F n)
   closed : ∀ {D : Type u} [CompleteLattice D] (_h : IsOmegaQVA D),
     letI := str D
     IsOmegaQVA (Q D)
 
 attribute [instance] IsQuantumPowerModel.str
+
+/-- `j ∘ i = id` as Scott maps. -/
+theorem IsContinuousLatticeProjection.retr_incl_comp {A B : Type u}
+    [CompleteLattice A] [CompleteLattice B]
+    (P : IsContinuousLatticeProjection A B) :
+    P.retr.comp P.incl = ScottMap.idMap :=
+  ScottMap.ext fun x => P.retr_incl x
+
+/-- `i ∘ j ⊑ id` as Scott maps. -/
+theorem IsContinuousLatticeProjection.incl_retr_le_comp {A B : Type u}
+    [CompleteLattice A] [CompleteLattice B]
+    (P : IsContinuousLatticeProjection A B) :
+    P.incl.comp P.retr ≤ ScottMap.idMap :=
+  P.incl_retr_le
+
+/-- A Scott functor sends a projection `A ◃ B` to a projection `Q(A) ◃ Q(B)`. -/
+noncomputable def IsQuantumPowerModel.mapProjection
+    {Q : (D : Type u) → [CompleteLattice D] → Type u} [inst : IsQuantumPowerModel Q]
+    {A B : Type u} [CompleteLattice A] [CompleteLattice B]
+    (P : IsContinuousLatticeProjection A B) :
+    IsContinuousLatticeProjection (Q A) (Q B) :=
+  letI := inst.str A
+  letI := inst.str B
+  { incl := inst.map P.incl
+    retr := inst.map P.retr
+    retr_incl := by
+      intro d
+      have hcomp := inst.map_comp (f := P.retr) (g := P.incl)
+      have hid := inst.map_id (D := A)
+      have hri := P.retr_incl_comp
+      have : (inst.map P.retr).comp (inst.map P.incl) = ScottMap.idMap := by
+        rw [← hcomp, hri, hid]
+      exact congrArg (fun f : ScottMap (Q A) (Q A) => (f : Q A → Q A) d) this
+    incl_retr_le := by
+      intro d
+      have hcomp := inst.map_comp (f := P.incl) (g := P.retr)
+      have hid := inst.map_id (D := B)
+      have hle := inst.map_mono (f := P.incl.comp P.retr) (g := ScottMap.idMap)
+        P.incl_retr_le_comp
+      have : (inst.map P.incl).comp (inst.map P.retr) ≤ ScottMap.idMap :=
+        calc (inst.map P.incl).comp (inst.map P.retr)
+            = inst.map (P.incl.comp P.retr) := hcomp.symm
+          _ ≤ inst.map ScottMap.idMap := hle
+          _ = ScottMap.idMap := hid
+      exact this d }
 
 noncomputable instance instIsQuantumPowerModelValuation :
     IsQuantumPowerModel QuantumValuationPower := by

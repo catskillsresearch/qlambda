@@ -30,7 +30,9 @@ status:
     (a Q that is an instance of the spec class IsQuantumPowerModel),
     then applied to QuantumValuationPower (V) and
     QuantumSaturationPower (S). The tower is D_{n+1} = [D_n → Q(D_n)].
-    The class-instance fields and function-space closure remain holes.
+    The class-instance fields (lattice, functoriality, local continuity,
+    ωQVA-closure) and function-space closure remain holes. The tower
+    maps qTowerProj / qEmbInfInf / qProjInfInf and the iso are defined.
     Saturation flattening is a mechanization of Chen–Kou–Lyu Lemmas
     6.8–6.9. Nothing in the compared statements is imported from a
     prior Palomar entry.
@@ -201,10 +203,10 @@ limitations:
     project-defined axiom and no native_decide in the compared proofs.
   - >-
     IsQuantumPowerModel is the spec; both carriers are instances.
-    The instance fields (lattice, functoriality, ωQVA-closure) are
-    sorry. The iso and the maps qEmbInfInf / qProjInfInf are sorry.
-    qTowerProj is sorry. ωQVA membership of the limit is the
-    retract-of-product argument once those holes are filled.
+    The instance fields (lattice, functoriality, local continuity,
+    ωQVA-closure) are sorry. The tower maps, inverse identities, and
+    order iso are defined from the spec (map, map_mono, map_iSup).
+    ωQVA membership of the limit is the retract-of-product argument.
   - >-
     Saturation Lean in this repo is an original mechanization of
     arXiv:2608.03073 Lemmas 6.5–6.7. Cartesian closure of function
@@ -220,9 +222,10 @@ alignment:
       note: >-
         Compared by Comparator as a theorem parameterized by a
         QuantumPowerModel. Applications to valuationModel and
-        saturationModel are also compared. The iso and qEmbInfInf /
-        qProjInfInf are unproved; the last conjunct is Scott's
-        inverse-limit identity on the quantum tower.
+        saturationModel are also compared. The iso is constructed
+        from qEmbInfInf / qProjInfInf; those maps and the inverse
+        identities are proved from the spec. The last conjunct is
+        Scott's inverse-limit identity on the quantum tower.
 
     - source: "The quantum inverse limit is an ωQVA object (arxiv.md, §6–8)"
       lean: "qDInf_isOmegaQVA"

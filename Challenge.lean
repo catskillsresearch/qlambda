@@ -253,6 +253,16 @@ class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) 
     letI := str E
     letI := str F
     map (f.comp g) = (map f).comp (map g)
+  map_mono : ∀ {D E : Type u} [CompleteLattice D] [CompleteLattice E]
+      {f g : ScottMap D E},
+    letI := str D
+    letI := str E
+    f ≤ g → map f ≤ map g
+  map_iSup : ∀ {D E : Type u} [CompleteLattice D] [CompleteLattice E]
+      (F : ℕ → ScottMap D E) (_hF : Monotone F),
+    letI := str D
+    letI := str E
+    map (⨆ n, F n) = ⨆ n, map (F n)
   closed : ∀ {D : Type u} [CompleteLattice D] (h : IsOmegaQVA D),
     letI := str D
     IsOmegaQVA (Q D)
