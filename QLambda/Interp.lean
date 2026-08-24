@@ -927,6 +927,145 @@ theorem interp_lam_alpha {Prim : Type}
     · simp [envUpdate_apply, hwx, hwy]
   rw [hf]
 
+/-- Simultaneously renaming the coincident binders of a recursive
+abstraction is semantically α-invariant. -/
+theorem interp_recLam_alpha_same {Prim : Type}
+    (primitive : Prim → SemanticComp Q D₀ j₀)
+    (M : Term Prim) (x y : Name)
+    (ρ : Env (SemanticValue Q D₀ j₀)) (hy : y ∉ names M) :
+    interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+        (.recLam y y (rename x y M)) ρ =
+      interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+        (.recLam x x M) ρ := by
+  rw [interp_recLam_apply, interp_recLam_apply]
+  unfold recLambdaValue
+  simp only [ScottMap.comp_apply, Proposition314.fixMap_apply]
+  have hf :
+      recFunctional (Q := Q) (D₀ := D₀) (j₀ := j₀) y y
+          (interp primitive (rename x y M)) ρ =
+        recFunctional (Q := Q) (D₀ := D₀) (j₀ := j₀) x x
+          (interp primitive M) ρ := by
+    unfold recFunctional
+    apply ScottMap.ext
+    intro dself
+    simp only [scottLambda_apply, ScottMap.comp_apply]
+    apply congrArg
+    apply ScottMap.ext
+    intro darg
+    simp only [scottLambda_apply, ScottMap.comp_apply,
+      ScottMap.pairMap_apply, ScottMap.fstMap_apply, ScottMap.sndMap_apply]
+    rw [interp_rename primitive M x y
+      (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) y
+        (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) y
+          (ρ, dself), darg)) hy]
+    apply interp_congr_free primitive M
+    intro z hz
+    have hzy : z ≠ y := by
+      intro h
+      subst z
+      exact hy (mem_names_of_mem_free hz)
+    by_cases hzx : z = x
+    · subst z
+      simp [envUpdate_apply, hzy]
+    · simp [envUpdate_apply, hzx, hzy]
+  rw [hf]
+
+/-- Renaming the self binder of a recursive abstraction to a fresh name is
+semantically α-invariant when the two recursive binders are distinct. -/
+theorem interp_recLam_alpha_self {Prim : Type}
+    (primitive : Prim → SemanticComp Q D₀ j₀)
+    (M : Term Prim) (self arg self' : Name)
+    (ρ : Env (SemanticValue Q D₀ j₀))
+    (hsa : self ≠ arg) (hfresh : self' ∉ names M)
+    (hne : self' ≠ arg) :
+    interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+        (.recLam self' arg (rename self self' M)) ρ =
+      interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+        (.recLam self arg M) ρ := by
+  rw [interp_recLam_apply, interp_recLam_apply]
+  unfold recLambdaValue
+  simp only [ScottMap.comp_apply, Proposition314.fixMap_apply]
+  have hf :
+      recFunctional (Q := Q) (D₀ := D₀) (j₀ := j₀) self' arg
+          (interp primitive (rename self self' M)) ρ =
+        recFunctional (Q := Q) (D₀ := D₀) (j₀ := j₀) self arg
+          (interp primitive M) ρ := by
+    unfold recFunctional
+    apply ScottMap.ext
+    intro dself
+    simp only [scottLambda_apply, ScottMap.comp_apply]
+    apply congrArg
+    apply ScottMap.ext
+    intro darg
+    simp only [scottLambda_apply, ScottMap.comp_apply,
+      ScottMap.pairMap_apply, ScottMap.fstMap_apply, ScottMap.sndMap_apply]
+    rw [interp_rename primitive M self self'
+      (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) arg
+        (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) self'
+          (ρ, dself), darg)) hfresh]
+    apply interp_congr_free primitive M
+    intro z hz
+    have hzf : z ≠ self' := by
+      intro h
+      subst z
+      exact hfresh (mem_names_of_mem_free hz)
+    by_cases hzs : z = self
+    · subst z
+      simp [envUpdate_apply, hsa, hne]
+    · by_cases hza : z = arg
+      · subst z
+        simp [envUpdate_apply, hsa, Ne.symm hsa, hne]
+      · simp [envUpdate_apply, hzs, hza, hzf, hne]
+  rw [hf]
+
+/-- Renaming the argument binder of a recursive abstraction to a fresh name
+is semantically α-invariant when the two recursive binders are distinct. -/
+theorem interp_recLam_alpha_arg {Prim : Type}
+    (primitive : Prim → SemanticComp Q D₀ j₀)
+    (M : Term Prim) (self arg arg' : Name)
+    (ρ : Env (SemanticValue Q D₀ j₀))
+    (hsa : self ≠ arg) (hfresh : arg' ∉ names M)
+    (hne : arg' ≠ self) :
+    interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+        (.recLam self arg' (rename arg arg' M)) ρ =
+      interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+        (.recLam self arg M) ρ := by
+  rw [interp_recLam_apply, interp_recLam_apply]
+  unfold recLambdaValue
+  simp only [ScottMap.comp_apply, Proposition314.fixMap_apply]
+  have hf :
+      recFunctional (Q := Q) (D₀ := D₀) (j₀ := j₀) self arg'
+          (interp primitive (rename arg arg' M)) ρ =
+        recFunctional (Q := Q) (D₀ := D₀) (j₀ := j₀) self arg
+          (interp primitive M) ρ := by
+    unfold recFunctional
+    apply ScottMap.ext
+    intro dself
+    simp only [scottLambda_apply, ScottMap.comp_apply]
+    apply congrArg
+    apply ScottMap.ext
+    intro darg
+    simp only [scottLambda_apply, ScottMap.comp_apply,
+      ScottMap.pairMap_apply, ScottMap.fstMap_apply, ScottMap.sndMap_apply]
+    rw [interp_rename primitive M arg arg'
+      (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) arg'
+        (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) self
+          (ρ, dself), darg)) hfresh]
+    apply interp_congr_free primitive M
+    intro z hz
+    have hzf : z ≠ arg' := by
+      intro h
+      subst z
+      exact hfresh (mem_names_of_mem_free hz)
+    by_cases hzs : z = self
+    · subst z
+      simp [envUpdate_apply, hsa, hne, Ne.symm hne]
+    · by_cases hza : z = arg
+      · subst z
+        simp [envUpdate_apply, hsa, hne]
+      · simp [envUpdate_apply, hzs, hza, hzf, hne]
+  rw [hf]
+
 /-- Value substitution is interpreted by an environment update when the
 term's binders are fresh for the substituted value. This is the
 capture-free core used by the general α-renaming proof. -/
@@ -1194,6 +1333,439 @@ theorem interp_subst_value_of_binders_fresh {Prim : Type}
         interp_subst_value_of_binders_fresh primitive x hV M ρ hM,
         interp_subst_value_of_binders_fresh primitive x hV N ρ hN]
 
+/-- Lift the substitution equation through a non-capturing lambda binder. -/
+private theorem interp_subst_value_lam {Prim : Type}
+    (primitive : Prim → SemanticComp Q D₀ j₀)
+    (x y : Name) {V M : Term Prim} (hV : Value V)
+    (hyx : y ≠ x) (hyV : y ∉ free V)
+    (hbody : ∀ σ : Env (SemanticValue Q D₀ j₀),
+      interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive (subst x V M) σ =
+        interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive M
+          (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+            (σ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              primitive V σ)))
+    (ρ : Env (SemanticValue Q D₀ j₀)) :
+    interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+        (.lam y (subst x V M)) ρ =
+      interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive (.lam y M)
+        (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+          (ρ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+            primitive V ρ)) := by
+  rw [interp_lam_apply, interp_lam_apply]
+  unfold lambdaValue
+  simp only [ScottMap.comp_apply]
+  have hf :
+      scottLambda ((interp primitive (subst x V M)).comp
+          (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) y)) ρ =
+        scottLambda ((interp primitive M).comp
+          (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) y))
+          (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+            (ρ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              primitive V ρ)) := by
+    apply ScottMap.ext
+    intro d
+    simp only [scottLambda_apply, ScottMap.comp_apply]
+    rw [hbody]
+    have hval :
+        valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive V
+            (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) y (ρ, d)) =
+          valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive V ρ := by
+      apply valueInterp_congr_free primitive hV
+      intro z hz
+      rw [envUpdate_other]
+      intro hzy
+      subst z
+      exact hyV hz
+    rw [hval]
+    apply interp_congr_free primitive M
+    intro z hz
+    by_cases hzx : z = x
+    · subst z
+      simp [envUpdate_apply, Ne.symm hyx]
+    · by_cases hzy : z = y
+      · subst z
+        simp [envUpdate_apply, hyx]
+      · simp [envUpdate_apply, hzx, hzy]
+  rw [hf]
+
+/-- Lift the substitution equation through recursive binders that do not
+capture the substituted value. This includes coincident self/argument
+binders. -/
+private theorem interp_subst_value_recLam {Prim : Type}
+    (primitive : Prim → SemanticComp Q D₀ j₀)
+    (x self arg : Name) {V M : Term Prim} (hV : Value V)
+    (hsx : self ≠ x) (hax : arg ≠ x)
+    (hsV : self ∉ free V) (haV : arg ∉ free V)
+    (hbody : ∀ σ : Env (SemanticValue Q D₀ j₀),
+      interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive (subst x V M) σ =
+        interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive M
+          (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+            (σ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              primitive V σ)))
+    (ρ : Env (SemanticValue Q D₀ j₀)) :
+    interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+        (.recLam self arg (subst x V M)) ρ =
+      interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+        (.recLam self arg M)
+        (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+          (ρ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+            primitive V ρ)) := by
+  rw [interp_recLam_apply, interp_recLam_apply]
+  unfold recLambdaValue
+  simp only [ScottMap.comp_apply, Proposition314.fixMap_apply]
+  have hf :
+      recFunctional (Q := Q) (D₀ := D₀) (j₀ := j₀) self arg
+          (interp primitive (subst x V M)) ρ =
+        recFunctional (Q := Q) (D₀ := D₀) (j₀ := j₀) self arg
+          (interp primitive M)
+          (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+            (ρ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              primitive V ρ)) := by
+    unfold recFunctional
+    apply ScottMap.ext
+    intro dself
+    simp only [scottLambda_apply, ScottMap.comp_apply]
+    apply congrArg
+    apply ScottMap.ext
+    intro darg
+    simp only [scottLambda_apply, ScottMap.comp_apply,
+      ScottMap.pairMap_apply, ScottMap.fstMap_apply, ScottMap.sndMap_apply]
+    rw [hbody]
+    have hval :
+        valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive V
+            (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) arg
+              (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) self
+                (ρ, dself), darg)) =
+          valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive V ρ := by
+      apply valueInterp_congr_free primitive hV
+      intro z hz
+      by_cases hza : z = arg
+      · subst z
+        exact (haV hz).elim
+      · rw [envUpdate_other hza]
+        by_cases hzs : z = self
+        · subst z
+          exact (hsV hz).elim
+        · rw [envUpdate_other hzs]
+    rw [hval]
+    apply interp_congr_free primitive M
+    intro z hz
+    by_cases hzx : z = x
+    · subst z
+      simp [envUpdate_apply, Ne.symm hsx, Ne.symm hax]
+    · by_cases hza : z = arg
+      · subst z
+        simp [envUpdate_apply, hax]
+      · by_cases hzs : z = self
+        · subst z
+          simp [envUpdate_apply, hsx, hza]
+        · simp [envUpdate_apply, hzx, hza, hzs]
+  rw [hf]
+
+set_option maxHeartbeats 1000000 in
+/-- Capture-avoiding substitution of a value is interpreted by updating the
+environment. The alpha-renaming performed by `subst` is handled
+semantically, so no binder-freshness hypothesis is required. -/
+theorem interp_subst_value {Prim : Type}
+    (primitive : Prim → SemanticComp Q D₀ j₀)
+    (x : Name) {V : Term Prim} (hV : Value V)
+    (M : Term Prim) (ρ : Env (SemanticValue Q D₀ j₀)) :
+    interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive (subst x V M) ρ =
+      interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive M
+        (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+          (ρ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+            primitive V ρ)) := by
+  cases M with
+  | var y =>
+      by_cases hyx : y = x
+      · subst y
+        simpa [subst, interp_var_apply, envUpdate_apply] using
+          congrArg (fun f :
+            ScottMap (Env (SemanticValue Q D₀ j₀)) (SemanticComp Q D₀ j₀) =>
+              f ρ) (interp_value primitive hV)
+      · simp [subst, interp_var_apply, envUpdate_apply, hyx]
+  | lam y M =>
+      by_cases hyx : y = x
+      · subst y
+        simp only [subst, if_pos]
+        apply interp_congr_free primitive (.lam x M)
+        intro z hz
+        have hz' : z ∈ free M ∧ z ≠ x := by simpa [free] using hz
+        rw [envUpdate_other hz'.2]
+      · by_cases hyV : y ∈ free V
+        · let avoid := y :: x :: free V ++ free M ++ names V ++ names M
+          let y' := fresh avoid
+          have hy' : y' ∉ avoid := by
+            dsimp [y']
+            exact fresh_not_mem avoid
+          have hy'x : y' ≠ x := by
+            dsimp [y']
+            apply fresh_ne_of_mem
+            simp [avoid]
+          have hy'V : y' ∉ free V := by
+            dsimp [y']
+            apply fresh_not_mem_of_subset
+            intro z hz
+            simp [avoid, hz]
+          have hy'M : y' ∉ names M := by
+            dsimp [y']
+            apply fresh_not_mem_of_subset
+            intro z hz
+            simp [avoid, hz]
+          have hrec : ∀ σ : Env (SemanticValue Q D₀ j₀),
+              interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+                  (subst x V (rename y y' M)) σ =
+                interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+                  (rename y y' M)
+                  (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+                    (σ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+                      primitive V σ)) := by
+            intro σ
+            apply interp_subst_value primitive x hV
+          have hlift := interp_subst_value_lam
+            (Q := Q) (D₀ := D₀) (j₀ := j₀)
+            primitive x y' hV hy'x hy'V hrec ρ
+          have halpha := interp_lam_alpha
+            (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive M y y'
+            (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+              (ρ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+                primitive V ρ)) hy'M
+          simpa only [subst, if_neg hyx, if_pos hyV, avoid, y'] using
+            hlift.trans halpha
+        · simpa only [subst, if_neg hyx, if_neg hyV] using
+            interp_subst_value_lam
+              (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              primitive x y hV hyx hyV
+              (fun σ => interp_subst_value primitive x hV M σ) ρ
+  | app M N =>
+      rw [show subst x V (.app M N) = .app (subst x V M) (subst x V N)
+        by simp [subst], interp_app_apply, interp_app_apply,
+        applyComp_apply, applyComp_apply]
+      have hiM := interp_subst_value primitive x hV M ρ
+      have hiN := interp_subst_value primitive x hV N ρ
+      have hCont :
+          applyContinuation (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              (interp primitive (subst x V N)) ρ =
+            applyContinuation (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              (interp primitive N)
+              (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+                (ρ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+                  primitive V ρ)) := by
+        apply ScottMap.ext
+        intro f
+        rw [applyContinuation_apply, applyContinuation_apply, hiN]
+      rw [hiM, hCont]
+  | prim p =>
+      rw [show subst x V (.prim p) = .prim p by simp [subst],
+        interp_prim_apply, interp_prim_apply]
+  | recLam self arg M =>
+      by_cases hbound : self = x ∨ arg = x
+      · simp only [subst, if_pos hbound]
+        apply interp_congr_free primitive (.recLam self arg M)
+        intro z hz
+        have hz' : z ∈ free M ∧ z ≠ arg ∧ z ≠ self := by
+          simpa [free] using hz
+        rcases hbound with hsx | hax
+        · subst x
+          rw [envUpdate_other hz'.2.2]
+        · subst x
+          rw [envUpdate_other hz'.2.1]
+      · have hsx : self ≠ x := (not_or.mp hbound).1
+        have hax : arg ≠ x := (not_or.mp hbound).2
+        by_cases hsa : self = arg
+        · subst arg
+          by_cases hsV : self ∈ free V
+          · let avoid := self :: x :: free V ++ free M ++ names V ++ names M
+            let z := fresh avoid
+            have hz : z ∉ avoid := by
+              dsimp [z]
+              exact fresh_not_mem avoid
+            have hzx : z ≠ x := by
+              dsimp [z]
+              apply fresh_ne_of_mem
+              simp [avoid]
+            have hzV : z ∉ free V := by
+              dsimp [z]
+              apply fresh_not_mem_of_subset
+              intro w hw
+              simp [avoid, hw]
+            have hzM : z ∉ names M := by
+              dsimp [z]
+              apply fresh_not_mem_of_subset
+              intro w hw
+              simp [avoid, hw]
+            have hrec : ∀ σ : Env (SemanticValue Q D₀ j₀),
+                interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+                    (subst x V (rename self z M)) σ =
+                  interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+                    (rename self z M)
+                    (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+                      (σ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+                        primitive V σ)) := by
+              intro σ
+              apply interp_subst_value primitive x hV
+            have hlift := interp_subst_value_recLam
+              (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              primitive x z z hV hzx hzx hzV hzV hrec ρ
+            have halpha := interp_recLam_alpha_same
+              (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              primitive M self z
+              (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+                (ρ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+                  primitive V ρ)) hzM
+            simpa only [subst, if_neg hbound, if_pos, if_pos hsV,
+              avoid, z] using hlift.trans halpha
+          · simpa only [subst, if_neg hbound, if_pos, if_neg hsV] using
+              interp_subst_value_recLam
+                (Q := Q) (D₀ := D₀) (j₀ := j₀)
+                primitive x self self hV hsx hsx hsV hsV
+                (fun σ => interp_subst_value primitive x hV M σ) ρ
+        · let avoid :=
+            self :: arg :: x :: free V ++ free M ++ names V ++ names M
+          let self' := if self ∈ free V then fresh avoid else self
+          let M' := if self' = self then M else rename self self' M
+          let avoid' := self' :: avoid ++ names M'
+          let arg' := if arg ∈ free V then fresh avoid' else arg
+          let M'' := if arg' = arg then M' else rename arg arg' M'
+          have hs'x : self' ≠ x := by
+            dsimp [self']
+            split
+            · apply fresh_ne_of_mem
+              simp [avoid]
+            · exact hsx
+          have hs'V : self' ∉ free V := by
+            dsimp [self']
+            split
+            · apply fresh_not_mem_of_subset
+              intro z hz
+              simp [avoid, hz]
+            · assumption
+          have hs'a : self' ≠ arg := by
+            dsimp [self']
+            split
+            · apply fresh_ne_of_mem
+              simp [avoid]
+            · exact hsa
+          have ha'x : arg' ≠ x := by
+            dsimp [arg']
+            split
+            · apply fresh_ne_of_mem
+              simp [avoid', avoid]
+            · exact hax
+          have ha'V : arg' ∉ free V := by
+            dsimp [arg']
+            split
+            · apply fresh_not_mem_of_subset
+              intro z hz
+              simp [avoid', avoid, hz]
+            · assumption
+          have ha's : arg' ≠ self' := by
+            dsimp [arg']
+            split
+            · apply fresh_ne_of_mem
+              simp [avoid']
+            · exact Ne.symm hs'a
+          have hsize : termSize M'' = termSize M := by
+            exact recLam_subst_body_termSize self arg x V M
+          have hdecr :
+              termSize M'' < termSize (.recLam self arg M) := by
+            rw [hsize]
+            simp [termSize]
+          have hrec : ∀ σ : Env (SemanticValue Q D₀ j₀),
+              interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+                  (subst x V M'') σ =
+                interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive M''
+                  (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+                    (σ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+                      primitive V σ)) := by
+            intro σ
+            apply interp_subst_value primitive x hV
+          have hlift := interp_subst_value_recLam
+            (Q := Q) (D₀ := D₀) (j₀ := j₀)
+            primitive x self' arg' hV hs'x ha'x hs'V ha'V hrec ρ
+          have halphaSelf : ∀ σ,
+              interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+                  (.recLam self' arg M') σ =
+                interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+                  (.recLam self arg M) σ := by
+            intro σ
+            by_cases hsV : self ∈ free V
+            · have hf : fresh avoid ∉ names M := by
+                apply fresh_not_mem_of_subset
+                intro z hz
+                simp [avoid, hz]
+              have hs'eq : self' = fresh avoid := by
+                simp [self', hsV]
+              have hne : fresh avoid ≠ self :=
+                fresh_ne_of_mem (by simp [avoid])
+              have hM'eq : M' = rename self (fresh avoid) M := by
+                simp [M', hs'eq, hne]
+              rw [hs'eq, hM'eq]
+              exact interp_recLam_alpha_self
+                  (Q := Q) (D₀ := D₀) (j₀ := j₀)
+                  primitive M self arg (fresh avoid) σ hsa hf
+                  (fresh_ne_of_mem (by simp [avoid]))
+            · simp [self', M', hsV]
+          have halphaArg : ∀ σ,
+              interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+                  (.recLam self' arg' M'') σ =
+                interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+                  (.recLam self' arg M') σ := by
+            intro σ
+            by_cases haV : arg ∈ free V
+            · have hf : fresh avoid' ∉ names M' := by
+                apply fresh_not_mem_of_subset
+                intro z hz
+                simp [avoid', hz]
+              have ha'eq : arg' = fresh avoid' := by
+                simp [arg', haV]
+              have hne : fresh avoid' ≠ arg :=
+                fresh_ne_of_mem (by simp [avoid', avoid])
+              have hM''eq : M'' = rename arg (fresh avoid') M' := by
+                simp [M'', ha'eq, hne]
+              rw [ha'eq, hM''eq]
+              exact interp_recLam_alpha_arg
+                  (Q := Q) (D₀ := D₀) (j₀ := j₀)
+                  primitive M' self' arg (fresh avoid') σ hs'a hf
+                  (fresh_ne_of_mem (by simp [avoid']))
+            · simp [arg', M'', haV]
+          have halpha := (halphaArg
+            (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+              (ρ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+                primitive V ρ))).trans
+            (halphaSelf
+              (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) x
+                (ρ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+                  primitive V ρ)))
+          have hsubst :
+              subst x V (.recLam self arg M) =
+                .recLam self' arg' (subst x V M'') := by
+            simp only [subst, if_neg hbound, if_neg hsa]
+            rfl
+          rw [hsubst]
+          exact hlift.trans halpha
+  | prob p M N =>
+      rw [show subst x V (.prob p M N) =
+        .prob p (subst x V M) (subst x V N) by simp [subst],
+        interp_prob_apply, interp_prob_apply,
+        interp_subst_value primitive x hV M ρ,
+        interp_subst_value primitive x hV N ρ]
+  | intern M N =>
+      rw [show subst x V (.intern M N) =
+        .intern (subst x V M) (subst x V N) by simp [subst],
+        interp_intern_apply, interp_intern_apply,
+        interp_subst_value primitive x hV M ρ,
+        interp_subst_value primitive x hV N ρ]
+  | extern M N =>
+      rw [show subst x V (.extern M N) =
+        .extern (subst x V M) (subst x V N) by simp [subst],
+        interp_extern_apply, interp_extern_apply,
+        interp_subst_value primitive x hV M ρ,
+        interp_subst_value primitive x hV N ρ]
+termination_by termSize M
+decreasing_by
+  all_goals first | assumption | omega | simp_all [termSize, rename_termSize]
+
 /-- β-soundness under the explicit binder-freshness condition required by
 the capture-free substitution core. -/
 theorem interp_beta_of_binders_fresh {Prim : Type}
@@ -1219,6 +1791,30 @@ theorem interp_beta_of_binders_fresh {Prim : Type}
   rw [applyComp_pure_lambda]
   exact (interp_subst_value_of_binders_fresh
     primitive x hV M ρ hfresh).symm
+
+/-- General semantic β-equation. Capture-avoiding substitution performs any
+required alpha-renaming automatically. -/
+theorem interp_beta {Prim : Type}
+    (primitive : Prim → SemanticComp Q D₀ j₀)
+    (x : Name) (M V : Term Prim) (hV : Value V)
+    (ρ : Env (SemanticValue Q D₀ j₀)) :
+    interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+        (.app (.lam x M) V) ρ =
+      interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+        (subst x V M) ρ := by
+  rw [interp_app_apply,
+    interp_value primitive (Value.lam x M),
+    interp_value primitive hV]
+  change
+    applyComp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+        ((semanticUnit (Q := Q) (D₀ := D₀) (j₀ := j₀)).comp
+          (lambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+            x (interp primitive M)))
+        ((semanticUnit (Q := Q) (D₀ := D₀) (j₀ := j₀)).comp
+          (valueInterp primitive V)) ρ =
+      interp primitive (subst x V M) ρ
+  rw [applyComp_pure_lambda]
+  exact (interp_subst_value primitive x hV M ρ).symm
 
 end Semantics
 

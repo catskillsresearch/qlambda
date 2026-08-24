@@ -120,6 +120,22 @@ theorem fresh_not_mem (avoid : List Name) : fresh avoid ∉ avoid := by
   have hle := length_le_sum_lengths_of_mem h
   simp [fresh] at hle
 
+/-- A generated fresh name differs from every member of its avoidance
+list. -/
+theorem fresh_ne_of_mem {avoid : List Name} {x : Name}
+    (hx : x ∈ avoid) : fresh avoid ≠ x := by
+  intro h
+  apply fresh_not_mem avoid
+  rw [h]
+  exact hx
+
+/-- Freshness transfers from an avoidance list to any list whose members
+occur in it. -/
+theorem fresh_not_mem_of_subset {avoid xs : List Name}
+    (h : ∀ x, x ∈ xs → x ∈ avoid) : fresh avoid ∉ xs := by
+  intro hx
+  exact fresh_not_mem avoid (h _ hx)
+
 /-- Rename free occurrences of `x` to `y`. -/
 def rename {Prim : Type} (x y : Name) : Term Prim → Term Prim
   | .var z => if z = x then .var y else .var z
@@ -156,6 +172,32 @@ def termSize {Prim : Type} : Term Prim → ℕ
   | .prob p M N => by simp [rename, termSize, rename_termSize]
   | .intern M N => by simp [rename, termSize, rename_termSize]
   | .extern M N => by simp [rename, termSize, rename_termSize]
+
+/-- The body produced by the two-stage recursive-binder renaming in
+`subst` has the same constructor count as the original body. -/
+theorem recLam_subst_body_termSize {Prim : Type}
+    (self arg x : Name) (s M : Term Prim) :
+    let avoid := self :: arg :: x :: free s ++ free M ++ names s ++ names M
+    let self' := if self ∈ free s then fresh avoid else self
+    let M' := if self' = self then M else rename self self' M
+    let avoid' := self' :: avoid ++ names M'
+    let arg' := if arg ∈ free s then fresh avoid' else arg
+    let M'' := if arg' = arg then M' else rename arg arg' M'
+    termSize M'' = termSize M := by
+  let avoid := self :: arg :: x :: free s ++ free M ++ names s ++ names M
+  let self' := if self ∈ free s then fresh avoid else self
+  let M' := if self' = self then M else rename self self' M
+  let avoid' := self' :: avoid ++ names M'
+  let arg' := if arg ∈ free s then fresh avoid' else arg
+  let M'' := if arg' = arg then M' else rename arg arg' M'
+  change termSize M'' = termSize M
+  have hM' : termSize M' = termSize M := by
+    dsimp [M']
+    split <;> simp
+  dsimp [M'']
+  split
+  · exact hM'
+  · rw [rename_termSize, hM']
 
 /-- Capture-avoiding substitution. -/
 def subst {Prim : Type} (x : Name) (s : Term Prim) : Term Prim → Term Prim
