@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import Mathlib.Data.Real.Basic
+import Mathlib.Data.String.Lemmas
 
 /-!
 # Syntax of untyped quantum λ-calculus (`qλ`)
@@ -65,15 +66,59 @@ def names {Prim : Type} : Term Prim → List Name
   | .intern M N => names M ++ names N
   | .extern M N => names M ++ names N
 
-/-- A name not in `avoid`. Pigeonhole on `x0, …, x_{length}` against a finite list. -/
+/-- Every free name occurs among all names of the term. -/
+theorem mem_names_of_mem_free {Prim : Type} :
+    ∀ {M : Term Prim} {x : Name}, x ∈ free M → x ∈ names M
+  | .var _, _, h => by simpa [free, names] using h
+  | .lam y M, x, h => by
+      simp only [free, List.mem_filter] at h
+      simp [names, mem_names_of_mem_free h.1]
+  | .app M N, x, h => by
+      simp only [free, List.mem_append] at h
+      rcases h with h | h
+      · simp [names, mem_names_of_mem_free h]
+      · simp [names, mem_names_of_mem_free h]
+  | .prim _, _, h => by simp [free] at h
+  | .recLam self arg M, x, h => by
+      simp only [free, List.mem_filter] at h
+      simp [names, mem_names_of_mem_free h.1.1]
+  | .prob _ M N, x, h => by
+      simp only [free, List.mem_append] at h
+      rcases h with h | h
+      · simp [names, mem_names_of_mem_free h]
+      · simp [names, mem_names_of_mem_free h]
+  | .intern M N, x, h => by
+      simp only [free, List.mem_append] at h
+      rcases h with h | h
+      · simp [names, mem_names_of_mem_free h]
+      · simp [names, mem_names_of_mem_free h]
+  | .extern M N, x, h => by
+      simp only [free, List.mem_append] at h
+      rcases h with h | h
+      · simp [names, mem_names_of_mem_free h]
+      · simp [names, mem_names_of_mem_free h]
+
+/-- A name longer than the total length of all names in `avoid`. -/
 def fresh (avoid : List Name) : Name :=
-  let rec go (n fuel : ℕ) : Name :=
-    match fuel with
-    | 0 => s!"x{n}"
-    | fuel + 1 =>
-      let cand : Name := s!"x{n}"
-      if cand ∈ avoid then go (n + 1) fuel else cand
-  go 0 (avoid.length + 1)
+  String.replicate ((avoid.map String.length).sum + 1) 'x'
+
+private theorem length_le_sum_lengths_of_mem {s : Name} :
+    ∀ {xs : List Name}, s ∈ xs → s.length ≤ (xs.map String.length).sum
+  | [], h => by simp at h
+  | a :: xs, h => by
+      simp only [List.mem_cons] at h
+      rcases h with rfl | h
+      · simp
+      · have ih := length_le_sum_lengths_of_mem h
+        simp only [List.map_cons, List.sum_cons]
+        omega
+
+/-- The generated name is absent from the finite avoidance list. -/
+@[simp]
+theorem fresh_not_mem (avoid : List Name) : fresh avoid ∉ avoid := by
+  intro h
+  have hle := length_le_sum_lengths_of_mem h
+  simp [fresh] at hle
 
 /-- Rename free occurrences of `x` to `y`. -/
 def rename {Prim : Type} (x y : Name) : Term Prim → Term Prim
