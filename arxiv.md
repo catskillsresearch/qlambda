@@ -4,7 +4,7 @@
 ---
 
 ### Abstract
-We develop a Lean 4 framework toward denotational semantics for an untyped $\lambda$-calculus with probabilistic, internal, and external choice, controlled by finite quantum instruments. Inspired by Chen, Kou, and Lyu’s finite-valuation approximable structures, we define $\omega\mathbf{QVA}$ by requiring its approximate identity to factor through finite products of sub-normalized density-operator spaces with the Loewner order. The finite spectrahedra are approximation factors; they are not themselves a quantum powerdomain $\mathcal Q(D)$. We formalize a parameterized inverse-limit theorem: any locally continuous endofunctor $\mathcal Q$ that preserves $\omega\mathbf{QVA}$ yields a solution of $D_\infty\cong[D_\infty\to\mathcal Q(D_\infty)]$. This theorem does not by itself supply such a quantum endofunctor. The concrete route developed here starts from Kraus-presented completely positive trace-nonincreasing maps and finite instruments, with untyped $\lambda$-calculus providing classical higher-order control over a finite quantum register. The accompanying $q\lambda$/Qiskit tables state an observational correspondence: matching operational realizations must induce the same outcome probabilities and conditional post-measurement states. Constructing the continuous instrument powerdomain and proving that it satisfies the abstract endofunctor specification remain the principal open steps.
+We develop a Lean 4 framework toward denotational semantics for an untyped $\lambda$-calculus with probabilistic, internal, and external choice, controlled by finite quantum instruments. Inspired by Chen, Kou, and Lyu’s finite-valuation approximable structures, we define $\omega\mathbf{QVA}$ by requiring its approximate identity to factor through finite products of sub-normalized density-operator spaces with the Loewner order. The finite spectrahedra are approximation factors; they are not themselves a quantum powerdomain $\mathcal Q(D)$. We prove a parameterized inverse-limit theorem and instantiate its hypotheses with the fixed-register continuation power $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$. Finite trace-nonincreasing CP instruments embed into this carrier through Scott-continuous token-local aggregation. The embedding preserves deterministic return exactly and agrees with finite map and bind on finitely presented continuations. Embedding order recovers every rational TT test having an explicit Scott representation; a global order equivalence would require an additional density theorem. We also isolate the obstruction to a finite-image Scott retract: any such retract would force the finite image to be closed under nonempty directed suprema. Thus the semantic domain and its physical finite fragment are constructed, while computation-valued term interpretation, the operational semantics and adequacy theorem, and the three choice algebras remain future semantic layers.
 
 ---
 
@@ -185,32 +185,133 @@ graph LR
 3. **Definition ($\omega\mathbf{QVA}$):** A domain $D$ is in $\omega\mathbf{QVA}$ if $\mathrm{id}_D = \sup_n a_n$ where each $a_n$ factors through $\mathcal{S}_{\le 1}(A_n)$ for finite-dimensional $C^*$-algebras $A_n$.
 4. **Saturation:** The 2-level flattening lemma (Lemma 6.6) depends only on way-below interpolation ($\ll$) and finite separation, so the bilimit $D_\infty = \operatorname{colim}_n D_n$ lies in $\omega\mathbf{QVA}$. The isomorphism $D_\infty \cong [D_\infty \to \mathcal{Q}(D_\infty)]$ additionally requires a locally continuous endofunctor $\mathcal{Q}$ on $\omega\mathbf{QVA}$.
 
-### Instruments as the quantum effect
+### The surviving roadmap
 
-The finite spectrahedron $\mathcal{S}_{\le 1}(A)$ is the approximating factor in the definition of $\omega\mathbf{QVA}$, analogous to $\mathcal{V}_{\le 1}(P)$ for a finite poset $P$. It is not itself an element of $\mathcal{Q}(D)$ for a general continuous lattice $D$. Jones and Plotkin define $\mathcal{V}_{\le 1}(D)$ as continuous valuations on Scott-opens; Selinger and Valiron’s $Q$ is a linear/monadic type constructor. Neither source fixes a unique endofunctor $\mathcal{Q}$ on continuous lattices.
+The development separates the construction of the semantic domain from the semantics of a language. The broad roadmap that survived formal proof is:
 
-Scott’s inverse-limit machine solves $D_\infty \cong [D_\infty \to \mathcal{Q}(D_\infty)]$ for *any* locally continuous endofunctor $\mathcal{Q}$ that preserves $\omega\mathbf{QVA}$. This is a conditional domain-theoretic theorem, not a construction of the required quantum effect. The stand-ins $\mathcal{Q}(D) := D$ and $\mathcal{Q}(D) := \mathcal{V}_{\le 1}(D)$ do not model quantum computation. The constant choice $\mathcal{Q}(D) := \mathcal{S}_{\le 1}(A)$ for fixed finite $A$ is a quantum ground type, not a powerdomain of computations returning values in $D$.
+1. **Ambient domain theory — complete.** Define $\omega\mathbf{QVA}$, prove Cartesian closure, prove closure of countable rounded theories, and solve the parameterized inverse-limit equation.
+2. **Concrete quantum effect — complete for a fixed register.** Construct the continuation power
+   $$\mathcal Q_n(D)=[[D\to R_n]\to R_n]$$
+   and prove the functor, local-continuity, $\omega\mathbf{QVA}$-closure, and monad laws required by `IsQuantumPowerModel` and `IsQuantumMonad`.
+3. **Finite physical fragment — complete with explicit boundaries.** Embed finite TNI CP instruments into $\mathcal Q_n(D)$; prove exact return and finitely presented map/bind compatibility; prove the represented-test direction of refinement correspondence; and replace the unsupported finite-retract claim by a directed-supremum obstruction theorem.
+4. **Language semantics — core interpretation constructed, metatheory still open.** Terms with closed quantum primitives and recursive abstractions now have a compositional Scott-continuous interpretation in $Q(D_\infty)$; pure values are lifted by monadic unit, application uses continuous Kleisli extension, and recursion uses Scott’s least fixed point. The remaining obligations are the full renaming/weakening/substitution metatheory, operational soundness and adequacy, and concrete probabilistic, internal, and external choice operations compatible with finite instruments.
 
-**Concrete route.** Fix a finite quantum register. A quantum operation is represented by Kraus operators $\{K_i\}$ and acts by
-$$\Phi(\rho)=\sum_i K_i\rho K_i^\dagger,$$
-subject to trace non-increase. A finite instrument is a finite family $(\Phi_o)_o$ whose sum is trace non-increasing; measurement probabilities are $\operatorname{Tr}(\Phi_o(\rho))$, and normalization gives the conditional post-measurement state. Finite instruments are ordered by a weakest-precondition/TT refinement quantified over monotone Kraus-valued postconditions. Residual CP refinement is proved equivalent to intrinsic Choi/Loewner refinement, making the order presentation-independent. Pointwise Choi refinement of Scott-open indicator observations is strictly weaker: `QLambda/RefinementCounterexample.lean` gives a rational qubit counterexample over the four-element Boolean diamond.
+The word “complete” in items 1–3 refers to the stated Lean interfaces and theorems, not to a complete quantum programming language.
 
-The Scott-continuous replacement uses finite rational CP-valued step postconditions and strict rational quadratic tests of their weakest-precondition Choi matrices. These tests are countable and stabilize on directed suprema. Their saturated rounded theories form continuous lattices; finite-prefix membership gates give explicit finitely separated `QFactorable` approximants, so every encodable rounded theory is in $\omega\mathbf{QVA}$. On finite instruments, inclusion of satisfied TT theories is exactly refinement by all coded finitary TT postconditions. The completed functor is the Scott continuation construction
-$$\mathcal Q_n(D)=[[D\to R_n]\to R_n],$$
-where $R_n$ is the fixed countable rounded theory of $n$-register CP tests. `QLambda/TTContinuationMonad.lean` proves functoriality, order enrichment, local continuity, preservation of $\omega\mathbf{QVA}$, and the continuation monad laws, and bundles the concrete model as `TTContinuation.model n`. The remaining physical task is to embed arbitrary finite CP instruments into this continuation carrier and prove compatibility with the three choice operations.
+### Mini-roadmaps followed during domain construction
 
-**Spec (`IsQuantumPowerModel`).** A *quantum powerdomain model* is an assignment $Q$ of types to complete lattices such that:
+#### From finite CP maps to a countable result domain
+
+The first route through Scott-open indicator observations failed to characterize weakest-precondition refinement. `QLambda/RefinementCounterexample.lean` exhibits a rational qubit counterexample over the four-element Boolean diamond: every cumulative Scott-open Choi observation refines, but a monotone Kraus-valued postcondition separates the instruments.
+
+The replacement roadmap was:
+
+1. restrict rational step-postcondition codes to trace-nonincreasing CP maps;
+2. test weakest-precondition Choi matrices by finite conjunctions of strict Gaussian-rational quadratic inequalities;
+3. identify finitary TT refinement with preservation of all such atoms and tokens;
+4. saturate tokens under semantic entailment and strict strengthening;
+5. prove the resulting rounded theory is a continuous lattice and an $\omega\mathbf{QVA}$.
+
+Strict inequalities are essential: they provide rational interpolation and allow a finite observation at a directed supremum to be witnessed at a finite stage.
+
+#### From exact pullback to rational local approximation
+
+Exact pullback of a rational Choi test through an arbitrary Kraus family need not remain rational. The successful route therefore used local approximation rather than exact syntactic closure:
+
+1. normalize a `PUnit`-valued finite computation to its total TNI Kraus map;
+2. prove uniform bounds for pulled-back Choi functionals on the compact TNI region;
+3. approximate each strict functional test by a finite rational quadratic neighbourhood;
+4. lift atomwise approximation to finite tokens;
+5. use token derivations to extend finite physical operations Scott-continuously to all rounded result theories.
+
+This is implemented across `QLambda/TTResultAlgebra.lean`, `QLambda/TTResultApproximation.lean`, and `QLambda/TTResultOperations.lean`.
+
+#### From a failed compactness shortcut to token-local aggregation
+
+An attempted shortcut treated an entire finitely satisfied result theory as compact. That statement is false in general: a finite instrument can satisfy infinitely many increasingly precise rational observations. The corrected proof works one output token at a time. A bind observation yields finitely many branch-local source tokens; directedness supplies one common continuation stage because the instrument has finitely many outcomes. `AggregateDerives`, `aggregateResult`, `aggregateResult_sSup`, and `bindResultScott` then give the required Scott-continuous aggregation without whole-theory compactness.
+
+#### From an intended order equivalence and retract to the valid boundary
+
+The continuation carrier contains arbitrary Scott-continuous higher-order maps, while the embedding only produces finite-instrument aggregators. Consequently, neither a global order equivalence nor a finite-image retract follows merely from operational agreement on finite presentations.
+
+The proved boundary is explicit:
+
+1. if a source rational TT test is represented by a Scott result postcondition and a finite result continuation, then `embed μ ≤ embed ν` implies preservation of that test;
+2. if every test in an output code has such a representation, embedding order implies `FinitaryTTRefines` for that code;
+3. any Scott projection fixing and landing in the finite image forces that image to be closed under every nonempty directed supremum;
+4. therefore any concrete directed family of finite embeddings with a non-finite supremum rules out such a retraction.
+
+The development does **not** assert the missing density theorem or manufacture a non-closure witness. It records these hypotheses rather than claiming an unconditional equivalence or retract.
+
+### Definitions produced by the construction
+
+- `RatTNICPMatrix n` is a Gaussian-rational Choi matrix with positivity and trace-nonincreasing certificates.
+- `FiniteInstrumentComp n D` is a finite family of TNI CP branches returning values in `D`.
+- `FinitaryTTRefines C μ ν` quantifies weakest-precondition refinement over rational finite-step postconditions.
+- `TTTokenTheory n C` is the saturated rounded completion of finite strict TT tokens.
+- `TTResult n` is the fixed result theory at output type `PUnit`.
+- `TTContinuationPower n D` is `ScottMap (ScottMap D (TTResult n)) (TTResult n)`.
+- `TTPhysicalEmbedding.embed μ` is the Scott-continuous aggregation transformer induced by the finite instrument `μ`.
+- `CodedTestRepresentation C c` packages the Scott representation needed to recover a source test `c` from a result continuation.
+- `FiniteImageScottRetraction n D` states precisely what a Scott-continuous projection onto the finite embedded image would require.
+- `Term Prim` is the untyped source syntax with parameterized closed primitives and recursive function values.
+- `SemanticValue Q D₀ j₀` is the solved domain $D_\infty$, while `SemanticComp Q D₀ j₀` is the single term codomain $Q(D_\infty)$.
+- `interp primitive M` is a Scott map from environments to $Q(D_\infty)$; `HasComputationChoice` supplies the three still-model-dependent choice operations.
+
+### Principal theorems and proof ideas
+
+**Finitary refinement.** `finitaryTTRefines_iff_atom_holds` and `finitaryTTRefines_iff_token_holds` reduce matrix refinement to strict rational quadratic separation. `satisfiedTTTheory_le_iff_finitaryTTRefines` then identifies theory inclusion with the finitary preorder. The forward direction uses Choi monotonicity; the reverse direction separates a failed Loewner inequality by a rational quadratic witness.
+
+**Rounded completion and $\omega\mathbf{QVA}$.** `ttTokenTheory_isContinuousLattice` follows from rounded ideal completion. `RoundedTheory.isOmegaQVA` uses finite-prefix membership gates, each factoring through finite products of one-dimensional sub-normalized density spaces, to approximate the identity.
+
+**Concrete continuation model.** `TTContinuation.model n` satisfies `IsQuantumPowerModel`; the same carrier satisfies `IsQuantumMonad`. Evaluation and precomposition are Scott-continuous, and pointwise directed suprema prove local continuity. Therefore the parameterized theorem `omegaQVA_quantum_domain_equation_solved` applies and yields
+$$D_\infty\cong[D_\infty\to\mathcal Q_n(D_\infty)].$$
+
+**Physical embedding.** `bindResultScott_satisfied` proves that on a continuation represented by finite result instruments,
+$$\operatorname{embed}(\mu)(k)
+  =(\mu\mathbin{\mathrm{bind}}\nu).\operatorname{satisfiedTTTheory}.$$
+The proof extracts finitely many branch-local source tokens and extends their semantic derivation to the rounded completion.
+
+**Finite monad compatibility.** `embed_unit` is exact as an equality of Scott maps. `embed_bind_unit` and `embed_unit_bind` inherit the continuation monad unit laws. `embed_map_satisfied` and `embed_bind_satisfied` prove map and Kleisli compatibility on finitely presented result continuations, where physical finite bind has an exact meaning.
+
+**Order boundary.** `finitaryTTRefines_test_of_embed_le` and `finitaryTTRefines_of_embed_le` recover represented rational tests from embedding order. Their proofs evaluate the pointwise Scott-map inequality at the representing continuation and use `satisfiedTTTheory_le_iff_finitaryTTRefines`.
+
+**Retract boundary.** `finiteImage_directedSupClosed_of_retraction` applies preservation of directed suprema by the proposed Scott projection and its fixed-point law. `no_finiteImageScottRetraction_of_directedSup_not_finite` turns any future non-closure witness into a contradiction.
+
+**Computation-valued interpretation.** `interp_continuous` records that every term clause is Scott-continuous in its environment by construction. `interp_value` proves that ordinary and recursive abstractions are precisely the pure cases lifted through monadic unit. `recLambdaValue_unfold` is Scott’s fixed-point equation for recursive functions. `applyComp_pure_lambda` combines both monad unit laws with the $D_\infty\cong[D_\infty\to Q(D_\infty)]$ inverse equations to prove semantic β-reduction for a pure abstraction and argument.
+
+### Examples and separating cases
+
+1. **Deterministic return.** A one-outcome identity instrument returning `d` embeds exactly as continuation evaluation at `d`: `embed (unit d) = TTContinuation.unit d`.
+2. **Finite sequential composition.** When `k e` is the satisfied result theory of a finite continuation at each returned value, evaluating `embed μ` at `k` equals the satisfied theory of physical instrument bind. The map and bind compatibility theorems are obtained by weakest-precondition semantic equivalence.
+3. **Why indicator observations are insufficient.** The Boolean-diamond qubit example proves `ObservationRefines μ ν` while `Refines μ ν` fails. Rational CP-valued step postconditions retain the missing value-dependent quantum information.
+4. **Why finite presentations are not assumed compact.** Increasing rational thresholds can approximate a boundary observation indefinitely; token-local witnesses, not a single compact satisfied theory, establish Scott continuity.
+5. **One codomain for terms.** A variable does not denote a bare element of $D_\infty$ while an application denotes a computation. Both denote elements of $Q(D_\infty)$; the variable is the special case `unit (ρ x)`. Likewise, an abstraction is folded into $D_\infty$ and then lifted by `unit`.
+6. **Recursive function.** The denotation of `recLam self arg body` is the least fixed point of the Scott-continuous self-functional obtained by updating the environment first at `self`, then at `arg`, interpreting `body`, and folding the resulting function back into $D_\infty$. `recLambdaValue_unfold` proves that this value equals one unfolding of that functional.
+
+### Abstract specification and solved domain equation
+
+The finite spectrahedron $\mathcal{S}_{\le 1}(A)$ is an approximation factor in $\omega\mathbf{QVA}$, not the computation type $\mathcal Q(D)$. A quantum power model is instead an assignment $Q$ such that:
 
 1. $Q(D)$ is a complete lattice whenever $D$ is;
-2. $Q$ is a functor on Scott maps ($Q(\mathrm{id}) = \mathrm{id}$, $Q(f \circ g) = Q(f) \circ Q(g)$);
-3. $Q$ is order-enriched and locally continuous on monotone $\mathbb{N}$-families ($f \le g$ implies $Q(f) \le Q(g)$, and $Q(\bigsqcup_n F_n) = \bigsqcup_n Q(F_n)$), so projections lift and $i_\infty \circ j_\infty = \mathrm{id}$ collapses;
-4. $D \in \omega\mathbf{QVA}$ implies $Q(D) \in \omega\mathbf{QVA}$.
+2. $Q$ is functorial on Scott maps;
+3. $Q$ is order-enriched and locally continuous on monotone $\mathbb N$-families;
+4. $D\in\omega\mathbf{QVA}$ implies $Q(D)\in\omega\mathbf{QVA}$.
 
-A bundled `QuantumPowerModel` is a $Q$ together with an instance of this specification. `TTContinuation.model n` is a concrete fixed-register instance, with a lawful `IsQuantumMonad` instance on the same carrier. Cartesian closure of $[D \to E]$ is independent of $Q$; the Lean proof constructs finite joins of step maps sampled at the finite separators of $D$ and uses the approximants of $E$.
+Let $D_0\in\omega\mathbf{QVA}$ and let $j_0:[D_0\to Q(D_0)]\to D_0$ be a continuous-lattice projection. For the inverse limit of $D_{m+1}=[D_m\to Q(D_m)]$, `omegaQVA_quantum_domain_equation_solved` proves
+$$D_\infty\in\omega\mathbf{QVA}
+\qquad\text{and}\qquad
+D_\infty\cong[D_\infty\to Q(D_\infty)].$$
+The mixed tower maps and inverse identities are proved from the specification and instantiate with `TTContinuation.model n`.
 
-**Theorem (parameterized).** Let $Q$ be an instance of the spec, let $D_0 \in \omega\mathbf{QVA}$, and let $j_0 : [D_0 \to Q(D_0)] \to D_0$ be a continuous lattice projection. Let $D_\infty$ be the inverse limit of $D_{n+1} = [D_n \to Q(D_n)]$. Then $D_\infty \in \omega\mathbf{QVA}$ and $D_\infty \cong [D_\infty \to Q(D_\infty)]$.
+### Roadmap from the domain to a complete language semantics
 
-The mixed tower maps and the isomorphism identities are proved from the specification and therefore apply to `TTContinuation.model n`. Identifying finite physical instruments with elements of that continuation model remains separate from the domain-equation instance.
+The domain construction supplies the space in which a fixed-register untyped quantum language can be interpreted. A complete semantics still requires the following layers, in this order:
+
+1. **Computation-valued term interpretation — core complete, structural metatheory in progress.** `Term Prim` supports closed quantum primitives and recursive abstractions, while `subst` is capture-avoiding. `interp` sends every constructor to $Q(D_\infty)$: variables and abstractions use `unit`, application uses the Scott-continuous monadic `bind`, function values cross the recursive-domain isomorphism, and `recLam` uses Scott `fix`. Environment lookup and update are Scott-continuous; constructor equations, value purity, recursive unfolding, compositional Scott continuity, and the pure semantic β-equation are proved. Full renaming, weakening, and syntactic-substitution correspondence remains to be discharged.
+2. **Operational semantics.** Give a small-step or evaluation semantics carrying classical outcomes and sub-normalized quantum states, including divergence and dynamic measurement branches. Prove preservation of trace bounds and compatibility with finite-instrument composition.
+3. **Probabilistic, internal, and external choice.** Construct the three operations on `TTContinuationPower`; prove Scott continuity, their algebraic laws, and agreement with the corresponding finite-instrument operations. These are distinct effects and must not be conflated with quantum superposition.
+4. **Adequacy.** Relate operational probabilities and conditional post-measurement states to denotational observations. Prove soundness first, then computational adequacy; only after this step should the development claim a complete quantum $\lambda$-calculus semantics.
 
 ---
 
@@ -251,7 +352,7 @@ Thus the “back-and-forth” is between operational realizations at matching se
 
 ## 7. Formal Verification in Lean 4 & Capstone Theorem
 
-The formalization is constructed in Lean 4 on top of the `Scott1972` continuous lattice library (`https://github.com/catskillsresearch/scott1972`). Chen–Kou–Lyu-style finite-separation and saturation lemmas are mechanized in `QLambda/Saturation.lean`, and `omegaQVA_closed_under_functionSpace` proves Cartesian closure by finite-separator step-map sampling. `QLambda/QuantumInstrument.lean` develops finite Kraus instruments and proves residual CP refinement equivalent to Choi order. `QLambda/RefinementCounterexample.lean` proves indicator observations too weak for TT refinement. `QLambda/RationalCP.lean`, `QLambda/TTObservationBasis.lean`, and `QLambda/TTRefinement.lean` replace them by countable finitary CP-valued postconditions and prove exact finite-instrument order correspondence. `QLambda/TTRoundedTheory.lean` forms their saturated continuous completion. `QLambda/RoundedTheoryOmega.lean` proves generically that every encodable rounded basis is an $\omega\mathbf{QVA}$ by explicit one-dimensional density factorizations. `QLambda/RoundedTheoryMorphisms.lean` supplies Scott-continuous rounded extension, while `QLambda/TTTokenTheoryOperations.lean` proves unit and code-compatible finite map/bind agreement. Finally, `QLambda/TTContinuationMonad.lean` defines $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$, proves every `IsQuantumPowerModel` and `IsQuantumMonad` field, and bundles `TTContinuation.model n`. The computation-valued syntax interpretation, physical instrument embedding into the continuation carrier, choice algebras, and operational adequacy remain open.
+The formalization is constructed in Lean 4 on top of the `Scott1972` continuous lattice library (`https://github.com/catskillsresearch/scott1972`). Chen–Kou–Lyu-style finite-separation and saturation lemmas are mechanized in `QLambda/Saturation.lean`, and `omegaQVA_closed_under_functionSpace` proves Cartesian closure by finite-separator step-map sampling. `QLambda/QuantumInstrument.lean` develops finite Kraus instruments and proves residual CP refinement equivalent to Choi order. `QLambda/RefinementCounterexample.lean` proves indicator observations too weak for TT refinement. `QLambda/RationalCP.lean`, `QLambda/TTObservationBasis.lean`, and `QLambda/TTRefinement.lean` replace them by countable physical finitary CP-valued postconditions and prove exact satisfied-theory order correspondence. `QLambda/TTRoundedTheory.lean` forms their saturated continuous completion. `QLambda/RoundedTheoryOmega.lean` proves generically that every encodable rounded basis is an $\omega\mathbf{QVA}$ by explicit one-dimensional density factorizations. `QLambda/TTResultAlgebra.lean`, `QLambda/TTResultApproximation.lean`, and `QLambda/TTResultOperations.lean` establish TNI result normalization, rational local approximation, and Scott-continuous token-local aggregation. `QLambda/TTContinuationMonad.lean` defines $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$, proves every `IsQuantumPowerModel` and `IsQuantumMonad` field, and bundles `TTContinuation.model n`. Finally, `QLambda/TTPhysicalEmbedding.lean` embeds finite physical instruments, proves finite monad compatibility on the precisely stated fragment, proves represented-test refinement recovery, and formalizes the directed-supremum obstruction to a finite-image Scott retract. The remaining work is computation-valued syntax interpretation, operational semantics and adequacy, and the three choice algebras.
 
 ```lean
 class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) where
@@ -284,6 +385,15 @@ structure FiniteInstrumentComp (n : ℕ) (D : Type*) where
   branch : Outcome → List (Matrix (Fin n) (Fin n) ℂ)
   value : Outcome → D
   trace_nonincreasing : ...
+
+noncomputable def TTPhysicalEmbedding.embed
+    (μ : FiniteInstrumentComp n D) :
+    TTContinuationPower n D :=
+  TTTokenTheory.bindResultScott μ
+
+theorem TTPhysicalEmbedding.embed_unit (d : D) :
+    embed (FiniteInstrumentComp.unit (n := n) d) =
+      TTContinuation.unit (n := n) d
 ```
 
 ---

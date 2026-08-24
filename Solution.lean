@@ -15,6 +15,8 @@ Importing the QLambda proof modules supplies the compared capstone
 `QuantumPowerModel`), `qDInf_isOmegaQVA`, and
 `finitelySeparated_wayBelow`, with the same names and types as in
 `Challenge.lean`. `QLambda.TTContinuation.model` now supplies a concrete
-Scott-continuation instance; its physical finite-instrument adequacy is
-tracked separately from the compared theorem.
+Scott-continuation instance. `QLambda.TTPhysicalEmbedding` supplies the
+finite physical embedding and its stated compatibility results; language
+interpretation and operational adequacy remain separate from the compared
+theorem.
 -/

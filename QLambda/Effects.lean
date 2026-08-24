@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import Mathlib.Order.UpperLower.CompleteLattice
+import QLambda.Syntax
 import Scott1972.ContinuousLattice.FunctionSpaces
 
 /-!
@@ -37,6 +38,16 @@ class HasInternalChoice (D : Type u) [CompleteLattice D] where
 /-- Algebra of external / interactive choice. -/
 class HasExternalChoice (D : Type u) [CompleteLattice D] where
   extern : D → D → D
+
+/-- Scott-continuous choice operations consumed by the computation-valued
+interpreter.  This interface keeps classical probabilistic, internal, and
+external choice distinct; concrete models may realize them differently. -/
+class HasComputationChoice (C : Type u) [CompleteLattice C] where
+  prob : Prob → ScottMap (C × C) C
+  intern : ScottMap (C × C) C
+  extern : ScottMap (C × C) C
+  left_le_intern : ∀ a b, a ≤ intern (a, b)
+  right_le_intern : ∀ a b, b ≤ intern (a, b)
 
 /-- Internal choice on `𝒫(D)` is the join of upper sets. -/
 instance instHasInternalChoiceNondet (D : Type u)

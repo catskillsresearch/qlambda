@@ -18,9 +18,46 @@ is order-isomorphic to its own function space
 (`D_∞ ≅ [D_∞ → Q(D_∞)]`), together with the supporting surface
 `qDInf_isOmegaQVA` and `finitelySeparated_wayBelow`.
 
-No concrete quantum-powerdomain instance is currently claimed. The
-active construction starts from Kraus-presented trace-nonincreasing
-operations and finite instruments.
+A concrete fixed-register instance is now constructed as
+`TTContinuation.model n`, with carrier
+`TTContinuationPower n D = [[D → TTResult n] → TTResult n]`.
+`TTPhysicalEmbedding.embed` maps Kraus-presented finite
+trace-nonincreasing instruments into this carrier. It preserves return
+exactly, agrees with finite map and bind on finitely presented result
+continuations, and recovers explicitly Scott-represented finitary TT
+tests from embedding order.
+
+## Roadmap
+
+The domain construction is complete at its stated interface:
+
+- ωQVA Cartesian closure and inverse-limit domain equation;
+- the fixed-register continuation quantum power and monad;
+- physical finite-instrument embedding and finite monad compatibility;
+- represented-test refinement recovery and the directed-supremum
+  obstruction to a finite-image Scott retract.
+
+A complete quantum λ-calculus semantics still requires:
+
+1. completion of the renaming, weakening, and capture-avoiding
+   substitution laws for the computation-valued interpretation;
+2. operational soundness and computational adequacy;
+3. concrete probabilistic, internal, and external choice operations on the
+   continuation model, with finite-instrument compatibility.
+
+The core language layer is now implemented: syntax is parameterized by
+closed quantum primitives and includes recursive abstractions;
+`QLambda.interp` maps every term compositionally into `Q(D_∞)`, with pure
+values lifted by monadic `unit`, call-by-value application implemented by
+Scott-continuous `bind`, and recursion interpreted by Scott `fix`.
+Environment lookup/update, constructor equations, value purity,
+compositional Scott continuity, recursive unfolding, and the pure semantic
+β-equation are proved. The choice clauses remain parameterized by
+`HasComputationChoice`; no unsupported identification of the three effects
+is made.
+
+See `arxiv.md` for the proof journey, definitions, theorem statements,
+examples, boundaries, and detailed mini-roadmaps.
 
 Narrative: `arxiv.md`. Palomar metadata: `comparator.json`,
 `formalization.yaml`. Vendor / attribution: `PROVENANCE.md`,

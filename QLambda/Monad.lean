@@ -30,7 +30,7 @@ class IsQuantumMonad (Q : (D : Type u) → [CompleteLattice D] → Type u)
   bind : ∀ {D E : Type u} [CompleteLattice D] [CompleteLattice E],
     letI := str D
     letI := str E
-    ScottMap D (Q E) → ScottMap (Q D) (Q E)
+    ScottMap (ScottMap D (Q E)) (ScottMap (Q D) (Q E))
   bind_unit : ∀ {D : Type u} [CompleteLattice D],
     letI := str D
     bind (unit (D := D)) = ScottMap.idMap
@@ -52,5 +52,14 @@ class IsQuantumMonad (Q : (D : Type u) → [CompleteLattice D] → Type u)
     letI := str D
     letI := str E
     map f = bind (unit.comp f)
+
+/-- Regard a quantum monad as its underlying bundled quantum power model.
+Using this constructor keeps the power-model and monad structures
+definitionally aligned in computation-valued semantics. -/
+noncomputable abbrev quantumMonadModel
+    (Q : (D : Type u) → [CompleteLattice D] → Type u)
+    [m : IsQuantumMonad Q] : QuantumPowerModel where
+  Power := Q
+  spec := m.toIsQuantumPowerModel
 
 end QLambda

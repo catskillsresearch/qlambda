@@ -127,6 +127,76 @@ theorem bind_apply (h : ScottMap D (TTContinuationPower n E))
     bind h q k = q (continuation h k) :=
   rfl
 
+private theorem continuation_mono_left
+    (k : ScottMap E (TTResult n)) :
+    Monotone fun h : ScottMap D (TTContinuationPower n E) =>
+      continuation h k := by
+  intro h g hhg d
+  exact hhg d k
+
+private theorem continuation_sSup_left
+    {S : Set (ScottMap D (TTContinuationPower n E))}
+    (k : ScottMap E (TTResult n)) :
+    continuation (sSup S) k =
+      sSup ((fun h : ScottMap D (TTContinuationPower n E) =>
+        continuation h k) '' S) := by
+  apply ScottMap.ext
+  intro d
+  change
+    ((sSup S : ScottMap D (TTContinuationPower n E)) d) k =
+      ((sSup ((fun h : ScottMap D (TTContinuationPower n E) =>
+        continuation h k) '' S) : ScottMap D (TTResult n)) d)
+  rw [ScottMap.sSup_apply, ScottMap.sSup_apply, ScottMap.sSup_apply,
+    Set.image_image]
+  congr 1
+  ext y
+  constructor
+  · rintro ⟨h, hhS, rfl⟩
+    exact ⟨continuation h k, ⟨h, hhS, rfl⟩, rfl⟩
+  · rintro ⟨_, ⟨h, hhS, rfl⟩, rfl⟩
+    exact ⟨h, hhS, rfl⟩
+
+/-- Kleisli extension is Scott-continuous also in its continuation
+argument. -/
+noncomputable def bindScott :
+    ScottMap (ScottMap D (TTContinuationPower n E))
+      (ScottMap (TTContinuationPower n D) (TTContinuationPower n E)) :=
+  ⟨bind, continuous_of_preservesDirectedSup fun S hS hdir => by
+    apply ScottMap.ext
+    intro q
+    apply ScottMap.ext
+    intro k
+    let T : Set (ScottMap D (TTResult n)) :=
+      (fun h : ScottMap D (TTContinuationPower n E) =>
+        continuation h k) '' S
+    have hT : T.Nonempty := hS.image _
+    have hTdir : DirectedOn (· ≤ ·) T := by
+      rintro _ ⟨h, hhS, rfl⟩ _ ⟨g, hgS, rfl⟩
+      obtain ⟨z, hzS, hhz, hgz⟩ := hdir h hhS g hgS
+      exact ⟨continuation z k, ⟨z, hzS, rfl⟩,
+        continuation_mono_left (n := n) k hhz,
+        continuation_mono_left (n := n) k hgz⟩
+    have hq := q.preservesDirectedSup_coe T hT hTdir
+    change q (continuation (sSup S) k) =
+      ((sSup (bind '' S) :
+        ScottMap (TTContinuationPower n D)
+          (TTContinuationPower n E)) q) k
+    rw [continuation_sSup_left (n := n) k, hq,
+      ScottMap.sSup_apply, ScottMap.sSup_apply,
+      Set.image_image, Set.image_image]
+    congr 1
+    ext y
+    constructor
+    · rintro ⟨h, hhS, rfl⟩
+      exact ⟨bind h, ⟨h, hhS, rfl⟩, rfl⟩
+    · rintro ⟨_, ⟨h, hhS, rfl⟩, rfl⟩
+      exact ⟨h, hhS, rfl⟩⟩
+
+@[simp]
+theorem bindScott_apply (h : ScottMap D (TTContinuationPower n E)) :
+    bindScott (n := n) h = bind h :=
+  rfl
+
 theorem map_id :
     map (n := n) (ScottMap.idMap : ScottMap D D) = ScottMap.idMap := by
   apply ScottMap.ext
@@ -236,7 +306,7 @@ noncomputable instance instIsQuantumPowerModel :
 noncomputable instance instIsQuantumMonad :
     IsQuantumMonad (TTContinuationPower n) where
   unit := unit (n := n)
-  bind := bind (n := n)
+  bind := bindScott (n := n)
   bind_unit := bind_unit (n := n)
   unit_bind := unit_bind (n := n)
   bind_assoc := bind_assoc (n := n)

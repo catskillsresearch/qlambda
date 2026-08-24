@@ -22,8 +22,9 @@ import Mathlib.Topology.Order.ScottTopology
 This module states the compared capstone and its type surface. It imports
 only Mathlib. Challenge is allowed `sorry`. `IsQuantumPowerModel` is the
 conditional specification of a quantum powerdomain. The capstone is
-parameterized by a bundled `QuantumPowerModel`; no concrete instance is
-claimed until the CP-instrument powerdomain is constructed.
+parameterized by a bundled `QuantumPowerModel`. The concrete
+`TTContinuation.model` instance and its finite physical-instrument embedding
+are proved in `QLambda/`, outside this deliberately abstract compared surface.
 -/
 
 open Matrix
