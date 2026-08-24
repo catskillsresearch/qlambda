@@ -27,8 +27,10 @@ import QLambda.ScottLowerSet
 import QLambda.Syntax
 import QLambda.TTObservationBasis
 import QLambda.TTContinuationMonad
+import QLambda.TTPhysicalEmbedding
 import QLambda.TTRefinement
 import QLambda.TTResultAlgebra
 import QLambda.TTResultApproximation
+import QLambda.TTResultOperations
 import QLambda.TTRoundedTheory
 import QLambda.TTTokenTheoryOperations

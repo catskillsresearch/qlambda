@@ -106,6 +106,23 @@ namespace FiniteInstrumentComp
 
 variable {n : ℕ}
 
+/-- A single branch of a finite instrument, regarded as a TNI operation. -/
+noncomputable def branchOperation {D : Type*}
+    (μ : FiniteInstrumentComp n D) (o : μ.Outcome) :
+    QuantumOperation n n where
+  kraus := μ.branch o
+  trace_nonincreasing := by
+    intro ρ hρ
+    have hnonneg : ∀ i : μ.Outcome,
+        0 ≤ (Matrix.trace (KrausFamily.applyMat (μ.branch i) ρ)).re := by
+      intro i
+      simpa [Matrix.trace] using
+        (Finset.sum_nonneg fun j (_ : j ∈ Finset.univ) =>
+          (Complex.nonneg_iff.mp
+            (KrausFamily.applyMat_posSemidef (μ.branch i) hρ).diag_nonneg).1)
+    exact (Finset.single_le_sum (fun i _ => hnonneg i)
+      (Finset.mem_univ o)).trans (μ.trace_nonincreasing ρ hρ)
+
 def precomposeResult (Φ : QuantumOperation n n)
     (μ : FiniteInstrumentComp n PUnit.{1}) :
     FiniteInstrumentComp n PUnit.{1} :=
@@ -556,6 +573,69 @@ theorem targetEval_eq_sum_pulled (Φ : QuantumOperation n n)
   | nil => simp
   | cons A K ih => simp [ih]
 
+private theorem choiTest_eval_list_sum (t : ChoiTest n)
+    (Js : List (Matrix (Fin n × Fin n) (Fin n × Fin n) ℂ)) :
+    t.eval Js.sum = (Js.map t.eval).sum := by
+  induction Js with
+  | nil => simp [ChoiTest.eval]
+  | cons J Js ih =>
+      simp only [List.sum_cons, List.map_cons]
+      rw [← ih]
+      simp [ChoiTest.eval, Matrix.add_mulVec, dotProduct_add]
+
+private theorem choiTest_eval_comp (t : ChoiTest n)
+    (L K : KrausFamily n n) :
+    t.eval (KrausFamily.choi (KrausFamily.comp L K)) =
+      (K.map fun A =>
+        (complexQuadratic (pulledVector A t.vector)
+          (KrausFamily.choi L)).re).sum := by
+  change (complexQuadratic t.vector
+    (KrausFamily.choi (KrausFamily.comp L K))).re = _
+  rw [complexQuadratic_comp]
+  induction K with
+  | nil => simp
+  | cons A K ih => simp [ih]
+
+/-- A bind target is the sum of the targets contributed by the instrument
+branches. -/
+theorem targetEval_bind_eq_sum {D : Type*}
+    [CompleteLattice D] (μ : FiniteInstrumentComp n D)
+    (ν : D → FiniteInstrumentComp n PUnit.{1})
+    (a : TTObservationAtom n) :
+    a.choi.eval
+        (KrausFamily.choi
+          ((μ.bind ν).wpKraus
+            (a.post.decode TTContinuation.resultCode))) =
+      ∑ o : μ.Outcome,
+        targetEval (μ.branchOperation o) a (ν (μ.value o)) := by
+  classical
+  let P := a.post.decode TTContinuation.resultCode
+  have hbind := KrausFamily.choi_eq_of_semEq
+    (FiniteInstrumentComp.wpKraus_bind_semEq μ ν P)
+  rw [hbind]
+  unfold FiniteInstrumentComp.wpKraus
+  rw [FiniteInstrumentComp.choi_flatMap]
+  rw [choiTest_eval_list_sum]
+  simp_rw [targetEval_eq_sum_pulled]
+  rw [List.map_map]
+  have hlist (f : μ.Outcome → ℝ) :
+      (Finset.univ.toList.map f).sum = ∑ o, f o := by
+    rw [← List.sum_toFinset f (Finset.nodup_toList Finset.univ)]
+    simp
+  rw [hlist]
+  apply Finset.sum_congr rfl
+  intro o _
+  change a.choi.eval
+      (KrausFamily.choi
+        (KrausFamily.comp
+          ((ν (μ.value o)).wpKraus P)
+          (μ.branch o))) =
+    ((μ.branch o).map fun A =>
+      (complexQuadratic (pulledVector A a.choi.vector)
+        (KrausFamily.choi ((ν (μ.value o)).wpKraus P))).re).sum
+  exact choiTest_eval_comp a.choi
+    ((ν (μ.value o)).wpKraus P) (μ.branch o)
+
 private theorem exists_mem_pos_of_sum_pos (xs : List ℝ)
     (h : 0 < xs.sum) : ∃ x ∈ xs, 0 < x := by
   induction xs with
@@ -958,13 +1038,192 @@ theorem exists_precompose_source_token
       Classical.choose
           (exists_rationalLocalCertificate Φ a ν (hu a ha)) ∈ cs := by
     refine List.mem_map.mpr ⟨⟨a, ha⟩, ?_, rfl⟩
-    simp [cs]
+    simp
   have hct :
       (Classical.choose
           (exists_rationalLocalCertificate Φ a ν (hu a ha))).target = a :=
     (Classical.choose_spec
       (exists_rationalLocalCertificate Φ a ν (hu a ha))).left
   exact hall ν' hs' a (List.mem_map.mpr ⟨_, hmem, hct⟩)
+
+/-- A single observation of a finite bind has finitely many branch-local
+source tokens which entail it. -/
+theorem exists_bind_source_atoms {D : Type*} [CompleteLattice D]
+    (μ : FiniteInstrumentComp n D) (a : TTObservationAtom n)
+    (ν : D → FiniteInstrumentComp n PUnit.{1})
+    (ha : TTObservationAtom.Holds TTContinuation.resultCode a (μ.bind ν)) :
+    ∃ sources : μ.Outcome → TTObservationToken n,
+      (∀ o, TTObservationToken.Holds TTContinuation.resultCode
+        (sources o) (ν (μ.value o))) ∧
+      ∀ ν' : D → FiniteInstrumentComp n PUnit.{1},
+        (∀ o, TTObservationToken.Holds TTContinuation.resultCode
+          (sources o) (ν' (μ.value o))) →
+        TTObservationAtom.Holds TTContinuation.resultCode a (μ.bind ν') := by
+  classical
+  let value : μ.Outcome → ℝ := fun o =>
+    targetEval (μ.branchOperation o) a (ν (μ.value o))
+  have hvalue_nonneg (o : μ.Outcome) : 0 ≤ value o := by
+    exact a.choi.eval_nonneg (KrausFamily.choi_posSemidef _)
+  let positive : List μ.Outcome :=
+    (Finset.univ.filter fun o => 0 < value o).toList
+  have hpositive (o : μ.Outcome) (ho : o ∈ positive) : 0 < value o := by
+    simpa [positive] using ho
+  have hsum_value :
+      (positive.map value).sum = ∑ o : μ.Outcome, value o := by
+    have hlist :
+        (positive.map value).sum =
+          ∑ o ∈ Finset.univ.filter (fun o => 0 < value o), value o := by
+      rw [← List.sum_toFinset value
+        (Finset.nodup_toList (Finset.univ.filter fun o => 0 < value o))]
+      simp
+    rw [hlist]
+    apply Finset.sum_subset (Finset.filter_subset _ _)
+    intro o _ ho
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ho
+    exact le_antisymm (not_lt.mp ho) (hvalue_nonneg o)
+  have hthreshold :
+      a.choi.threshold < (positive.map value).sum := by
+    rw [hsum_value, ← targetEval_bind_eq_sum μ ν a]
+    exact ha
+  obtain ⟨tests, htests_fst, htests_value, htests_sum⟩ :=
+    exists_rational_threshold_tests value positive hpositive hthreshold
+  have htests_ne : tests ≠ [] := by
+    intro hnil
+    have hqnonneg : 0 ≤ a.choi.threshold := by
+      change (0 : ℝ) ≤ (a.choi.2.1 : ℝ)
+      exact_mod_cast a.choi.2.2
+    simp [hnil] at htests_sum
+    linarith
+  let componentAtom (t : μ.Outcome × NonnegRat) : TTObservationAtom n :=
+    ⟨a.post, (a.choi.1, t.2)⟩
+  have hcomponent (t : μ.Outcome × NonnegRat) (ht : t ∈ tests) :
+      TTObservationAtom.Holds TTContinuation.resultCode (componentAtom t)
+        ((ν (μ.value t.1)).precomposeResult (μ.branchOperation t.1)) := by
+    change (t.2.1 : ℝ) < value t.1
+    exact htests_value t ht
+  let sourceFor (t : {t // t ∈ tests}) : TTObservationToken n :=
+    Classical.choose
+      (exists_rational_source_token (μ.branchOperation t.1.1)
+        (componentAtom t.1) (ν (μ.value t.1.1)) (hcomponent t.1 t.2))
+  have sourceFor_spec (t : {t // t ∈ tests}) :
+      TTObservationToken.Holds TTContinuation.resultCode (sourceFor t)
+          (ν (μ.value t.1.1)) ∧
+        ∀ ξ : FiniteInstrumentComp n PUnit.{1},
+          TTObservationToken.Holds TTContinuation.resultCode (sourceFor t) ξ →
+          TTObservationAtom.Holds TTContinuation.resultCode
+            (componentAtom t.1)
+            (ξ.precomposeResult (μ.branchOperation t.1.1)) :=
+    Classical.choose_spec
+      (exists_rational_source_token (μ.branchOperation t.1.1)
+        (componentAtom t.1) (ν (μ.value t.1.1)) (hcomponent t.1 t.2))
+  let sources : μ.Outcome → TTObservationToken n := fun o =>
+    (tests.attach.filter fun t => t.1.1 = o).flatMap sourceFor
+  refine ⟨sources, ?_, ?_⟩
+  · intro o b hb
+    obtain ⟨t, ht, hbt⟩ := List.mem_flatMap.mp hb
+    have hto : t.1.1 = o := by
+      simpa [sources] using ht
+    subst o
+    exact (sourceFor_spec t).1 b hbt
+  · intro ν' hsources
+    have htest (t : {t // t ∈ tests}) :
+        TTObservationAtom.Holds TTContinuation.resultCode
+          (componentAtom t.1)
+          ((ν' (μ.value t.1.1)).precomposeResult
+            (μ.branchOperation t.1.1)) := by
+      apply (sourceFor_spec t).2
+      intro b hb
+      apply hsources t.1.1 b
+      apply List.mem_flatMap.mpr
+      exact ⟨t, by simp, hb⟩
+    have hterms : ∀ t ∈ tests,
+        (t.2.1 : ℝ) ≤
+          targetEval (μ.branchOperation t.1) a (ν' (μ.value t.1)) := by
+      intro t ht
+      exact (htest ⟨t, ht⟩).le
+    have hex : ∃ t ∈ tests,
+        (t.2.1 : ℝ) <
+          targetEval (μ.branchOperation t.1) a (ν' (μ.value t.1)) := by
+      obtain ⟨t, ht⟩ := List.exists_mem_of_ne_nil tests htests_ne
+      exact ⟨t, ht, htest ⟨t, ht⟩⟩
+    have hstrict :
+        (tests.map fun t => (t.2.1 : ℝ)).sum <
+          (tests.map fun t =>
+            targetEval (μ.branchOperation t.1) a
+              (ν' (μ.value t.1))).sum :=
+      List.sum_lt_sum _ _ hterms hex
+    have hselected :
+        (tests.map fun t =>
+            targetEval (μ.branchOperation t.1) a
+              (ν' (μ.value t.1))).sum ≤
+          ∑ o : μ.Outcome,
+            targetEval (μ.branchOperation o) a (ν' (μ.value o)) := by
+      let value' : μ.Outcome → ℝ := fun o =>
+        targetEval (μ.branchOperation o) a (ν' (μ.value o))
+      change (tests.map fun t => value' t.1).sum ≤ ∑ o, value' o
+      have hmap :
+          tests.map (fun t => value' t.1) =
+            (tests.map Prod.fst).map value' := by
+        rw [List.map_map]
+        rfl
+      rw [hmap, htests_fst]
+      have hlist :
+          (positive.map value').sum =
+            ∑ o ∈ positive.toFinset, value' o := by
+        rw [← List.sum_toFinset value'
+          (Finset.nodup_toList (Finset.univ.filter fun o => 0 < value o))]
+      rw [hlist]
+      apply Finset.sum_le_sum_of_subset_of_nonneg
+      · intro o ho
+        simp
+      · intro o _ _
+        exact a.choi.eval_nonneg (KrausFamily.choi_posSemidef _)
+    change a.choi.threshold <
+      a.choi.eval
+        (KrausFamily.choi
+          ((μ.bind ν').wpKraus
+            (a.post.decode TTContinuation.resultCode)))
+    rw [targetEval_bind_eq_sum μ ν' a]
+    linarith
+
+/-- A finite token held by a bind has one finite source token at each
+instrument outcome, uniformly entailing the target token. -/
+theorem exists_bind_source_tokens {D : Type*} [CompleteLattice D]
+    (μ : FiniteInstrumentComp n D) (u : TTObservationToken n)
+    (ν : D → FiniteInstrumentComp n PUnit.{1})
+    (hu : TTObservationToken.Holds TTContinuation.resultCode u (μ.bind ν)) :
+    ∃ sources : μ.Outcome → TTObservationToken n,
+      (∀ o, TTObservationToken.Holds TTContinuation.resultCode
+        (sources o) (ν (μ.value o))) ∧
+      ∀ ν' : D → FiniteInstrumentComp n PUnit.{1},
+        (∀ o, TTObservationToken.Holds TTContinuation.resultCode
+          (sources o) (ν' (μ.value o))) →
+        TTObservationToken.Holds TTContinuation.resultCode u (μ.bind ν') := by
+  classical
+  let atomSources (p : {a // a ∈ u}) :
+      μ.Outcome → TTObservationToken n :=
+    Classical.choose (exists_bind_source_atoms μ p.1 ν (hu p.1 p.2))
+  have atomSources_spec (p : {a // a ∈ u}) :
+      (∀ o, TTObservationToken.Holds TTContinuation.resultCode
+        (atomSources p o) (ν (μ.value o))) ∧
+      ∀ ν' : D → FiniteInstrumentComp n PUnit.{1},
+        (∀ o, TTObservationToken.Holds TTContinuation.resultCode
+          (atomSources p o) (ν' (μ.value o))) →
+        TTObservationAtom.Holds TTContinuation.resultCode p.1 (μ.bind ν') :=
+    Classical.choose_spec
+      (exists_bind_source_atoms μ p.1 ν (hu p.1 p.2))
+  let sources : μ.Outcome → TTObservationToken n := fun o =>
+    u.attach.flatMap fun p => atomSources p o
+  refine ⟨sources, ?_, ?_⟩
+  · intro o b hb
+    obtain ⟨p, hp, hbp⟩ := List.mem_flatMap.mp hb
+    exact (atomSources_spec p).1 o b hbp
+  · intro ν' hsources a ha
+    let p : {a // a ∈ u} := ⟨a, ha⟩
+    apply (atomSources_spec p).2 ν'
+    intro o b hb
+    apply hsources o b
+    exact List.mem_flatMap.mpr ⟨p, by simp, hb⟩
 
 end TTResultApproximation
 
