@@ -28,5 +28,7 @@ import QLambda.Syntax
 import QLambda.TTObservationBasis
 import QLambda.TTContinuationMonad
 import QLambda.TTRefinement
+import QLambda.TTResultAlgebra
+import QLambda.TTResultApproximation
 import QLambda.TTRoundedTheory
 import QLambda.TTTokenTheoryOperations

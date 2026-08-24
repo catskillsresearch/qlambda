@@ -30,11 +30,11 @@ namespace QLambda
 
 open Scott1972.ContinuousLattice
 
-universe u
+universe u v
 
 namespace FiniteInstrumentComp
 
-variable {n : ℕ} {D E : Type u}
+variable {n : ℕ} {D : Type u} {E : Type v}
 
 /-- A quantum postcondition is a Kraus-valued predicate monotone in the
 residual CP order. -/

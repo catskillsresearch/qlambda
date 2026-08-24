@@ -59,9 +59,11 @@ theorem signature_pullPost (h : OutputCodeHom C C' f) {n : ℕ}
 theorem decode_pullPost (h : OutputCodeHom C C' f) {n : ℕ}
     (c : RatStepPostCode n) (d : D) :
     (h.pullPost c).decode C d = c.decode C' (f d) := by
-  change ((h.pullPost c).decodedMatrix C d).realize =
-    (c.decodedMatrix C' (f d)).realize
-  unfold RatStepPostCode.decodedMatrix
+  change (h.pullPost c).decodedKraus C d =
+    c.decodedKraus C' (f d)
+  unfold RatStepPostCode.decodedKraus RatStepPostCode.decodedOperation
+    RatStepPostCode.decodedTNI RatTNICPMatrix.toQuantumOperation
+    RatTNICPMatrix.realize
   rw [signature_pullPost]
   rfl
 
@@ -198,9 +200,11 @@ theorem exists_unit_holds_of_directed (C : OutputCode ℕ D)
   refine ⟨d, hdS, ?_⟩
   have hpost :
       a.post.decode C d = a.post.decode C (sSup S) := by
-    change (a.post.decodedMatrix C d).realize =
-      (a.post.decodedMatrix C (sSup S)).realize
-    unfold RatStepPostCode.decodedMatrix
+    change a.post.decodedKraus C d =
+      a.post.decodedKraus C (sSup S)
+    unfold RatStepPostCode.decodedKraus RatStepPostCode.decodedOperation
+      RatStepPostCode.decodedTNI RatTNICPMatrix.toQuantumOperation
+      RatTNICPMatrix.realize
     rw [hsig]
   have hchoi :
       KrausFamily.choi

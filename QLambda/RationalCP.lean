@@ -84,4 +84,74 @@ theorem realize_refines {n : ℕ} {M N : RatCPMatrix n}
 
 end RatCPMatrix
 
+/-- A rational completely positive code whose chosen Kraus realization is
+trace-nonincreasing.  The certificate is semantic, while countability comes
+from the underlying rational Choi matrix. -/
+structure RatTNICPMatrix (n : ℕ) where
+  cp : RatCPMatrix n
+  trace_nonincreasing :
+    ∀ ρ : Matrix (Fin n) (Fin n) ℂ, ρ.PosSemidef →
+      (Matrix.trace (KrausFamily.applyMat cp.realize ρ)).re ≤
+        (Matrix.trace ρ).re
+
+namespace RatTNICPMatrix
+
+instance (n : ℕ) : Countable (RatTNICPMatrix n) :=
+  (show Function.Injective (cp : RatTNICPMatrix n → RatCPMatrix n) from
+    fun A B h => by
+      cases A
+      cases B
+      simp_all).countable
+
+noncomputable instance (n : ℕ) : Encodable (RatTNICPMatrix n) := by
+  classical
+  let isTNI (M : RatCPMatrix n) : Prop :=
+    ∀ ρ : Matrix (Fin n) (Fin n) ℂ, ρ.PosSemidef →
+      (Matrix.trace (KrausFamily.applyMat M.realize ρ)).re ≤
+        (Matrix.trace ρ).re
+  let e : RatTNICPMatrix n ≃ {M : RatCPMatrix n // isTNI M} := {
+    toFun M := ⟨M.cp, M.trace_nonincreasing⟩
+    invFun M := ⟨M.1, M.2⟩
+    left_inv _ := rfl
+    right_inv _ := rfl }
+  exact Encodable.ofEquiv _ e
+
+/-- The rational Choi matrix carried by a TNI code. -/
+def matrix {n : ℕ} (M : RatTNICPMatrix n) : RatChoiMatrix n :=
+  M.cp.matrix
+
+/-- The complex Choi matrix denoted by a rational TNI code. -/
+def toComplex {n : ℕ} (M : RatTNICPMatrix n) :
+    Matrix (Fin n × Fin n) (Fin n × Fin n) ℂ :=
+  M.cp.toComplex
+
+theorem toComplex_posSemidef {n : ℕ} (M : RatTNICPMatrix n) :
+    M.toComplex.PosSemidef :=
+  M.cp.toComplex_posSemidef
+
+/-- The chosen Kraus realization of a rational TNI code. -/
+noncomputable def realize {n : ℕ} (M : RatTNICPMatrix n) : KrausFamily n n :=
+  M.cp.realize
+
+@[simp] theorem choi_realize {n : ℕ} (M : RatTNICPMatrix n) :
+    KrausFamily.choi M.realize = M.toComplex :=
+  M.cp.choi_realize
+
+theorem realize_refines {n : ℕ} {M N : RatTNICPMatrix n}
+    (h : M.toComplex ≤ N.toComplex) :
+    KrausFamily.Refines M.realize N.realize :=
+  RatCPMatrix.realize_refines h
+
+/-- Realize a rational TNI code as a physical quantum operation. -/
+noncomputable def toQuantumOperation {n : ℕ} (M : RatTNICPMatrix n) :
+    QuantumOperation n n where
+  kraus := M.realize
+  trace_nonincreasing := M.trace_nonincreasing
+
+@[simp] theorem toQuantumOperation_kraus {n : ℕ} (M : RatTNICPMatrix n) :
+    M.toQuantumOperation.kraus = M.realize :=
+  rfl
+
+end RatTNICPMatrix
+
 end QLambda

@@ -14,14 +14,14 @@ universe u
 
 /-- Raw finite data underlying a rational step postcondition. -/
 abbrev RatStepPostData (n : ℕ) :=
-  Σ k : ℕ, (Fin k → ℕ) × ((Fin k → Bool) → RatCPMatrix n)
+  Σ k : ℕ, (Fin k → ℕ) × ((Fin k → Bool) → RatTNICPMatrix n)
 
-/-- A finite table of rational CP matrices indexed by the Boolean
-signature of finitely many coded Scott opens. -/
+/-- A finite table of rational trace-nonincreasing CP codes indexed by the
+Boolean signature of finitely many coded Scott opens. -/
 structure RatStepPostCode (n : ℕ) where
   arity : ℕ
   opens : Fin arity → ℕ
-  table : (Fin arity → Bool) → RatCPMatrix n
+  table : (Fin arity → Bool) → RatTNICPMatrix n
   table_mono : ∀ ⦃s t⦄,
     (∀ i, @LE.le Bool Bool.instLE (s i) (t i)) →
     (table s).toComplex ≤ (table t).toComplex
@@ -63,35 +63,70 @@ theorem signature_mono {D : Type u} [CompleteLattice D]
   · by_cases he : e ∈ C.observe (c.opens i) <;>
       simp [signature, hd, he]
 
-/-- Rational matrix selected by the signature of `d`. -/
+/-- Rational TNI code selected by the signature of `d`. -/
+noncomputable def decodedTNI {D : Type u} [CompleteLattice D]
+    (C : OutputCode ℕ D) (c : RatStepPostCode n) (d : D) :
+    RatTNICPMatrix n :=
+  c.table (c.signature C d)
+
+theorem decodedTNI_mono {D : Type u} [CompleteLattice D]
+    (C : OutputCode ℕ D) (c : RatStepPostCode n) ⦃d e : D⦄ (hde : d ≤ e) :
+    (c.decodedTNI C d).toComplex ≤ (c.decodedTNI C e).toComplex :=
+  c.table_mono (fun i => c.signature_mono C hde i)
+
+/-- The underlying rational CP matrix of the selected TNI code.  This keeps
+the pre-TNI matrix-level interface available to downstream proofs. -/
 noncomputable def decodedMatrix {D : Type u} [CompleteLattice D]
     (C : OutputCode ℕ D) (c : RatStepPostCode n) (d : D) :
     RatCPMatrix n :=
-  c.table (c.signature C d)
+  (c.decodedTNI C d).cp
 
 theorem decodedMatrix_mono {D : Type u} [CompleteLattice D]
     (C : OutputCode ℕ D) (c : RatStepPostCode n) ⦃d e : D⦄ (hde : d ≤ e) :
     (c.decodedMatrix C d).toComplex ≤ (c.decodedMatrix C e).toComplex :=
-  c.table_mono (fun i => c.signature_mono C hde i)
+  c.decodedTNI_mono C hde
+
+/-- Physical quantum operation selected at `d`. -/
+noncomputable def decodedOperation {D : Type u} [CompleteLattice D]
+    (C : OutputCode ℕ D) (c : RatStepPostCode n) (d : D) :
+    QuantumOperation n n :=
+  (c.decodedTNI C d).toQuantumOperation
 
 /-- Kraus realization of the rational matrix selected at `d`. -/
 noncomputable def decodedKraus {D : Type u} [CompleteLattice D]
     (C : OutputCode ℕ D) (c : RatStepPostCode n) (d : D) :
     KrausFamily n n :=
-  (c.decodedMatrix C d).realize
+  (c.decodedOperation C d).kraus
 
 @[simp] theorem choi_decodedKraus {D : Type u} [CompleteLattice D]
     (C : OutputCode ℕ D) (c : RatStepPostCode n) (d : D) :
     KrausFamily.choi (c.decodedKraus C d) =
       (c.decodedMatrix C d).toComplex :=
-  RatCPMatrix.choi_realize _
+  RatTNICPMatrix.choi_realize _
+
+theorem choi_decodedKraus_tni {D : Type u} [CompleteLattice D]
+    (C : OutputCode ℕ D) (c : RatStepPostCode n) (d : D) :
+    KrausFamily.choi (c.decodedKraus C d) =
+      (c.decodedTNI C d).toComplex :=
+  RatTNICPMatrix.choi_realize _
 
 theorem decodedKraus_mono {D : Type u} [CompleteLattice D]
     (C : OutputCode ℕ D) (c : RatStepPostCode n) ⦃d e : D⦄ (hde : d ≤ e) :
     KrausFamily.Refines (c.decodedKraus C d) (c.decodedKraus C e) :=
-  RatCPMatrix.realize_refines (c.decodedMatrix_mono C hde)
+  RatTNICPMatrix.realize_refines (c.decodedTNI_mono C hde)
 
-/-- Decode a finite rational step table as a monotone Kraus postcondition. -/
+theorem decodedKraus_trace_nonincreasing
+    {D : Type u} [CompleteLattice D]
+    (C : OutputCode ℕ D) (c : RatStepPostCode n) (d : D) :
+    ∀ ρ : Matrix (Fin n) (Fin n) ℂ, ρ.PosSemidef →
+      (Matrix.trace (KrausFamily.applyMat (c.decodedKraus C d) ρ)).re ≤
+        (Matrix.trace ρ).re :=
+  (c.decodedOperation C d).trace_nonincreasing
+
+/-- Decode a finite rational TNI step table as a monotone Kraus
+postcondition.  Its values are the Kraus families of physical quantum
+operations; `FiniteInstrumentComp.Refines` remains the legacy quantification
+over all monotone Kraus postconditions. -/
 noncomputable def decode {D : Type u} [CompleteLattice D]
     (C : OutputCode ℕ D) (c : RatStepPostCode n) :
     FiniteInstrumentComp.KrausPost n D where
@@ -102,6 +137,15 @@ noncomputable def decode {D : Type u} [CompleteLattice D]
     (C : OutputCode ℕ D) (c : RatStepPostCode n) (d : D) :
     c.decode C d = c.decodedKraus C d :=
   rfl
+
+/-- Every Kraus value supplied by a decoded step postcondition is
+trace-nonincreasing. -/
+theorem decode_trace_nonincreasing {D : Type u} [CompleteLattice D]
+    (C : OutputCode ℕ D) (c : RatStepPostCode n) (d : D) :
+    ∀ ρ : Matrix (Fin n) (Fin n) ℂ, ρ.PosSemidef →
+      (Matrix.trace (KrausFamily.applyMat (c.decode C d) ρ)).re ≤
+        (Matrix.trace ρ).re :=
+  c.decodedKraus_trace_nonincreasing C d
 
 end RatStepPostCode
 
