@@ -43,6 +43,70 @@ theorem embed_satisfied
       (μ.bind ν).satisfiedTTTheory TTContinuation.resultCode :=
   TTTokenTheory.bindResultScott_satisfied μ ν k hk
 
+/-- A source-code test represented inside the result continuation model.
+
+The Scott postcondition is finitely presented pointwise, and `probe` recovers
+the original source weakest precondition after finite bind.  Keeping this
+representation hypothesis explicit isolates the density statement that would
+be needed for an unconditional order equivalence. -/
+structure CodedTestRepresentation
+    (C : OutputCode ℕ D) (c : RatStepPostCode n) where
+  post : ScottMap D (TTContinuation.TTResult n)
+  result : D → FiniteInstrumentComp n PUnit.{1}
+  post_eq : ∀ d,
+    post d = (result d).satisfiedTTTheory TTContinuation.resultCode
+  probe : RatStepPostCode n
+  wp_semEq : ∀ ρ : FiniteInstrumentComp n D,
+    KrausFamily.SemEq
+      ((ρ.bind result).wpKraus
+        (probe.decode TTContinuation.resultCode))
+      (ρ.wpKraus (c.decode C))
+
+/-- Order between physical embeddings preserves every source-code test that
+has an explicit Scott representation in the result model. -/
+theorem finitaryTTRefines_test_of_embed_le
+    (C : OutputCode ℕ D) {μ ν : FiniteInstrumentComp n D}
+    (hμν : embed μ ≤ embed ν) (c : RatStepPostCode n)
+    (R : CodedTestRepresentation C c) :
+    KrausFamily.Refines
+      (μ.wpKraus (c.decode C)) (ν.wpKraus (c.decode C)) := by
+  have htheory :
+      (μ.bind R.result).satisfiedTTTheory TTContinuation.resultCode ≤
+        (ν.bind R.result).satisfiedTTTheory TTContinuation.resultCode := by
+    calc
+      (μ.bind R.result).satisfiedTTTheory TTContinuation.resultCode =
+          embed μ R.post := by
+        symm
+        exact embed_satisfied μ R.result R.post fun o =>
+          R.post_eq (μ.value o)
+      _ ≤ embed ν R.post := hμν R.post
+      _ = (ν.bind R.result).satisfiedTTTheory
+          TTContinuation.resultCode := by
+        exact embed_satisfied ν R.result R.post fun o =>
+          R.post_eq (ν.value o)
+  have hprobe :
+      KrausFamily.Refines
+        ((μ.bind R.result).wpKraus
+          (R.probe.decode TTContinuation.resultCode))
+        ((ν.bind R.result).wpKraus
+          (R.probe.decode TTContinuation.resultCode)) :=
+    ((FiniteInstrumentComp.satisfiedTTTheory_le_iff_finitaryTTRefines
+      TTContinuation.resultCode).1 htheory) R.probe
+  exact KrausFamily.residualRefines_trans
+    (KrausFamily.residualRefines_of_semEq
+      (KrausFamily.applySemEq_symm (R.wp_semEq μ)))
+    (KrausFamily.residualRefines_trans hprobe
+      (KrausFamily.residualRefines_of_semEq (R.wp_semEq ν)))
+
+/-- Consequently, embedding order implies finitary TT refinement whenever
+the chosen source code has Scott representations for all of its tests. -/
+theorem finitaryTTRefines_of_embed_le
+    (C : OutputCode ℕ D) {μ ν : FiniteInstrumentComp n D}
+    (represented : ∀ c : RatStepPostCode n, CodedTestRepresentation C c)
+    (hμν : embed μ ≤ embed ν) :
+    FiniteInstrumentComp.FinitaryTTRefines C μ ν :=
+  fun c => finitaryTTRefines_test_of_embed_le C hμν c (represented c)
+
 private theorem satisfiedTTTheory_eq_of_wpKraus_semEq
     {μ ν : FiniteInstrumentComp n PUnit.{1}}
     (h : ∀ P : PUnit.{1} → KrausFamily n n,
@@ -296,6 +360,63 @@ theorem embed_bind_satisfied
                 (fun d => (f d).bind ξ) P))))
     _ = embed (μ.bind f) k := by
       exact (embed_satisfied (μ.bind f) ξ k hk).symm
+
+/-- A Scott-continuous projection of the ambient continuation domain onto
+exactly the finite physical image.  Such a projection is intentionally not
+asserted to exist. -/
+structure FiniteImageScottRetraction (n : ℕ) (D : Type u)
+    [CompleteLattice D] where
+  project : ScottMap (TTContinuation.TTContinuationPower n D)
+    (TTContinuation.TTContinuationPower n D)
+  fixes : ∀ μ : FiniteInstrumentComp n D, project (embed μ) = embed μ
+  lands : ∀ q, ∃ μ : FiniteInstrumentComp n D, project q = embed μ
+
+/-- Any Scott retraction onto the finite image would force that image to be
+closed under all nonempty directed suprema. -/
+theorem finiteImage_directedSupClosed_of_retraction
+    (R : FiniteImageScottRetraction n D)
+    {S : Set (TTContinuation.TTContinuationPower n D)}
+    (hS : S.Nonempty) (hdir : DirectedOn (· ≤ ·) S)
+    (hfinite : S ⊆ Set.range (embed (n := n) (D := D))) :
+    sSup S ∈ Set.range (embed (n := n) (D := D)) := by
+  have himage : R.project '' S = S := by
+    ext q
+    constructor
+    · rintro ⟨p, hpS, rfl⟩
+      obtain ⟨μ, hμ⟩ := hfinite hpS
+      have hpfix : R.project p = p := by
+        calc
+          R.project p = R.project (embed μ) :=
+            congrArg (fun q => R.project q) hμ.symm
+          _ = embed μ := R.fixes μ
+          _ = p := hμ
+      simpa only [hpfix] using hpS
+    · intro hqS
+      refine ⟨q, hqS, ?_⟩
+      obtain ⟨μ, hμ⟩ := hfinite hqS
+      calc
+        R.project q = R.project (embed μ) :=
+          congrArg (fun p => R.project p) hμ.symm
+        _ = embed μ := R.fixes μ
+        _ = q := hμ
+  have hpres := R.project.preservesDirectedSup_coe S hS hdir
+  rw [himage] at hpres
+  obtain ⟨μ, hμ⟩ := R.lands (sSup S)
+  exact ⟨μ, hμ.symm.trans hpres⟩
+
+/-- Thus any directed family of finite embeddings whose supremum is not
+finite rules out a Scott retraction onto the finite image.  This is the valid
+formal boundary: a concrete non-closure witness is required, rather than an
+unsupported finite-retract claim. -/
+theorem no_finiteImageScottRetraction_of_directedSup_not_finite
+    {S : Set (TTContinuation.TTContinuationPower n D)}
+    (hS : S.Nonempty) (hdir : DirectedOn (· ≤ ·) S)
+    (hfinite : S ⊆ Set.range (embed (n := n) (D := D)))
+    (hnot : sSup S ∉ Set.range (embed (n := n) (D := D))) :
+    FiniteImageScottRetraction n D → False := by
+  intro R
+  exact hnot
+    (finiteImage_directedSupClosed_of_retraction R hS hdir hfinite)
 
 end TTPhysicalEmbedding
 
