@@ -668,6 +668,30 @@ noncomputable def measurementTree {C : Type} (zeroValue oneValue : C)
         control_eq := rfl
         stack_eq := rfl })
 
+/-- The left one-sided execution of an internal choice between returns. -/
+def internReturnLeftTree {C : Type} (leftValue rightValue : C)
+    (quantum : NormalizedDensity 2) :
+    ChannelTree C
+      (initialChannelConfig
+        (.intern (.prim (.ret leftValue)) (.prim (.ret rightValue))) quantum) :=
+  ChannelTree.internal
+    (ChannelInternalStep.internalLeft
+      (s := initialChannelConfig
+        (.intern (.prim (.ret leftValue)) (.prim (.ret rightValue))) quantum))
+    (returnTree leftValue quantum)
+
+/-- The right one-sided execution of an internal choice between returns. -/
+def internReturnRightTree {C : Type} (leftValue rightValue : C)
+    (quantum : NormalizedDensity 2) :
+    ChannelTree C
+      (initialChannelConfig
+        (.intern (.prim (.ret leftValue)) (.prim (.ret rightValue))) quantum) :=
+  ChannelTree.internal
+    (ChannelInternalStep.internalRight
+      (s := initialChannelConfig
+        (.intern (.prim (.ret leftValue)) (.prim (.ret rightValue))) quantum))
+    (returnTree rightValue quantum)
+
 theorem returnTree_depth {C : Type} (value : C)
     (quantum : NormalizedDensity 2) :
     (returnTree value quantum).depth = 1 := by
@@ -682,6 +706,16 @@ theorem measurementTree_depth {C : Type} (zeroValue oneValue : C)
     (quantum : NormalizedDensity 2) :
     (measurementTree zeroValue oneValue quantum).depth = 1 := by
   simp [measurementTree, ChannelTree.depth]
+
+theorem internReturnLeftTree_depth {C : Type} (leftValue rightValue : C)
+    (quantum : NormalizedDensity 2) :
+    (internReturnLeftTree leftValue rightValue quantum).depth = 2 := by
+  simp [internReturnLeftTree, returnTree, ChannelTree.depth]
+
+theorem internReturnRightTree_depth {C : Type} (leftValue rightValue : C)
+    (quantum : NormalizedDensity 2) :
+    (internReturnRightTree leftValue rightValue quantum).depth = 2 := by
+  simp [internReturnRightTree, returnTree, ChannelTree.depth]
 
 theorem returnTree_leaf_payload {C : Type} (value : C)
     (quantum : NormalizedDensity 2)
@@ -752,6 +786,44 @@ theorem measurementTree_compatible {C : Type}
       selectors i o := by
   simpa [OutcomeCompatible, measurementTree_selectors] using List.nil_prefix
 
+theorem internReturnLeftTree_leaf_payload {C : Type}
+    (leftValue rightValue : C) (quantum : NormalizedDensity 2)
+    (o : (internReturnLeftTree leftValue rightValue quantum).instrument.Outcome) :
+    ((internReturnLeftTree leftValue rightValue quantum).instrument.value o
+      ).isTerminal.value = .payload leftValue := by
+  rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+  rfl
+
+theorem internReturnRightTree_leaf_payload {C : Type}
+    (leftValue rightValue : C) (quantum : NormalizedDensity 2)
+    (o : (internReturnRightTree leftValue rightValue quantum).instrument.Outcome) :
+    ((internReturnRightTree leftValue rightValue quantum).instrument.value o
+      ).isTerminal.value = .payload rightValue := by
+  rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+  rfl
+
+theorem internReturnLeftTree_compatible {C : Type}
+    (leftValue rightValue : C) (quantum : NormalizedDensity 2)
+    (selectors : List Bool) (i : ℕ)
+    (o : (internReturnLeftTree leftValue rightValue quantum).instrument.Outcome) :
+    OutcomeCompatible (internReturnLeftTree leftValue rightValue quantum)
+      selectors i o := by
+  rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+  simp [OutcomeCompatible, internReturnLeftTree, returnTree,
+    ChannelTree.instrument]
+  exact List.nil_prefix
+
+theorem internReturnRightTree_compatible {C : Type}
+    (leftValue rightValue : C) (quantum : NormalizedDensity 2)
+    (selectors : List Bool) (i : ℕ)
+    (o : (internReturnRightTree leftValue rightValue quantum).instrument.Outcome) :
+    OutcomeCompatible (internReturnRightTree leftValue rightValue quantum)
+      selectors i o := by
+  rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+  simp [OutcomeCompatible, internReturnRightTree, returnTree,
+    ChannelTree.instrument]
+  exact List.nil_prefix
+
 noncomputable def returnTreeRealization {C : Type}
     (D₀ : QDomain.{0})
     (j₀ : IsContinuousLatticeProjection D₀.carrier
@@ -798,6 +870,38 @@ noncomputable def measurementTreeRealization {C : Type}
     rw [hc]
     obtain ⟨b, hb⟩ := o
     cases b <;> exact ValueRel.payload _
+
+noncomputable def internReturnLeftTreeRealization {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (leftValue rightValue : C) (quantum : NormalizedDensity 2) :
+    ChannelTreeRealization D₀ j₀ realize
+      (internReturnLeftTree leftValue rightValue quantum) where
+  value := payloadLeafValue D₀ j₀ realize
+  related := by
+    intro o
+    have hc := internReturnLeftTree_leaf_payload leftValue rightValue quantum o
+    unfold payloadLeafValue
+    rw [hc]
+    exact ValueRel.payload leftValue
+
+noncomputable def internReturnRightTreeRealization {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (leftValue rightValue : C) (quantum : NormalizedDensity 2) :
+    ChannelTreeRealization D₀ j₀ realize
+      (internReturnRightTree leftValue rightValue quantum) where
+  value := payloadLeafValue D₀ j₀ realize
+  related := by
+    intro o
+    have hc := internReturnRightTree_leaf_payload leftValue rightValue quantum o
+    unfold payloadLeafValue
+    rw [hc]
+    exact ValueRel.payload rightValue
 
 /-- Restriction of a fully compatible tree is only a subtype reindexing. -/
 noncomputable def restrictedOutcomeEquiv {C : Type}
@@ -970,6 +1074,80 @@ theorem measurementTree_realized_eq_measureZ {C : Type}
       rw [payloadLeafValue_payload D₀ j₀ realize _
         (measurementTree_leaf_payload zeroValue oneValue quantum ⟨true, ⟨⟩⟩)]
 
+theorem internReturnLeftTree_realized_eq_unit {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (leftValue rightValue : C) (quantum : NormalizedDensity 2) :
+    embed (realizedInstrument D₀ j₀ realize
+        (internReturnLeftTree leftValue rightValue quantum)
+        (internReturnLeftTreeRealization D₀ j₀ realize
+          leftValue rightValue quantum)) =
+      embed (FiniteInstrumentComp.unit (n := 2) (realize leftValue)) := by
+  let μ := realizedInstrument D₀ j₀ realize
+    (internReturnLeftTree leftValue rightValue quantum)
+    (internReturnLeftTreeRealization D₀ j₀ realize
+      leftValue rightValue quantum)
+  let _ : Unique μ.Outcome :=
+    { default := ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+      uniq := by
+        intro o
+        rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+        rfl }
+  refine embed_eq_unit_of_unique μ (realize leftValue) ?_ ?_
+  · intro o
+    change payloadLeafValue D₀ j₀ realize
+      ((internReturnLeftTree leftValue rightValue quantum).instrument.value o) =
+        realize leftValue
+    rw [payloadLeafValue_payload D₀ j₀ realize _
+      (internReturnLeftTree_leaf_payload leftValue rightValue quantum o)]
+  · intro o
+    rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+    change
+      KrausFamily.comp
+        (KrausFamily.comp (KrausFamily.identity 2)
+          (QuantumOperation.identity 2).kraus)
+        (QuantumOperation.identity 2).kraus = KrausFamily.identity 2
+    simp [QuantumOperation.identity]
+
+theorem internReturnRightTree_realized_eq_unit {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (leftValue rightValue : C) (quantum : NormalizedDensity 2) :
+    embed (realizedInstrument D₀ j₀ realize
+        (internReturnRightTree leftValue rightValue quantum)
+        (internReturnRightTreeRealization D₀ j₀ realize
+          leftValue rightValue quantum)) =
+      embed (FiniteInstrumentComp.unit (n := 2) (realize rightValue)) := by
+  let μ := realizedInstrument D₀ j₀ realize
+    (internReturnRightTree leftValue rightValue quantum)
+    (internReturnRightTreeRealization D₀ j₀ realize
+      leftValue rightValue quantum)
+  let _ : Unique μ.Outcome :=
+    { default := ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+      uniq := by
+        intro o
+        rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+        rfl }
+  refine embed_eq_unit_of_unique μ (realize rightValue) ?_ ?_
+  · intro o
+    change payloadLeafValue D₀ j₀ realize
+      ((internReturnRightTree leftValue rightValue quantum).instrument.value o) =
+        realize rightValue
+    rw [payloadLeafValue_payload D₀ j₀ realize _
+      (internReturnRightTree_leaf_payload leftValue rightValue quantum o)]
+  · intro o
+    rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+    change
+      KrausFamily.comp
+        (KrausFamily.comp (KrausFamily.identity 2)
+          (QuantumOperation.identity 2).kraus)
+        (QuantumOperation.identity 2).kraus = KrausFamily.identity 2
+    simp [QuantumOperation.identity]
+
 theorem ChannelInternalStep.eq_of_return {C : Type}
     {s t : ChannelConfig C} {value : C}
     (h : ChannelInternalStep s t)
@@ -988,6 +1166,16 @@ theorem ChannelInternalStep.eq_of_pauliX {C : Type}
       t.quantum = applyOperation Qubit.pauliXOp s.quantum := by
   cases h <;> cases hc
   exact ⟨rfl, rfl, rfl, rfl⟩
+
+theorem ChannelInternalStep.eq_of_intern {C : Type}
+    {s t : ChannelConfig C} {left right : Term (QubitPrimitive C)}
+    (h : ChannelInternalStep s t)
+    (hc : s.control = .term (.intern left right)) :
+    (t = {s with control := .term left}) ∨
+      (t = {s with control := .term right}) := by
+  cases h <;> cases hc
+  · exact Or.inl rfl
+  · exact Or.inr rfl
 
 theorem ChannelInternalStep.not_measureZ {C : Type}
     {s t : ChannelConfig C} {zeroValue oneValue : C}
@@ -1017,6 +1205,13 @@ theorem ChannelExternalStep.not_prim {C : Type}
     {s t : ChannelConfig C} {b : Bool} {p : QubitPrimitive C}
     (h : ChannelExternalStep s b t)
     (hc : s.control = .term (.prim p)) : False := by
+  cases h <;> cases hc
+
+theorem ChannelExternalStep.not_intern {C : Type}
+    {s t : ChannelConfig C} {b : Bool}
+    {left right : Term (QubitPrimitive C)}
+    (h : ChannelExternalStep s b t)
+    (hc : s.control = .term (.intern left right)) : False := by
   cases h <;> cases hc
 
 theorem ChannelExternalStep.not_value {C : Type}
@@ -1331,6 +1526,170 @@ theorem embed_of_measureZ_tree {C : Type}
       | external _ h' _ =>
           exact False.elim (ChannelExternalStep.not_value h' hctrl0)
 
+/-- Every completing tree for an internal choice of two closed returns chooses
+exactly one side and embeds as that deterministic return. -/
+theorem embed_of_intern_returns_tree {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (leftValue rightValue : C) (quantum : NormalizedDensity 2)
+    (tree : ChannelTree C
+      (initialChannelConfig
+        (.intern (.prim (.ret leftValue)) (.prim (.ret rightValue))) quantum))
+    (R : ChannelTreeRealization D₀ j₀ realize tree)
+    (selectors : List Bool) (i : ℕ) :
+    embed (restrictedInstrument D₀ j₀ realize tree R selectors i) =
+        embed (FiniteInstrumentComp.unit (n := 2) (realize leftValue)) ∨
+      embed (restrictedInstrument D₀ j₀ realize tree R selectors i) =
+        embed (FiniteInstrumentComp.unit (n := 2) (realize rightValue)) := by
+  let start := initialChannelConfig
+    (.intern (.prim (.ret leftValue)) (.prim (.ret rightValue))) quantum
+  have hctrl : start.control =
+      .term (.intern (.prim (.ret leftValue)) (.prim (.ret rightValue))) := rfl
+  have hstack : start.stack = [] := rfl
+  dsimp [start] at tree hctrl hstack
+  cases tree with
+  | terminal hterm =>
+      have := hterm.control_eq.symm.trans hctrl
+      cases this
+  | @internal _ target h next =>
+      rcases ChannelInternalStep.eq_of_intern h hctrl with ht | ht
+      · left
+        subst target
+        have hnextctrl :
+            ({start with control := .term (.prim (.ret leftValue))}).control =
+              .term (.prim (.ret leftValue)) := rfl
+        cases next with
+        | terminal hterm =>
+            have := hterm.control_eq.symm.trans hnextctrl
+            cases this
+        | internal hret final =>
+            have hr := ChannelInternalStep.eq_of_return hret hnextctrl
+            have hfinalctrl := hr.1
+            have hfinalstack := hr.2.2.1.trans hstack
+            cases final with
+            | terminal hterm =>
+                have hvalue : hterm.value = .payload leftValue := by
+                  injection hterm.control_eq.symm.trans hfinalctrl
+                have hall : ∀ o, OutcomeCompatible
+                    (ChannelTree.internal h
+                      (ChannelTree.internal hret (ChannelTree.terminal hterm)))
+                    selectors i o := by
+                  intro o
+                  rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+                  simp [OutcomeCompatible, ChannelTree.instrument]
+                  exact List.nil_prefix
+                rw [embed_restricted_of_all_compatible D₀ j₀ realize _ R
+                  selectors i hall]
+                let μ := realizedInstrument D₀ j₀ realize
+                  (ChannelTree.internal h
+                    (ChannelTree.internal hret (ChannelTree.terminal hterm))) R
+                let _ : Unique μ.Outcome :=
+                  { default := ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+                    uniq := by
+                      intro o
+                      rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+                      rfl }
+                refine embed_eq_unit_of_unique μ (realize leftValue) ?_ ?_
+                · intro o
+                  have hrel := R.related o
+                  have hpay :
+                      ((ChannelTree.internal h
+                        (ChannelTree.internal hret
+                          (ChannelTree.terminal hterm))).instrument.value o
+                        ).isTerminal.value = .payload leftValue := by
+                    simp [ChannelTree.instrument]
+                    exact hvalue
+                  rw [hpay] at hrel
+                  exact ValueRel.payload_eq D₀ j₀ hrel
+                · intro o
+                  rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+                  change
+                    KrausFamily.comp
+                      (KrausFamily.comp (KrausFamily.identity 2)
+                        (QuantumOperation.identity 2).kraus)
+                      (QuantumOperation.identity 2).kraus =
+                        KrausFamily.identity 2
+                  simp [QuantumOperation.identity]
+            | internal h' _ =>
+                exact False.elim
+                  (ChannelInternalStep.not_value_nil h' hfinalctrl hfinalstack)
+            | external _ h' _ =>
+                exact False.elim (ChannelExternalStep.not_value h' hfinalctrl)
+            | probability _ _ _ _ => cases hfinalctrl
+            | measurement _ _ => cases hfinalctrl
+        | external _ h' _ =>
+            exact False.elim (ChannelExternalStep.not_prim h' hnextctrl)
+      · right
+        subst target
+        have hnextctrl :
+            ({start with control := .term (.prim (.ret rightValue))}).control =
+              .term (.prim (.ret rightValue)) := rfl
+        cases next with
+        | terminal hterm =>
+            have := hterm.control_eq.symm.trans hnextctrl
+            cases this
+        | internal hret final =>
+            have hr := ChannelInternalStep.eq_of_return hret hnextctrl
+            have hfinalctrl := hr.1
+            have hfinalstack := hr.2.2.1.trans hstack
+            cases final with
+            | terminal hterm =>
+                have hvalue : hterm.value = .payload rightValue := by
+                  injection hterm.control_eq.symm.trans hfinalctrl
+                have hall : ∀ o, OutcomeCompatible
+                    (ChannelTree.internal h
+                      (ChannelTree.internal hret (ChannelTree.terminal hterm)))
+                    selectors i o := by
+                  intro o
+                  rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+                  simp [OutcomeCompatible, ChannelTree.instrument]
+                  exact List.nil_prefix
+                rw [embed_restricted_of_all_compatible D₀ j₀ realize _ R
+                  selectors i hall]
+                let μ := realizedInstrument D₀ j₀ realize
+                  (ChannelTree.internal h
+                    (ChannelTree.internal hret (ChannelTree.terminal hterm))) R
+                let _ : Unique μ.Outcome :=
+                  { default := ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+                    uniq := by
+                      intro o
+                      rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+                      rfl }
+                refine embed_eq_unit_of_unique μ (realize rightValue) ?_ ?_
+                · intro o
+                  have hrel := R.related o
+                  have hpay :
+                      ((ChannelTree.internal h
+                        (ChannelTree.internal hret
+                          (ChannelTree.terminal hterm))).instrument.value o
+                        ).isTerminal.value = .payload rightValue := by
+                    simp [ChannelTree.instrument]
+                    exact hvalue
+                  rw [hpay] at hrel
+                  exact ValueRel.payload_eq D₀ j₀ hrel
+                · intro o
+                  rcases o with ⟨⟨⟩, ⟨⟨⟩, ⟨⟩⟩⟩
+                  change
+                    KrausFamily.comp
+                      (KrausFamily.comp (KrausFamily.identity 2)
+                        (QuantumOperation.identity 2).kraus)
+                      (QuantumOperation.identity 2).kraus =
+                        KrausFamily.identity 2
+                  simp [QuantumOperation.identity]
+            | internal h' _ =>
+                exact False.elim
+                  (ChannelInternalStep.not_value_nil h' hfinalctrl hfinalstack)
+            | external _ h' _ =>
+                exact False.elim (ChannelExternalStep.not_value h' hfinalctrl)
+            | probability _ _ _ _ => cases hfinalctrl
+            | measurement _ _ => cases hfinalctrl
+        | external _ h' _ =>
+            exact False.elim (ChannelExternalStep.not_prim h' hnextctrl)
+  | external _ h _ =>
+      exact False.elim (ChannelExternalStep.not_intern h hctrl)
+
 /-- Closed return primitives satisfy channel-tree completeness exactly. -/
 theorem return_channelTreeCompleteness {C : Type}
     (D₀ : QDomain.{0})
@@ -1439,6 +1798,78 @@ theorem measureZ_channelTreeCompleteness {C : Type}
       rintro T ⟨_, tree, R, _, rfl⟩
       rw [embed_of_measureZ_tree D₀ j₀ realize zeroValue oneValue quantum
         tree R selectors i]
+
+/-- A closed internal choice between two returns is the supremum of its two
+one-sided completing channel trees. -/
+theorem intern_returns_channelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (leftValue rightValue : C) (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    ChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig
+        (.intern (.prim (.ret leftValue)) (.prim (.ret rightValue))) quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.intern (.prim (.ret leftValue)) (.prim (.ret rightValue)))
+        semanticEnv) where
+  selected_result_eq_channelTree_sup := by
+    intro selectors i k
+    let leftResult :=
+      embed (FiniteInstrumentComp.unit (n := 2) (realize leftValue)) k
+    let rightResult :=
+      embed (FiniteInstrumentComp.unit (n := 2) (realize rightValue)) k
+    have hselected :
+        HardwareAdequacy.selectPath selectors
+            (interp (hardwarePrimitive D₀ j₀ realize)
+              (.intern (.prim (.ret leftValue)) (.prim (.ret rightValue)))
+              semanticEnv) i k =
+          leftResult ⊔ rightResult := by
+      rw [interp_intern_apply, HardwareAdequacy.selectPath_apply_encode,
+        TTContinuation.computation_intern_apply,
+        TTContinuation.internalChoice_apply, interp_prim_apply,
+        interp_prim_apply, hardwarePrimitive_ret, hardwarePrimitive_ret]
+      rw [← taggedEmbed_unit (n := 2) (realize leftValue),
+        ← taggedEmbed_unit (n := 2) (realize rightValue)]
+      rfl
+    rw [hselected]
+    refine le_antisymm ?_ ?_
+    · apply sup_le
+      · apply le_sSup
+        refine ⟨2, internReturnLeftTree leftValue rightValue quantum,
+          internReturnLeftTreeRealization D₀ j₀ realize
+            leftValue rightValue quantum, ?_, ?_⟩
+        · simp [internReturnLeftTree_depth]
+        · rw [embed_restricted_of_all_compatible D₀ j₀ realize
+              (internReturnLeftTree leftValue rightValue quantum)
+              (internReturnLeftTreeRealization D₀ j₀ realize
+                leftValue rightValue quantum)
+              selectors i
+              (internReturnLeftTree_compatible leftValue rightValue quantum
+                selectors i),
+            internReturnLeftTree_realized_eq_unit]
+      · apply le_sSup
+        refine ⟨2, internReturnRightTree leftValue rightValue quantum,
+          internReturnRightTreeRealization D₀ j₀ realize
+            leftValue rightValue quantum, ?_, ?_⟩
+        · simp [internReturnRightTree_depth]
+        · rw [embed_restricted_of_all_compatible D₀ j₀ realize
+              (internReturnRightTree leftValue rightValue quantum)
+              (internReturnRightTreeRealization D₀ j₀ realize
+                leftValue rightValue quantum)
+              selectors i
+              (internReturnRightTree_compatible leftValue rightValue quantum
+                selectors i),
+            internReturnRightTree_realized_eq_unit]
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      rcases embed_of_intern_returns_tree D₀ j₀ realize
+          leftValue rightValue quantum tree R selectors i with hleft | hright
+      · rw [hleft]
+        exact le_sup_left
+      · rw [hright]
+        exact le_sup_right
 
 /-- Closed-term TT adequacy from the repaired channel-tree completeness
 statement. -/

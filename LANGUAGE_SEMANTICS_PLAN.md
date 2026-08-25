@@ -40,12 +40,14 @@ Completed:
 Remaining boundary:
 
 - `ChannelTreeCompleteness` is proved for the closed return, Pauli-X, and
-  measure-Z primitives. General closed-term adequacy for choice, application,
-  and recursion remains the CEK fundamental lemma identifying the interpreter
-  with the supremum of branch-complete subnormalized channel-tree instruments.
-  It no longer assumes that a recursive denotation is one finite physical
-  embedding. A formal counterexample rules out deriving state-independent TT
-  completeness from a single arbitrary normalized hardware run.
+  measure-Z primitives, and for a closed internal choice between two returns.
+  General closed-term adequacy for internal/external/probabilistic choice,
+  application, and recursion remains the CEK fundamental lemma identifying the
+  interpreter with the supremum of branch-complete subnormalized channel-tree
+  instruments. It no longer assumes that a recursive denotation is one finite
+  physical embedding. A formal counterexample rules out deriving
+  state-independent TT completeness from a single arbitrary normalized
+  hardware run.
 
 ## Goal
 
