@@ -83,11 +83,11 @@ General closed-term hardware adequacy no longer assumes one finite denotation.
 measure-Z primitives: after any selector path, the interpreter result is
 exactly the supremum of restricted subnormalized channel-tree embeddings,
 and every completing tree from those starts reconstructs that same
-instrument. It is also proved for a closed internal choice between two return
-primitives: its two one-sided trees have supremum equal to the denotational
-join, and every completing tree is classified as one side. Administrative CEK
-simulation, physical branch aggregation, positive-run correspondence, and
-recursive Scott approximation are also proved. General internal choice,
-external/probabilistic choice, application, and recursion still require the
-remaining CEK fundamental lemma connecting all finite channel trees to
-`interp`.
+instrument. Internal choice is now compositional: if both children already
+satisfy `ChannelTreeCompleteness`, the intern start is the join of their
+channel-tree suprema, and every completing tree unwraps to one child after an
+identity administrative step. Administrative CEK simulation, physical branch
+aggregation, positive-run correspondence, and recursive Scott approximation
+are also proved. External/probabilistic choice, application, and recursion
+still require the remaining CEK fundamental lemma connecting all finite
+channel trees to `interp`.

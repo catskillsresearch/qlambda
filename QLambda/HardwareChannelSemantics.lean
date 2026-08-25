@@ -1871,6 +1871,308 @@ theorem intern_returns_channelTreeCompleteness {C : Type}
       · rw [hright]
         exact le_sup_right
 
+/-- The first intern step is a classical identity operation. -/
+theorem channelInternalOperation_intern {C : Type}
+    (left right : Term (QubitPrimitive C))
+    (quantum : NormalizedDensity 2) :
+    channelInternalOperation
+      (initialChannelConfig (.intern left right) quantum) =
+      QuantumOperation.identity 2 :=
+  rfl
+
+theorem initialChannelConfig_intern_left {C : Type}
+    (left right : Term (QubitPrimitive C))
+    (quantum : NormalizedDensity 2) :
+    { initialChannelConfig (.intern left right) quantum with
+        control := .term left } =
+      initialChannelConfig left quantum :=
+  rfl
+
+theorem initialChannelConfig_intern_right {C : Type}
+    (left right : Term (QubitPrimitive C))
+    (quantum : NormalizedDensity 2) :
+    { initialChannelConfig (.intern left right) quantum with
+        control := .term right } =
+      initialChannelConfig right quantum :=
+  rfl
+
+/-- Wrap a completed left child as one intern branch. -/
+def wrapInternLeft {C : Type}
+    (left right : Term (QubitPrimitive C))
+    (quantum : NormalizedDensity 2)
+    (child : ChannelTree C (initialChannelConfig left quantum)) :
+    ChannelTree C (initialChannelConfig (.intern left right) quantum) :=
+  ChannelTree.internal
+    (ChannelInternalStep.internalLeft
+      (s := initialChannelConfig (.intern left right) quantum))
+    child
+
+/-- Wrap a completed right child as one intern branch. -/
+def wrapInternRight {C : Type}
+    (left right : Term (QubitPrimitive C))
+    (quantum : NormalizedDensity 2)
+    (child : ChannelTree C (initialChannelConfig right quantum)) :
+    ChannelTree C (initialChannelConfig (.intern left right) quantum) :=
+  ChannelTree.internal
+    (ChannelInternalStep.internalRight
+      (s := initialChannelConfig (.intern left right) quantum))
+    child
+
+theorem wrapInternLeft_depth {C : Type}
+    (left right : Term (QubitPrimitive C))
+    (quantum : NormalizedDensity 2)
+    (child : ChannelTree C (initialChannelConfig left quantum)) :
+    (wrapInternLeft left right quantum child).depth = child.depth + 1 :=
+  rfl
+
+theorem wrapInternRight_depth {C : Type}
+    (left right : Term (QubitPrimitive C))
+    (quantum : NormalizedDensity 2)
+    (child : ChannelTree C (initialChannelConfig right quantum)) :
+    (wrapInternRight left right quantum child).depth = child.depth + 1 :=
+  rfl
+
+/-- Drop the administrative intern node from a realization. -/
+noncomputable def internalChildRealization {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s t : ChannelConfig C} (h : ChannelInternalStep s t)
+    (next : ChannelTree C t)
+    (R : ChannelTreeRealization D₀ j₀ realize (ChannelTree.internal h next)) :
+    ChannelTreeRealization D₀ j₀ realize next where
+  value := R.value
+  related := fun o => R.related ⟨⟨⟩, o⟩
+
+/-- Lift a child realization across an administrative intern node. -/
+noncomputable def wrapInternalRealization {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s t : ChannelConfig C} (h : ChannelInternalStep s t)
+    (next : ChannelTree C t)
+    (R : ChannelTreeRealization D₀ j₀ realize next) :
+    ChannelTreeRealization D₀ j₀ realize (ChannelTree.internal h next) where
+  value := R.value
+  related := fun p => R.related p.2
+
+/-- An identity internal step is only a unit-sigma reindexing of outcomes. -/
+theorem embed_restricted_internal_of_identity {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s t : ChannelConfig C} (h : ChannelInternalStep s t)
+    (hop : channelInternalOperation s = QuantumOperation.identity 2)
+    (next : ChannelTree C t)
+    (R : ChannelTreeRealization D₀ j₀ realize (ChannelTree.internal h next))
+    (selectors : List Bool) (i : ℕ) :
+    embed (restrictedInstrument D₀ j₀ realize
+        (ChannelTree.internal h next) R selectors i) =
+      embed (restrictedInstrument D₀ j₀ realize next
+        (internalChildRealization D₀ j₀ realize h next R) selectors i) := by
+  let μ := restrictedInstrument D₀ j₀ realize
+    (ChannelTree.internal h next) R selectors i
+  let ν := restrictedInstrument D₀ j₀ realize next
+    (internalChildRealization D₀ j₀ realize h next R) selectors i
+  refine embed_congr_of_outcome_equiv μ ν ?e ?hbranch ?hvalue
+  · exact
+      { toFun := fun p => ⟨p.1.2, p.2⟩
+        invFun := fun q => ⟨⟨⟨⟩, q.1⟩, q.2⟩
+        left_inv := by
+          intro p
+          rcases p with ⟨⟨⟨⟩, o⟩, hp⟩
+          rfl
+        right_inv := by
+          intro q
+          rcases q with ⟨o, ho⟩
+          rfl }
+  · intro p
+    change next.instrument.branch p.1.2 =
+      KrausFamily.comp (next.instrument.branch p.1.2)
+        (channelInternalOperation s).kraus
+    rw [hop]
+    simp [QuantumOperation.identity]
+  · intro p
+    rfl
+
+theorem selectPath_intern {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (left right : Term (QubitPrimitive C))
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (selectors : List Bool) (i : ℕ)
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)) :
+    HardwareAdequacy.selectPath selectors
+        (interp (hardwarePrimitive D₀ j₀ realize) (.intern left right)
+          semanticEnv) i k =
+      HardwareAdequacy.selectPath selectors
+          (interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv) i k ⊔
+        HardwareAdequacy.selectPath selectors
+          (interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv) i k := by
+  rw [interp_intern_apply, HardwareAdequacy.selectPath_apply_encode,
+    TTContinuation.computation_intern_apply,
+    TTContinuation.internalChoice_apply, HardwareAdequacy.selectPath_apply_encode,
+    HardwareAdequacy.selectPath_apply_encode]
+
+/-- Internal choice of any two completed closed terms is the join of their
+channel-tree suprema. -/
+theorem intern_channelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (left right : Term (QubitPrimitive C))
+    (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (hleft : ChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig left quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv))
+    (hright : ChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig right quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv)) :
+    ChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig (.intern left right) quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize) (.intern left right)
+        semanticEnv) where
+  selected_result_eq_channelTree_sup := by
+    intro selectors i k
+    rw [selectPath_intern, hleft.selected_result_eq_channelTree_sup,
+      hright.selected_result_eq_channelTree_sup]
+    refine le_antisymm ?_ ?_
+    · apply sup_le
+      · apply sSup_le
+        rintro T ⟨fuel, child, R, hdepth, rfl⟩
+        apply le_sSup
+        refine ⟨fuel + 1,
+          wrapInternLeft left right quantum child,
+          wrapInternalRealization D₀ j₀ realize
+            (ChannelInternalStep.internalLeft
+              (s := initialChannelConfig (.intern left right) quantum)
+              (left := left) (right := right))
+            child R,
+          ?_, ?_⟩
+        · simpa [wrapInternLeft_depth] using Nat.succ_le_succ hdepth
+        · exact congrArg (fun f => f k)
+            (embed_restricted_internal_of_identity D₀ j₀ realize
+              (ChannelInternalStep.internalLeft
+                (s := initialChannelConfig (.intern left right) quantum)
+                (left := left) (right := right))
+              (channelInternalOperation_intern left right quantum)
+              child
+              (wrapInternalRealization D₀ j₀ realize
+                (ChannelInternalStep.internalLeft
+                  (s := initialChannelConfig (.intern left right) quantum)
+                  (left := left) (right := right))
+                child R)
+              selectors i).symm
+      · apply sSup_le
+        rintro T ⟨fuel, child, R, hdepth, rfl⟩
+        apply le_sSup
+        refine ⟨fuel + 1,
+          wrapInternRight left right quantum child,
+          wrapInternalRealization D₀ j₀ realize
+            (ChannelInternalStep.internalRight
+              (s := initialChannelConfig (.intern left right) quantum)
+              (left := left) (right := right))
+            child R,
+          ?_, ?_⟩
+        · simpa [wrapInternRight_depth] using Nat.succ_le_succ hdepth
+        · exact congrArg (fun f => f k)
+            (embed_restricted_internal_of_identity D₀ j₀ realize
+              (ChannelInternalStep.internalRight
+                (s := initialChannelConfig (.intern left right) quantum)
+                (left := left) (right := right))
+              (channelInternalOperation_intern left right quantum)
+              child
+              (wrapInternalRealization D₀ j₀ realize
+                (ChannelInternalStep.internalRight
+                  (s := initialChannelConfig (.intern left right) quantum)
+                  (left := left) (right := right))
+                child R)
+              selectors i).symm
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      have hctrl :
+          (initialChannelConfig (.intern left right) quantum).control =
+            .term (.intern left right) :=
+        rfl
+      have hop := channelInternalOperation_intern left right quantum
+      cases tree with
+      | terminal hterm =>
+          have := hterm.control_eq.symm.trans hctrl
+          cases this
+      | @internal _ t h next =>
+          rcases ChannelInternalStep.eq_of_intern h hctrl with ht | ht
+          · cases ht
+            have := embed_restricted_internal_of_identity D₀ j₀ realize
+              h hop next R selectors i
+            rw [this]
+            apply le_sup_of_le_left
+            apply le_sSup
+            exact ⟨next.depth,
+              next,
+              internalChildRealization D₀ j₀ realize h next R,
+              le_rfl, rfl⟩
+          · cases ht
+            have := embed_restricted_internal_of_identity D₀ j₀ realize
+              h hop next R selectors i
+            rw [this]
+            apply le_sup_of_le_right
+            apply le_sSup
+            exact ⟨next.depth,
+              next,
+              internalChildRealization D₀ j₀ realize h next R,
+              le_rfl, rfl⟩
+      | external _ hex _ =>
+          exact False.elim (ChannelExternalStep.not_intern hex hctrl)
+
+theorem intern_ret_pauliX_channelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (leftValue rightValue : C) (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    ChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig
+        (.intern (.prim (.ret leftValue)) (.prim (.pauliX rightValue)))
+        quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.intern (.prim (.ret leftValue)) (.prim (.pauliX rightValue)))
+        semanticEnv) :=
+  intern_channelTreeCompleteness D₀ j₀ realize _ _ quantum semanticEnv
+    (return_channelTreeCompleteness D₀ j₀ realize leftValue quantum
+      semanticEnv)
+    (pauliX_channelTreeCompleteness D₀ j₀ realize rightValue quantum
+      semanticEnv)
+
+theorem intern_ret_measureZ_channelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (leftValue zeroValue oneValue : C) (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    ChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig
+        (.intern (.prim (.ret leftValue))
+          (.prim (.measureZ zeroValue oneValue)))
+        quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.intern (.prim (.ret leftValue))
+          (.prim (.measureZ zeroValue oneValue)))
+        semanticEnv) :=
+  intern_channelTreeCompleteness D₀ j₀ realize _ _ quantum semanticEnv
+    (return_channelTreeCompleteness D₀ j₀ realize leftValue quantum
+      semanticEnv)
+    (measureZ_channelTreeCompleteness D₀ j₀ realize zeroValue oneValue
+      quantum semanticEnv)
+
 /-- Closed-term TT adequacy from the repaired channel-tree completeness
 statement. -/
 theorem initialConfig_channel_tree_token_adequacy_iff {C : Type}

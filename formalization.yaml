@@ -100,11 +100,11 @@ status:
     physical instruments. Runtime logical relations, positive-run
     correspondence, recursive finite approximants, and TT token adequacy for
     every realized finite channel tree are proved. ChannelTreeCompleteness is
-    proved for the closed return, Pauli-X, and measure-Z primitives and for a
-    closed internal choice between two returns. General closed-term adequacy
-    for choice, application, and recursion remains the remaining fundamental
-    lemma. Nothing in the compared statements is imported from a prior Palomar
-    entry.
+    proved for the closed return, Pauli-X, and measure-Z primitives and for
+    compositional internal choice of already-complete children. General
+    closed-term adequacy for external/probabilistic choice, application, and
+    recursion remains the remaining fundamental lemma. Nothing in the compared
+    statements is imported from a prior Palomar entry.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -249,7 +249,7 @@ review:
     review has been performed.
 
 known_gaps:
-  - "Extend ChannelTreeCompleteness from closed return/Pauli-X/measure-Z primitives and internal choice between two returns to general first-order choice, application, and recursive interpreter denotations."
+  - "Extend ChannelTreeCompleteness from closed primitives and compositional internal choice to external/probabilistic choice, application, and recursive interpreter denotations."
   - "Formalize the rank-one Choi-ray obstruction showing why Scott closure or rational attenuation of the exact physical basis alone cannot establish omegaQVA for register dimension at least two."
 
 limitations:
