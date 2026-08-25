@@ -49,6 +49,36 @@ class HasComputationChoice (C : Type u) [CompleteLattice C] where
   left_le_intern : ∀ a b, a ≤ intern (a, b)
   right_le_intern : ∀ a b, b ≤ intern (a, b)
 
+/-- An external observer resolves an external choice.  Selection is a
+Bool-indexed family of Scott-continuous maps on computations; it is not a
+lattice comparison and does not identify external with internal choice.
+
+The laws here concern only a top-level `extern`.  Closure under application
+contexts is a separate property of a model's sequencing operation. -/
+class HasExternalSelection (C : Type u) [CompleteLattice C]
+    [HasComputationChoice C] where
+  select : Bool → ScottMap C C
+  select_false : ∀ a b,
+    select false (HasComputationChoice.extern (a, b)) = a
+  select_true : ∀ a b,
+    select true (HasComputationChoice.extern (a, b)) = b
+
+/-- Denotational meaning of a weighted branch transition.  The relation keeps
+the transition weight explicit rather than erasing it into lattice order.
+
+These are deliberately only the two top-level probabilistic-choice laws.
+Soundness of `WeightedStep.app_left` and `WeightedStep.app_right` additionally
+requires closure of `weightedBranch` under the corresponding semantic
+application contexts (equivalently, suitable laws for Kleisli sequencing);
+that closure is not implied by this interface. -/
+class HasWeightedBranchSemantics (C : Type u) [CompleteLattice C]
+    [HasComputationChoice C] where
+  weightedBranch : C → Prob → C → Prop
+  prob_left : ∀ (p : Prob) (a b : C), 0 ≤ p → p ≤ 1 →
+    weightedBranch (HasComputationChoice.prob p (a, b)) p a
+  prob_right : ∀ (p : Prob) (a b : C), 0 ≤ p → p ≤ 1 →
+    weightedBranch (HasComputationChoice.prob p (a, b)) (1 - p) b
+
 /-- Internal choice on `𝒫(D)` is the join of upper sets. -/
 instance instHasInternalChoiceNondet (D : Type u)
     [CompleteLattice D] : HasInternalChoice (NondetPower D) where

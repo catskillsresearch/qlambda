@@ -33,18 +33,35 @@ operational relations support closed primitives and recursive abstractions.
 `QLambda.interp` denotes every term in `Q(D∞)`: values use monadic `unit`,
 application uses Scott-continuous bind, and recursion uses Scott `fix`.
 Environment continuity, constructor equations, value purity, recursive
-unfolding, and the pure semantic β-equation are proved without `sorry`.
+unfolding, general capture-avoiding value substitution, ordinary and
+recursive semantic β-equations, and α-invariance for ordinary and recursive
+binders are proved without `sorry`.
+
+Unweighted internal reduction is sound: `Step M N` implies
+`interp N ρ ≤ interp M ρ`, and the result lifts to `Reduces`. External
+selection and weighted branches now have separate abstract specifications;
+top-level external and probabilistic branch theorems preserve their Boolean
+label and probability respectively. Full abstract `WeightedStep` soundness is
+proved under explicit application-closure laws. TT internal choice is
+implemented as pointwise join and is exactly preserved by continuation bind.
+Concrete qubit return, Pauli-X, and Z-measurement primitives are embedded into
+the two-dimensional TT model.
 
 ## Surviving roadmap
 
 The remaining language-semantics goals are:
 
-1. prove the remaining renaming, weakening, and capture-avoiding
-   substitution correspondence for `QLambda.interp`;
-2. prove soundness for the existing small-step interfaces, then adequacy;
-3. construct concrete probabilistic, internal, and external choice operations on
-   `TTContinuationPower` and prove their laws and finite-instrument
-   compatibility.
+1. construct a weighted TT result aggregation (the TT result lattice has no
+   canonical convex operation), prove Scott continuity, and use it for
+   probabilistic choice without identifying probability with lattice join;
+2. construct an environment-indexed external-choice representation and
+   Boolean selectors without identifying external choice with internal
+   nondeterminism;
+3. combine those operations with the existing TT internal choice to register
+   a lawful `HasComputationChoice` instance;
+4. instantiate the weighted application-context closure laws for that
+   concrete TT construction, then formulate and prove adequacy for a
+   separating observation relation.
 
 For stronger embedding claims, a density theorem for
 `CodedTestRepresentation` and a concrete directed-supremum non-closure

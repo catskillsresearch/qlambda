@@ -268,6 +268,41 @@ theorem applyComp_apply
         (mf ρ) :=
   rfl
 
+/-- Application is monotone in the function computation. -/
+theorem applyComp_mono_left
+    {mf mf' ma : ScottMap (Env (SemanticValue Q D₀ j₀))
+      (SemanticComp Q D₀ j₀)}
+    (h : mf ≤ mf') :
+    applyComp (Q := Q) (D₀ := D₀) (j₀ := j₀) mf ma ≤
+      applyComp (Q := Q) (D₀ := D₀) (j₀ := j₀) mf' ma := by
+  rw [ScottMap.le_def]
+  intro ρ
+  rw [applyComp_apply, applyComp_apply]
+  exact
+    (semanticBind (Q := Q) (D₀ := D₀) (j₀ := j₀)
+      (applyContinuation (Q := Q) (D₀ := D₀) (j₀ := j₀) ma ρ)).monotone
+      (ScottMap.le_def.mp h ρ)
+
+/-- Application is monotone in the argument computation. -/
+theorem applyComp_mono_right
+    {mf ma ma' : ScottMap (Env (SemanticValue Q D₀ j₀))
+      (SemanticComp Q D₀ j₀)}
+    (h : ma ≤ ma') :
+    applyComp (Q := Q) (D₀ := D₀) (j₀ := j₀) mf ma ≤
+      applyComp (Q := Q) (D₀ := D₀) (j₀ := j₀) mf ma' := by
+  rw [ScottMap.le_def]
+  intro ρ
+  rw [applyComp_apply, applyComp_apply]
+  apply ScottMap.le_def.mp
+    ((semanticBind (Q := Q) (D₀ := D₀) (j₀ := j₀)).monotone ?_)
+  rw [ScottMap.le_def]
+  intro f
+  rw [applyContinuation_apply, applyContinuation_apply]
+  exact
+    (semanticBind (Q := Q) (D₀ := D₀) (j₀ := j₀)
+      (semanticUnfold (Q := Q) (D₀ := D₀) (j₀ := j₀) f)).monotone
+      (ScottMap.le_def.mp h ρ)
+
 /-- Applying a pure abstraction to a pure argument evaluates its body in
 the updated environment. This is the semantic β-equation before relating
 environment update to syntactic substitution. -/
@@ -388,6 +423,109 @@ theorem recLambdaValue_unfold (self arg : Name)
   exact (Proposition314.fix_eq
     (recFunctional (Q := Q) (D₀ := D₀) (j₀ := j₀)
       self arg body ρ)).symm
+
+/-- Applying a pure recursive abstraction to a pure argument unfolds one
+recursive call and evaluates the body with both binders installed. -/
+theorem applyComp_pure_recLambda
+    (self arg : Name)
+    (body : ScottMap (Env (SemanticValue Q D₀ j₀))
+      (SemanticComp Q D₀ j₀))
+    (value : ScottMap (Env (SemanticValue Q D₀ j₀))
+      (SemanticValue Q D₀ j₀))
+    (ρ : Env (SemanticValue Q D₀ j₀)) :
+    applyComp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+        ((semanticUnit (Q := Q) (D₀ := D₀) (j₀ := j₀)).comp
+          (recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+            self arg body))
+        ((semanticUnit (Q := Q) (D₀ := D₀) (j₀ := j₀)).comp value) ρ =
+      body
+        (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) arg
+          (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) self
+            (ρ, recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              self arg body ρ),
+            value ρ)) := by
+  rw [applyComp_apply]
+  change
+    semanticBind (Q := Q) (D₀ := D₀) (j₀ := j₀)
+        (applyContinuation (Q := Q) (D₀ := D₀) (j₀ := j₀)
+          ((semanticUnit (Q := Q) (D₀ := D₀) (j₀ := j₀)).comp value) ρ)
+        (semanticUnit (Q := Q) (D₀ := D₀) (j₀ := j₀)
+          (recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+            self arg body ρ)) =
+      body
+        (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) arg
+          (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) self
+            (ρ, recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              self arg body ρ),
+            value ρ))
+  have hOuter := congrArg
+    (fun f : ScottMap (SemanticValue Q D₀ j₀) (SemanticComp Q D₀ j₀) =>
+      f (recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+        self arg body ρ))
+    (IsQuantumMonad.unit_bind (Q := Q)
+      (applyContinuation (Q := Q) (D₀ := D₀) (j₀ := j₀)
+        ((semanticUnit (Q := Q) (D₀ := D₀) (j₀ := j₀)).comp value) ρ))
+  rw [ScottMap.comp_apply] at hOuter
+  rw [hOuter, applyContinuation_apply]
+  have hInner := congrArg
+    (fun f : ScottMap (SemanticValue Q D₀ j₀) (SemanticComp Q D₀ j₀) =>
+      f (value ρ))
+    (IsQuantumMonad.unit_bind (Q := Q)
+      (semanticUnfold (Q := Q) (D₀ := D₀) (j₀ := j₀)
+        (recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+          self arg body ρ)))
+  rw [ScottMap.comp_apply] at hInner
+  change
+    semanticBind (Q := Q) (D₀ := D₀) (j₀ := j₀)
+        (semanticUnfold (Q := Q) (D₀ := D₀) (j₀ := j₀)
+          (recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+            self arg body ρ))
+        (semanticUnit (Q := Q) (D₀ := D₀) (j₀ := j₀) (value ρ)) =
+      body
+        (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) arg
+          (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) self
+            (ρ, recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              self arg body ρ),
+            value ρ))
+  rw [hInner]
+  conv_lhs =>
+    rw [recLambdaValue_unfold]
+  change
+    qEmbInfInf (QModel Q) D₀ j₀
+        (qProjInfInf (QModel Q) D₀ j₀
+          (scottLambda
+            (body.comp
+              ((envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) arg).comp
+                (ScottMap.pairMap
+                  ((envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) self).comp
+                    ScottMap.fstMap)
+                  ScottMap.sndMap)))
+            (ρ, recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              self arg body ρ)))
+        (value ρ) =
+      body
+        (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) arg
+          (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) self
+            (ρ, recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              self arg body ρ),
+            value ρ))
+  let f : ScottMap (SemanticValue Q D₀ j₀) (SemanticComp Q D₀ j₀) :=
+    scottLambda
+      (body.comp
+        ((envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) arg).comp
+          (ScottMap.pairMap
+            ((envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) self).comp
+              ScottMap.fstMap)
+            ScottMap.sndMap)))
+      (ρ, recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+        self arg body ρ)
+  have hf := congrArg
+    (fun g : ScottMap (SemanticValue Q D₀ j₀) (SemanticComp Q D₀ j₀) =>
+      g (value ρ))
+    (qEmbInfInf_qProjInfInf (QModel Q) D₀ j₀ f)
+  simpa only [f, scottLambda_apply, ScottMap.comp_apply,
+    ScottMap.pairMap_apply, ScottMap.fstMap_apply,
+    ScottMap.sndMap_apply] using hf
 
 variable [HasComputationChoice (SemanticComp Q D₀ j₀)]
 
@@ -1815,6 +1953,54 @@ theorem interp_beta {Prim : Type}
       interp primitive (subst x V M) ρ
   rw [applyComp_pure_lambda]
   exact (interp_subst_value primitive x hV M ρ).symm
+
+/-- General semantic recursive β-equation. The recursive abstraction is
+installed at `self`, the pure argument at `arg`, and the distinct updates are
+commuted to match the operational substitution order. -/
+theorem interp_rec_beta {Prim : Type}
+    (primitive : Prim → SemanticComp Q D₀ j₀)
+    (self arg : Name) (M V : Term Prim)
+    (hne : self ≠ arg) (hV : Value V)
+    (ρ : Env (SemanticValue Q D₀ j₀)) :
+    interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+        (.app (.recLam self arg M) V) ρ =
+      interp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+        (subst arg V (subst self (.recLam self arg M) M)) ρ := by
+  rw [interp_app_apply,
+    interp_value primitive (Value.recLam self arg M),
+    interp_value primitive hV]
+  change
+    applyComp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+        ((semanticUnit (Q := Q) (D₀ := D₀) (j₀ := j₀)).comp
+          (recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+            self arg (interp primitive M)))
+        ((semanticUnit (Q := Q) (D₀ := D₀) (j₀ := j₀)).comp
+          (valueInterp primitive V)) ρ =
+      interp primitive
+        (subst arg V (subst self (.recLam self arg M) M)) ρ
+  rw [applyComp_pure_recLambda]
+  rw [interp_subst_value primitive arg hV]
+  rw [interp_subst_value primitive self (Value.recLam self arg M)]
+  have hrec :
+      valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive
+          (.recLam self arg M)
+          (envUpdate (Q := Q) (D₀ := D₀) (j₀ := j₀) arg
+            (ρ, valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀)
+              primitive V ρ)) =
+        recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+          self arg (interp primitive M) ρ := by
+    apply valueInterp_congr_free primitive (Value.recLam self arg M)
+    intro x hx
+    rw [envUpdate_other]
+    intro hxa
+    subst x
+    simp [free] at hx
+  rw [hrec]
+  rw [envUpdate_comm (Q := Q) (D₀ := D₀) (j₀ := j₀)
+    (Ne.symm hne) ρ
+    (valueInterp (Q := Q) (D₀ := D₀) (j₀ := j₀) primitive V ρ)
+    (recLambdaValue (Q := Q) (D₀ := D₀) (j₀ := j₀)
+      self arg (interp primitive M) ρ)]
 
 end Semantics
 

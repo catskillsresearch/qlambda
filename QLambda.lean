@@ -24,10 +24,13 @@ import QLambda.RoundedTheoryMorphisms
 import QLambda.RoundedTheoryOmega
 import QLambda.Saturation
 import QLambda.ScottLowerSet
+import QLambda.Soundness
 import QLambda.Syntax
 import QLambda.TTObservationBasis
 import QLambda.TTContinuationMonad
+import QLambda.TTInternalChoice
 import QLambda.TTPhysicalEmbedding
+import QLambda.TTPhysicalPrimitives
 import QLambda.TTRefinement
 import QLambda.TTResultAlgebra
 import QLambda.TTResultApproximation
