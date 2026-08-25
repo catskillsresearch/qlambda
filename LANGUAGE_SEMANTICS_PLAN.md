@@ -39,15 +39,16 @@ Completed:
 
 Remaining boundary:
 
-- `ChannelTreeCompleteness` is proved for the closed return, Pauli-X, and
-  measure-Z primitives, and for internal choice of any two already-complete
-  closed children. General closed-term adequacy for external/probabilistic
-  choice, application, and recursion remains the CEK fundamental lemma
-  identifying the interpreter with the supremum of branch-complete
-  subnormalized channel-tree instruments. It no longer assumes that a
-  recursive denotation is one finite physical embedding. A formal
-  counterexample rules out deriving state-independent TT completeness from a
-  single arbitrary normalized hardware run.
+- `ChannelTreeCompleteness` is proved for closed return, Pauli-X, measure-Z,
+  compositional internal and external choice, and probabilistic endpoints;
+  interior probability is complete at presented continuations by physical
+  weighted aggregation. Application and recursion have identity-step and
+  Scott-unfolding scaffolding; a full stacked-application fundamental lemma
+  remains. Recursive denotations are suprema of finite `iterateBot`
+  unfoldings, not single finite embeddings. A formal counterexample rules
+  out deriving state-independent TT completeness from a single arbitrary
+  normalized hardware run. The rank-one Choi-ray obstruction for
+  `PhysicalBasisApproximant` is formalized separately.
 
 ## Goal
 

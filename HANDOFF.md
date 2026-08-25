@@ -79,15 +79,21 @@ finite-iterate suprema.
 ## Surviving roadmap
 
 General closed-term hardware adequacy no longer assumes one finite denotation.
-`ChannelTreeCompleteness` is now proved for the closed return, Pauli-X, and
-measure-Z primitives: after any selector path, the interpreter result is
-exactly the supremum of restricted subnormalized channel-tree embeddings,
-and every completing tree from those starts reconstructs that same
-instrument. Internal choice is now compositional: if both children already
-satisfy `ChannelTreeCompleteness`, the intern start is the join of their
-channel-tree suprema, and every completing tree unwraps to one child after an
-identity administrative step. Administrative CEK simulation, physical branch
-aggregation, positive-run correspondence, and recursive Scott approximation
-are also proved. External/probabilistic choice, application, and recursion
-still require the remaining CEK fundamental lemma connecting all finite
-channel trees to `interp`.
+`ChannelTreeCompleteness` is proved for closed return, Pauli-X, measure-Z,
+compositional internal and external choice, and probabilistic choice at the
+weight endpoints; interior weights are complete at every finitely presented
+continuation by physical coin aggregation, never lattice join. Unique-successor
+identity CEK steps (application, argument evaluation, closure beta, recursive
+beta, lambda, recursive abstraction) transfer completeness, and selector paths
+commute with `semanticBind`, `applyContinuation`, and `semanticUnfold`.
+Recursive denotations are identified with the supremum of finite `iterateBot`
+unfoldings. Token adequacy follows for every closed term whose completeness is
+already known. A full induction over arbitrary stacked applications remains
+the remaining fundamental-lemma obligation.
+
+The rank-one Choi-ray obstruction is formalized in
+`QLambda/ChoiRayObstruction.lean`: for register dimension `2 ≤ n`, mixing
+weights in `(0, 1)` inject into distinct rays, while any countable family of
+`PhysicalBasisApproximant`s covers only countably many generating rays. This
+does not claim that raw `InstrumentPower` lies outside `ωQVA`, and it does
+not apply to the countable `RatCPMatrix` / rounded-token construction.
