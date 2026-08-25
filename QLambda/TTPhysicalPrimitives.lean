@@ -4,16 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Interp
-import QLambda.TTPhysicalEmbedding
+import QLambda.TTComputationChoice
 
 /-!
 # Minimal physical primitives for the two-dimensional TT model
 
 This module gives a small, concrete primitive signature for a qubit register.
 Every primitive is represented by an existing finite physical instrument and
-then embedded into `TTContinuationPower 2`.  Choice remains an explicit
-assumption needed only when the general term interpreter is used; no
-`HasComputationChoice` instance is asserted here.
+then embedded into the complete tagged TT model. Choice is supplied by that
+concrete model rather than by a caller assumption.
 -/
 
 namespace QLambda
@@ -62,27 +61,27 @@ theorem finiteInstrument_measureZ {D : Type u} (d₀ d₁ : D) :
 continuation model. -/
 noncomputable def denote {D : Type u} [CompleteLattice D]
     (p : QubitPrimitive D) :
-    TTContinuation.TTContinuationPower 2 D :=
-  TTPhysicalEmbedding.embed (finiteInstrument p)
+    TTContinuation.TTExternalContinuationPower 2 D :=
+  TTPhysicalEmbedding.taggedEmbed (finiteInstrument p)
 
 /-- Deterministic return is exactly continuation return, not merely related
 to it by refinement. -/
 @[simp]
 theorem denote_ret {D : Type u} [CompleteLattice D] (d : D) :
-    denote (.ret d) = TTContinuation.unit (n := 2) d := by
-  exact TTPhysicalEmbedding.embed_unit d
+    denote (.ret d) = TTContinuation.taggedUnit (n := 2) d := by
+  exact TTPhysicalEmbedding.taggedEmbed_unit d
 
 @[simp]
 theorem denote_pauliX {D : Type u} [CompleteLattice D] (d : D) :
     denote (.pauliX d) =
-      TTPhysicalEmbedding.embed
+      TTPhysicalEmbedding.taggedEmbed
         (FiniteInstrumentComp.ofOperation Qubit.pauliXOp d) :=
   rfl
 
 @[simp]
 theorem denote_measureZ {D : Type u} [CompleteLattice D] (d₀ d₁ : D) :
     denote (.measureZ d₀ d₁) =
-      TTPhysicalEmbedding.embed
+      TTPhysicalEmbedding.taggedEmbed
         (Qubit.measureZComp.map fun b => if b then d₁ else d₀) :=
   rfl
 
@@ -91,7 +90,7 @@ section Interpreter
 variable (D₀ : QDomain.{0})
 variable (j₀ : IsContinuousLatticeProjection D₀.carrier
   (QuantumFunctor
-    (QModel (TTContinuation.TTContinuationPower 2))
+    (QModel (TTContinuation.TTExternalContinuationPower 2))
     D₀.carrier))
 
 /-- The primitive signature at the recursive value domain of the
@@ -99,27 +98,22 @@ two-dimensional TT continuation model. -/
 abbrev SemanticQubitPrimitive :=
   QubitPrimitive
     (SemanticValue
-      (TTContinuation.TTContinuationPower 2) D₀ j₀)
+      (TTContinuation.TTExternalContinuationPower 2) D₀ j₀)
 
 /-- The concrete primitive interpretation consumed by `interp`. -/
 noncomputable def semanticPrimitive :
     SemanticQubitPrimitive D₀ j₀ →
       SemanticComp
-        (TTContinuation.TTContinuationPower 2) D₀ j₀ :=
+        (TTContinuation.TTExternalContinuationPower 2) D₀ j₀ :=
   denote
-
-variable
-  [HasComputationChoice
-    (SemanticComp
-      (TTContinuation.TTContinuationPower 2) D₀ j₀)]
 
 /-- Primitive terms are environment independent. -/
 @[simp]
 theorem interp_primitive (p : SemanticQubitPrimitive D₀ j₀)
     (ρ : Env
       (SemanticValue
-        (TTContinuation.TTContinuationPower 2) D₀ j₀)) :
-    interp (Q := TTContinuation.TTContinuationPower 2)
+        (TTContinuation.TTExternalContinuationPower 2) D₀ j₀)) :
+    interp (Q := TTContinuation.TTExternalContinuationPower 2)
         (D₀ := D₀) (j₀ := j₀) (semanticPrimitive D₀ j₀) (.prim p) ρ =
       semanticPrimitive D₀ j₀ p :=
   rfl
@@ -129,28 +123,28 @@ TT continuation unit exactly. -/
 @[simp]
 theorem interp_ret
     (d : SemanticValue
-      (TTContinuation.TTContinuationPower 2) D₀ j₀)
+      (TTContinuation.TTExternalContinuationPower 2) D₀ j₀)
     (ρ : Env
       (SemanticValue
-        (TTContinuation.TTContinuationPower 2) D₀ j₀)) :
-    interp (Q := TTContinuation.TTContinuationPower 2)
+        (TTContinuation.TTExternalContinuationPower 2) D₀ j₀)) :
+    interp (Q := TTContinuation.TTExternalContinuationPower 2)
         (D₀ := D₀) (j₀ := j₀) (semanticPrimitive D₀ j₀)
         (.prim (.ret d)) ρ =
-      TTContinuation.unit (n := 2) d := by
+      TTContinuation.taggedUnit (n := 2) d := by
   rw [interp_primitive]
   exact denote_ret d
 
 @[simp]
 theorem interp_pauliX
     (d : SemanticValue
-      (TTContinuation.TTContinuationPower 2) D₀ j₀)
+      (TTContinuation.TTExternalContinuationPower 2) D₀ j₀)
     (ρ : Env
       (SemanticValue
-        (TTContinuation.TTContinuationPower 2) D₀ j₀)) :
-    interp (Q := TTContinuation.TTContinuationPower 2)
+        (TTContinuation.TTExternalContinuationPower 2) D₀ j₀)) :
+    interp (Q := TTContinuation.TTExternalContinuationPower 2)
         (D₀ := D₀) (j₀ := j₀) (semanticPrimitive D₀ j₀)
         (.prim (.pauliX d)) ρ =
-      TTPhysicalEmbedding.embed
+      TTPhysicalEmbedding.taggedEmbed
         (FiniteInstrumentComp.ofOperation Qubit.pauliXOp d) := by
   rfl
 
@@ -158,14 +152,14 @@ theorem interp_pauliX
 theorem interp_measureZ
     (d₀ d₁ :
       SemanticValue
-        (TTContinuation.TTContinuationPower 2) D₀ j₀)
+        (TTContinuation.TTExternalContinuationPower 2) D₀ j₀)
     (ρ : Env
       (SemanticValue
-        (TTContinuation.TTContinuationPower 2) D₀ j₀)) :
-    interp (Q := TTContinuation.TTContinuationPower 2)
+        (TTContinuation.TTExternalContinuationPower 2) D₀ j₀)) :
+    interp (Q := TTContinuation.TTExternalContinuationPower 2)
         (D₀ := D₀) (j₀ := j₀) (semanticPrimitive D₀ j₀)
         (.prim (.measureZ d₀ d₁)) ρ =
-      TTPhysicalEmbedding.embed
+      TTPhysicalEmbedding.taggedEmbed
         (Qubit.measureZComp.map fun b => if b then d₁ else d₀) := by
   rfl
 
@@ -173,10 +167,10 @@ theorem interp_primitive_environment_independent
     (p : SemanticQubitPrimitive D₀ j₀)
     (ρ σ : Env
       (SemanticValue
-        (TTContinuation.TTContinuationPower 2) D₀ j₀)) :
-    interp (Q := TTContinuation.TTContinuationPower 2)
+        (TTContinuation.TTExternalContinuationPower 2) D₀ j₀)) :
+    interp (Q := TTContinuation.TTExternalContinuationPower 2)
         (D₀ := D₀) (j₀ := j₀) (semanticPrimitive D₀ j₀) (.prim p) ρ =
-      interp (Q := TTContinuation.TTContinuationPower 2)
+      interp (Q := TTContinuation.TTExternalContinuationPower 2)
         (D₀ := D₀) (j₀ := j₀) (semanticPrimitive D₀ j₀) (.prim p) σ := by
   rw [interp_primitive, interp_primitive]
 

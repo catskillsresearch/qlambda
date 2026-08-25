@@ -14,16 +14,25 @@ Completed:
   laws;
 - TT internal choice as pointwise join, including algebra laws and exact bind
   compatibility;
-- embedded qubit return, Pauli-X, and Z-measurement primitive examples.
+- embedded qubit return, Pauli-X, and Z-measurement primitive examples;
+- Scott-continuous weighted TT result aggregation (physical coin, not join);
+- pointwise probabilistic choice on TT continuations, with bind laws and a
+  concrete `weightedBranch` relation;
+- branch-tagged external choice with exact Boolean selectors, not identified
+  with internal choice;
+- lawful tagged `HasComputationChoice`, `HasExternalSelection`,
+  `HasWeightedBranchSemantics`, and `HasWeightedApplicationClosure`;
+- token-by-token adequacy for return, Pauli-X, Z measurement, finite bind,
+  interior weighted traces, and external selection on finitely presented
+  continuations.
 
-Blocked pending new mathematical constructions:
+Blocked pending density/separation:
 
-- a concrete TT instance of `WeightedStep` soundness requires a weighted TT
-  result aggregation and proofs of the abstract application-closure laws;
-- a TT `HasComputationChoice` instance requires non-conflating probabilistic
-  and environment-selected external operations;
-- adequacy requires that concrete instance plus a separating observation
-  relation.
+- general closed-term adequacy is stated only under an explicit
+  `CodedTestRepresentation` density hypothesis together with a
+  finite-denotation hypothesis;
+- the finite physical image is not a Scott retract, and no concrete
+  directed-supremum non-closure witness is supplied.
 
 ## Goal
 
@@ -148,12 +157,12 @@ relevant TT denotations.
 
 Update `HANDOFF.md` to:
 
-- mark weakening, renaming, and general capture-avoiding value substitution
-  complete;
-- identify `interp_rec_beta` and internal-step soundness as the immediate
-  frontier;
-- record that weighted and external soundness require additional semantic
-  laws.
+- mark weighted aggregation, tagged external choice, and the concrete TT
+  computation-choice instances complete;
+- record token-by-token adequacy of the finitely presented primitive
+  fragment;
+- identify `CodedTestRepresentation` density and a concrete directed-sup
+  non-closure witness as the remaining optional embedding obligations.
 
 ## Verification
 

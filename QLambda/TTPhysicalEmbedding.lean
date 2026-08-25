@@ -3,6 +3,7 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
+import QLambda.TTExternalChoice
 import QLambda.TTResultOperations
 
 namespace QLambda
@@ -360,6 +361,56 @@ theorem embed_bind_satisfied
                 (fun d => (f d).bind ξ) P))))
     _ = embed (μ.bind f) k := by
       exact (embed_satisfied (μ.bind f) ξ k hk).symm
+
+/-! ## Compatibility with the complete tagged model -/
+
+/-- A finite physical computation represented at every branch-tree
+coordinate.  Physical primitives introduce no unresolved external branch. -/
+noncomputable def taggedEmbed (μ : FiniteInstrumentComp n D) :
+    TTContinuation.TTExternalContinuationPower n D :=
+  fun _ => embed μ
+
+@[simp]
+theorem taggedEmbed_apply (μ : FiniteInstrumentComp n D) (i : ℕ)
+    (k : ScottMap D (TTContinuation.TTResult n)) :
+    taggedEmbed μ i k = embed μ k :=
+  rfl
+
+/-- Tagged physical return agrees exactly with the reader-transformer unit. -/
+theorem taggedEmbed_unit (d : D) :
+    taggedEmbed (FiniteInstrumentComp.unit (n := n) d) =
+      TTContinuation.taggedUnit (n := n) d := by
+  funext i
+  exact embed_unit d
+
+/-- Represented-continuation compatibility for tagged Kleisli extension.
+The finite presentation condition is the exact boundary inherited from
+`embed_bind_satisfied`; no density or finite-image retraction is assumed. -/
+theorem taggedEmbed_bind_satisfied
+    (μ : FiniteInstrumentComp n D)
+    (f : D → FiniteInstrumentComp n E)
+    (h : ScottMap D (TTContinuation.TTExternalContinuationPower n E))
+    (hh : ∀ o : μ.Outcome, h (μ.value o) = taggedEmbed (f (μ.value o)))
+    (ξ : E → FiniteInstrumentComp n PUnit.{1})
+    (k : ScottMap E (TTContinuation.TTResult n))
+    (hk : ∀ p : (μ.bind f).Outcome,
+      k ((μ.bind f).value p) =
+        (ξ ((μ.bind f).value p)).satisfiedTTTheory
+          TTContinuation.resultCode)
+    (i : ℕ) :
+    TTContinuation.taggedBindScott h (taggedEmbed μ) i k =
+      taggedEmbed (μ.bind f) i k := by
+  let hi : ScottMap D (TTContinuation.TTContinuationPower n E) :=
+    ⟨fun d => h d i, continuous_of_preservesDirectedSup fun S hS hdir => by
+      have hs := h.preservesDirectedSup_coe S hS hdir
+      have hsi := congrArg (fun q => q i) hs
+      rw [sSup_apply_eq_sSup_image] at hsi
+      simpa only [Set.image_image] using hsi⟩
+  change TTContinuation.bind hi (embed μ) k = embed (μ.bind f) k
+  apply embed_bind_satisfied μ f hi
+  · intro o
+    exact congrArg (fun q => q i) (hh o)
+  · exact hk
 
 /-- A Scott-continuous projection of the ambient continuation domain onto
 exactly the finite physical image.  Such a projection is intentionally not
