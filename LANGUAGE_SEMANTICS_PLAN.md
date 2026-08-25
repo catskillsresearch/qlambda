@@ -27,14 +27,15 @@ Completed:
   continuations;
 - a finite-instrument representation of every rational
   `CodedTestRepresentation`, giving unconditional recovery of finitary TT
-  refinement from embedding order.
+  refinement from embedding order;
+- a concrete directed dyadic-prefix family whose supremum leaves the finite
+  physical image, proving unconditional nonexistence of a finite-image Scott
+  retraction.
 
 Remaining boundary:
 
 - general closed-term adequacy still requires a finite-denotation hypothesis
-  because higher-order recursion can leave the finite physical image;
-- the finite physical image is not a Scott retract, and no concrete
-  directed-supremum non-closure witness is supplied.
+  because higher-order recursion can leave the finite physical image.
 
 ## Goal
 
@@ -163,9 +164,8 @@ Update `HANDOFF.md` to:
   computation-choice instances complete;
 - record token-by-token adequacy of the finitely presented primitive
   fragment;
-- record unconditional rational coded-test separation and identify a concrete
-  directed-sup non-closure witness as the remaining optional embedding
-  obligation.
+- record unconditional rational coded-test separation and the concrete
+  directed-sup non-closure witness.
 
 ## Verification
 

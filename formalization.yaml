@@ -82,12 +82,11 @@ status:
     aggregation. TTPhysicalEmbedding.embed maps finite instruments into
     the continuation carrier. Deterministic return is preserved exactly;
     map and bind agree on finitely presented result continuations.
-    Embedding order implies every explicitly Scott-represented finitary
-    TT test, and hence FinitaryTTRefines when all tests in the source code
-    have such representations. No unconditional density converse is
-    claimed. A Scott projection onto the finite image would force closure
-    under nonempty directed suprema; a concrete non-closure witness would
-    therefore rule out such a retract. The computation-valued core now
+    Every rational coded TT test has an explicit Scott representation, so
+    embedding order unconditionally implies FinitaryTTRefines. A concrete
+    directed dyadic-prefix family of finite embeddings has a supremum outside
+    the finite image, ruling out a Scott retraction onto that image. The
+    computation-valued core now
     parameterizes syntax by closed primitives, adds recursive abstractions,
     and interprets every term by a Scott map into Q(D_infinity). Pure values
     use monadic unit, call-by-value application uses Scott-continuous bind,
@@ -241,11 +240,7 @@ review:
     review has been performed.
 
 known_gaps:
-  - "Complete the computation-valued term interpretation, including environments, substitution, recursion, quantum primitives, and compositional Scott continuity."
-  - "Define the operational semantics and prove soundness and computational adequacy for outcome probabilities and conditional post-measurement states."
-  - "Construct probabilistic, internal, and external choice algebras on TTContinuationPower and prove their laws and compatibility with the corresponding finite-instrument operations."
-  - "Prove a density theorem for CodedTestRepresentation if a global embedding-order correspondence is desired; the current theorem is deliberately conditional on explicit Scott representations."
-  - "Construct a directed-supremum non-closure witness before asserting the unconditional nonexistence of a Scott retract onto the finite physical image."
+  - "Extend adequacy beyond the finitely presented primitive fragment to higher-order and recursive terms without assuming that their denotations are finite physical embeddings."
   - "Formalize the rank-one Choi-ray obstruction showing why Scott closure or rational attenuation of the exact physical basis alone cannot establish omegaQVA for register dimension at least two."
 
 limitations:

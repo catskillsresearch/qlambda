@@ -5,6 +5,7 @@ Authors: Lars Warren Ericson.
 -/
 import QLambda.Adequacy
 import QLambda.Effects
+import QLambda.FiniteImageNonclosure
 import QLambda.Interp
 import QLambda.InstrumentPower
 import QLambda.Monad

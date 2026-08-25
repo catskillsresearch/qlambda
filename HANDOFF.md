@@ -57,17 +57,16 @@ Token-by-token adequacy is proved for the finitely presented primitive
 fragment: return, Pauli-X, Z measurement, finite bind, interior weighted
 traces, and external selection. Every rational coded source test now has a
 Scott-continuous finite result representation, so embedding order
-unconditionally implies `FinitaryTTRefines`.
+unconditionally implies `FinitaryTTRefines`. A concrete one-dimensional
+dyadic-prefix chain has finite embedded stages, is directed, and has a
+supremum outside the finite image. Consequently no Scott retraction onto the
+finite physical image exists.
 
 ## Surviving roadmap
 
 General closed-term adequacy remains conditional only at the finite-image
 boundary:
 
-1. a concrete directed-supremum non-closure witness for the finite physical
-   image (the retract obstruction is already formalized);
-2. higher-order and recursive terms need not denote finite embedded
+1. higher-order and recursive terms need not denote finite embedded
    instruments, so their adequacy is stated only under an explicit
    finite-denotation hypothesis.
-
-For stronger embedding claims, the non-closure witness remains optional.

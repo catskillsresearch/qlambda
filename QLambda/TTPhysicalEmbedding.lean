@@ -513,6 +513,47 @@ theorem taggedEmbed_bind_satisfied
     exact congrArg (fun q => q i) (hh o)
   · exact hk
 
+/-! ## Monotonicity for support-coupled extensions -/
+
+/-- A finite extension is monotone in the TT embedding when every new outcome
+can reuse the source observation of an old outcome below it, and finite bind
+against every result continuation preserves rational TT observations.
+
+This is deliberately more precise than a blanket `embed_mono`: adding a fresh
+incomparable output need not increase a CPS computation, because an arbitrary
+continuation may map that output to bottom. -/
+theorem embed_le_of_outcome_retract
+    (μ ν : FiniteInstrumentComp n D)
+    (injectOutcome : μ.Outcome → ν.Outcome)
+    (retract : ν.Outcome → μ.Outcome)
+    (hretract : ∀ o, retract (injectOutcome o) = o)
+    (hinjectValue : ∀ o, ν.value (injectOutcome o) = μ.value o)
+    (hvalue : ∀ q, μ.value (retract q) ≤ ν.value q)
+    (hbind : ∀ ξ : D → FiniteInstrumentComp n PUnit.{1},
+      FiniteInstrumentComp.FinitaryTTRefines
+        TTContinuation.resultCode (μ.bind ξ) (ν.bind ξ)) :
+    embed μ ≤ embed ν := by
+  intro k t ht
+  obtain ⟨sources, hsources, target, hderives, httarget⟩ :=
+    (TTTokenTheory.mem_aggregateResult μ k t).mp ht
+  let extended : ν.Outcome → TTObservationToken n :=
+    fun q => sources (retract q)
+  apply (TTTokenTheory.mem_aggregateResult ν k t).2
+  refine ⟨extended, ?_, target, ?_, httarget⟩
+  · intro q
+    exact k.monotone (hvalue q) (hsources (retract q))
+  · intro ξ hξ
+    have hμ :
+        TTObservationToken.Holds TTContinuation.resultCode
+          target (μ.bind ξ) := by
+      apply hderives ξ
+      intro o
+      simpa only [extended, hretract o, hinjectValue o] using
+        hξ (injectOutcome o)
+    exact
+      (FiniteInstrumentComp.finitaryTTRefines_iff_token_holds
+        TTContinuation.resultCode).1 (hbind ξ) target hμ
+
 /-- A Scott-continuous projection of the ambient continuation domain onto
 exactly the finite physical image.  Such a projection is intentionally not
 asserted to exist. -/

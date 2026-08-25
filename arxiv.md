@@ -241,7 +241,7 @@ The proved boundary is explicit:
 3. any Scott projection fixing and landing in the finite image forces that image to be closed under every nonempty directed supremum;
 4. therefore any concrete directed family of finite embeddings with a non-finite supremum rules out such a retraction.
 
-The development constructs the previously missing rational coded-test representation. It does **not** manufacture a directed-supremum non-closure witness or claim a finite-image retract.
+The development constructs both the rational coded-test representation and a concrete one-dimensional dyadic-prefix chain of finite embeddings. The chain is directed, while its supremum is separated from every finite embedding by rational coordinate tests. Thus the finite physical image is not closed under directed suprema and admits no Scott-continuous retraction.
 
 ### Definitions produced by the construction
 
@@ -276,7 +276,7 @@ The proof extracts finitely many branch-local source tokens and extends their se
 
 **Order boundary.** `finitaryTTRefines_test_of_embed_le` and `finitaryTTRefines_of_embed_le` recover represented rational tests from embedding order. Their proofs evaluate the pointwise Scott-map inequality at the representing continuation and use `satisfiedTTTheory_le_iff_finitaryTTRefines`.
 
-**Retract boundary.** `finiteImage_directedSupClosed_of_retraction` applies preservation of directed suprema by the proposed Scott projection and its fixed-point law. `no_finiteImageScottRetraction_of_directedSup_not_finite` turns any future non-closure witness into a contradiction.
+**Retract boundary.** `finiteImage_directedSupClosed_of_retraction` applies preservation of directed suprema by the proposed Scott projection and its fixed-point law. `range_embed_dyadicStage_directed_nonclosed` supplies a concrete non-closure witness, and `no_finiteImageScottRetraction_dyadic` derives the unconditional contradiction.
 
 **Computation-valued interpretation.** `interp_continuous` records that every term clause is Scott-continuous in its environment by construction. `interp_value` proves that ordinary and recursive abstractions are precisely the pure cases lifted through monadic unit. `recLambdaValue_unfold` is Scott’s fixed-point equation for recursive functions. `applyComp_pure_lambda` combines both monad unit laws with the $D_\infty\cong[D_\infty\to Q(D_\infty)]$ inverse equations to prove semantic β-reduction for a pure abstraction and argument.
 
