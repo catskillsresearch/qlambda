@@ -62,11 +62,26 @@ dyadic-prefix chain has finite embedded stages, is directed, and has a
 supremum outside the finite image. Consequently no Scott retraction onto the
 finite physical image exists.
 
+A hardware-faithful qubit CEK machine now carries a normalized density matrix,
+lexical closures, and an evaluation stack. Its internal, weighted, and
+externally selected transitions are separate. Finite branch-complete execution
+trees aggregate probability and measurement physically before TT embedding;
+runtime values, environments, controls, and stacks are related to the recursive
+semantic domain. A formal `|0⟩` counterexample shows why one normalized run
+cannot reconstruct a state-independent channel when a locally zero measurement
+branch is globally nonzero. The proof semantics therefore has a separate
+subnormalized `ChannelConfig`/`ChannelTree` layer which retains every physical
+branch, including zero states. It folds exactly to finite instruments, agrees
+with positive executable transitions after normalization, and gives exact TT
+token adequacy for every realized finite tree. Scott fixed points are
+finite-iterate suprema.
+
 ## Surviving roadmap
 
-General closed-term adequacy remains conditional only at the finite-image
-boundary:
-
-1. higher-order and recursive terms need not denote finite embedded
-   instruments, so their adequacy is stated only under an explicit
-   finite-denotation hypothesis.
+General closed-term hardware adequacy no longer assumes one finite denotation.
+It is conditional on `ChannelTreeCompleteness`: the CEK fundamental lemma that
+the selected interpreter denotation is the supremum of branch-complete
+subnormalized channel-tree instruments. Administrative CEK simulation,
+physical branch aggregation, positive-run correspondence, and recursive Scott
+approximation are proved; the completeness direction connecting all finite
+channel trees to `interp` remains open.

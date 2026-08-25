@@ -92,10 +92,17 @@ status:
     use monadic unit, call-by-value application uses Scott-continuous bind,
     and recursion uses Scott fix. Environment continuity, constructor
     equations, value purity, recursive unfolding, and the pure semantic beta
-    equation are proved. Full renaming/weakening/substitution correspondence,
-    operational soundness and adequacy, and concrete
-    probabilistic/internal/external choice operations remain open. Nothing in
-    the compared statements is imported from a prior Palomar entry.
+    equation are proved, together with renaming, weakening, capture-avoiding
+    value substitution, and operational soundness. A hardware-faithful qubit
+    CEK machine carries normalized density states and models executable
+    positive branches. A separate subnormalized channel-tree semantics retains
+    every CP branch, including zero states, and folds finite trees into
+    physical instruments. Runtime logical relations, positive-run
+    correspondence, recursive finite approximants, and TT token adequacy for
+    every realized finite channel tree are proved. General closed-term
+    adequacy remains conditional on the ChannelTreeCompleteness fundamental
+    lemma. Nothing in the compared statements is imported from a prior
+    Palomar entry.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -240,7 +247,7 @@ review:
     review has been performed.
 
 known_gaps:
-  - "Extend adequacy beyond the finitely presented primitive fragment to higher-order and recursive terms without assuming that their denotations are finite physical embeddings."
+  - "Prove ChannelTreeCompleteness: the CEK fundamental lemma identifying each selected higher-order/recursive interpreter denotation with the supremum of branch-complete finite subnormalized channel-tree instruments."
   - "Formalize the rank-one Choi-ray obstruction showing why Scott closure or rational attenuation of the exact physical basis alone cannot establish omegaQVA for register dimension at least two."
 
 limitations:

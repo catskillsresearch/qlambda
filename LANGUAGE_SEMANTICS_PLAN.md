@@ -30,12 +30,21 @@ Completed:
   refinement from embedding order;
 - a concrete directed dyadic-prefix family whose supremum leaves the finite
   physical image, proving unconditional nonexistence of a finite-image Scott
-  retraction.
+  retraction;
+- a hardware-faithful qubit CEK machine with normalized density states,
+  runtime logical relations, and exact Born-normalized positive transitions;
+- a separate proof-only subnormalized channel-tree semantics which retains
+  zero branches and has exact finite-instrument/token correspondence;
+- finite-iterate approximation of recursive Scott fixed points.
 
 Remaining boundary:
 
-- general closed-term adequacy still requires a finite-denotation hypothesis
-  because higher-order recursion can leave the finite physical image.
+- general closed-term adequacy is reduced to `ChannelTreeCompleteness`, the CEK
+  fundamental lemma identifying the interpreter with the supremum of
+  branch-complete subnormalized channel-tree instruments. It no longer assumes
+  that a recursive denotation is one finite physical embedding. A formal
+  counterexample rules out deriving state-independent TT completeness from a
+  single arbitrary normalized hardware run.
 
 ## Goal
 
