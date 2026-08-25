@@ -317,6 +317,126 @@ theorem weightedResultScott_satisfied_interior
       (ν.satisfiedTTTheory resultCode))
     (core_satisfiedTTTheory p hp₀.le hp₁.le μ ν)
 
+theorem weightedResultScott_bot_left
+    (p : Prob) (hp₀ : 0 < p) (hp₁ : p < 1)
+    (U : TTContinuation.TTResult n) :
+    weightedResultScott p hp₀.le hp₁.le (⊥, U) = ⊥ := by
+  rw [weightedResultScott_interior p hp₀ hp₁]
+  apply RoundedTheory.ext
+  ext t
+  constructor
+  · intro ht
+    obtain ⟨left, hleft, _⟩ :=
+      (mem_core p hp₀.le hp₁.le ⊥ U t).mp ht
+    have : False := by
+      rw [← sSup_empty, RoundedTheory.mem_sSup] at hleft
+      simpa using hleft
+    exact this.elim
+  · intro ht
+    have : False := by
+      rw [← sSup_empty] at ht
+      have ht' := (RoundedTheory.mem_sSup (S := (∅ : Set
+        (TTContinuation.TTResult n)))).mp ht
+      simpa using ht'
+    exact this.elim
+
+theorem weightedResultScott_bot_right
+    (p : Prob) (hp₀ : 0 < p) (hp₁ : p < 1)
+    (T : TTContinuation.TTResult n) :
+    weightedResultScott p hp₀.le hp₁.le (T, ⊥) = ⊥ := by
+  rw [weightedResultScott_interior p hp₀ hp₁]
+  apply RoundedTheory.ext
+  ext t
+  constructor
+  · intro ht
+    obtain ⟨_, _, right, hright, _⟩ :=
+      (mem_core p hp₀.le hp₁.le T ⊥ t).mp ht
+    have : False := by
+      rw [← sSup_empty, RoundedTheory.mem_sSup] at hright
+      simpa using hright
+    exact this.elim
+  · intro ht
+    have : False := by
+      rw [← sSup_empty] at ht
+      have ht' := (RoundedTheory.mem_sSup (S := (∅ : Set
+        (TTContinuation.TTResult n)))).mp ht
+      simpa using ht'
+    exact this.elim
+
+/-- The token-generated interior operation preserves arbitrary (not merely
+directed) suprema in the two arguments jointly. -/
+theorem core_sSup_product
+    (p : Prob) (hp₀ : 0 ≤ p) (hp₁ : p ≤ 1)
+    (S U : Set (TTContinuation.TTResult n)) :
+    core p hp₀ hp₁ (sSup S) (sSup U) =
+      sSup ((fun q => core p hp₀ hp₁ q.1 q.2) '' (S ×ˢ U)) := by
+  apply RoundedTheory.ext
+  ext t
+  change t ∈ core p hp₀ hp₁ (sSup S) (sSup U) ↔
+    t ∈ (sSup ((fun q => core p hp₀ hp₁ q.1 q.2) '' (S ×ˢ U)) :
+      TTContinuation.TTResult n)
+  rw [RoundedTheory.mem_sSup]
+  constructor
+  · intro ht
+    obtain ⟨left, hleft, right, hright, target, hderives, httarget⟩ :=
+      (mem_core p hp₀ hp₁ (sSup S) (sSup U) t).mp ht
+    rw [RoundedTheory.mem_sSup] at hleft hright
+    obtain ⟨T, hTS, hleft⟩ := hleft
+    obtain ⟨V, hVU, hright⟩ := hright
+    refine ⟨core p hp₀ hp₁ T V, ?_, ?_⟩
+    · exact ⟨(T, V), ⟨hTS, hVU⟩, rfl⟩
+    · exact (mem_core p hp₀ hp₁ T V t).2
+        ⟨left, hleft, right, hright, target, hderives, httarget⟩
+  · rintro ⟨W, ⟨⟨T, V⟩, ⟨hTS, hVU⟩, rfl⟩, ht⟩
+    obtain ⟨left, hleft, right, hright, target, hderives, httarget⟩ :=
+      (mem_core p hp₀ hp₁ T V t).mp ht
+    apply (mem_core p hp₀ hp₁ (sSup S) (sSup U) t).2
+    refine ⟨left, ?_, right, ?_, target, hderives, httarget⟩
+    · rw [RoundedTheory.mem_sSup]
+      exact ⟨T, hTS, hleft⟩
+    · rw [RoundedTheory.mem_sSup]
+      exact ⟨V, hVU, hright⟩
+
+/-- Physical weighted aggregation preserves arbitrary product suprema.  The
+nonemptiness assumptions are necessary at the endpoints, where one projection
+is discarded but the Cartesian product would otherwise be empty. -/
+theorem weightedResultScott_sSup_product
+    (p : Prob) (hp₀ : 0 ≤ p) (hp₁ : p ≤ 1)
+    (S U : Set (TTContinuation.TTResult n))
+    (hS : S.Nonempty) (hU : U.Nonempty) :
+    weightedResultScott p hp₀ hp₁ (sSup S, sSup U) =
+      sSup ((fun q => weightedResultScott p hp₀ hp₁ q) '' (S ×ˢ U)) := by
+  by_cases hpzero : p = 0
+  · subst p
+    simp only [weightedResultScott_zero]
+    apply le_antisymm
+    · apply sSup_le
+      intro V hVU
+      obtain ⟨T, hTS⟩ := hS
+      apply le_sSup
+      refine ⟨(T, V), ⟨hTS, hVU⟩, ?_⟩
+      simp
+    · apply sSup_le
+      rintro _ ⟨⟨T, V⟩, ⟨hTS, hVU⟩, rfl⟩
+      simpa using le_sSup hVU
+  · by_cases hpone : p = 1
+    · subst p
+      simp only [weightedResultScott_one]
+      apply le_antisymm
+      · apply sSup_le
+        intro T hTS
+        obtain ⟨V, hVU⟩ := hU
+        apply le_sSup
+        refine ⟨(T, V), ⟨hTS, hVU⟩, ?_⟩
+        simp
+      · apply sSup_le
+        rintro _ ⟨⟨T, V⟩, ⟨hTS, hVU⟩, rfl⟩
+        simpa using le_sSup hTS
+    · rw [weightedResultScott, if_neg hpzero, if_neg hpone]
+      change core p hp₀ hp₁ (sSup S) (sSup U) =
+        sSup ((fun q => core p hp₀ hp₁ q.1 q.2) '' (S ×ˢ U))
+      exact core_sSup_product p hp₀ hp₁ S U
+
 end TTWeightedAggregation
 
 end QLambda
