@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Adequacy
+import QLambda.ChoiRayObstruction
 import QLambda.Effects
 import QLambda.FiniteImageNonclosure
 import QLambda.HardwareAdequacy
