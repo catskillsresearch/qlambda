@@ -79,9 +79,11 @@ finite-iterate suprema.
 ## Surviving roadmap
 
 General closed-term hardware adequacy no longer assumes one finite denotation.
-It is conditional on `ChannelTreeCompleteness`: the CEK fundamental lemma that
-the selected interpreter denotation is the supremum of branch-complete
-subnormalized channel-tree instruments. Administrative CEK simulation,
-physical branch aggregation, positive-run correspondence, and recursive Scott
-approximation are proved; the completeness direction connecting all finite
-channel trees to `interp` remains open.
+`ChannelTreeCompleteness` is now proved for the closed return, Pauli-X, and
+measure-Z primitives: after any selector path, the interpreter result is
+exactly the supremum of restricted subnormalized channel-tree embeddings,
+and every completing tree from those starts reconstructs that same
+instrument. Administrative CEK simulation, physical branch aggregation,
+positive-run correspondence, and recursive Scott approximation are also
+proved. Choice, application, and recursion still require the remaining CEK
+fundamental lemma connecting all finite channel trees to `interp`.

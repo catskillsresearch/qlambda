@@ -74,6 +74,26 @@ theorem applyMat_wpKraus [Preorder D] (μ : FiniteInstrumentComp n D)
   rw [KrausFamily.applyMat_flatMap]
   simp
 
+/-- Weakest-precondition action is invariant under outcome reindexing that
+preserves branches and returned values. -/
+theorem wpKraus_congr_of_outcome_equiv [Preorder D]
+    (μ ν : FiniteInstrumentComp n D)
+    (e : μ.Outcome ≃ ν.Outcome)
+    (hbranch : ∀ o, ν.branch (e o) = μ.branch o)
+    (hvalue : ∀ o, ν.value (e o) = μ.value o)
+    (P : D → KrausFamily n n) :
+    KrausFamily.SemEq (μ.wpKraus P) (ν.wpKraus P) := by
+  intro ρ
+  rw [applyMat_wpKraus, applyMat_wpKraus]
+  refine Fintype.sum_equiv e
+      (fun o => KrausFamily.applyMat
+        (KrausFamily.comp (P (μ.value o)) (μ.branch o)) ρ)
+      (fun q => KrausFamily.applyMat
+        (KrausFamily.comp (P (ν.value q)) (ν.branch q)) ρ)
+      ?_
+  intro o
+  rw [hbranch o, hvalue o]
+
 theorem wpKraus_unit_semEq [Preorder D] (d : D)
     (P : D → KrausFamily n n) :
     KrausFamily.SemEq ((unit (n := n) d).wpKraus P) (P d) := by
@@ -124,6 +144,26 @@ theorem wpKraus_bind_semEq [Preorder D] [Preorder E]
   intro o _
   rw [KrausFamily.applyMat_comp, applyMat_wpKraus]
   simp only [KrausFamily.applyMat_comp]
+
+/-- Bind then observe is likewise invariant under the same reindexing. -/
+theorem bind_wpKraus_congr_of_outcome_equiv [Preorder D] [Preorder E]
+    (μ ν : FiniteInstrumentComp n D)
+    (e : μ.Outcome ≃ ν.Outcome)
+    (hbranch : ∀ o, ν.branch (e o) = μ.branch o)
+    (hvalue : ∀ o, ν.value (e o) = μ.value o)
+    (ξ : D → FiniteInstrumentComp n E)
+    (P : E → KrausFamily n n) :
+    KrausFamily.SemEq ((μ.bind ξ).wpKraus P) ((ν.bind ξ).wpKraus P) := by
+  intro ρ
+  calc
+    KrausFamily.applyMat ((μ.bind ξ).wpKraus P) ρ =
+        KrausFamily.applyMat (μ.wpKraus fun d => (ξ d).wpKraus P) ρ :=
+      wpKraus_bind_semEq μ ξ P ρ
+    _ = KrausFamily.applyMat (ν.wpKraus fun d => (ξ d).wpKraus P) ρ :=
+      wpKraus_congr_of_outcome_equiv μ ν e hbranch hvalue
+        (fun d => (ξ d).wpKraus P) ρ
+    _ = KrausFamily.applyMat ((ν.bind ξ).wpKraus P) ρ :=
+      (wpKraus_bind_semEq ν ξ P ρ).symm
 
 /-- Kraus branches whose returned values lie in `U`.  Their concatenation
 denotes the sum of those CP branches and is independent of list order at

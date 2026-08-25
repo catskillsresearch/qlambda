@@ -99,10 +99,11 @@ status:
     every CP branch, including zero states, and folds finite trees into
     physical instruments. Runtime logical relations, positive-run
     correspondence, recursive finite approximants, and TT token adequacy for
-    every realized finite channel tree are proved. General closed-term
-    adequacy remains conditional on the ChannelTreeCompleteness fundamental
-    lemma. Nothing in the compared statements is imported from a prior
-    Palomar entry.
+    every realized finite channel tree are proved. ChannelTreeCompleteness is
+    proved for the closed return, Pauli-X, and measure-Z primitives. General
+    closed-term adequacy for choice, application, and recursion remains the
+    remaining fundamental lemma. Nothing in the compared statements is
+    imported from a prior Palomar entry.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -247,7 +248,7 @@ review:
     review has been performed.
 
 known_gaps:
-  - "Prove ChannelTreeCompleteness: the CEK fundamental lemma identifying each selected higher-order/recursive interpreter denotation with the supremum of branch-complete finite subnormalized channel-tree instruments."
+  - "Extend ChannelTreeCompleteness from closed return/Pauli-X/measure-Z primitives to first-order choice, application, and recursive interpreter denotations."
   - "Formalize the rank-one Choi-ray obstruction showing why Scott closure or rational attenuation of the exact physical basis alone cannot establish omegaQVA for register dimension at least two."
 
 limitations:

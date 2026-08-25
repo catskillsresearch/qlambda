@@ -513,6 +513,119 @@ theorem taggedEmbed_bind_satisfied
     exact congrArg (fun q => q i) (hh o)
   · exact hk
 
+/-- Physical embedding is invariant under outcome reindexing that preserves
+branches and returned values. -/
+theorem embed_congr_of_outcome_equiv
+    (μ ν : FiniteInstrumentComp n D)
+    (e : μ.Outcome ≃ ν.Outcome)
+    (hbranch : ∀ o, ν.branch (e o) = μ.branch o)
+    (hvalue : ∀ o, ν.value (e o) = μ.value o) :
+    embed μ = embed ν := by
+  apply ScottMap.ext
+  intro k
+  apply RoundedTheory.ext
+  ext t
+  constructor
+  · intro ht
+    obtain ⟨sources, hsources, target, hderives, httarget⟩ :=
+      (TTTokenTheory.mem_aggregateResult μ k t).mp ht
+    let sources' : ν.Outcome → TTObservationToken n :=
+      fun q => sources (e.symm q)
+    apply (TTTokenTheory.mem_aggregateResult ν k t).2
+    refine ⟨sources', ?_, target, ?_, httarget⟩
+    · intro q
+      have hq : ν.value q = μ.value (e.symm q) := by
+        simpa using hvalue (e.symm q)
+      simpa [sources', hq] using hsources (e.symm q)
+    · intro ξ hξ
+      have hμ :
+          TTObservationToken.Holds TTContinuation.resultCode
+            target (μ.bind ξ) := by
+        apply hderives ξ
+        intro o
+        have ho : ν.value (e o) = μ.value o := hvalue o
+        simpa [sources', ho] using hξ (e o)
+      have hthy :
+          (μ.bind ξ).satisfiedTTTheory TTContinuation.resultCode =
+            (ν.bind ξ).satisfiedTTTheory TTContinuation.resultCode :=
+        satisfiedTTTheory_eq_of_wpKraus_semEq
+          (fun P => FiniteInstrumentComp.bind_wpKraus_congr_of_outcome_equiv
+            μ ν e hbranch hvalue ξ P)
+      exact (FiniteInstrumentComp.mem_satisfiedTTTheory
+          TTContinuation.resultCode (ν.bind ξ) target).mp
+        (hthy ▸
+          (FiniteInstrumentComp.mem_satisfiedTTTheory
+            TTContinuation.resultCode (μ.bind ξ) target).2 hμ)
+  · intro ht
+    obtain ⟨sources, hsources, target, hderives, httarget⟩ :=
+      (TTTokenTheory.mem_aggregateResult ν k t).mp ht
+    let sources' : μ.Outcome → TTObservationToken n :=
+      fun o => sources (e o)
+    apply (TTTokenTheory.mem_aggregateResult μ k t).2
+    refine ⟨sources', ?_, target, ?_, httarget⟩
+    · intro o
+      simpa [sources', hvalue o] using hsources (e o)
+    · intro ξ hξ
+      have hν :
+          TTObservationToken.Holds TTContinuation.resultCode
+            target (ν.bind ξ) := by
+        apply hderives ξ
+        intro q
+        have hq : ν.value q = μ.value (e.symm q) := by
+          simpa using hvalue (e.symm q)
+        simpa [sources', hq] using hξ (e.symm q)
+      have hthy :
+          (μ.bind ξ).satisfiedTTTheory TTContinuation.resultCode =
+            (ν.bind ξ).satisfiedTTTheory TTContinuation.resultCode :=
+        satisfiedTTTheory_eq_of_wpKraus_semEq
+          (fun P => FiniteInstrumentComp.bind_wpKraus_congr_of_outcome_equiv
+            μ ν e hbranch hvalue ξ P)
+      exact (FiniteInstrumentComp.mem_satisfiedTTTheory
+          TTContinuation.resultCode (μ.bind ξ) target).mp
+        (hthy.symm ▸
+          (FiniteInstrumentComp.mem_satisfiedTTTheory
+            TTContinuation.resultCode (ν.bind ξ) target).2 hν)
+
+/-- A one-outcome identity instrument embeds as deterministic return. -/
+theorem embed_eq_unit_of_unique
+    (μ : FiniteInstrumentComp n D) [Unique μ.Outcome]
+    (d : D)
+    (hvalue : ∀ o, μ.value o = d)
+    (hbranch : ∀ o, μ.branch o = KrausFamily.identity n) :
+    embed μ = embed (FiniteInstrumentComp.unit (n := n) d) :=
+  embed_congr_of_outcome_equiv μ
+    (FiniteInstrumentComp.unit (n := n) d)
+    { toFun := fun _ => ()
+      invFun := fun _ => default
+      left_inv := fun o => (Unique.uniq _ o).symm
+      right_inv := fun _ => rfl }
+    (fun o => by
+      change KrausFamily.identity n = μ.branch o
+      exact (hbranch o).symm)
+    (fun o => by
+      change d = μ.value o
+      exact (hvalue o).symm)
+
+/-- A one-outcome operation instrument embeds as `ofOperation`. -/
+theorem embed_eq_ofOperation_of_unique
+    (μ : FiniteInstrumentComp n D) [Unique μ.Outcome]
+    (Φ : QuantumOperation n n) (d : D)
+    (hvalue : ∀ o, μ.value o = d)
+    (hbranch : ∀ o, μ.branch o = Φ.kraus) :
+    embed μ = embed (FiniteInstrumentComp.ofOperation Φ d) :=
+  embed_congr_of_outcome_equiv μ
+    (FiniteInstrumentComp.ofOperation Φ d)
+    { toFun := fun _ => ()
+      invFun := fun _ => default
+      left_inv := fun o => (Unique.uniq _ o).symm
+      right_inv := fun _ => rfl }
+    (fun o => by
+      change Φ.kraus = μ.branch o
+      exact (hbranch o).symm)
+    (fun o => by
+      change d = μ.value o
+      exact (hvalue o).symm)
+
 /-! ## Monotonicity for support-coupled extensions -/
 
 /-- A finite extension is monotone in the TT embedding when every new outcome

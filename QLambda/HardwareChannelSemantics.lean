@@ -595,31 +595,60 @@ theorem initialChannelConfig_related {C : Type}
   exact ControlRel.term code [] semanticEnv
     (env_nil D₀ j₀ realize semanticEnv)
 
+/-- Realize every payload leaf by the supplied classical embedding. -/
+noncomputable def payloadLeafValue {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (leaf : ChannelLeaf C) : HSemanticValue D₀ j₀ :=
+  match leaf.isTerminal.value with
+  | .payload c => realize c
+  | .closure .. => ⊥
+  | .recClosure .. => ⊥
+
+theorem ValueRel.payload_eq {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀} {c : C}
+    {d : HSemanticValue D₀ j₀}
+    (h : ValueRel D₀ j₀ realize (.payload c) d) :
+    d = realize c := by
+  cases h
+  rfl
+
+theorem payloadLeafValue_payload {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (leaf : ChannelLeaf C) {c : C}
+    (hc : leaf.isTerminal.value = .payload c) :
+    payloadLeafValue D₀ j₀ realize leaf = realize c := by
+  simp [payloadLeafValue, hc]
+
 /-- The return primitive has a complete one-step channel tree. -/
 def returnTree {C : Type} (value : C) (quantum : NormalizedDensity 2) :
-    ChannelTree C (initialChannelConfig (.prim (.ret value)) quantum) := by
-  let s := initialChannelConfig (.prim (.ret value)) quantum
-  let tree := ChannelTree.internal
-    (ChannelInternalStep.returnPrimitive (s := s) (value := value))
+    ChannelTree C (initialChannelConfig (.prim (.ret value)) quantum) :=
+  ChannelTree.internal
+    (ChannelInternalStep.returnPrimitive
+      (s := initialChannelConfig (.prim (.ret value)) quantum)
+      (value := value))
     (ChannelTree.terminal
-      (s := {s with control := .value (.payload value)})
       { value := .payload value, control_eq := rfl, stack_eq := rfl })
-  simpa [s, initialChannelConfig, ofConfig, initialConfig] using tree
 
 /-- Pauli-X has a complete one-step channel tree with exact unnormalized
 operation semantics (normalization happens only in the executable machine). -/
 noncomputable def pauliXTree {C : Type} (value : C)
     (quantum : NormalizedDensity 2) :
-    ChannelTree C (initialChannelConfig (.prim (.pauliX value)) quantum) := by
-  let s := initialChannelConfig (.prim (.pauliX value)) quantum
-  let tree := ChannelTree.internal
-    (ChannelInternalStep.pauliXPrimitive (s := s) (value := value))
+    ChannelTree C (initialChannelConfig (.prim (.pauliX value)) quantum) :=
+  ChannelTree.internal
+    (ChannelInternalStep.pauliXPrimitive
+      (s := initialChannelConfig (.prim (.pauliX value)) quantum)
+      (value := value))
     (ChannelTree.terminal
-      (s := { s with
-        control := .value (.payload value)
-        quantum := applyOperation Qubit.pauliXOp s.quantum })
       { value := .payload value, control_eq := rfl, stack_eq := rfl })
-  simpa [s, initialChannelConfig, ofConfig, initialConfig] using tree
 
 /-- Measurement always has both channel children, including a child whose
 state is zero on the selected initial density. -/
@@ -638,6 +667,778 @@ noncomputable def measurementTree {C : Type} (zeroValue oneValue : C)
       { value := .payload oneValue
         control_eq := rfl
         stack_eq := rfl })
+
+theorem returnTree_depth {C : Type} (value : C)
+    (quantum : NormalizedDensity 2) :
+    (returnTree value quantum).depth = 1 := by
+  simp [returnTree, ChannelTree.depth]
+
+theorem pauliXTree_depth {C : Type} (value : C)
+    (quantum : NormalizedDensity 2) :
+    (pauliXTree value quantum).depth = 1 := by
+  simp [pauliXTree, ChannelTree.depth]
+
+theorem measurementTree_depth {C : Type} (zeroValue oneValue : C)
+    (quantum : NormalizedDensity 2) :
+    (measurementTree zeroValue oneValue quantum).depth = 1 := by
+  simp [measurementTree, ChannelTree.depth]
+
+theorem returnTree_leaf_payload {C : Type} (value : C)
+    (quantum : NormalizedDensity 2)
+    (o : (returnTree value quantum).instrument.Outcome) :
+    ((returnTree value quantum).instrument.value o).isTerminal.value =
+      .payload value := by
+  rcases o with ⟨⟨⟩, ⟨⟩⟩
+  rfl
+
+theorem pauliXTree_leaf_payload {C : Type} (value : C)
+    (quantum : NormalizedDensity 2)
+    (o : (pauliXTree value quantum).instrument.Outcome) :
+    ((pauliXTree value quantum).instrument.value o).isTerminal.value =
+      .payload value := by
+  rcases o with ⟨⟨⟩, ⟨⟩⟩
+  rfl
+
+theorem measurementTree_leaf_payload {C : Type}
+    (zeroValue oneValue : C) (quantum : NormalizedDensity 2)
+    (o : (measurementTree zeroValue oneValue quantum).instrument.Outcome) :
+    ((measurementTree zeroValue oneValue quantum).instrument.value o
+      ).isTerminal.value =
+      .payload (match o.1 with
+        | true => oneValue
+        | false => zeroValue) := by
+  obtain ⟨b, hb⟩ := o
+  cases b <;> (cases hb; rfl)
+
+theorem returnTree_selectors {C : Type} (value : C)
+    (quantum : NormalizedDensity 2)
+    (o : (returnTree value quantum).instrument.Outcome) :
+    ((returnTree value quantum).instrument.value o).selectors = [] := by
+  rcases o with ⟨⟨⟩, ⟨⟩⟩
+  rfl
+
+theorem pauliXTree_selectors {C : Type} (value : C)
+    (quantum : NormalizedDensity 2)
+    (o : (pauliXTree value quantum).instrument.Outcome) :
+    ((pauliXTree value quantum).instrument.value o).selectors = [] := by
+  rcases o with ⟨⟨⟩, ⟨⟩⟩
+  rfl
+
+theorem measurementTree_selectors {C : Type}
+    (zeroValue oneValue : C) (quantum : NormalizedDensity 2)
+    (o : (measurementTree zeroValue oneValue quantum).instrument.Outcome) :
+    ((measurementTree zeroValue oneValue quantum).instrument.value o
+      ).selectors = [] := by
+  obtain ⟨b, hb⟩ := o
+  cases b <;> (cases hb; rfl)
+
+theorem returnTree_compatible {C : Type} (value : C)
+    (quantum : NormalizedDensity 2) (selectors : List Bool) (i : ℕ)
+    (o : (returnTree value quantum).instrument.Outcome) :
+    OutcomeCompatible (returnTree value quantum) selectors i o := by
+  simpa [OutcomeCompatible, returnTree_selectors] using List.nil_prefix
+
+theorem pauliXTree_compatible {C : Type} (value : C)
+    (quantum : NormalizedDensity 2) (selectors : List Bool) (i : ℕ)
+    (o : (pauliXTree value quantum).instrument.Outcome) :
+    OutcomeCompatible (pauliXTree value quantum) selectors i o := by
+  simpa [OutcomeCompatible, pauliXTree_selectors] using List.nil_prefix
+
+theorem measurementTree_compatible {C : Type}
+    (zeroValue oneValue : C) (quantum : NormalizedDensity 2)
+    (selectors : List Bool) (i : ℕ)
+    (o : (measurementTree zeroValue oneValue quantum).instrument.Outcome) :
+    OutcomeCompatible (measurementTree zeroValue oneValue quantum)
+      selectors i o := by
+  simpa [OutcomeCompatible, measurementTree_selectors] using List.nil_prefix
+
+noncomputable def returnTreeRealization {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (value : C) (quantum : NormalizedDensity 2) :
+    ChannelTreeRealization D₀ j₀ realize (returnTree value quantum) where
+  value := payloadLeafValue D₀ j₀ realize
+  related := by
+    intro o
+    have hc := returnTree_leaf_payload value quantum o
+    unfold payloadLeafValue
+    rw [hc]
+    exact ValueRel.payload value
+
+noncomputable def pauliXTreeRealization {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (value : C) (quantum : NormalizedDensity 2) :
+    ChannelTreeRealization D₀ j₀ realize (pauliXTree value quantum) where
+  value := payloadLeafValue D₀ j₀ realize
+  related := by
+    intro o
+    have hc := pauliXTree_leaf_payload value quantum o
+    unfold payloadLeafValue
+    rw [hc]
+    exact ValueRel.payload value
+
+noncomputable def measurementTreeRealization {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (zeroValue oneValue : C) (quantum : NormalizedDensity 2) :
+    ChannelTreeRealization D₀ j₀ realize
+      (measurementTree zeroValue oneValue quantum) where
+  value := payloadLeafValue D₀ j₀ realize
+  related := by
+    intro o
+    have hc := measurementTree_leaf_payload zeroValue oneValue quantum o
+    unfold payloadLeafValue
+    rw [hc]
+    obtain ⟨b, hb⟩ := o
+    cases b <;> exact ValueRel.payload _
+
+/-- Restriction of a fully compatible tree is only a subtype reindexing. -/
+noncomputable def restrictedOutcomeEquiv {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {start : ChannelConfig C} (tree : ChannelTree C start)
+    (R : ChannelTreeRealization D₀ j₀ realize tree)
+    (selectors : List Bool) (i : ℕ)
+    (hall : ∀ o, OutcomeCompatible tree selectors i o) :
+    (realizedInstrument D₀ j₀ realize tree R).Outcome ≃
+      (restrictedInstrument D₀ j₀ realize tree R selectors i).Outcome :=
+  (Equiv.subtypeUnivEquiv hall).symm
+
+theorem embed_restricted_of_all_compatible {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {start : ChannelConfig C} (tree : ChannelTree C start)
+    (R : ChannelTreeRealization D₀ j₀ realize tree)
+    (selectors : List Bool) (i : ℕ)
+    (hall : ∀ o, OutcomeCompatible tree selectors i o) :
+    embed (restrictedInstrument D₀ j₀ realize tree R selectors i) =
+      embed (realizedInstrument D₀ j₀ realize tree R) := by
+  refine embed_congr_of_outcome_equiv
+      (restrictedInstrument D₀ j₀ realize tree R selectors i)
+      (realizedInstrument D₀ j₀ realize tree R)
+      (restrictedOutcomeEquiv D₀ j₀ realize tree R selectors i hall).symm
+      ?_ ?_
+  · intro o
+    rfl
+  · intro o
+    rfl
+
+theorem returnTree_branch {C : Type} (value : C)
+    (quantum : NormalizedDensity 2)
+    (o : (returnTree value quantum).instrument.Outcome) :
+    (returnTree value quantum).instrument.branch o =
+      KrausFamily.identity 2 := by
+  rcases o with ⟨⟨⟩, ⟨⟩⟩
+  change KrausFamily.comp (KrausFamily.identity 2)
+      (channelInternalOperation
+        (initialChannelConfig (.prim (.ret value)) quantum)).kraus =
+    KrausFamily.identity 2
+  simp [channelInternalOperation, initialChannelConfig, ofConfig,
+    initialConfig, QuantumOperation.identity]
+
+theorem pauliXTree_branch {C : Type} (value : C)
+    (quantum : NormalizedDensity 2)
+    (o : (pauliXTree value quantum).instrument.Outcome) :
+    (pauliXTree value quantum).instrument.branch o =
+      Qubit.pauliXOp.kraus := by
+  rcases o with ⟨⟨⟩, ⟨⟩⟩
+  change KrausFamily.comp (KrausFamily.identity 2)
+      (channelInternalOperation
+        (initialChannelConfig (.prim (.pauliX value)) quantum)).kraus =
+    Qubit.pauliXOp.kraus
+  simp [channelInternalOperation, initialChannelConfig, ofConfig,
+    initialConfig]
+
+theorem returnTree_realized_eq_unit {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (value : C) (quantum : NormalizedDensity 2) :
+    embed (realizedInstrument D₀ j₀ realize (returnTree value quantum)
+      (returnTreeRealization D₀ j₀ realize value quantum)) =
+      embed (FiniteInstrumentComp.unit (n := 2) (realize value)) := by
+  let μ := realizedInstrument D₀ j₀ realize (returnTree value quantum)
+    (returnTreeRealization D₀ j₀ realize value quantum)
+  let _ : Unique μ.Outcome :=
+    { default := ⟨⟨⟩, ⟨⟩⟩
+      uniq := by intro o; rcases o with ⟨⟨⟩, ⟨⟩⟩; rfl }
+  refine embed_eq_unit_of_unique μ (realize value) ?_ ?_
+  · intro o
+    change payloadLeafValue D₀ j₀ realize
+        ((returnTree value quantum).instrument.value o) = realize value
+    rw [payloadLeafValue_payload D₀ j₀ realize _
+      (returnTree_leaf_payload value quantum o)]
+  · intro o
+    exact returnTree_branch value quantum o
+
+theorem pauliXTree_realized_eq_ofOperation {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (value : C) (quantum : NormalizedDensity 2) :
+    embed (realizedInstrument D₀ j₀ realize (pauliXTree value quantum)
+      (pauliXTreeRealization D₀ j₀ realize value quantum)) =
+      embed (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+        (realize value)) := by
+  let μ := realizedInstrument D₀ j₀ realize (pauliXTree value quantum)
+    (pauliXTreeRealization D₀ j₀ realize value quantum)
+  let _ : Unique μ.Outcome :=
+    { default := ⟨⟨⟩, ⟨⟩⟩
+      uniq := by intro o; rcases o with ⟨⟨⟩, ⟨⟩⟩; rfl }
+  refine embed_eq_ofOperation_of_unique μ Qubit.pauliXOp (realize value) ?_ ?_
+  · intro o
+    change payloadLeafValue D₀ j₀ realize
+        ((pauliXTree value quantum).instrument.value o) = realize value
+    rw [payloadLeafValue_payload D₀ j₀ realize _
+      (pauliXTree_leaf_payload value quantum o)]
+  · intro o
+    exact pauliXTree_branch value quantum o
+
+/-- The two-outcome measurement tree reindexes to the primitive
+computational-basis instrument. -/
+theorem measurementTree_realized_eq_measureZ {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (zeroValue oneValue : C) (quantum : NormalizedDensity 2) :
+    embed (realizedInstrument D₀ j₀ realize
+        (measurementTree zeroValue oneValue quantum)
+        (measurementTreeRealization D₀ j₀ realize zeroValue oneValue quantum)) =
+      embed (Qubit.measureZComp.map
+        (fun b => if b then realize oneValue else realize zeroValue)) := by
+  let μ := realizedInstrument D₀ j₀ realize
+    (measurementTree zeroValue oneValue quantum)
+    (measurementTreeRealization D₀ j₀ realize zeroValue oneValue quantum)
+  let ν := Qubit.measureZComp.map
+    (fun b => if b then realize oneValue else realize zeroValue)
+  refine embed_congr_of_outcome_equiv μ ν ?e ?hbranch ?hvalue
+  · exact
+      { toFun := fun o => o.1
+        invFun := fun b =>
+          match b with
+          | true => ⟨true, ⟨⟩⟩
+          | false => ⟨false, ⟨⟩⟩
+        left_inv := by
+          intro o
+          obtain ⟨b, hb⟩ := o
+          cases b <;> (cases hb; rfl)
+        right_inv := by
+          intro b
+          cases b <;> rfl }
+  · intro o
+    obtain ⟨b, hb⟩ := o
+    cases b
+    · cases hb
+      change Qubit.measureZComp.branch false =
+        KrausFamily.comp (KrausFamily.identity 2)
+          (Qubit.measureZComp.branch false)
+      simp
+    · cases hb
+      change Qubit.measureZComp.branch true =
+        KrausFamily.comp (KrausFamily.identity 2)
+          (Qubit.measureZComp.branch true)
+      simp
+  · intro o
+    obtain ⟨b, hb⟩ := o
+    cases b
+    · cases hb
+      change realize zeroValue =
+        payloadLeafValue D₀ j₀ realize
+          ((measurementTree zeroValue oneValue quantum).instrument.value
+            ⟨false, ⟨⟩⟩)
+      rw [payloadLeafValue_payload D₀ j₀ realize _
+        (measurementTree_leaf_payload zeroValue oneValue quantum ⟨false, ⟨⟩⟩)]
+    · cases hb
+      change realize oneValue =
+        payloadLeafValue D₀ j₀ realize
+          ((measurementTree zeroValue oneValue quantum).instrument.value
+            ⟨true, ⟨⟩⟩)
+      rw [payloadLeafValue_payload D₀ j₀ realize _
+        (measurementTree_leaf_payload zeroValue oneValue quantum ⟨true, ⟨⟩⟩)]
+
+theorem ChannelInternalStep.eq_of_return {C : Type}
+    {s t : ChannelConfig C} {value : C}
+    (h : ChannelInternalStep s t)
+    (hc : s.control = .term (.prim (.ret value))) :
+    t.control = .value (.payload value) ∧
+      t.env = s.env ∧ t.stack = s.stack ∧ t.quantum = s.quantum := by
+  cases h <;> cases hc
+  exact ⟨rfl, rfl, rfl, rfl⟩
+
+theorem ChannelInternalStep.eq_of_pauliX {C : Type}
+    {s t : ChannelConfig C} {value : C}
+    (h : ChannelInternalStep s t)
+    (hc : s.control = .term (.prim (.pauliX value))) :
+    t.control = .value (.payload value) ∧
+      t.env = s.env ∧ t.stack = s.stack ∧
+      t.quantum = applyOperation Qubit.pauliXOp s.quantum := by
+  cases h <;> cases hc
+  exact ⟨rfl, rfl, rfl, rfl⟩
+
+theorem ChannelInternalStep.not_measureZ {C : Type}
+    {s t : ChannelConfig C} {zeroValue oneValue : C}
+    (h : ChannelInternalStep s t)
+    (hc : s.control = .term (.prim (.measureZ zeroValue oneValue))) :
+    False := by
+  cases h <;> cases hc
+
+theorem ChannelInternalStep.not_value_nil {C : Type}
+    {s t : ChannelConfig C} {v : RuntimeValue C}
+    (h : ChannelInternalStep s t)
+    (hc : s.control = .value v) (hs : s.stack = []) : False := by
+  cases h with
+  | evaluateArgument => cases hs
+  | beta => cases hs
+  | recBeta => cases hs
+  | returnPrimitive => cases hc
+  | pauliXPrimitive => cases hc
+  | lambda => cases hc
+  | recursive => cases hc
+  | application => cases hc
+  | internalLeft => cases hc
+  | internalRight => cases hc
+  | «variable» => cases hc
+
+theorem ChannelExternalStep.not_prim {C : Type}
+    {s t : ChannelConfig C} {b : Bool} {p : QubitPrimitive C}
+    (h : ChannelExternalStep s b t)
+    (hc : s.control = .term (.prim p)) : False := by
+  cases h <;> cases hc
+
+theorem ChannelExternalStep.not_value {C : Type}
+    {s t : ChannelConfig C} {b : Bool} {v : RuntimeValue C}
+    (h : ChannelExternalStep s b t)
+    (hc : s.control = .value v) : False := by
+  cases h <;> cases hc
+
+/-- Any completing channel tree from a closed return primitive embeds as
+deterministic return of that payload. -/
+theorem embed_of_ret_tree {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (value : C) (quantum : NormalizedDensity 2)
+    (tree : ChannelTree C
+      (initialChannelConfig (.prim (.ret value)) quantum))
+    (R : ChannelTreeRealization D₀ j₀ realize tree)
+    (selectors : List Bool) (i : ℕ) :
+    embed (restrictedInstrument D₀ j₀ realize tree R selectors i) =
+      embed (FiniteInstrumentComp.unit (n := 2) (realize value)) := by
+  have hctrl :
+      (initialChannelConfig (.prim (.ret value)) quantum).control =
+        .term (.prim (.ret value)) := rfl
+  have hstack :
+      (initialChannelConfig (.prim (.ret value)) quantum).stack = [] := rfl
+  cases tree with
+  | terminal hterm =>
+      have := hterm.control_eq
+      simp [initialChannelConfig, ofConfig, initialConfig] at this
+  | internal h next =>
+      have ht := ChannelInternalStep.eq_of_return h hctrl
+      have hnextctrl := ht.1
+      have hnextstack := ht.2.2.1.trans hstack
+      cases next with
+      | terminal hterm =>
+          have hvalue : hterm.value = .payload value := by
+            injection hterm.control_eq.symm.trans hnextctrl
+          have hall : ∀ o, OutcomeCompatible
+              (ChannelTree.internal h (ChannelTree.terminal hterm))
+              selectors i o := by
+            intro o
+            simp [OutcomeCompatible, ChannelTree.instrument]
+            exact List.nil_prefix
+          rw [embed_restricted_of_all_compatible D₀ j₀ realize _ R
+            selectors i hall]
+          let μ := realizedInstrument D₀ j₀ realize
+            (ChannelTree.internal h (ChannelTree.terminal hterm)) R
+          let _ : Unique μ.Outcome :=
+            { default := ⟨⟨⟩, ⟨⟩⟩
+              uniq := by intro o; rcases o with ⟨⟨⟩, ⟨⟩⟩; rfl }
+          refine embed_eq_unit_of_unique μ (realize value) ?_ ?_
+          · intro o
+            have hrel := R.related o
+            have hpay :
+                ((ChannelTree.internal h (ChannelTree.terminal hterm)
+                  ).instrument.value o).isTerminal.value =
+                  .payload value := by
+              simp [ChannelTree.instrument]
+              exact hvalue
+            rw [hpay] at hrel
+            exact ValueRel.payload_eq D₀ j₀ hrel
+          · intro o
+            rcases o with ⟨⟨⟩, ⟨⟩⟩
+            change KrausFamily.comp (KrausFamily.identity 2)
+                (channelInternalOperation
+                  (initialChannelConfig (.prim (.ret value)) quantum)).kraus =
+              KrausFamily.identity 2
+            simp [channelInternalOperation, initialChannelConfig, ofConfig,
+              initialConfig, QuantumOperation.identity]
+      | internal h' _ =>
+          exact False.elim
+            (ChannelInternalStep.not_value_nil h' hnextctrl
+              (ht.2.2.1.trans hstack))
+      | external _ h' _ =>
+          exact False.elim (ChannelExternalStep.not_value h' hnextctrl)
+      | probability _ _ _ _ => cases hnextctrl
+      | measurement _ _ => cases hnextctrl
+  | external _ h _ =>
+      exact False.elim (ChannelExternalStep.not_prim h hctrl)
+
+theorem embed_of_pauliX_tree {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (value : C) (quantum : NormalizedDensity 2)
+    (tree : ChannelTree C
+      (initialChannelConfig (.prim (.pauliX value)) quantum))
+    (R : ChannelTreeRealization D₀ j₀ realize tree)
+    (selectors : List Bool) (i : ℕ) :
+    embed (restrictedInstrument D₀ j₀ realize tree R selectors i) =
+      embed (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+        (realize value)) := by
+  have hctrl :
+      (initialChannelConfig (.prim (.pauliX value)) quantum).control =
+        .term (.prim (.pauliX value)) := rfl
+  have hstack :
+      (initialChannelConfig (.prim (.pauliX value)) quantum).stack = [] := rfl
+  cases tree with
+  | terminal hterm =>
+      have := hterm.control_eq
+      simp [initialChannelConfig, ofConfig, initialConfig] at this
+  | internal h next =>
+      have ht := ChannelInternalStep.eq_of_pauliX h hctrl
+      have hnextctrl := ht.1
+      have hnextstack := ht.2.2.1.trans hstack
+      cases next with
+      | terminal hterm =>
+          have hvalue : hterm.value = .payload value := by
+            injection hterm.control_eq.symm.trans hnextctrl
+          have hall : ∀ o, OutcomeCompatible
+              (ChannelTree.internal h (ChannelTree.terminal hterm))
+              selectors i o := by
+            intro o
+            simp [OutcomeCompatible, ChannelTree.instrument]
+            exact List.nil_prefix
+          rw [embed_restricted_of_all_compatible D₀ j₀ realize _ R
+            selectors i hall]
+          let μ := realizedInstrument D₀ j₀ realize
+            (ChannelTree.internal h (ChannelTree.terminal hterm)) R
+          let _ : Unique μ.Outcome :=
+            { default := ⟨⟨⟩, ⟨⟩⟩
+              uniq := by intro o; rcases o with ⟨⟨⟩, ⟨⟩⟩; rfl }
+          refine embed_eq_ofOperation_of_unique μ Qubit.pauliXOp
+            (realize value) ?_ ?_
+          · intro o
+            have hrel := R.related o
+            have hpay :
+                ((ChannelTree.internal h (ChannelTree.terminal hterm)
+                  ).instrument.value o).isTerminal.value =
+                  .payload value := by
+              simp [ChannelTree.instrument]
+              exact hvalue
+            rw [hpay] at hrel
+            exact ValueRel.payload_eq D₀ j₀ hrel
+          · intro o
+            rcases o with ⟨⟨⟩, ⟨⟩⟩
+            change KrausFamily.comp (KrausFamily.identity 2)
+                (channelInternalOperation
+                  (initialChannelConfig (.prim (.pauliX value)) quantum)).kraus =
+              Qubit.pauliXOp.kraus
+            simp [channelInternalOperation, initialChannelConfig, ofConfig,
+              initialConfig]
+      | internal h' _ =>
+          exact False.elim
+            (ChannelInternalStep.not_value_nil h' hnextctrl hnextstack)
+      | external _ h' _ =>
+          exact False.elim (ChannelExternalStep.not_value h' hnextctrl)
+      | probability _ _ _ _ => cases hnextctrl
+      | measurement _ _ => cases hnextctrl
+  | external _ h _ =>
+      exact False.elim (ChannelExternalStep.not_prim h hctrl)
+
+/-- Any completing channel tree from a closed measure-Z primitive embeds as
+the two-outcome computational-basis instrument.  The start is generalized
+first so indexed elimination can enter the measurement constructor. -/
+theorem embed_of_measureZ_tree {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (zeroValue oneValue : C) (quantum : NormalizedDensity 2)
+    (tree : ChannelTree C
+      (initialChannelConfig (.prim (.measureZ zeroValue oneValue)) quantum))
+    (R : ChannelTreeRealization D₀ j₀ realize tree)
+    (selectors : List Bool) (i : ℕ) :
+    embed (restrictedInstrument D₀ j₀ realize tree R selectors i) =
+      embed (Qubit.measureZComp.map
+        (fun b => if b then realize oneValue else realize zeroValue)) := by
+  revert tree R
+  generalize hs : initialChannelConfig
+      (.prim (.measureZ zeroValue oneValue)) quantum = s
+  intro tree R
+  have hctrl :
+      s.control = .term (.prim (.measureZ zeroValue oneValue)) := by
+    cases hs; rfl
+  have hstack : s.stack = [] := by
+    cases hs; rfl
+  cases tree with
+  | terminal hterm =>
+      have := hterm.control_eq.symm.trans hctrl
+      cases this
+  | internal h next =>
+      exact False.elim (ChannelInternalStep.not_measureZ h hctrl)
+  | external _ h _ =>
+      exact False.elim (ChannelExternalStep.not_prim h hctrl)
+  | probability _ _ _ _ =>
+      cases hctrl
+  | @measurement source z' o' zeroTree oneTree =>
+      have hctrl0 :
+          ({source with
+              control := .value (.payload z')
+              quantum := applyOperation (measurementOperation false)
+                source.quantum}).control =
+            .value (.payload z') := rfl
+      have hstack0 :
+          ({source with
+              control := .value (.payload z')
+              quantum := applyOperation (measurementOperation false)
+                source.quantum}).stack = [] := hstack
+      have hctrl1 :
+          ({source with
+              control := .value (.payload o')
+              quantum := applyOperation (measurementOperation true)
+                source.quantum}).control =
+            .value (.payload o') := rfl
+      have hstack1 :
+          ({source with
+              control := .value (.payload o')
+              quantum := applyOperation (measurementOperation true)
+                source.quantum}).stack = [] := hstack
+      cases zeroTree with
+      | terminal hz =>
+          cases oneTree with
+          | terminal ho =>
+              have hval0 : hz.value = .payload z' :=
+                (by injection hz.control_eq : _ = hz.value).symm
+              have hval1 : ho.value = .payload o' :=
+                (by injection ho.control_eq : _ = ho.value).symm
+              have hzid : z' = zeroValue := by
+                cases hctrl
+                rfl
+              have hoid : o' = oneValue := by
+                cases hctrl
+                rfl
+              have hall : ∀ o, OutcomeCompatible
+                  (ChannelTree.measurement
+                    (ChannelTree.terminal hz) (ChannelTree.terminal ho))
+                  selectors i o := by
+                intro o
+                obtain ⟨b, hb⟩ := o
+                cases b
+                · cases hb
+                  simp [OutcomeCompatible, ChannelTree.instrument]
+                  exact List.nil_prefix
+                · cases hb
+                  simp [OutcomeCompatible, ChannelTree.instrument]
+                  exact List.nil_prefix
+              rw [embed_restricted_of_all_compatible D₀ j₀ realize _ R
+                selectors i hall]
+              let μ := realizedInstrument D₀ j₀ realize
+                (ChannelTree.measurement
+                  (ChannelTree.terminal hz) (ChannelTree.terminal ho)) R
+              let ν := Qubit.measureZComp.map
+                (fun b => if b then realize oneValue else realize zeroValue)
+              refine embed_congr_of_outcome_equiv μ ν ?e ?hbranch ?hvalue
+              · exact
+                  { toFun := fun o => o.1
+                    invFun := fun b =>
+                      match b with
+                      | true => ⟨true, ⟨⟩⟩
+                      | false => ⟨false, ⟨⟩⟩
+                    left_inv := by
+                      intro o
+                      obtain ⟨b, hb⟩ := o
+                      cases b <;> (cases hb; rfl)
+                    right_inv := by
+                      intro b
+                      cases b <;> rfl }
+              · intro o
+                obtain ⟨b, hb⟩ := o
+                cases b
+                · cases hb
+                  change Qubit.measureZComp.branch false =
+                    KrausFamily.comp (KrausFamily.identity 2)
+                      (Qubit.measureZComp.branch false)
+                  simp
+                · cases hb
+                  change Qubit.measureZComp.branch true =
+                    KrausFamily.comp (KrausFamily.identity 2)
+                      (Qubit.measureZComp.branch true)
+                  simp
+              · intro o
+                obtain ⟨b, hb⟩ := o
+                cases b
+                · cases hb
+                  have hrel := R.related ⟨false, ⟨⟩⟩
+                  have hpay :
+                      ((ChannelTree.measurement
+                          (ChannelTree.terminal hz)
+                          (ChannelTree.terminal ho)).instrument.value
+                        ⟨false, ⟨⟩⟩).isTerminal.value =
+                        .payload z' := by
+                    simp [ChannelTree.instrument]
+                    exact hval0
+                  rw [hpay] at hrel
+                  exact ((ValueRel.payload_eq D₀ j₀ hrel).trans
+                    (congrArg realize hzid)).symm
+                · cases hb
+                  have hrel := R.related ⟨true, ⟨⟩⟩
+                  have hpay :
+                      ((ChannelTree.measurement
+                          (ChannelTree.terminal hz)
+                          (ChannelTree.terminal ho)).instrument.value
+                        ⟨true, ⟨⟩⟩).isTerminal.value =
+                        .payload o' := by
+                    simp [ChannelTree.instrument]
+                    exact hval1
+                  rw [hpay] at hrel
+                  exact ((ValueRel.payload_eq D₀ j₀ hrel).trans
+                    (congrArg realize hoid)).symm
+          | internal h' _ =>
+              exact False.elim
+                (ChannelInternalStep.not_value_nil h' hctrl1 hstack1)
+          | external _ h' _ =>
+              exact False.elim (ChannelExternalStep.not_value h' hctrl1)
+      | internal h' _ =>
+          exact False.elim
+            (ChannelInternalStep.not_value_nil h' hctrl0 hstack0)
+      | external _ h' _ =>
+          exact False.elim (ChannelExternalStep.not_value h' hctrl0)
+
+/-- Closed return primitives satisfy channel-tree completeness exactly. -/
+theorem return_channelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (value : C) (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    ChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig (.prim (.ret value)) quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.prim (.ret value)) semanticEnv) where
+  selected_result_eq_channelTree_sup := by
+    intro selectors i k
+    have hdenote :
+        interp (hardwarePrimitive D₀ j₀ realize)
+            (.prim (.ret value)) semanticEnv =
+          taggedEmbed (FiniteInstrumentComp.unit (n := 2) (realize value)) := by
+      simp [hardwarePrimitive_ret, taggedEmbed_unit]
+    rw [hdenote, selectPath_taggedEmbed, taggedEmbed_apply]
+    refine le_antisymm ?_ ?_
+    · apply le_sSup
+      refine ⟨1, returnTree value quantum,
+        returnTreeRealization D₀ j₀ realize value quantum, ?_, ?_⟩
+      · simp [returnTree_depth]
+      · rw [embed_restricted_of_all_compatible D₀ j₀ realize
+            (returnTree value quantum)
+            (returnTreeRealization D₀ j₀ realize value quantum)
+            selectors i (returnTree_compatible value quantum selectors i),
+          returnTree_realized_eq_unit]
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      rw [embed_of_ret_tree D₀ j₀ realize value quantum tree R selectors i]
+
+/-- Closed Pauli-X primitives satisfy channel-tree completeness exactly. -/
+theorem pauliX_channelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (value : C) (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    ChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig (.prim (.pauliX value)) quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.prim (.pauliX value)) semanticEnv) where
+  selected_result_eq_channelTree_sup := by
+    intro selectors i k
+    have hdenote :
+        interp (hardwarePrimitive D₀ j₀ realize)
+            (.prim (.pauliX value)) semanticEnv =
+          taggedEmbed (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+            (realize value)) := by
+      simp [hardwarePrimitive_pauliX]
+    rw [hdenote, selectPath_taggedEmbed, taggedEmbed_apply]
+    refine le_antisymm ?_ ?_
+    · apply le_sSup
+      refine ⟨1, pauliXTree value quantum,
+        pauliXTreeRealization D₀ j₀ realize value quantum, ?_, ?_⟩
+      · simp [pauliXTree_depth]
+      · rw [embed_restricted_of_all_compatible D₀ j₀ realize
+            (pauliXTree value quantum)
+            (pauliXTreeRealization D₀ j₀ realize value quantum)
+            selectors i (pauliXTree_compatible value quantum selectors i),
+          pauliXTree_realized_eq_ofOperation]
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      rw [embed_of_pauliX_tree D₀ j₀ realize value quantum tree R selectors i]
+
+/-- Closed measure-Z primitives satisfy channel-tree completeness exactly. -/
+theorem measureZ_channelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (zeroValue oneValue : C) (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    ChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig (.prim (.measureZ zeroValue oneValue)) quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.prim (.measureZ zeroValue oneValue)) semanticEnv) where
+  selected_result_eq_channelTree_sup := by
+    intro selectors i k
+    have hdenote :
+        interp (hardwarePrimitive D₀ j₀ realize)
+            (.prim (.measureZ zeroValue oneValue)) semanticEnv =
+          taggedEmbed (Qubit.measureZComp.map
+            (fun b => if b then realize oneValue else realize zeroValue)) := by
+      simp [hardwarePrimitive_measureZ]
+    rw [hdenote, selectPath_taggedEmbed, taggedEmbed_apply]
+    refine le_antisymm ?_ ?_
+    · apply le_sSup
+      refine ⟨1, measurementTree zeroValue oneValue quantum,
+        measurementTreeRealization D₀ j₀ realize zeroValue oneValue quantum,
+        ?_, ?_⟩
+      · simp [measurementTree_depth]
+      · rw [embed_restricted_of_all_compatible D₀ j₀ realize
+            (measurementTree zeroValue oneValue quantum)
+            (measurementTreeRealization D₀ j₀ realize
+              zeroValue oneValue quantum)
+            selectors i
+            (measurementTree_compatible zeroValue oneValue quantum
+              selectors i),
+          measurementTree_realized_eq_measureZ]
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      rw [embed_of_measureZ_tree D₀ j₀ realize zeroValue oneValue quantum
+        tree R selectors i]
 
 /-- Closed-term TT adequacy from the repaired channel-tree completeness
 statement. -/
