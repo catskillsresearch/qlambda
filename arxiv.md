@@ -4,7 +4,7 @@
 ---
 
 ### Abstract
-We develop a Lean 4 framework toward denotational semantics for an untyped $\lambda$-calculus with probabilistic, internal, and external choice, controlled by finite quantum instruments. Inspired by Chen, Kou, and Lyu’s finite-valuation approximable structures, we define $\omega\mathbf{QVA}$ by requiring its approximate identity to factor through finite products of sub-normalized density-operator spaces with the Loewner order. The finite spectrahedra are approximation factors; they are not themselves a quantum powerdomain $\mathcal Q(D)$. We prove a parameterized inverse-limit theorem and instantiate its hypotheses with the fixed-register continuation power $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$. Finite trace-nonincreasing CP instruments embed into this carrier through Scott-continuous token-local aggregation. The embedding preserves deterministic return exactly and agrees with finite map and bind on finitely presented continuations. Embedding order recovers every rational TT test having an explicit Scott representation; a global order equivalence would require an additional density theorem. We also isolate the obstruction to a finite-image Scott retract: any such retract would force the finite image to be closed under nonempty directed suprema. Thus the semantic domain and its physical finite fragment are constructed, while computation-valued term interpretation, the operational semantics and adequacy theorem, and the three choice algebras remain future semantic layers.
+We develop a Lean 4 framework toward denotational semantics for an untyped $\lambda$-calculus with probabilistic, internal, and external choice, controlled by finite quantum instruments. Inspired by Chen, Kou, and Lyu’s finite-valuation approximable structures, we define $\omega\mathbf{QVA}$ by requiring its approximate identity to factor through finite products of sub-normalized density-operator spaces with the Loewner order. The finite spectrahedra are approximation factors; they are not themselves a quantum powerdomain $\mathcal Q(D)$. We prove a parameterized inverse-limit theorem and instantiate its hypotheses with the fixed-register continuation power $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$. Finite trace-nonincreasing CP instruments embed into this carrier through Scott-continuous token-local aggregation. The embedding preserves deterministic return exactly and agrees with finite map and bind on finitely presented continuations. Every rational TT test has an explicit Scott representation, so embedding order unconditionally recovers finitary TT refinement. We also isolate the obstruction to a finite-image Scott retract: any such retract would force the finite image to be closed under nonempty directed suprema.
 
 ---
 
@@ -236,12 +236,12 @@ The continuation carrier contains arbitrary Scott-continuous higher-order maps, 
 
 The proved boundary is explicit:
 
-1. if a source rational TT test is represented by a Scott result postcondition and a finite result continuation, then `embed μ ≤ embed ν` implies preservation of that test;
-2. if every test in an output code has such a representation, embedding order implies `FinitaryTTRefines` for that code;
+1. every source rational TT test is represented by a Scott result postcondition and a finite result continuation;
+2. consequently, embedding order unconditionally implies `FinitaryTTRefines` for every output code;
 3. any Scott projection fixing and landing in the finite image forces that image to be closed under every nonempty directed supremum;
 4. therefore any concrete directed family of finite embeddings with a non-finite supremum rules out such a retraction.
 
-The development does **not** assert the missing density theorem or manufacture a non-closure witness. It records these hypotheses rather than claiming an unconditional equivalence or retract.
+The development constructs the previously missing rational coded-test representation. It does **not** manufacture a directed-supremum non-closure witness or claim a finite-image retract.
 
 ### Definitions produced by the construction
 

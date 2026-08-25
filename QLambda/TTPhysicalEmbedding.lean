@@ -47,9 +47,8 @@ theorem embed_satisfied
 /-- A source-code test represented inside the result continuation model.
 
 The Scott postcondition is finitely presented pointwise, and `probe` recovers
-the original source weakest precondition after finite bind.  Keeping this
-representation hypothesis explicit isolates the density statement that would
-be needed for an unconditional order equivalence. -/
+the original source weakest precondition after finite bind.  Every rational
+step code receives such a representation below. -/
 structure CodedTestRepresentation
     (C : OutputCode ℕ D) (c : RatStepPostCode n) where
   post : ScottMap D (TTContinuation.TTResult n)
@@ -62,6 +61,107 @@ structure CodedTestRepresentation
       ((ρ.bind result).wpKraus
         (probe.decode TTContinuation.resultCode))
       (ρ.wpKraus (c.decode C))
+
+/-- The finite result instrument which realizes one value of a coded source
+postcondition. -/
+noncomputable def codedResult
+    (C : OutputCode ℕ D) (c : RatStepPostCode n) (d : D) :
+    FiniteInstrumentComp n PUnit.{1} :=
+  FiniteInstrumentComp.ofOperation (c.decodedOperation C d) PUnit.unit
+
+theorem codedResult_wp_identity
+    (C : OutputCode ℕ D) (c : RatStepPostCode n) (d : D) :
+    KrausFamily.SemEq
+      ((codedResult C c d).wpKraus
+        ((RatStepPostCode.identity n).decode
+          TTContinuation.resultCode))
+      (c.decode C d) := by
+  apply KrausFamily.applySemEq_trans
+    (FiniteInstrumentComp.wpKraus_ofOperation_semEq
+      (c.decodedOperation C d) PUnit.unit
+      ((RatStepPostCode.identity n).decode
+        TTContinuation.resultCode))
+  intro ρ
+  rw [KrausFamily.applyMat_comp]
+  have hid := RatStepPostCode.decode_identity_semEq
+    (n := n) TTContinuation.resultCode PUnit.unit
+  rw [hid]
+  exact KrausFamily.applyMat_identity _
+
+/-- The finite table underlying a coded postcondition yields a
+Scott-continuous family of represented result theories.  At a directed
+supremum, all finitely many open-membership bits are already attained at one
+member of the directed set. -/
+noncomputable def codedPost
+    (C : OutputCode ℕ D) (c : RatStepPostCode n) :
+    ScottMap D (TTContinuation.TTResult n) :=
+  ⟨fun d => (codedResult C c d).satisfiedTTTheory
+      TTContinuation.resultCode,
+    continuous_of_preservesDirectedSup fun S hS hdir => by
+      apply RoundedTheory.ext
+      ext t
+      change
+        t ∈ (codedResult C c (sSup S)).satisfiedTTTheory
+            TTContinuation.resultCode ↔
+          t ∈ (sSup
+            ((fun d =>
+              (codedResult C c d).satisfiedTTTheory
+                TTContinuation.resultCode) '' S) :
+              TTContinuation.TTResult n)
+      rw [RoundedTheory.mem_sSup]
+      constructor
+      · intro ht
+        obtain ⟨d, hdS, hsig⟩ :=
+          c.exists_signature_eq_of_directed C hS hdir
+        have hop :
+            c.decodedOperation C d =
+              c.decodedOperation C (sSup S) := by
+          unfold RatStepPostCode.decodedOperation
+            RatStepPostCode.decodedTNI
+          rw [hsig]
+        refine ⟨(codedResult C c d).satisfiedTTTheory
+            TTContinuation.resultCode, ⟨d, hdS, rfl⟩, ?_⟩
+        simpa [codedResult, hop] using ht
+      · rintro ⟨_, ⟨d, hdS, rfl⟩, ht⟩
+        apply TTObservationToken.holds_mono
+          TTContinuation.resultCode ?_ ht
+        intro P
+        exact KrausFamily.residualRefines_trans
+          (KrausFamily.residualRefines_of_semEq
+            (FiniteInstrumentComp.wpKraus_ofOperation_semEq
+              (c.decodedOperation C d) PUnit.unit P))
+          (KrausFamily.residualRefines_trans
+            (KrausFamily.residualRefines_comp_left (P PUnit.unit)
+              (c.decodedKraus_mono C (le_sSup hdS)))
+            (KrausFamily.residualRefines_of_semEq
+              (KrausFamily.applySemEq_symm
+                (FiniteInstrumentComp.wpKraus_ofOperation_semEq
+                  (c.decodedOperation C (sSup S)) PUnit.unit P))))⟩
+
+@[simp]
+theorem codedPost_apply
+    (C : OutputCode ℕ D) (c : RatStepPostCode n) (d : D) :
+    codedPost C c d =
+      (codedResult C c d).satisfiedTTTheory
+        TTContinuation.resultCode :=
+  rfl
+
+/-- Every rational source test has a finite result representation. -/
+noncomputable def codedTestRepresentation
+    (C : OutputCode ℕ D) (c : RatStepPostCode n) :
+    CodedTestRepresentation C c where
+  post := codedPost C c
+  result := codedResult C c
+  post_eq := codedPost_apply C c
+  probe := RatStepPostCode.identity n
+  wp_semEq := fun ρ =>
+    KrausFamily.applySemEq_trans
+      (FiniteInstrumentComp.wpKraus_bind_semEq ρ
+        (codedResult C c)
+        ((RatStepPostCode.identity n).decode
+          TTContinuation.resultCode))
+      (FiniteInstrumentComp.wpKraus_semEq_pred ρ
+        (codedResult_wp_identity C c))
 
 /-- Order between physical embeddings preserves every source-code test that
 has an explicit Scott representation in the result model. -/
@@ -99,14 +199,15 @@ theorem finitaryTTRefines_test_of_embed_le
     (KrausFamily.residualRefines_trans hprobe
       (KrausFamily.residualRefines_of_semEq (R.wp_semEq ν)))
 
-/-- Consequently, embedding order implies finitary TT refinement whenever
-the chosen source code has Scott representations for all of its tests. -/
+/-- Embedding order implies unconditional finitary TT refinement.  The
+representation is constructed above from the finite signature table of each
+rational test. -/
 theorem finitaryTTRefines_of_embed_le
     (C : OutputCode ℕ D) {μ ν : FiniteInstrumentComp n D}
-    (represented : ∀ c : RatStepPostCode n, CodedTestRepresentation C c)
     (hμν : embed μ ≤ embed ν) :
     FiniteInstrumentComp.FinitaryTTRefines C μ ν :=
-  fun c => finitaryTTRefines_test_of_embed_le C hμν c (represented c)
+  fun c => finitaryTTRefines_test_of_embed_le C hμν c
+    (codedTestRepresentation C c)
 
 private theorem satisfiedTTTheory_eq_of_wpKraus_semEq
     {μ ν : FiniteInstrumentComp n PUnit.{1}}

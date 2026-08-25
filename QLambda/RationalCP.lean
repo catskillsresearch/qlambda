@@ -82,6 +82,40 @@ theorem realize_refines {n : ℕ} {M N : RatCPMatrix n}
   apply KrausFamily.residualRefines_of_choiRefines
   simpa [KrausFamily.ChoiRefines] using h
 
+/-- Gaussian-rational Choi code for the identity channel. -/
+noncomputable def identity (n : ℕ) : RatCPMatrix n where
+  matrix := fun p q =>
+    if p.1 = p.2 ∧ q.1 = q.2 then 1 else 0
+  posSemidef := by
+    have h :=
+      KrausFamily.choi_posSemidef (KrausFamily.identity n)
+    convert h using 1
+    ext p q
+    change
+      (((if p.1 = p.2 ∧ q.1 = q.2 then 1 else 0) :
+        RatComplex) : ℂ) = _
+    by_cases hp : p.1 = p.2 <;> by_cases hq : q.1 = q.2 <;>
+      simp [hp, hq, KrausFamily.identity, KrausFamily.choiTerm,
+        Matrix.one_apply]
+
+@[simp]
+theorem toComplex_identity (n : ℕ) :
+    (identity n).toComplex =
+      KrausFamily.choi (KrausFamily.identity n) := by
+  ext p q
+  change
+    (((if p.1 = p.2 ∧ q.1 = q.2 then 1 else 0) :
+      RatComplex) : ℂ) = _
+  by_cases hp : p.1 = p.2 <;> by_cases hq : q.1 = q.2 <;>
+    simp [hp, hq, KrausFamily.identity,
+      KrausFamily.choiTerm, Matrix.one_apply]
+
+theorem realize_identity_semEq (n : ℕ) :
+    KrausFamily.SemEq (identity n).realize
+      (KrausFamily.identity n) := by
+  apply KrausFamily.semEq_of_choi_eq
+  rw [choi_realize, toComplex_identity]
+
 end RatCPMatrix
 
 /-- A rational completely positive code whose chosen Kraus realization is
@@ -141,6 +175,19 @@ theorem realize_refines {n : ℕ} {M N : RatTNICPMatrix n}
     (h : M.toComplex ≤ N.toComplex) :
     KrausFamily.Refines M.realize N.realize :=
   RatCPMatrix.realize_refines h
+
+/-- Rational TNI code for the identity channel. -/
+noncomputable def identity (n : ℕ) : RatTNICPMatrix n where
+  cp := RatCPMatrix.identity n
+  trace_nonincreasing := by
+    intro ρ _
+    rw [RatCPMatrix.realize_identity_semEq,
+      KrausFamily.applyMat_identity]
+
+theorem realize_identity_semEq (n : ℕ) :
+    KrausFamily.SemEq (identity n).realize
+      (KrausFamily.identity n) :=
+  RatCPMatrix.realize_identity_semEq n
 
 /-- Realize a rational TNI code as a physical quantum operation. -/
 noncomputable def toQuantumOperation {n : ℕ} (M : RatTNICPMatrix n) :

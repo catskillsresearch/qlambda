@@ -43,6 +43,16 @@ noncomputable instance (n : ℕ) : Encodable (RatStepPostCode n) := by
 instance (n : ℕ) : Countable (RatStepPostCode n) :=
   Encodable.countable
 
+/-- Constant rational identity postcondition.  It has no output tests, so it
+decodes to the identity channel for every output code and value. -/
+noncomputable def identity (n : ℕ) : RatStepPostCode n where
+  arity := 0
+  opens := Fin.elim0
+  table := fun _ => RatTNICPMatrix.identity n
+  table_mono := by
+    intro s t hst
+    exact le_rfl
+
 /-- Boolean membership signature of a point against the finitely many
 Scott opens selected by a step code. -/
 noncomputable def signature {D : Type u} [CompleteLattice D]
@@ -146,6 +156,14 @@ theorem decode_trace_nonincreasing {D : Type u} [CompleteLattice D]
       (Matrix.trace (KrausFamily.applyMat (c.decode C d) ρ)).re ≤
         (Matrix.trace ρ).re :=
   c.decodedKraus_trace_nonincreasing C d
+
+theorem decode_identity_semEq {D : Type u} [CompleteLattice D]
+    (C : OutputCode ℕ D) (d : D) :
+    KrausFamily.SemEq ((identity n).decode C d)
+      (KrausFamily.identity n) := by
+  change KrausFamily.SemEq (RatTNICPMatrix.identity n).realize
+    (KrausFamily.identity n)
+  exact RatTNICPMatrix.realize_identity_semEq n
 
 end RatStepPostCode
 

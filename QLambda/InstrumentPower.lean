@@ -85,6 +85,22 @@ theorem wpKraus_unit_semEq [Preorder D] (d : D)
     KrausFamily.applyMat (P d) ρ
   simp
 
+theorem wpKraus_ofOperation_semEq [Preorder D]
+    (Φ : QuantumOperation n n) (d : D)
+    (P : D → KrausFamily n n) :
+    KrausFamily.SemEq
+      ((ofOperation Φ d).wpKraus P)
+      (KrausFamily.comp (P d) Φ.kraus) := by
+  intro ρ
+  rw [applyMat_wpKraus]
+  change
+    (∑ _ : Unit,
+      KrausFamily.applyMat
+        (KrausFamily.comp (P d) Φ.kraus) ρ) =
+      KrausFamily.applyMat
+        (KrausFamily.comp (P d) Φ.kraus) ρ
+  simp
+
 theorem wpKraus_bind_semEq [Preorder D] [Preorder E]
     (μ : FiniteInstrumentComp n D) (f : D → FiniteInstrumentComp n E)
     (P : E → KrausFamily n n) :

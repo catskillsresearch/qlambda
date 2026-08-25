@@ -14,10 +14,9 @@ instrument.  Observing the TT denotation at a finitely presented result
 continuation recovers exactly the tokens of that operational instrument.
 
 General closed-term adequacy is stated only under an explicit finite-
-denotation hypothesis together with a `CodedTestRepresentation` density
-assumption.  The finite physical image is not claimed to contain every
-denotation: it is not closed under directed suprema, and higher-order
-recursion may leave it.
+denotation hypothesis.  Rational coded-test separation is unconditional, but
+the finite physical image is not claimed to contain every denotation:
+higher-order recursion may leave it.
 -/
 
 namespace QLambda
@@ -355,20 +354,13 @@ end Interpreter
 
 /-! ## General adequacy boundary -/
 
-/-- Every source-code test of `C` has an explicit Scott representation
-in the result continuation model.  This is a density/separation
-assumption, not a theorem of the present development. -/
-def DensityHypothesis (C : OutputCode ℕ D) : Type (max 1 u) :=
-  ∀ c : RatStepPostCode n, CodedTestRepresentation C c
-
-/-- Under density, embedding order is finitary TT refinement. -/
+/-- Embedding order unconditionally recovers every rational coded TT test. -/
 theorem general_adequacy_of_embed_le
     (C : OutputCode ℕ D)
-    (density : DensityHypothesis (n := n) (D := D) C)
     {μ ν : FiniteInstrumentComp n D}
     (h : embed μ ≤ embed ν) :
     FiniteInstrumentComp.FinitaryTTRefines C μ ν :=
-  finitaryTTRefines_of_embed_le C density h
+  finitaryTTRefines_of_embed_le C h
 
 /-- Closed-term token adequacy, available only when the denotation is a
 finite embedded instrument.  The hypothesis is discharged for first-order
