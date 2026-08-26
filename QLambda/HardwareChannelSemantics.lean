@@ -7054,5 +7054,169 @@ theorem external_step_pathChannelTreeTokenAdequacy {C : Type}
       | measurement _ _ =>
           cases hc
 
+/-- Token adequacy transfers backwards through the endpoint `p = 0`.
+The generic source and explicit control equality let tree inversion retain
+the source environment, stack, and quantum state definitionally. -/
+theorem probabilityZero_step_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {left right : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.prob 0 left right))
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hsource : PathChannelConfigRel D₀ j₀ realize
+      s active observedStack finalK result)
+    (hchild : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with
+        control := .term right
+        quantum := applyOperation
+          (sourceProbabilityOperation 1 zero_le_one (le_refl 1)) s.quantum}
+      active observedStack finalK result) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize
+      s active observedStack finalK result := by
+  refine
+    { related := hsource
+      token_iff := ?_ }
+  intro ξ hk token
+  rw [hchild.token_iff ξ hk token]
+  constructor
+  · rintro ⟨tree, R, havail, htoken⟩
+    rcases s with ⟨control, env, stack, quantum⟩
+    simp only at hc
+    subst control
+    let sourceTree := ChannelTree.probabilityZero
+      (s := ⟨.term (.prob 0 left right), env, stack, quantum⟩)
+      (left := left) tree
+    let sourceR :=
+      wrapProbabilityZeroRealization D₀ j₀ realize
+        (leftTerm := left) (rightTerm := right) tree R
+    refine ⟨sourceTree, sourceR, havail, ?_⟩
+    apply (token_of_restrictedInstrument D₀ j₀ realize
+      sourceTree sourceR [] active ξ finalK (fun o => hk _) token).mp
+    rw [embed_restricted_probabilityZero D₀ j₀ realize tree sourceR]
+    exact
+      (token_of_restrictedInstrument D₀ j₀ realize
+        tree
+        (probabilityZeroRealization D₀ j₀ realize tree sourceR)
+        [] active ξ finalK (fun o => hk _) token).mpr htoken
+  · rintro ⟨tree, R, havail, htoken⟩
+    cases tree with
+    | terminal hterminal =>
+        have := hterminal.control_eq.symm.trans hc
+        cases this
+    | internal hstep _ =>
+        exact False.elim (ChannelInternalStep.not_prob hstep hc)
+    | external _ hstep _ =>
+        exact False.elim (ChannelExternalStep.not_prob hstep hc)
+    | probability hp₀ hp₁ leftTree rightTree =>
+        injection hc with hterm
+        injection hterm with hp0
+        exact (lt_irrefl (0 : ℝ) (hp0 ▸ hp₀)).elim
+    | @probabilityZero _ L R next =>
+        injection hc with hterm
+        injection hterm with _ hL hR
+        subst hL
+        subst hR
+        let childR :=
+          probabilityZeroRealization D₀ j₀ realize next R
+        refine ⟨next, childR, havail, ?_⟩
+        apply (token_of_restrictedInstrument D₀ j₀ realize
+          next childR [] active ξ finalK (fun o => hk _) token).mp
+        rw [← embed_restricted_probabilityZero D₀ j₀ realize next R]
+        exact
+          (token_of_restrictedInstrument D₀ j₀ realize
+            (ChannelTree.probabilityZero next) R [] active
+            ξ finalK (fun o => hk _) token).mpr htoken
+    | probabilityOne _ =>
+        injection hc with hterm
+        injection hterm with hp01
+        exact (one_ne_zero hp01).elim
+    | measurement _ _ =>
+        cases hc
+
+/-- Token adequacy transfers backwards through the endpoint `p = 1`. -/
+theorem probabilityOne_step_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {left right : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.prob 1 left right))
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hsource : PathChannelConfigRel D₀ j₀ realize
+      s active observedStack finalK result)
+    (hchild : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with
+        control := .term left
+        quantum := applyOperation
+          (sourceProbabilityOperation 1 zero_le_one (le_refl 1)) s.quantum}
+      active observedStack finalK result) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize
+      s active observedStack finalK result := by
+  refine
+    { related := hsource
+      token_iff := ?_ }
+  intro ξ hk token
+  rw [hchild.token_iff ξ hk token]
+  constructor
+  · rintro ⟨tree, R, havail, htoken⟩
+    rcases s with ⟨control, env, stack, quantum⟩
+    simp only at hc
+    subst control
+    let sourceTree := ChannelTree.probabilityOne
+      (s := ⟨.term (.prob 1 left right), env, stack, quantum⟩)
+      (right := right) tree
+    let sourceR :=
+      wrapProbabilityOneRealization D₀ j₀ realize
+        (leftTerm := left) (rightTerm := right) tree R
+    refine ⟨sourceTree, sourceR, havail, ?_⟩
+    apply (token_of_restrictedInstrument D₀ j₀ realize
+      sourceTree sourceR [] active ξ finalK (fun o => hk _) token).mp
+    rw [embed_restricted_probabilityOne D₀ j₀ realize tree sourceR]
+    exact
+      (token_of_restrictedInstrument D₀ j₀ realize
+        tree
+        (probabilityOneRealization D₀ j₀ realize tree sourceR)
+        [] active ξ finalK (fun o => hk _) token).mpr htoken
+  · rintro ⟨tree, R, havail, htoken⟩
+    cases tree with
+    | terminal hterminal =>
+        have := hterminal.control_eq.symm.trans hc
+        cases this
+    | internal hstep _ =>
+        exact False.elim (ChannelInternalStep.not_prob hstep hc)
+    | external _ hstep _ =>
+        exact False.elim (ChannelExternalStep.not_prob hstep hc)
+    | probability hp₀ hp₁ leftTree rightTree =>
+        injection hc with hterm
+        injection hterm with hp1
+        exact (lt_irrefl (1 : ℝ) (hp1 ▸ hp₁)).elim
+    | probabilityZero _ =>
+        injection hc with hterm
+        injection hterm with hp10
+        exact (zero_ne_one hp10).elim
+    | @probabilityOne _ L R next =>
+        injection hc with hterm
+        injection hterm with _ hL hR
+        subst hL
+        subst hR
+        let childR :=
+          probabilityOneRealization D₀ j₀ realize next R
+        refine ⟨next, childR, havail, ?_⟩
+        apply (token_of_restrictedInstrument D₀ j₀ realize
+          next childR [] active ξ finalK (fun o => hk _) token).mp
+        rw [← embed_restricted_probabilityOne D₀ j₀ realize next R]
+        exact
+          (token_of_restrictedInstrument D₀ j₀ realize
+            (ChannelTree.probabilityOne next) R [] active
+            ξ finalK (fun o => hk _) token).mpr htoken
+    | measurement _ _ =>
+        cases hc
+
 end HardwareChannelSemantics
 end QLambda
