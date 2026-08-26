@@ -55,6 +55,14 @@ def free {Prim : Type} : Term Prim → List Name
   | .intern M N => free M ++ free N
   | .extern M N => free M ++ free N
 
+/-- A term is syntactically closed when it has no free names. -/
+def Closed {Prim : Type} (M : Term Prim) : Prop :=
+  free M = []
+
+theorem closed_iff_forall_not_mem {Prim : Type} {M : Term Prim} :
+    Closed M ↔ ∀ x, x ∉ free M := by
+  simp [Closed, List.eq_nil_iff_forall_not_mem]
+
 /-- All names, free or bound (used only to pick a fresh rename). -/
 def names {Prim : Type} : Term Prim → List Name
   | .var x => [x]

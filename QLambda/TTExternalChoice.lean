@@ -47,6 +47,18 @@ private noncomputable def evalBranch {C : Type u} [CompleteLattice C]
   ⟨fun q => q i, continuous_of_preservesDirectedSup fun S _ _ => by
     rw [sSup_apply_eq_sSup_image]⟩
 
+/-- Public coordinate evaluation for indexed logical relations. -/
+noncomputable def atCoordinate {C : Type u} [CompleteLattice C]
+    (i : ℕ) : ScottMap (BranchTagged C) C :=
+  ⟨fun q => q i, continuous_of_preservesDirectedSup fun S _ _ => by
+    rw [sSup_apply_eq_sSup_image]⟩
+
+@[simp]
+theorem atCoordinate_apply {C : Type u} [CompleteLattice C]
+    (i : ℕ) (q : BranchTagged C) :
+    atCoordinate i q = q i :=
+  rfl
+
 /-- Coordinatewise lifting of a Scott map. -/
 noncomputable def liftTaggedMap {C C' : Type u}
     [CompleteLattice C] [CompleteLattice C']
@@ -333,6 +345,27 @@ theorem taggedMap_iSup (G : ℕ → ScottMap D E) (hG : Monotone G) :
     (X := TTContinuationPower n D) (Y := TTContinuationPower n E)
     (fun j => TTContinuation.map (n := n) (G j)) (q i)
   exact hbase.trans (hbaseEval.trans (hinner.symm.trans hcoord.symm))
+
+/-- External selection distributes through tagged bind only when it
+reindexes both the source and the value continuation.  Omitting the latter
+reindexing is false in this tagged reader model. -/
+theorem selectBranch_taggedBind
+    (selected : Bool)
+    (h : ScottMap D (TTExternalContinuationPower n E))
+    (q : TTExternalContinuationPower n D) :
+    selectBranch selected (taggedBindScott (n := n) h q) =
+      taggedBindScott (n := n) ((selectBranch selected).comp h)
+        (selectBranch selected q) := by
+  funext i
+  cases selected <;> rfl
+
+theorem taggedBind_atCoordinate
+    (h : ScottMap D (TTExternalContinuationPower n E))
+    (q : TTExternalContinuationPower n D)
+    (i : ℕ) :
+    atCoordinate i (taggedBindScott (n := n) h q) =
+      TTContinuation.bind ((atCoordinate i).comp h) (q i) := by
+  rfl
 
 theorem taggedBind_unit :
     taggedBindScott (n := n)

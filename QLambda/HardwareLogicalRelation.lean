@@ -39,6 +39,227 @@ abbrev HSemanticValue :=
 abbrev HSemanticComp :=
   SemanticComp QubitQ D₀ j₀
 
+/-- A runtime value is well scoped when every value stored in a captured
+environment is recursively well scoped and every free name of a closure is
+bound by that environment.  The binders of `lam` and `recLam` are already
+removed by `free`. -/
+inductive RuntimeValue.WellScoped {C : Type} : RuntimeValue C → Prop where
+  | payload (c : C) :
+      WellScoped (.payload c)
+  | closure (x : Name) (body : Term (QubitPrimitive C))
+      (runtimeEnv : RuntimeEnv C)
+      (henv : ∀ y v, RuntimeEnv.lookup y runtimeEnv = some v →
+        WellScoped v)
+      (hfree : ∀ y, y ∈ free (.lam x body) →
+        ∃ v, RuntimeEnv.lookup y runtimeEnv = some v) :
+      WellScoped (.closure x body runtimeEnv)
+  | recClosure (self arg : Name) (body : Term (QubitPrimitive C))
+      (runtimeEnv : RuntimeEnv C)
+      (henv : ∀ y v, RuntimeEnv.lookup y runtimeEnv = some v →
+        WellScoped v)
+      (hfree : ∀ y, y ∈ free (.recLam self arg body) →
+        ∃ v, RuntimeEnv.lookup y runtimeEnv = some v) :
+      WellScoped (.recClosure self arg body runtimeEnv)
+
+/-- Every value reachable through a finite runtime environment is well
+scoped. -/
+def RuntimeEnv.WellScoped {C : Type} (runtimeEnv : RuntimeEnv C) : Prop :=
+  ∀ x v, RuntimeEnv.lookup x runtimeEnv = some v →
+    RuntimeValue.WellScoped v
+
+theorem RuntimeEnv.wellScoped_nil {C : Type} :
+    RuntimeEnv.WellScoped ([] : RuntimeEnv C) := by
+  intro x v h
+  simp [RuntimeEnv.lookup] at h
+
+theorem RuntimeEnv.WellScoped.bind {C : Type}
+    {runtimeEnv : RuntimeEnv C} {x : Name} {value : RuntimeValue C}
+    (henv : RuntimeEnv.WellScoped runtimeEnv)
+    (hvalue : RuntimeValue.WellScoped value) :
+    RuntimeEnv.WellScoped (RuntimeEnv.bind x value runtimeEnv) := by
+  intro y v hlookup
+  by_cases hyx : y = x
+  · subst y
+    simp [RuntimeEnv.bind, RuntimeEnv.lookup] at hlookup
+    cases hlookup
+    exact hvalue
+  · simp [RuntimeEnv.bind, RuntimeEnv.lookup, hyx] at hlookup
+    exact henv y v hlookup
+
+/-- A runtime environment binds every free name needed by a term. -/
+def RuntimeEnv.Covers {C : Type} (runtimeEnv : RuntimeEnv C)
+    (code : Term (QubitPrimitive C)) : Prop :=
+  ∀ x, x ∈ free code → ∃ value, RuntimeEnv.lookup x runtimeEnv = some value
+
+/-- Well-scoped CEK control.  The current environment is retained in the
+value case because it may subsequently be restored from an argument frame. -/
+def Control.WellScoped {C : Type} (runtimeEnv : RuntimeEnv C) :
+    Control C → Prop
+  | .term code =>
+      RuntimeEnv.WellScoped runtimeEnv ∧ RuntimeEnv.Covers runtimeEnv code
+  | .value value =>
+      RuntimeEnv.WellScoped runtimeEnv ∧ RuntimeValue.WellScoped value
+
+/-- Well-scoped CEK frames carry their own lexical scope. -/
+def Frame.WellScoped {C : Type} : Frame C → Prop
+  | .argument arg runtimeEnv =>
+      RuntimeEnv.WellScoped runtimeEnv ∧ RuntimeEnv.Covers runtimeEnv arg
+  | .function fn => RuntimeValue.WellScoped fn
+
+/-- Every pending CEK frame is well scoped. -/
+def EvalStack.WellScoped {C : Type} (stack : EvalStack C) : Prop :=
+  ∀ frame, frame ∈ stack → Frame.WellScoped frame
+
+/-- The closed-program invariant for executable CEK configurations. -/
+def Config.WellScoped {C : Type} (s : Config C) : Prop :=
+  Control.WellScoped s.env s.control ∧ EvalStack.WellScoped s.stack
+
+theorem initialConfig_wellScoped {C : Type}
+    {code : Term (QubitPrimitive C)} (hclosed : Closed code)
+    (quantum : NormalizedDensity 2) :
+    Config.WellScoped (initialConfig code quantum) := by
+  refine ⟨⟨RuntimeEnv.wellScoped_nil, ?_⟩, ?_⟩
+  · intro x hx
+    exact False.elim ((closed_iff_forall_not_mem.mp hclosed x) hx)
+  · intro frame hframe
+    simp [initialConfig] at hframe
+
+/-- Administrative CEK transitions preserve the closed-program scoping
+invariant, including closure creation and both beta rules. -/
+theorem HardwareOperational.InternalStep.preserve_wellScoped {C : Type}
+    {s t : Config C} (hstep : HardwareOperational.InternalStep s t)
+    (hscoped : Config.WellScoped s) :
+    Config.WellScoped t := by
+  cases hstep with
+  | @«variable» base x value hlookup =>
+      rcases hscoped with ⟨⟨henv, _⟩, hstack⟩
+      exact ⟨⟨henv, henv x value hlookup⟩, hstack⟩
+  | @lambda base x body =>
+      rcases hscoped with ⟨⟨henv, hcover⟩, hstack⟩
+      exact ⟨⟨henv, .closure x body base.env henv hcover⟩, hstack⟩
+  | @recursive base self arg body =>
+      rcases hscoped with ⟨⟨henv, hcover⟩, hstack⟩
+      exact ⟨⟨henv, .recClosure self arg body base.env henv hcover⟩, hstack⟩
+  | @application base fn arg =>
+      rcases hscoped with ⟨⟨henv, hcover⟩, hstack⟩
+      refine ⟨⟨henv, ?_⟩, ?_⟩
+      · intro x hx
+        exact hcover x (by simp [free, hx])
+      · intro frame hframe
+        simp only [List.mem_cons] at hframe
+        rcases hframe with rfl | hframe
+        · refine ⟨henv, ?_⟩
+          intro x hx
+          exact hcover x (by simp [free, hx])
+        · exact hstack frame hframe
+  | @evaluateArgument base fn arg callEnv rest =>
+      rcases hscoped with ⟨⟨_henv, hfn⟩, hstack⟩
+      have hargFrame :
+          Frame.WellScoped (.argument arg callEnv) :=
+        hstack _ (by simp)
+      rcases hargFrame with ⟨hcallEnv, harg⟩
+      refine ⟨⟨hcallEnv, harg⟩, ?_⟩
+      intro frame hframe
+      simp only [List.mem_cons] at hframe
+      rcases hframe with rfl | hframe
+      · exact hfn
+      · exact hstack frame (by simp [hframe])
+  | @beta base x body closureEnv arg rest =>
+      rcases hscoped with ⟨⟨_henv, harg⟩, hstack⟩
+      have hclosureFrame :=
+        hstack (.function (.closure x body closureEnv)) (by simp)
+      change RuntimeValue.WellScoped (.closure x body closureEnv) at hclosureFrame
+      have hclosure := hclosureFrame
+      cases hclosure with
+      | closure _ _ _ hclosureEnv hfree =>
+          have hclosureEnv' : RuntimeEnv.WellScoped closureEnv :=
+            hclosureEnv
+          refine ⟨⟨RuntimeEnv.WellScoped.bind hclosureEnv' harg, ?_⟩, ?_⟩
+          · intro y hy
+            by_cases hyx : y = x
+            · subst y
+              exact ⟨arg, by simp [RuntimeEnv.bind, RuntimeEnv.lookup]⟩
+            · obtain ⟨value, hvalue⟩ :=
+                hfree y (by simp [free, hy, hyx])
+              exact ⟨value, by
+                simp [RuntimeEnv.bind, RuntimeEnv.lookup, hyx, hvalue]⟩
+          · intro frame hframe
+            exact hstack frame (by simp [hframe])
+  | @recBeta base self x body closureEnv arg rest =>
+      rcases hscoped with ⟨⟨_henv, harg⟩, hstack⟩
+      have hrecFrame :=
+        hstack (.function (.recClosure self x body closureEnv)) (by simp)
+      change RuntimeValue.WellScoped
+        (.recClosure self x body closureEnv) at hrecFrame
+      have hrec := hrecFrame
+      cases hrec with
+      | recClosure _ _ _ _ hclosureEnv hfree =>
+          have hclosureEnv' : RuntimeEnv.WellScoped closureEnv :=
+            hclosureEnv
+          have hself :
+              RuntimeEnv.WellScoped
+                (RuntimeEnv.bind self
+                  (.recClosure self x body closureEnv) closureEnv) :=
+            RuntimeEnv.WellScoped.bind hclosureEnv'
+              (.recClosure self x body closureEnv hclosureEnv hfree)
+          refine ⟨⟨RuntimeEnv.WellScoped.bind hself harg, ?_⟩, ?_⟩
+          · intro y hy
+            by_cases hyx : y = x
+            · subst y
+              exact ⟨arg, by simp [RuntimeEnv.bind, RuntimeEnv.lookup]⟩
+            · by_cases hyself : y = self
+              · subst y
+                exact ⟨.recClosure self x body closureEnv, by
+                  simp [RuntimeEnv.bind, RuntimeEnv.lookup, hyx]⟩
+              · obtain ⟨value, hvalue⟩ :=
+                  hfree y (by simp [free, hy, hyself, hyx])
+                exact ⟨value, by
+                  simp [RuntimeEnv.bind, RuntimeEnv.lookup, hyx, hyself,
+                    hvalue]⟩
+          · intro frame hframe
+            exact hstack frame (by simp [hframe])
+  | @returnPrimitive base value =>
+      rcases hscoped with ⟨⟨henv, _⟩, hstack⟩
+      exact ⟨⟨henv, .payload value⟩, hstack⟩
+  | @pauliXPrimitive base value =>
+      rcases hscoped with ⟨⟨henv, _⟩, hstack⟩
+      exact ⟨⟨henv, .payload value⟩, hstack⟩
+  | @internalLeft base left right =>
+      rcases hscoped with ⟨⟨henv, hcover⟩, hstack⟩
+      exact ⟨⟨henv, fun x hx => hcover x (by simp [free, hx])⟩, hstack⟩
+  | @internalRight base left right =>
+      rcases hscoped with ⟨⟨henv, hcover⟩, hstack⟩
+      exact ⟨⟨henv, fun x hx => hcover x (by simp [free, hx])⟩, hstack⟩
+
+theorem HardwareOperational.WeightedStep.preserve_wellScoped {C : Type}
+    {s t : Config C} {weight : ℝ}
+    (hstep : HardwareOperational.WeightedStep s weight t)
+    (hscoped : Config.WellScoped s) :
+    Config.WellScoped t := by
+  cases hstep with
+  | @probabilityLeft base p left right hp hp1 =>
+      rcases hscoped with ⟨⟨henv, hcover⟩, hstack⟩
+      exact ⟨⟨henv, fun x hx => hcover x (by simp [free, hx])⟩, hstack⟩
+  | @probabilityRight base p left right hp hp1 =>
+      rcases hscoped with ⟨⟨henv, hcover⟩, hstack⟩
+      exact ⟨⟨henv, fun x hx => hcover x (by simp [free, hx])⟩, hstack⟩
+  | @measurement base zeroValue oneValue b h =>
+      rcases hscoped with ⟨⟨henv, _⟩, hstack⟩
+      exact ⟨⟨henv, .payload _⟩, hstack⟩
+
+theorem HardwareOperational.ExternalStep.preserve_wellScoped {C : Type}
+    {s t : Config C} {selector : Bool}
+    (hstep : HardwareOperational.ExternalStep s selector t)
+    (hscoped : Config.WellScoped s) :
+    Config.WellScoped t := by
+  cases hstep with
+  | @selectFalse base left right =>
+      rcases hscoped with ⟨⟨henv, hcover⟩, hstack⟩
+      exact ⟨⟨henv, fun x hx => hcover x (by simp [free, hx])⟩, hstack⟩
+  | @selectTrue base left right =>
+      rcases hscoped with ⟨⟨henv, hcover⟩, hstack⟩
+      exact ⟨⟨henv, fun x hx => hcover x (by simp [free, hx])⟩, hstack⟩
+
 /-- Map every classical payload in a hardware primitive through its chosen
 realization. -/
 def realizePrimitive {C : Type} (realize : C → HSemanticValue D₀ j₀) :
@@ -137,6 +358,55 @@ theorem env_bind {C : Type} {realize : C → HSemanticValue D₀ j₀}
     rw [envUpdate_other hyx]
     exact henv y w hw
 
+/-- On well-scoped runtime values, the semantic value represented by
+`ValueRel` is unique.  For closures, recursive well-scoping makes the two
+semantic environments agree at every captured free name; the remaining
+coordinates are irrelevant by `valueInterp_congr_free`, whose proof uses
+`interp_congr_free`. -/
+theorem valueRel_functional {C : Type}
+    (realize : C → HSemanticValue D₀ j₀) :
+    ∀ {value : RuntimeValue C},
+      RuntimeValue.WellScoped value →
+      ∀ {d₁ d₂ : HSemanticValue D₀ j₀},
+        ValueRel D₀ j₀ realize value d₁ →
+        ValueRel D₀ j₀ realize value d₂ →
+        d₁ = d₂ := by
+  intro value hscoped
+  induction hscoped with
+  | payload c =>
+      intro d₁ d₂ h₁ h₂
+      cases h₁
+      cases h₂
+      rfl
+  | closure x body runtimeEnv henv hfree ih =>
+      intro d₁ d₂ h₁ h₂
+      cases h₁ with
+      | closure _ _ _ semanticEnv₁ hrel₁ =>
+          cases h₂ with
+          | closure _ _ _ semanticEnv₂ hrel₂ =>
+              exact valueInterp_congr_free
+                (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                (hardwarePrimitive D₀ j₀ realize)
+                (.lam x body) semanticEnv₁ semanticEnv₂ (by
+                  intro y hy
+                  obtain ⟨v, hv⟩ := hfree y hy
+                  exact ih y v hv
+                    (hrel₁ y v hv) (hrel₂ y v hv))
+  | recClosure self arg body runtimeEnv henv hfree ih =>
+      intro d₁ d₂ h₁ h₂
+      cases h₁ with
+      | recClosure _ _ _ _ semanticEnv₁ hrel₁ =>
+          cases h₂ with
+          | recClosure _ _ _ _ semanticEnv₂ hrel₂ =>
+              exact valueInterp_congr_free
+                (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                (hardwarePrimitive D₀ j₀ realize)
+                (.recLam self arg body) semanticEnv₁ semanticEnv₂ (by
+                  intro y hy
+                  obtain ⟨v, hv⟩ := hfree y hy
+                  exact ih y v hv
+                    (hrel₁ y v hv) (hrel₂ y v hv))
+
 theorem payload_related {C : Type}
     (realize : C → HSemanticValue D₀ j₀) (c : C) :
     ValueRel D₀ j₀ realize (.payload c) (realize c) :=
@@ -229,6 +499,71 @@ inductive StackRel {C : Type} (realize : C → HSemanticValue D₀ j₀) :
         (fun ma => k
           (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
             (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) ma))
+
+/-- A CEK frame paired with the tagged-tree coordinate at which it was
+installed.  Coordinates are ghost proof data and do not alter execution. -/
+abbrev ObservedFrame (C : Type) := Frame C × ℕ
+
+abbrev ObservedStack (C : Type) := List (ObservedFrame C)
+
+namespace ObservedStack
+
+def erase {C : Type} (stack : ObservedStack C) : EvalStack C :=
+  stack.map Prod.fst
+
+@[simp]
+theorem erase_nil {C : Type} :
+    erase ([] : ObservedStack C) = [] :=
+  rfl
+
+@[simp]
+theorem erase_cons {C : Type} (frame : Frame C) (coordinate : ℕ)
+    (rest : ObservedStack C) :
+    erase ((frame, coordinate) :: rest) = frame :: erase rest :=
+  rfl
+
+end ObservedStack
+
+/-- Coordinate-indexed stack relation.  Each pending frame retains its
+parent coordinate, while the active control may descend through external
+branches independently. -/
+inductive PathStackRel {C : Type}
+    (realize : C → HSemanticValue D₀ j₀)
+    (finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)) :
+    ObservedStack C →
+      ScottMap (HSemanticValue D₀ j₀) (TTResult 2) → Prop where
+  | nil :
+      PathStackRel realize finalK [] finalK
+  | argument
+      (arg : Term (QubitPrimitive C))
+      (runtimeEnv : RuntimeEnv C)
+      (semanticEnv : Env (HSemanticValue D₀ j₀))
+      (coordinate : ℕ)
+      (rest : ObservedStack C)
+      (restK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2))
+      (henv : EnvRel D₀ j₀ realize runtimeEnv semanticEnv)
+      (hrest : PathStackRel realize finalK rest restK) :
+      PathStackRel realize finalK
+        ((.argument arg runtimeEnv, coordinate) :: rest)
+        (TTContinuation.continuation
+          ((TTContinuation.atCoordinate coordinate).comp
+            (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv))
+          restK)
+  | function
+      (fn : RuntimeValue C)
+      (f : HSemanticValue D₀ j₀)
+      (coordinate : ℕ)
+      (rest : ObservedStack C)
+      (restK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2))
+      (hfn : ValueRel D₀ j₀ realize fn f)
+      (hrest : PathStackRel realize finalK rest restK) :
+      PathStackRel realize finalK
+        ((.function fn, coordinate) :: rest)
+        (TTContinuation.continuation
+          ((TTContinuation.atCoordinate coordinate).comp
+            (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f))
+          restK)
 
 theorem stack_nil {C : Type}
     (realize : C → HSemanticValue D₀ j₀) :
