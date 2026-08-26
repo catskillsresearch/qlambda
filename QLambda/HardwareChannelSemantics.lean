@@ -5920,6 +5920,135 @@ theorem path_channel_config_lambda {C : Type}
         hstack, ?_⟩
       rw [hresult, interp_lam_apply]
 
+/-- A returned value is observed by applying the current continuation, so
+the path-indexed relation does not depend on the active coordinate. -/
+theorem path_channel_config_value_reindex {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {s : ChannelConfig C} {value : RuntimeValue C}
+    (hc : s.control = .value value)
+    {active active' : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hrel : PathChannelConfigRel D₀ j₀ realize
+      s active observedStack finalK result) :
+    PathChannelConfigRel D₀ j₀ realize
+      s active' observedStack finalK result := by
+  rcases hrel with ⟨herase, current, currentK, hcontrol, hstack, hresult⟩
+  rw [hc] at hcontrol
+  cases hcontrol with
+  | value _ d _ hvalue =>
+      refine ⟨herase, semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) d, currentK,
+        hc.symm ▸ ControlRel.value value d s.env hvalue, hstack, ?_⟩
+      rw [hresult]
+      rfl
+
+/-- Variable lookup installs the related runtime value at the same
+path-indexed result. -/
+theorem path_channel_config_variable {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {s : ChannelConfig C} {x : Name} {v : RuntimeValue C}
+    (hc : s.control = .term (.var x))
+    (hlookup : RuntimeEnv.lookup x s.env = some v)
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hrel : PathChannelConfigRel D₀ j₀ realize
+      s active observedStack finalK result) :
+    PathChannelConfigRel D₀ j₀ realize
+      {s with control := .value v}
+      active observedStack finalK result := by
+  rcases hrel with ⟨herase, current, currentK, hcontrol, hstack, hresult⟩
+  rw [hc] at hcontrol
+  cases hcontrol with
+  | term _ _ semanticEnv henv =>
+      refine ⟨herase,
+        semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) (semanticEnv x),
+        currentK,
+        ControlRel.value v (semanticEnv x) s.env
+          (env_lookup D₀ j₀ henv hlookup),
+        hstack, ?_⟩
+      rw [hresult, interp_var_apply]
+
+theorem channel_config_lambda {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {s : ChannelConfig C} {x : Name} {body : Term (QubitPrimitive C)}
+    {answer : HSemanticComp D₀ j₀}
+    (hrel : ChannelConfigRel D₀ j₀ realize
+      {s with control := .term (.lam x body)} answer) :
+    ChannelConfigRel D₀ j₀ realize
+      {s with control := .value (.closure x body s.env)} answer := by
+  rcases hrel with ⟨current, k, hcontrol, hstack, rfl⟩
+  cases hcontrol with
+  | term _ _ semanticEnv henv =>
+      refine ⟨semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀)
+          (lambdaValue (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) x
+            (interp (hardwarePrimitive D₀ j₀ realize) body) semanticEnv),
+        k, ControlRel.value _ _ s.env
+          (closure_created D₀ j₀ realize x body s.env semanticEnv henv),
+        hstack, ?_⟩
+      rw [interp_lam_apply]
+
+theorem channel_config_recursive {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {s : ChannelConfig C} {self arg : Name}
+    {body : Term (QubitPrimitive C)}
+    {answer : HSemanticComp D₀ j₀}
+    (hrel : ChannelConfigRel D₀ j₀ realize
+      {s with control := .term (.recLam self arg body)} answer) :
+    ChannelConfigRel D₀ j₀ realize
+      {s with control := .value (.recClosure self arg body s.env)}
+      answer := by
+  rcases hrel with ⟨current, k, hcontrol, hstack, rfl⟩
+  cases hcontrol with
+  | term _ _ semanticEnv henv =>
+      refine ⟨semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀)
+          (recLambdaValue (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) self arg
+            (interp (hardwarePrimitive D₀ j₀ realize) body) semanticEnv),
+        k, ControlRel.value _ _ s.env
+          (recClosure_created D₀ j₀ realize self arg body
+            s.env semanticEnv henv),
+        hstack, ?_⟩
+      rw [interp_recLam_apply]
+
+theorem channel_config_variable {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {s : ChannelConfig C} {x : Name} {v : RuntimeValue C}
+    (hlookup : RuntimeEnv.lookup x s.env = some v)
+    {answer : HSemanticComp D₀ j₀}
+    (hrel : ChannelConfigRel D₀ j₀ realize
+      {s with control := .term (.var x)} answer) :
+    ChannelConfigRel D₀ j₀ realize
+      {s with control := .value v} answer := by
+  rcases hrel with ⟨current, k, hcontrol, hstack, rfl⟩
+  cases hcontrol with
+  | term _ _ semanticEnv henv =>
+      refine ⟨semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) (semanticEnv x), k,
+        ControlRel.value v (semanticEnv x) s.env
+          (env_lookup D₀ j₀ henv hlookup), hstack, ?_⟩
+      rw [interp_var_apply]
+
 theorem channel_config_application {C : Type}
     (D₀ : QDomain.{0})
     (j₀ : IsContinuousLatticeProjection D₀.carrier
@@ -6428,6 +6557,354 @@ theorem PresentedChannelConfigCompleteness.ofIdentityStep {C : Type}
   related := hsource
   complete := identity_step_presentedChannelTreeCompleteness D₀ j₀ realize
     hstep hop hunq hchild.complete
+
+/-- Presented completeness transfers across the application identity step. -/
+theorem application_presentedChannelConfigCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {fn arg : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.app fn arg))
+    {denotation : HSemanticComp D₀ j₀}
+    (hsource : ChannelConfigRel D₀ j₀ realize s denotation)
+    (hchild : PresentedChannelConfigCompleteness D₀ j₀ realize
+      {s with
+        control := .term fn
+        stack := .argument arg s.env :: s.stack}
+      denotation) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s denotation := by
+  let t : ChannelConfig C :=
+    {s with
+      control := .term fn
+      stack := .argument arg s.env :: s.stack}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with control := .term (.app fn arg)} t :=
+      ChannelInternalStep.application (s := s) (fn := fn) (arg := arg)
+    have hs : s = {s with control := .term (.app fn arg)} :=
+      ChannelConfig.ext hc rfl rfl rfl
+    exact hs.symm ▸ happ
+  exact PresentedChannelConfigCompleteness.ofIdentityStep D₀ j₀ realize
+    hsource hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelInternalStep.eq_of_application h' hc) hchild
+
+/-- Presented completeness transfers across argument evaluation. -/
+theorem evaluateArgument_presentedChannelConfigCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {fn : RuntimeValue C}
+    {arg : Term (QubitPrimitive C)} {callEnv : RuntimeEnv C}
+    {rest : EvalStack C}
+    (hc : s.control = .value fn)
+    (hs : s.stack = .argument arg callEnv :: rest)
+    {denotation : HSemanticComp D₀ j₀}
+    (hsource : ChannelConfigRel D₀ j₀ realize s denotation)
+    (hchild : PresentedChannelConfigCompleteness D₀ j₀ realize
+      {s with
+        control := .term arg
+        env := callEnv
+        stack := .function fn :: rest}
+      denotation) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s denotation := by
+  let t : ChannelConfig C :=
+    {s with
+      control := .term arg
+      env := callEnv
+      stack := .function fn :: rest}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with
+            control := .value fn
+            stack := .argument arg callEnv :: rest} t :=
+      ChannelInternalStep.evaluateArgument
+        (s := s) (fn := fn) (arg := arg) (callEnv := callEnv)
+        (rest := rest)
+    have hsrc :
+        s = {s with
+          control := .value fn
+          stack := .argument arg callEnv :: rest} :=
+      ChannelConfig.ext hc rfl hs rfl
+    exact hsrc.symm ▸ happ
+  exact PresentedChannelConfigCompleteness.ofIdentityStep D₀ j₀ realize
+    hsource hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelInternalStep.eq_of_evaluateArgument h' hc hs) hchild
+
+/-- Presented completeness transfers across closure beta. -/
+theorem beta_presentedChannelConfigCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {x : Name}
+    {body : Term (QubitPrimitive C)} {closureEnv : RuntimeEnv C}
+    {arg : RuntimeValue C} {rest : EvalStack C}
+    (hc : s.control = .value arg)
+    (hs : s.stack = .function (.closure x body closureEnv) :: rest)
+    {denotation : HSemanticComp D₀ j₀}
+    (hsource : ChannelConfigRel D₀ j₀ realize s denotation)
+    (hchild : PresentedChannelConfigCompleteness D₀ j₀ realize
+      {s with
+        control := .term body
+        env := RuntimeEnv.bind x arg closureEnv
+        stack := rest}
+      denotation) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s denotation := by
+  let t : ChannelConfig C :=
+    {s with
+      control := .term body
+      env := RuntimeEnv.bind x arg closureEnv
+      stack := rest}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with
+            control := .value arg
+            stack := .function (.closure x body closureEnv) :: rest} t :=
+      ChannelInternalStep.beta (s := s) (x := x) (body := body)
+        (closureEnv := closureEnv) (arg := arg) (rest := rest)
+    have hsrc :
+        s = {s with
+          control := .value arg
+          stack := .function (.closure x body closureEnv) :: rest} :=
+      ChannelConfig.ext hc rfl hs rfl
+    exact hsrc.symm ▸ happ
+  exact PresentedChannelConfigCompleteness.ofIdentityStep D₀ j₀ realize
+    hsource hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelInternalStep.eq_of_beta h' hc hs) hchild
+
+/-- Presented completeness transfers across recursive-closure beta. -/
+theorem recBeta_presentedChannelConfigCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {self x : Name}
+    {body : Term (QubitPrimitive C)} {closureEnv : RuntimeEnv C}
+    {arg : RuntimeValue C} {rest : EvalStack C}
+    (hc : s.control = .value arg)
+    (hs : s.stack =
+      .function (.recClosure self x body closureEnv) :: rest)
+    {denotation : HSemanticComp D₀ j₀}
+    (hsource : ChannelConfigRel D₀ j₀ realize s denotation)
+    (hchild : PresentedChannelConfigCompleteness D₀ j₀ realize
+      {s with
+        control := .term body
+        env :=
+          RuntimeEnv.bind x arg
+            (RuntimeEnv.bind self
+              (.recClosure self x body closureEnv) closureEnv)
+        stack := rest}
+      denotation) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s denotation := by
+  let t : ChannelConfig C :=
+    {s with
+      control := .term body
+      env :=
+        RuntimeEnv.bind x arg
+          (RuntimeEnv.bind self
+            (.recClosure self x body closureEnv) closureEnv)
+      stack := rest}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with
+            control := .value arg
+            stack :=
+              .function (.recClosure self x body closureEnv) :: rest} t :=
+      ChannelInternalStep.recBeta (s := s) (self := self) (x := x)
+        (body := body) (closureEnv := closureEnv) (arg := arg)
+        (rest := rest)
+    have hsrc :
+        s = {s with
+          control := .value arg
+          stack :=
+            .function (.recClosure self x body closureEnv) :: rest} :=
+      ChannelConfig.ext hc rfl hs rfl
+    exact hsrc.symm ▸ happ
+  exact PresentedChannelConfigCompleteness.ofIdentityStep D₀ j₀ realize
+    hsource hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelInternalStep.eq_of_recBeta h' hc hs) hchild
+
+/-- Presented completeness transfers across ordinary abstraction. -/
+theorem lambda_presentedChannelConfigCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {x : Name} {body : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.lam x body))
+    {denotation : HSemanticComp D₀ j₀}
+    (hsource : ChannelConfigRel D₀ j₀ realize s denotation)
+    (hchild : PresentedChannelConfigCompleteness D₀ j₀ realize
+      {s with control := .value (.closure x body s.env)}
+      denotation) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s denotation := by
+  let t : ChannelConfig C :=
+    {s with control := .value (.closure x body s.env)}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with control := .term (.lam x body)} t :=
+      ChannelInternalStep.lambda (s := s) (x := x) (body := body)
+    have hs : s = {s with control := .term (.lam x body)} :=
+      ChannelConfig.ext hc rfl rfl rfl
+    exact hs.symm ▸ happ
+  exact PresentedChannelConfigCompleteness.ofIdentityStep D₀ j₀ realize
+    hsource hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelInternalStep.eq_of_lambda h' hc) hchild
+
+/-- Presented completeness transfers across recursive abstraction. -/
+theorem recLam_presentedChannelConfigCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {self arg : Name}
+    {body : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.recLam self arg body))
+    {denotation : HSemanticComp D₀ j₀}
+    (hsource : ChannelConfigRel D₀ j₀ realize s denotation)
+    (hchild : PresentedChannelConfigCompleteness D₀ j₀ realize
+      {s with control := .value (.recClosure self arg body s.env)}
+      denotation) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s denotation := by
+  let t : ChannelConfig C :=
+    {s with control := .value (.recClosure self arg body s.env)}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with control := .term (.recLam self arg body)} t :=
+      ChannelInternalStep.recursive (s := s) (self := self) (arg := arg)
+        (body := body)
+    have hs : s = {s with control := .term (.recLam self arg body)} :=
+      ChannelConfig.ext hc rfl rfl rfl
+    exact hs.symm ▸ happ
+  exact PresentedChannelConfigCompleteness.ofIdentityStep D₀ j₀ realize
+    hsource hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelInternalStep.eq_of_recursive h' hc) hchild
+
+/-- Presented completeness transfers across variable lookup. -/
+theorem variable_presentedChannelConfigCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {x : Name} {v : RuntimeValue C}
+    (hc : s.control = .term (.var x))
+    (hlookup : RuntimeEnv.lookup x s.env = some v)
+    {denotation : HSemanticComp D₀ j₀}
+    (hsource : ChannelConfigRel D₀ j₀ realize s denotation)
+    (hchild : PresentedChannelConfigCompleteness D₀ j₀ realize
+      {s with control := .value v} denotation) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s denotation := by
+  let t : ChannelConfig C := {s with control := .value v}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with control := .term (.var x)} t :=
+      ChannelInternalStep.variable (s := s) (x := x) (v := v) hlookup
+    have hs : s = {s with control := .term (.var x)} :=
+      ChannelConfig.ext hc rfl rfl rfl
+    exact hs.symm ▸ happ
+  exact PresentedChannelConfigCompleteness.ofIdentityStep D₀ j₀ realize
+    hsource hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelInternalStep.eq_of_variable h' hc hlookup) hchild
+
+/-- Presented stacked fundamental lemma for `app (lam x body) arg`. -/
+theorem stacked_lam_app_presentedChannelConfigCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {x : Name}
+    {body arg : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.app (.lam x body) arg))
+    {denotation : HSemanticComp D₀ j₀}
+    (hsource : ChannelConfigRel D₀ j₀ realize s denotation)
+    (harg : PresentedChannelConfigCompleteness D₀ j₀ realize
+      {s with
+        control := .term arg
+        stack := .function (.closure x body s.env) :: s.stack}
+      denotation) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s denotation := by
+  have hAppEq :
+      {s with control := .term (.app (.lam x body) arg)} = s :=
+    ChannelConfig.ext hc.symm rfl rfl rfl
+  have hrelLam :=
+    channel_config_application D₀ j₀
+      (s := s) (fn := .lam x body) (arg := arg)
+      (hrel := hAppEq.symm ▸ hsource)
+  have hrelClo :=
+    channel_config_lambda D₀ j₀
+      (s := {s with stack := .argument arg s.env :: s.stack})
+      (hrel := by simpa using hrelLam)
+  have hClo :=
+    evaluateArgument_presentedChannelConfigCompleteness D₀ j₀ realize
+      (s := {s with
+        control := .value (.closure x body s.env)
+        stack := .argument arg s.env :: s.stack})
+      (fn := .closure x body s.env) (arg := arg)
+      (callEnv := s.env) (rest := s.stack)
+      rfl rfl hrelClo harg
+  have hLam :=
+    lambda_presentedChannelConfigCompleteness D₀ j₀ realize
+      (s := {s with
+        control := .term (.lam x body)
+        stack := .argument arg s.env :: s.stack})
+      (x := x) (body := body) rfl hrelLam hClo
+  exact application_presentedChannelConfigCompleteness D₀ j₀ realize
+    hc hsource hLam
+
+/-- Presented stacked fundamental lemma for `app (recLam self x body) arg`. -/
+theorem stacked_recLam_app_presentedChannelConfigCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {self x : Name}
+    {body arg : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.app (.recLam self x body) arg))
+    {denotation : HSemanticComp D₀ j₀}
+    (hsource : ChannelConfigRel D₀ j₀ realize s denotation)
+    (harg : PresentedChannelConfigCompleteness D₀ j₀ realize
+      {s with
+        control := .term arg
+        stack :=
+          .function (.recClosure self x body s.env) :: s.stack}
+      denotation) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s denotation := by
+  have hAppEq :
+      {s with control := .term (.app (.recLam self x body) arg)} = s :=
+    ChannelConfig.ext hc.symm rfl rfl rfl
+  have hrelRec :=
+    channel_config_application D₀ j₀
+      (s := s) (fn := .recLam self x body) (arg := arg)
+      (hrel := hAppEq.symm ▸ hsource)
+  have hrelClo :=
+    channel_config_recursive D₀ j₀
+      (s := {s with stack := .argument arg s.env :: s.stack})
+      (hrel := by simpa using hrelRec)
+  have hClo :=
+    evaluateArgument_presentedChannelConfigCompleteness D₀ j₀ realize
+      (s := {s with
+        control := .value (.recClosure self x body s.env)
+        stack := .argument arg s.env :: s.stack})
+      (fn := .recClosure self x body s.env) (arg := arg)
+      (callEnv := s.env) (rest := s.stack)
+      rfl rfl hrelClo harg
+  have hRec :=
+    recLam_presentedChannelConfigCompleteness D₀ j₀ realize
+      (s := {s with
+        control := .term (.recLam self x body)
+        stack := .argument arg s.env :: s.stack})
+      (self := self) (arg := x) (body := body) rfl hrelRec hClo
+  exact application_presentedChannelConfigCompleteness D₀ j₀ realize
+    hc hsource hRec
 
 /-- Invert an application tree at a general source configuration. -/
 theorem restrictedResult_of_control_application {C : Type}
@@ -7941,9 +8418,9 @@ theorem application_pathChannelTreeTokenAdequacy {C : Type}
     (fun h' => ChannelInternalStep.eq_of_application h' hc)
     hsource hchild
 
-/-- Argument evaluation restores the saved frame coordinate.  Token
-restriction is well-defined for the identity wrap only when that restored
-coordinate is the current active one. -/
+/-- Argument evaluation restores the saved frame coordinate.  The function
+value is coordinate-independent, so the parent may have descended through
+an external branch; token restriction follows the restored coordinate. -/
 theorem evaluateArgument_pathChannelTreeTokenAdequacy {C : Type}
     (D₀ : QDomain.{0})
     (j₀ : IsContinuousLatticeProjection D₀.carrier
@@ -7957,7 +8434,6 @@ theorem evaluateArgument_pathChannelTreeTokenAdequacy {C : Type}
     {result : TTResult 2}
     (hc : s.control = .value fn)
     (hs : s.stack = .argument arg callEnv :: rest)
-    (hcoord : active = saved)
     (hsource : PathChannelConfigRel D₀ j₀ realize
       s active ((.argument arg callEnv, saved) :: observedRest)
       finalK result)
@@ -7968,9 +8444,8 @@ theorem evaluateArgument_pathChannelTreeTokenAdequacy {C : Type}
         stack := .function fn :: rest}
       saved ((.function fn, saved) :: observedRest) finalK result) :
     PathChannelTreeTokenAdequacy D₀ j₀ realize
-      s active ((.argument arg callEnv, saved) :: observedRest)
+      s saved ((.argument arg callEnv, saved) :: observedRest)
       finalK result := by
-  subst saved
   let t : ChannelConfig C :=
     {s with
       control := .term arg
@@ -7994,11 +8469,11 @@ theorem evaluateArgument_pathChannelTreeTokenAdequacy {C : Type}
   exact identity_step_pathChannelTreeTokenAdequacy D₀ j₀ realize
     hstep (by simp [channelInternalOperation, hc])
     (fun h' => ChannelInternalStep.eq_of_evaluateArgument h' hc hs)
-    hsource hchild
+    (path_channel_config_value_reindex D₀ j₀ hc hsource) hchild
 
 /-- Closure beta pops the function frame and resumes the body at the saved
-coordinate.  As with argument evaluation, the identity wrap requires that
-coordinate to be the current active one. -/
+coordinate.  The argument value is coordinate-independent, so the parent
+may have a different active coordinate than the frame. -/
 theorem beta_pathChannelTreeTokenAdequacy {C : Type}
     (D₀ : QDomain.{0})
     (j₀ : IsContinuousLatticeProjection D₀.carrier
@@ -8012,7 +8487,6 @@ theorem beta_pathChannelTreeTokenAdequacy {C : Type}
     {result : TTResult 2}
     (hc : s.control = .value arg)
     (hs : s.stack = .function (.closure x body closureEnv) :: rest)
-    (hcoord : active = saved)
     (hsource : PathChannelConfigRel D₀ j₀ realize
       s active
       ((.function (.closure x body closureEnv), saved) :: observedRest)
@@ -8024,10 +8498,9 @@ theorem beta_pathChannelTreeTokenAdequacy {C : Type}
         stack := rest}
       saved observedRest finalK result) :
     PathChannelTreeTokenAdequacy D₀ j₀ realize
-      s active
+      s saved
       ((.function (.closure x body closureEnv), saved) :: observedRest)
       finalK result := by
-  subst saved
   let t : ChannelConfig C :=
     {s with
       control := .term body
@@ -8050,7 +8523,7 @@ theorem beta_pathChannelTreeTokenAdequacy {C : Type}
   exact identity_step_pathChannelTreeTokenAdequacy D₀ j₀ realize
     hstep (by simp [channelInternalOperation, hc])
     (fun h' => ChannelInternalStep.eq_of_beta h' hc hs)
-    hsource hchild
+    (path_channel_config_value_reindex D₀ j₀ hc hsource) hchild
 
 /-- Recursive-closure beta is the same identity wrap as ordinary beta, with
 both recursive binders installed in the body environment. -/
@@ -8068,7 +8541,6 @@ theorem recBeta_pathChannelTreeTokenAdequacy {C : Type}
     (hc : s.control = .value arg)
     (hs : s.stack =
       .function (.recClosure self x body closureEnv) :: rest)
-    (hcoord : active = saved)
     (hsource : PathChannelConfigRel D₀ j₀ realize
       s active
       ((.function (.recClosure self x body closureEnv), saved) ::
@@ -8084,11 +8556,10 @@ theorem recBeta_pathChannelTreeTokenAdequacy {C : Type}
         stack := rest}
       saved observedRest finalK result) :
     PathChannelTreeTokenAdequacy D₀ j₀ realize
-      s active
+      s saved
       ((.function (.recClosure self x body closureEnv), saved) ::
         observedRest)
       finalK result := by
-  subst saved
   let t : ChannelConfig C :=
     {s with
       control := .term body
@@ -8117,7 +8588,7 @@ theorem recBeta_pathChannelTreeTokenAdequacy {C : Type}
   exact identity_step_pathChannelTreeTokenAdequacy D₀ j₀ realize
     hstep (by simp [channelInternalOperation, hc])
     (fun h' => ChannelInternalStep.eq_of_recBeta h' hc hs)
-    hsource hchild
+    (path_channel_config_value_reindex D₀ j₀ hc hsource) hchild
 
 /-- Recursive abstraction is an identity step onto the related recursive
 closure.  Finite `iterateBot` unfoldings describe that closure's tokens;
@@ -8188,6 +8659,177 @@ theorem lambda_pathChannelTreeTokenAdequacy {C : Type}
     hstep (by simp [channelInternalOperation, hc])
     (fun h' => ChannelInternalStep.eq_of_lambda h' hc)
     hsource hchild
+
+/-- Variable lookup is an identity step onto the related runtime value. -/
+theorem variable_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {x : Name} {v : RuntimeValue C}
+    (hc : s.control = .term (.var x))
+    (hlookup : RuntimeEnv.lookup x s.env = some v)
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hsource : PathChannelConfigRel D₀ j₀ realize
+      s active observedStack finalK result)
+    (hchild : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with control := .value v}
+      active observedStack finalK result) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize
+      s active observedStack finalK result := by
+  let t : ChannelConfig C := {s with control := .value v}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with control := .term (.var x)} t :=
+      ChannelInternalStep.variable (s := s) (x := x) (v := v) hlookup
+    have hs : s = {s with control := .term (.var x)} :=
+      ChannelConfig.ext hc rfl rfl rfl
+    exact hs.symm ▸ happ
+  exact identity_step_pathChannelTreeTokenAdequacy D₀ j₀ realize
+    hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelInternalStep.eq_of_variable h' hc hlookup)
+    hsource hchild
+
+/-- Stacked fundamental lemma for `app (lam x body) arg`.
+Application pushes the argument frame, abstraction installs the
+closure, and argument evaluation restores that frame's coordinate.
+The remaining obligation is adequacy of the argument under the
+function frame. -/
+theorem stacked_lam_app_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {x : Name}
+    {body arg : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.app (.lam x body) arg))
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hsource : PathChannelConfigRel D₀ j₀ realize
+      s active observedStack finalK result)
+    (harg : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with
+        control := .term arg
+        stack := .function (.closure x body s.env) :: s.stack}
+      active
+      ((.function (.closure x body s.env), active) :: observedStack)
+      finalK result) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize
+      s active observedStack finalK result := by
+  have hAppEq :
+      {s with control := .term (.app (.lam x body) arg)} = s :=
+    ChannelConfig.ext hc.symm rfl rfl rfl
+  have hrelLam :
+      PathChannelConfigRel D₀ j₀ realize
+        {s with
+          control := .term (.lam x body)
+          stack := .argument arg s.env :: s.stack}
+        active ((.argument arg s.env, active) :: observedStack)
+        finalK result :=
+    path_channel_config_application D₀ j₀
+      (hrel := hAppEq.symm ▸ hsource)
+  have hrelClo :
+      PathChannelConfigRel D₀ j₀ realize
+        {s with
+          control := .value (.closure x body s.env)
+          stack := .argument arg s.env :: s.stack}
+        active ((.argument arg s.env, active) :: observedStack)
+        finalK result :=
+    path_channel_config_lambda D₀ j₀
+      (s := {s with stack := .argument arg s.env :: s.stack})
+      (hrel := by
+        simpa using hrelLam)
+  have hClo :=
+    evaluateArgument_pathChannelTreeTokenAdequacy D₀ j₀ realize
+      (s := {s with
+        control := .value (.closure x body s.env)
+        stack := .argument arg s.env :: s.stack})
+      (fn := .closure x body s.env) (arg := arg)
+      (callEnv := s.env) (rest := s.stack)
+      (active := active) (saved := active)
+      (observedRest := observedStack)
+      rfl rfl hrelClo harg
+  have hLam :=
+    lambda_pathChannelTreeTokenAdequacy D₀ j₀ realize
+      (s := {s with
+        control := .term (.lam x body)
+        stack := .argument arg s.env :: s.stack})
+      (x := x) (body := body) rfl hrelLam hClo
+  exact application_pathChannelTreeTokenAdequacy D₀ j₀ realize hc
+    hsource hLam
+
+/-- Stacked fundamental lemma for `app (recLam self x body) arg`.
+The same administrative sequence as ordinary abstraction, installing a
+recursive closure. -/
+theorem stacked_recLam_app_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {self x : Name}
+    {body arg : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.app (.recLam self x body) arg))
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hsource : PathChannelConfigRel D₀ j₀ realize
+      s active observedStack finalK result)
+    (harg : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with
+        control := .term arg
+        stack :=
+          .function (.recClosure self x body s.env) :: s.stack}
+      active
+      ((.function (.recClosure self x body s.env), active) ::
+        observedStack)
+      finalK result) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize
+      s active observedStack finalK result := by
+  have hAppEq :
+      {s with control := .term (.app (.recLam self x body) arg)} = s :=
+    ChannelConfig.ext hc.symm rfl rfl rfl
+  have hrelRec :
+      PathChannelConfigRel D₀ j₀ realize
+        {s with
+          control := .term (.recLam self x body)
+          stack := .argument arg s.env :: s.stack}
+        active ((.argument arg s.env, active) :: observedStack)
+        finalK result :=
+    path_channel_config_application D₀ j₀
+      (hrel := hAppEq.symm ▸ hsource)
+  have hrelClo :
+      PathChannelConfigRel D₀ j₀ realize
+        {s with
+          control := .value (.recClosure self x body s.env)
+          stack := .argument arg s.env :: s.stack}
+        active ((.argument arg s.env, active) :: observedStack)
+        finalK result :=
+    path_channel_config_recursive D₀ j₀
+      (s := {s with stack := .argument arg s.env :: s.stack})
+      (hrel := by
+        simpa using hrelRec)
+  have hClo :=
+    evaluateArgument_pathChannelTreeTokenAdequacy D₀ j₀ realize
+      (s := {s with
+        control := .value (.recClosure self x body s.env)
+        stack := .argument arg s.env :: s.stack})
+      (fn := .recClosure self x body s.env) (arg := arg)
+      (callEnv := s.env) (rest := s.stack)
+      (active := active) (saved := active)
+      (observedRest := observedStack)
+      rfl rfl hrelClo harg
+  have hRec :=
+    recursive_pathChannelTreeTokenAdequacy D₀ j₀ realize
+      (s := {s with
+        control := .term (.recLam self x body)
+        stack := .argument arg s.env :: s.stack})
+      (self := self) (arg := x) (body := body) rfl hrelRec hClo
+  exact application_pathChannelTreeTokenAdequacy D₀ j₀ realize hc
+    hsource hRec
 
 /-- Token adequacy for a Pauli-X primitive at an empty stack.  The parent
 result is the embedded physical operation, not the child's unit return. -/
