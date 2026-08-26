@@ -7054,6 +7054,177 @@ theorem external_step_pathChannelTreeTokenAdequacy {C : Type}
       | measurement _ _ =>
           cases hc
 
+/-- Token adequacy aggregates backwards through a strictly interior
+probability node.  A parent token is assembled from potentially different
+branch-local source tokens via `WeightedDerives` and `RoundedBelow`; no
+independent-membership interpretation of the parent token is assumed. -/
+theorem probability_step_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {p : ℝ}
+    {left right : Term (QubitPrimitive C)}
+    (hp₀ : 0 < p) (hp₁ : p < 1)
+    (hc : s.control = .term (.prob p left right))
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {leftResult rightResult result : TTResult 2}
+    (hsource : PathChannelConfigRel D₀ j₀ realize
+      s active observedStack finalK result)
+    (hleft : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with
+        control := .term left
+        quantum := applyOperation
+          (sourceProbabilityOperation p hp₀.le hp₁.le) s.quantum}
+      active observedStack finalK leftResult)
+    (hright : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with
+        control := .term right
+        quantum := applyOperation
+          (sourceProbabilityOperation (1 - p)
+            (sub_nonneg.mpr hp₁.le) (by linarith)) s.quantum}
+      active observedStack finalK rightResult)
+    (hresult : result =
+      TTWeightedAggregation.weightedResultScott p hp₀.le hp₁.le
+        (leftResult, rightResult)) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize
+      s active observedStack finalK result := by
+  refine
+    { related := hsource
+      token_iff := ?_ }
+  intro ξ hk token
+  rw [hresult, TTWeightedAggregation.weightedResultScott_interior
+    p hp₀ hp₁]
+  constructor
+  · intro htoken
+    obtain ⟨leftToken, hleftToken, rightToken, hrightToken,
+        target, hderives, hrounded⟩ :=
+      (TTWeightedAggregation.mem_core p hp₀.le hp₁.le
+        leftResult rightResult token).mp htoken
+    obtain ⟨leftTree, leftR, hleftAvail, hleftHolds⟩ :=
+      (hleft.token_iff ξ hk leftToken).mp hleftToken
+    obtain ⟨rightTree, rightR, hrightAvail, hrightHolds⟩ :=
+      (hright.token_iff ξ hk rightToken).mp hrightToken
+    rcases s with ⟨control, env, stack, quantum⟩
+    simp only at hc
+    subst control
+    let sourceTree := ChannelTree.probability hp₀ hp₁ leftTree rightTree
+    let sourceR := wrapProbabilityRealization D₀ j₀ realize
+      hp₀ hp₁ leftTree rightTree leftR rightR
+    refine ⟨sourceTree, sourceR, ⟨hleftAvail, hrightAvail⟩, ?_⟩
+    have hleftRestricted :
+        leftToken ∈ restrictedResult D₀ j₀ realize leftTree leftR
+          [] active finalK := by
+      rw [restrictedResult_eq_embed D₀ j₀ realize leftTree leftR
+        [] active finalK hleftAvail]
+      exact
+        (token_of_restrictedInstrument D₀ j₀ realize leftTree leftR
+          [] active ξ finalK (fun o => hk _) leftToken).mpr hleftHolds
+    have hrightRestricted :
+        rightToken ∈ restrictedResult D₀ j₀ realize rightTree rightR
+          [] active finalK := by
+      rw [restrictedResult_eq_embed D₀ j₀ realize rightTree rightR
+        [] active finalK hrightAvail]
+      exact
+        (token_of_restrictedInstrument D₀ j₀ realize rightTree rightR
+          [] active ξ finalK (fun o => hk _) rightToken).mpr hrightHolds
+    have hparentRestricted :
+        token ∈ restrictedResult D₀ j₀ realize sourceTree sourceR
+          [] active finalK := by
+      rw [restrictedResult_probability_presented D₀ j₀ realize
+        hp₀ hp₁ leftTree rightTree sourceR [] active ξ finalK hk,
+        TTWeightedAggregation.weightedResultScott_interior p hp₀ hp₁]
+      exact
+        (TTWeightedAggregation.mem_core p hp₀.le hp₁.le _ _ token).2
+          ⟨leftToken, hleftRestricted, rightToken, hrightRestricted,
+            target, hderives, hrounded⟩
+    apply (token_of_restrictedInstrument D₀ j₀ realize
+      sourceTree sourceR [] active ξ finalK (fun o => hk _) token).mp
+    rw [← restrictedResult_eq_embed D₀ j₀ realize sourceTree sourceR
+      [] active finalK ⟨hleftAvail, hrightAvail⟩]
+    exact hparentRestricted
+  · rintro ⟨tree, parentR, havail, htoken⟩
+    cases tree with
+    | terminal hterminal =>
+        have := hterminal.control_eq.symm.trans hc
+        cases this
+    | internal hstep _ =>
+        exact False.elim (ChannelInternalStep.not_prob hstep hc)
+    | external _ hstep _ =>
+        exact False.elim (ChannelExternalStep.not_prob hstep hc)
+    | @probability source p' L rightTerm' hp₀' hp₁' leftTree rightTree =>
+        injection hc with hterm
+        injection hterm with hp hL hR
+        subst p'
+        subst L
+        subst rightTerm'
+        rcases havail with ⟨hleftAvail, hrightAvail⟩
+        let leftR := probabilityLeftRealization D₀ j₀ realize
+          hp₀' hp₁' leftTree rightTree parentR
+        let rightR := probabilityRightRealization D₀ j₀ realize
+          hp₀' hp₁' leftTree rightTree parentR
+        have hparentRestricted :
+            token ∈ restrictedResult D₀ j₀ realize
+              (ChannelTree.probability hp₀' hp₁' leftTree rightTree) parentR
+              [] active finalK := by
+          rw [restrictedResult_eq_embed D₀ j₀ realize
+            (ChannelTree.probability hp₀' hp₁' leftTree rightTree) parentR
+            [] active finalK ⟨hleftAvail, hrightAvail⟩]
+          exact
+            (token_of_restrictedInstrument D₀ j₀ realize
+              (ChannelTree.probability hp₀' hp₁' leftTree rightTree) parentR
+              [] active ξ finalK (fun o => hk _) token).mpr htoken
+        rw [restrictedResult_probability_presented D₀ j₀ realize
+          hp₀' hp₁' leftTree rightTree parentR [] active ξ finalK hk,
+          TTWeightedAggregation.weightedResultScott_interior p hp₀' hp₁']
+          at hparentRestricted
+        obtain ⟨leftToken, hleftRestricted, rightToken, hrightRestricted,
+            target, hderives, hrounded⟩ :=
+          (TTWeightedAggregation.mem_core p hp₀'.le hp₁'.le _ _ token).mp
+            hparentRestricted
+        have hleftHolds :
+            TTObservationToken.Holds resultCode leftToken
+              ((restrictedInstrument D₀ j₀ realize leftTree leftR
+                [] active).bind ξ) := by
+          apply (token_of_restrictedInstrument D₀ j₀ realize
+            leftTree leftR [] active ξ finalK
+            (fun o => hk _) leftToken).mp
+          rw [← restrictedResult_eq_embed D₀ j₀ realize leftTree leftR
+            [] active finalK hleftAvail]
+          exact hleftRestricted
+        have hrightHolds :
+            TTObservationToken.Holds resultCode rightToken
+              ((restrictedInstrument D₀ j₀ realize rightTree rightR
+                [] active).bind ξ) := by
+          apply (token_of_restrictedInstrument D₀ j₀ realize
+            rightTree rightR [] active ξ finalK
+            (fun o => hk _) rightToken).mp
+          rw [← restrictedResult_eq_embed D₀ j₀ realize rightTree rightR
+            [] active finalK hrightAvail]
+          exact hrightRestricted
+        have hleftMember : leftToken ∈ leftResult :=
+          (hleft.token_iff ξ hk leftToken).mpr
+            ⟨leftTree, leftR, hleftAvail, hleftHolds⟩
+        have hrightMember : rightToken ∈ rightResult :=
+          (hright.token_iff ξ hk rightToken).mpr
+            ⟨rightTree, rightR, hrightAvail, hrightHolds⟩
+        exact
+          (TTWeightedAggregation.mem_core p hp₀.le hp₁.le
+            leftResult rightResult token).2
+            ⟨leftToken, hleftMember, rightToken, hrightMember,
+              target, hderives, hrounded⟩
+    | probabilityZero _ =>
+        injection hc with hterm
+        injection hterm with hp
+        exact (ne_of_gt hp₀ hp.symm).elim
+    | probabilityOne _ =>
+        injection hc with hterm
+        injection hterm with hp
+        exact (ne_of_lt hp₁ hp.symm).elim
+    | measurement _ _ =>
+        cases hc
+
 /-- Token adequacy transfers backwards through the endpoint `p = 0`.
 The generic source and explicit control equality let tree inversion retain
 the source environment, stack, and quantum state definitionally. -/
