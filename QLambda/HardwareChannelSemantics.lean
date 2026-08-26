@@ -9199,35 +9199,18 @@ theorem no_channelTree_of_invalid_prob {C : Type}
       exact False.elim (ChannelInternalStep.not_prob h hc)
   | external _ h _ =>
       exact False.elim (ChannelExternalStep.not_prob h hc)
-  | @probability s' p' left' right' hp₀ hp₁ _ _ =>
-      have hctrl :
-          s.control = .term (.prob p' left' right') := by
-        change ({s' with
-            control := .term (.prob p' left' right')}).control =
-          .term (.prob p' left' right')
-        rfl
-      rw [hc] at hctrl
-      injection hctrl with hterm
+  | @probability _ p' _ _ hp₀ hp₁ _ _ =>
+      injection hc with hterm
       injection hterm with hp' _ _
       subst p
       exact hp ⟨hp₀.le, hp₁.le⟩
-  | @probabilityZero s' L R next =>
-      have hctrl : s.control = .term (.prob 0 L R) := by
-        change ({s' with control := .term (.prob 0 L R)}).control =
-          .term (.prob 0 L R)
-        rfl
-      rw [hc] at hctrl
-      injection hctrl with hterm
+  | @probabilityZero _ _ _ _ =>
+      injection hc with hterm
       injection hterm with hp0
       subst p
       exact hp ⟨le_rfl, zero_le_one⟩
-  | @probabilityOne s' L R next =>
-      have hctrl : s.control = .term (.prob 1 L R) := by
-        change ({s' with control := .term (.prob 1 L R)}).control =
-          .term (.prob 1 L R)
-        rfl
-      rw [hc] at hctrl
-      injection hctrl with hterm
+  | @probabilityOne _ _ _ _ =>
+      injection hc with hterm
       injection hterm with hp1
       subst p
       exact hp ⟨zero_le_one, le_rfl⟩
@@ -9382,6 +9365,1494 @@ theorem prob_presented_of_presented_children {C : Type}
         apply ChannelConfig.ext <;> rfl
       simpa [hL, hR] using hle
 
+/-- Application-free terms: the closed lambda-and-choice fragment. -/
+def NoApp {Prim : Type} : Term Prim → Prop
+  | .app _ _ => False
+  | .lam _ M => NoApp M
+  | .recLam _ _ M => NoApp M
+  | .prob _ M N => NoApp M ∧ NoApp N
+  | .intern M N => NoApp M ∧ NoApp N
+  | .extern M N => NoApp M ∧ NoApp N
+  | .var _ => True
+  | .prim _ => True
+
+theorem empty_env_closed_wellScoped {C : Type}
+    {s : ChannelConfig C} {code : Term (QubitPrimitive C)}
+    (hclosed : Closed code)
+    (hc : s.control = .term code) (he : s.env = [])
+    (hs : s.stack = []) :
+    ChannelConfig.WellScoped s := by
+  refine ⟨?_, ?_⟩
+  · rw [hc, he]
+    exact ⟨RuntimeEnv.wellScoped_nil, fun x hx =>
+      False.elim ((closed_iff_forall_not_mem.mp hclosed x) hx)⟩
+  · intro frame hf
+    rw [hs] at hf
+    cases hf
+
+/-- A return at any empty stack is the identity wrap of its payload. -/
+theorem return_empty_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {value : C}
+    (hc : s.control = .term (.prim (.ret value)))
+    (hs : s.stack = [])
+    (hscoped : ChannelConfig.WellScoped s)
+    {semanticEnv : Env (HSemanticValue D₀ j₀)}
+    (_henv : EnvRel D₀ j₀ realize s.env semanticEnv) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize s
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.prim (.ret value)) semanticEnv) := by
+  let t : ChannelConfig C :=
+    {s with control := .value (.payload value)}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with control := .term (.prim (.ret value))} t :=
+      ChannelInternalStep.returnPrimitive (s := s) (value := value)
+    have hsrc : s = {s with control := .term (.prim (.ret value))} :=
+      ChannelConfig.ext hc rfl rfl rfl
+    exact hsrc.symm ▸ happ
+  have hchildScoped : ChannelConfig.WellScoped t :=
+    ChannelInternalStep.preserve_wellScoped hstep hscoped
+  have hchildRel : ChannelConfigRel D₀ j₀ realize t
+      (semanticUnit (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀) (realize value)) := by
+    refine ⟨semanticUnit (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀) (realize value), id, ?_, ?_, rfl⟩
+    · exact ControlRel.value _ _ t.env
+        (payload_related D₀ j₀ realize value)
+    · change StackRel D₀ j₀ realize s.stack id
+      rw [hs]
+      exact StackRel.nil
+  have hchild : PresentedChannelTreeCompleteness D₀ j₀ realize t
+      (semanticUnit (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀) (realize value)) :=
+    terminal_presentedChannelTreeCompleteness D₀ j₀ realize
+      (s := t) ⟨.payload value, rfl, hs⟩ hchildScoped hchildRel
+  simp [hardwarePrimitive_ret]
+  exact identity_step_presentedChannelTreeCompleteness D₀ j₀ realize
+    hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelConfig.ext
+      (ChannelInternalStep.eq_of_return h' hc).1
+      (ChannelInternalStep.eq_of_return h' hc).2.1
+      (ChannelInternalStep.eq_of_return h' hc).2.2.1
+      (ChannelInternalStep.eq_of_return h' hc).2.2.2)
+    hchild
+
+/-- Wrap a left intern child at an arbitrary source with definitional
+intern control. -/
+def wrapInternLeftAt {C : Type} (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (child : ChannelTree C {s with control := .term left}) :
+    ChannelTree C {s with control := .term (.intern left right)} :=
+  ChannelTree.internal
+    (ChannelInternalStep.internalLeft
+      (s := {s with control := .term (.intern left right)}))
+    child
+
+def wrapInternRightAt {C : Type} (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (child : ChannelTree C {s with control := .term right}) :
+    ChannelTree C {s with control := .term (.intern left right)} :=
+  ChannelTree.internal
+    (ChannelInternalStep.internalRight
+      (s := {s with control := .term (.intern left right)}))
+    child
+
+theorem wrapInternLeftAt_depth {C : Type} (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (child : ChannelTree C {s with control := .term left}) :
+    (wrapInternLeftAt s left right child).depth = child.depth + 1 :=
+  rfl
+
+theorem wrapInternRightAt_depth {C : Type} (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (child : ChannelTree C {s with control := .term right}) :
+    (wrapInternRightAt s left right child).depth = child.depth + 1 :=
+  rfl
+
+/-- Internal choice at an empty stack is the join of presented children
+that keep the same environment, stack, and quantum state. -/
+theorem intern_empty_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (hleft : PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term left}
+      (interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv))
+    (hright : PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term right}
+      (interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv)) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term (.intern left right)}
+      (interp (hardwarePrimitive D₀ j₀ realize) (.intern left right)
+        semanticEnv) where
+  selected_result_eq_channelTree_sup_presented := by
+    intro selectors i ξ k hk
+    rw [selectPath_intern,
+      hleft.selected_result_eq_channelTree_sup_presented selectors i ξ k hk,
+      hright.selected_result_eq_channelTree_sup_presented selectors i ξ k hk]
+    have hop :
+        channelInternalOperation
+          {s with control := .term (.intern left right)} =
+          QuantumOperation.identity 2 :=
+      rfl
+    refine le_antisymm ?_ ?_
+    · apply sup_le
+      · apply sSup_le
+        rintro T ⟨fuel, child, R, hdepth, rfl⟩
+        apply le_sSup
+        refine ⟨fuel + 1, wrapInternLeftAt s left right child,
+          wrapInternalRealization D₀ j₀ realize
+            (ChannelInternalStep.internalLeft
+              (s := {s with control := .term (.intern left right)}))
+            child R, ?_, ?_⟩
+        · simpa [wrapInternLeftAt_depth] using Nat.succ_le_succ hdepth
+        · exact
+            (restrictedResult_internal_of_identity D₀ j₀ realize
+              (ChannelInternalStep.internalLeft
+                (s := {s with control := .term (.intern left right)}))
+              hop child
+              (wrapInternalRealization D₀ j₀ realize
+                (ChannelInternalStep.internalLeft
+                  (s := {s with control := .term (.intern left right)}))
+                child R)
+              selectors i k).symm
+      · apply sSup_le
+        rintro T ⟨fuel, child, R, hdepth, rfl⟩
+        apply le_sSup
+        refine ⟨fuel + 1, wrapInternRightAt s left right child,
+          wrapInternalRealization D₀ j₀ realize
+            (ChannelInternalStep.internalRight
+              (s := {s with control := .term (.intern left right)}))
+            child R, ?_, ?_⟩
+        · simpa [wrapInternRightAt_depth] using Nat.succ_le_succ hdepth
+        · exact
+            (restrictedResult_internal_of_identity D₀ j₀ realize
+              (ChannelInternalStep.internalRight
+                (s := {s with control := .term (.intern left right)}))
+              hop child
+              (wrapInternalRealization D₀ j₀ realize
+                (ChannelInternalStep.internalRight
+                  (s := {s with control := .term (.intern left right)}))
+                child R)
+              selectors i k).symm
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      have hctrl :
+          ({s with control := .term (.intern left right)}).control =
+            .term (.intern left right) :=
+        rfl
+      cases tree with
+      | terminal hterm =>
+          have := hterm.control_eq.symm.trans hctrl
+          cases this
+      | @internal _ t h next =>
+          rcases ChannelInternalStep.eq_of_intern h hctrl with ht | ht
+          · cases ht
+            have := restrictedResult_internal_of_identity D₀ j₀ realize
+              h hop next R selectors i k
+            rw [this]
+            apply le_sup_of_le_left
+            apply le_sSup
+            exact ⟨next.depth, next,
+              internalChildRealization D₀ j₀ realize h next R,
+              le_rfl, rfl⟩
+          · cases ht
+            have := restrictedResult_internal_of_identity D₀ j₀ realize
+              h hop next R selectors i k
+            rw [this]
+            apply le_sup_of_le_right
+            apply le_sSup
+            exact ⟨next.depth, next,
+              internalChildRealization D₀ j₀ realize h next R,
+              le_rfl, rfl⟩
+      | external _ hex _ =>
+          exact False.elim (ChannelExternalStep.not_intern hex hctrl)
+
+/-- Wrap a completed child under one external-selection node at an
+arbitrary source with definitional extern control. -/
+def wrapExternAt {C : Type} (s : ChannelConfig C) (b : Bool)
+    (left right : Term (QubitPrimitive C))
+    (child : ChannelTree C
+      {s with control := .term (if b then right else left)}) :
+    ChannelTree C {s with control := .term (.extern left right)} :=
+  ChannelTree.external b
+    (by
+      cases b
+      · exact ChannelExternalStep.selectFalse
+          (s := {s with control := .term (.extern left right)})
+      · exact ChannelExternalStep.selectTrue
+          (s := {s with control := .term (.extern left right)}))
+    child
+
+theorem wrapExternAt_depth {C : Type} (s : ChannelConfig C) (b : Bool)
+    (left right : Term (QubitPrimitive C))
+    (child : ChannelTree C
+      {s with control := .term (if b then right else left)}) :
+    (wrapExternAt s b left right child).depth = child.depth + 1 :=
+  rfl
+
+theorem external_cons_channelTreeSup_at {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (b : Bool) (selectors : List Bool) (i : ℕ)
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)) :
+    sSup (channelTreeResults D₀ j₀ realize
+        {s with control := .term (.extern left right)}
+        (b :: selectors) i k) =
+      sSup (channelTreeResults D₀ j₀ realize
+        {s with control := .term (if b then right else left)}
+        selectors i k) := by
+  let source := {s with control := .term (.extern left right)}
+  let target := {s with control := .term (if b then right else left)}
+  have hb : ChannelExternalStep source b target := by
+    cases b
+    · exact ChannelExternalStep.selectFalse
+        (s := {s with control := .term (.extern left right)})
+    · exact ChannelExternalStep.selectTrue
+        (s := {s with control := .term (.extern left right)})
+  apply le_antisymm
+  · apply sSup_le
+    rintro T ⟨_, tree, R, _, rfl⟩
+    have hctrl : source.control = .term (.extern left right) := rfl
+    cases tree with
+    | terminal hterm =>
+        have := hterm.control_eq.symm.trans hctrl
+        cases this
+    | internal h _ =>
+        exact False.elim (ChannelInternalStep.not_extern h hctrl)
+    | external c h next =>
+        have ht := ChannelExternalStep.eq_of_extern h hctrl
+        cases b <;> cases c
+        · cases ht
+          rw [restrictedResult_external_cons]
+          apply le_sSup
+          exact ⟨next.depth, next,
+            externalChildRealization D₀ j₀ realize false h next R, le_rfl, rfl⟩
+        · rw [restrictedResult_external_mismatch D₀ j₀ realize true false
+            (by decide) h next R selectors i k]
+          exact bot_le
+        · rw [restrictedResult_external_mismatch D₀ j₀ realize false true
+            (by decide) h next R selectors i k]
+          exact bot_le
+        · cases ht
+          rw [restrictedResult_external_cons]
+          apply le_sSup
+          exact ⟨next.depth, next,
+            externalChildRealization D₀ j₀ realize true h next R, le_rfl, rfl⟩
+  · apply sSup_le
+    rintro T ⟨fuel, child, R, hdepth, rfl⟩
+    apply le_sSup
+    refine ⟨fuel + 1, ChannelTree.external b hb child,
+      wrapExternalRealization D₀ j₀ realize b hb child R, ?_, ?_⟩
+    · change child.depth + 1 ≤ fuel + 1
+      omega
+    · rw [restrictedResult_external_cons]
+      rfl
+
+theorem external_coordinate_channelTreeSup_at {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (b : Bool) (j : ℕ)
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)) :
+    sSup (channelTreeResults D₀ j₀ realize
+        {s with control := .term (.extern left right)} []
+        (HardwareAdequacy.branchCoordinate b j) k) =
+      sSup (channelTreeResults D₀ j₀ realize
+        {s with control := .term (if b then right else left)} [] j k) := by
+  let source := {s with control := .term (.extern left right)}
+  let target := {s with control := .term (if b then right else left)}
+  have hb : ChannelExternalStep source b target := by
+    cases b
+    · exact ChannelExternalStep.selectFalse
+        (s := {s with control := .term (.extern left right)})
+    · exact ChannelExternalStep.selectTrue
+        (s := {s with control := .term (.extern left right)})
+  apply le_antisymm
+  · apply sSup_le
+    rintro T ⟨_, tree, R, _, rfl⟩
+    have hctrl : source.control = .term (.extern left right) := rfl
+    cases tree with
+    | terminal hterm =>
+        have := hterm.control_eq.symm.trans hctrl
+        cases this
+    | internal h _ =>
+        exact False.elim (ChannelInternalStep.not_extern h hctrl)
+    | external c h next =>
+        have ht := ChannelExternalStep.eq_of_extern h hctrl
+        cases b <;> cases c
+        · cases ht
+          rw [restrictedResult_external_coordinate]
+          apply le_sSup
+          exact ⟨next.depth, next,
+            externalChildRealization D₀ j₀ realize false h next R, le_rfl, rfl⟩
+        · rw [restrictedResult_external_coordinate_mismatch D₀ j₀ realize
+            true false (by decide) h next R j k]
+          exact bot_le
+        · rw [restrictedResult_external_coordinate_mismatch D₀ j₀ realize
+            false true (by decide) h next R j k]
+          exact bot_le
+        · cases ht
+          rw [restrictedResult_external_coordinate]
+          apply le_sSup
+          exact ⟨next.depth, next,
+            externalChildRealization D₀ j₀ realize true h next R, le_rfl, rfl⟩
+  · apply sSup_le
+    rintro T ⟨fuel, child, R, hdepth, rfl⟩
+    apply le_sSup
+    refine ⟨fuel + 1, ChannelTree.external b hb child,
+      wrapExternalRealization D₀ j₀ realize b hb child R, ?_, ?_⟩
+    · change child.depth + 1 ≤ fuel + 1
+      omega
+    · rw [restrictedResult_external_coordinate]
+      rfl
+
+theorem external_root_channelTreeSup_at {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)) :
+    sSup (channelTreeResults D₀ j₀ realize
+      {s with control := .term (.extern left right)} [] 0 k) = ⊥ := by
+  apply le_antisymm
+  · apply sSup_le
+    rintro T ⟨_, tree, R, _, rfl⟩
+    have hctrl :
+        ({s with control := .term (.extern left right)}).control =
+          .term (.extern left right) := rfl
+    cases tree with
+    | terminal hterm =>
+        have := hterm.control_eq.symm.trans hctrl
+        cases this
+    | internal h _ =>
+        exact False.elim (ChannelInternalStep.not_extern h hctrl)
+    | external _ h next =>
+        rw [restrictedResult_external_root]
+  · exact bot_le
+
+/-- External choice at an empty stack is the selected child-tree supremum. -/
+theorem extern_empty_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (hleft : PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term left}
+      (interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv))
+    (hright : PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term right}
+      (interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv)) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term (.extern left right)}
+      (interp (hardwarePrimitive D₀ j₀ realize) (.extern left right)
+        semanticEnv) where
+  selected_result_eq_channelTree_sup_presented := by
+    intro selectors i ξ k hk
+    cases selectors with
+    | cons b selectors =>
+        rw [selectPath_extern_cons]
+        cases b
+        · simp only [Bool.false_eq_true, if_false]
+          rw [hleft.selected_result_eq_channelTree_sup_presented
+            selectors i ξ k hk,
+            external_cons_channelTreeSup_at]
+          simp
+        · simp only [if_true]
+          rw [hright.selected_result_eq_channelTree_sup_presented
+            selectors i ξ k hk,
+            external_cons_channelTreeSup_at]
+          simp
+    | nil =>
+        cases i with
+        | zero =>
+            rw [HardwareAdequacy.selectPath_nil, interp_extern_apply,
+              external_root_channelTreeSup_at]
+            change (TTContinuation.externalChoice
+              (interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv,
+                interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv)
+              0) k = ⊥
+            rw [TTContinuation.externalChoice_root_bot]
+            exact ScottMap.bot_apply k
+        | succ n =>
+            by_cases heven : n % 2 = 0
+            · have hi : n + 1 =
+                  HardwareAdequacy.branchCoordinate false (n / 2) := by
+                simp [HardwareAdequacy.branchCoordinate]
+                omega
+              rw [hi, HardwareAdequacy.selectPath_nil,
+                selectPath_extern_coordinate]
+              simp only [Bool.false_eq_true, if_false]
+              have hc :=
+                hleft.selected_result_eq_channelTree_sup_presented
+                  [] (n / 2) ξ k hk
+              have hc' :
+                  interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv
+                      (n / 2) k =
+                    sSup (channelTreeResults D₀ j₀ realize
+                      {s with control := .term left} [] (n / 2) k) := by
+                simpa using hc
+              exact hc'.trans
+                (external_coordinate_channelTreeSup_at D₀ j₀ realize s
+                  left right false (n / 2) k).symm
+            · have hodd : n % 2 = 1 := by omega
+              have hi : n + 1 =
+                  HardwareAdequacy.branchCoordinate true (n / 2) := by
+                simp [HardwareAdequacy.branchCoordinate]
+                omega
+              rw [hi, HardwareAdequacy.selectPath_nil,
+                selectPath_extern_coordinate]
+              simp only [if_true]
+              have hc :=
+                hright.selected_result_eq_channelTree_sup_presented
+                  [] (n / 2) ξ k hk
+              have hc' :
+                  interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv
+                      (n / 2) k =
+                    sSup (channelTreeResults D₀ j₀ realize
+                      {s with control := .term right} [] (n / 2) k) := by
+                simpa using hc
+              exact hc'.trans
+                (external_coordinate_channelTreeSup_at D₀ j₀ realize s
+                  left right true (n / 2) k).symm
+
+noncomputable def wrapProbAt {C : Type} {p : ℝ} (hp₀ : 0 < p) (hp₁ : p < 1)
+    (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (leftChild : ChannelTree C
+      { s with
+        control := .term left
+        quantum := applyOperation
+          (sourceProbabilityOperation p hp₀.le hp₁.le) s.quantum })
+    (rightChild : ChannelTree C
+      { s with
+        control := .term right
+        quantum := applyOperation
+          (sourceProbabilityOperation (1 - p)
+            (sub_nonneg.mpr hp₁.le) (by linarith)) s.quantum }) :
+    ChannelTree C {s with control := .term (.prob p left right)} :=
+  ChannelTree.probability (s := s) hp₀ hp₁ leftChild rightChild
+
+noncomputable def wrapProbZeroAt {C : Type} (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (rightChild : ChannelTree C
+      { s with
+        control := .term right
+        quantum := applyOperation
+          (sourceProbabilityOperation 1 zero_le_one (le_refl 1))
+          s.quantum }) :
+    ChannelTree C {s with control := .term (.prob 0 left right)} :=
+  ChannelTree.probabilityZero (s := s) (left := left) rightChild
+
+noncomputable def wrapProbOneAt {C : Type} (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (leftChild : ChannelTree C
+      { s with
+        control := .term left
+        quantum := applyOperation
+          (sourceProbabilityOperation 1 zero_le_one (le_refl 1))
+          s.quantum }) :
+    ChannelTree C {s with control := .term (.prob 1 left right)} :=
+  ChannelTree.probabilityOne (s := s) (right := right) leftChild
+
+theorem wrapProbAt_depth {C : Type} {p : ℝ} (hp₀ : 0 < p) (hp₁ : p < 1)
+    (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (leftChild : ChannelTree C
+      { s with
+        control := .term left
+        quantum := applyOperation
+          (sourceProbabilityOperation p hp₀.le hp₁.le) s.quantum })
+    (rightChild : ChannelTree C
+      { s with
+        control := .term right
+        quantum := applyOperation
+          (sourceProbabilityOperation (1 - p)
+            (sub_nonneg.mpr hp₁.le) (by linarith)) s.quantum }) :
+    (wrapProbAt hp₀ hp₁ s left right leftChild rightChild).depth =
+      max leftChild.depth rightChild.depth + 1 :=
+  rfl
+
+theorem wrapProbZeroAt_depth {C : Type} (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (rightChild : ChannelTree C
+      { s with
+        control := .term right
+        quantum := applyOperation
+          (sourceProbabilityOperation 1 zero_le_one (le_refl 1))
+          s.quantum }) :
+    (wrapProbZeroAt s left right rightChild).depth =
+      rightChild.depth + 1 :=
+  rfl
+
+theorem wrapProbOneAt_depth {C : Type} (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (leftChild : ChannelTree C
+      { s with
+        control := .term left
+        quantum := applyOperation
+          (sourceProbabilityOperation 1 zero_le_one (le_refl 1))
+          s.quantum }) :
+    (wrapProbOneAt s left right leftChild).depth =
+      leftChild.depth + 1 :=
+  rfl
+
+theorem prob_zero_empty_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (hright : PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term right}
+      (interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv)) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term (.prob 0 left right)}
+      (interp (hardwarePrimitive D₀ j₀ realize) (.prob 0 left right)
+        semanticEnv) where
+  selected_result_eq_channelTree_sup_presented := by
+    intro selectors i ξ k hk
+    have hright' :=
+      PresentedChannelTreeCompleteness.congr
+        (show
+            { s with
+              control := .term right
+              quantum := applyOperation
+                (sourceProbabilityOperation 1 zero_le_one (le_refl 1))
+                s.quantum } =
+              {s with control := .term right} from
+          ChannelConfig.ext rfl rfl rfl
+            (applyOperation_sourceProbability_one s.quantum)).symm
+        rfl hright
+    rw [selectPath_prob_zero,
+      hright'.selected_result_eq_channelTree_sup_presented
+        selectors i ξ k hk]
+    apply le_antisymm
+    · apply sSup_le
+      rintro T ⟨fuel, child, R, hdepth, rfl⟩
+      apply le_sSup
+      refine ⟨fuel + 1, wrapProbZeroAt s left right child,
+        wrapProbabilityZeroRealization D₀ j₀ realize
+          (s := s) (leftTerm := left) (rightTerm := right) child R, ?_, ?_⟩
+      · simpa [wrapProbZeroAt_depth] using Nat.succ_le_succ hdepth
+      · exact
+          (restrictedResult_probabilityZero D₀ j₀ realize child
+            (wrapProbabilityZeroRealization D₀ j₀ realize
+              (s := s) (leftTerm := left) (rightTerm := right) child R)
+            selectors i k).symm
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      exact restrictedResult_of_control_prob_zero D₀ j₀ realize tree R rfl
+        selectors i k
+
+theorem prob_one_empty_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (hleft : PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term left}
+      (interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv)) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term (.prob 1 left right)}
+      (interp (hardwarePrimitive D₀ j₀ realize) (.prob 1 left right)
+        semanticEnv) where
+  selected_result_eq_channelTree_sup_presented := by
+    intro selectors i ξ k hk
+    have hleft' :=
+      PresentedChannelTreeCompleteness.congr
+        (show
+            { s with
+              control := .term left
+              quantum := applyOperation
+                (sourceProbabilityOperation 1 zero_le_one (le_refl 1))
+                s.quantum } =
+              {s with control := .term left} from
+          ChannelConfig.ext rfl rfl rfl
+            (applyOperation_sourceProbability_one s.quantum)).symm
+        rfl hleft
+    rw [selectPath_prob_one,
+      hleft'.selected_result_eq_channelTree_sup_presented
+        selectors i ξ k hk]
+    apply le_antisymm
+    · apply sSup_le
+      rintro T ⟨fuel, child, R, hdepth, rfl⟩
+      apply le_sSup
+      refine ⟨fuel + 1, wrapProbOneAt s left right child,
+        wrapProbabilityOneRealization D₀ j₀ realize
+          (s := s) (leftTerm := left) (rightTerm := right) child R, ?_, ?_⟩
+      · simpa [wrapProbOneAt_depth] using Nat.succ_le_succ hdepth
+      · exact
+          (restrictedResult_probabilityOne D₀ j₀ realize child
+            (wrapProbabilityOneRealization D₀ j₀ realize
+              (s := s) (leftTerm := left) (rightTerm := right) child R)
+            selectors i k).symm
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      exact restrictedResult_of_control_prob_one D₀ j₀ realize tree R rfl
+        selectors i k
+
+theorem prob_invalid_empty_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C)
+    (p : ℝ) (hp : ¬ (0 ≤ p ∧ p ≤ 1))
+    (left right : Term (QubitPrimitive C))
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term (.prob p left right)}
+      (interp (hardwarePrimitive D₀ j₀ realize) (.prob p left right)
+        semanticEnv) where
+  selected_result_eq_channelTree_sup_presented := by
+    intro selectors i ξ k hk
+    have hbot :
+        HardwareAdequacy.selectPath selectors
+          (interp (hardwarePrimitive D₀ j₀ realize) (.prob p left right)
+            semanticEnv) i k = ⊥ := by
+      rw [selectPath_prob, TTContinuation.probChoice_apply, dif_neg hp]
+    rw [hbot]
+    apply le_antisymm
+    · exact bot_le
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      exact False.elim
+        (no_channelTree_of_invalid_prob tree rfl hp)
+
+theorem prob_empty_presented_of_presented_children {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C)
+    (p : ℝ) (hp₀ : 0 < p) (hp₁ : p < 1)
+    (left right : Term (QubitPrimitive C))
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (hleft : PresentedChannelTreeCompleteness D₀ j₀ realize
+      { s with
+        control := .term left
+        quantum := applyOperation
+          (sourceProbabilityOperation p hp₀.le hp₁.le) s.quantum }
+      (interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv))
+    (hright : PresentedChannelTreeCompleteness D₀ j₀ realize
+      { s with
+        control := .term right
+        quantum := applyOperation
+          (sourceProbabilityOperation (1 - p)
+            (sub_nonneg.mpr hp₁.le) (by linarith)) s.quantum }
+      (interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv)) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term (.prob p left right)}
+      (interp (hardwarePrimitive D₀ j₀ realize) (.prob p left right)
+        semanticEnv) where
+  selected_result_eq_channelTree_sup_presented := by
+    intro selectors i ξ k hk
+    have hpI : 0 ≤ p ∧ p ≤ 1 := ⟨hp₀.le, hp₁.le⟩
+    rw [selectPath_prob, TTContinuation.probChoice_apply, dif_pos hpI,
+      hleft.selected_result_eq_channelTree_sup_presented selectors i ξ k hk,
+      hright.selected_result_eq_channelTree_sup_presented selectors i ξ k hk]
+    let SL :=
+      channelTreeResults D₀ j₀ realize
+        { s with
+          control := .term left
+          quantum := applyOperation
+            (sourceProbabilityOperation p hp₀.le hp₁.le) s.quantum }
+        selectors i k
+    let SR :=
+      channelTreeResults D₀ j₀ realize
+        { s with
+          control := .term right
+          quantum := applyOperation
+            (sourceProbabilityOperation (1 - p)
+              (sub_nonneg.mpr hp₁.le) (by linarith)) s.quantum }
+        selectors i k
+    refine le_antisymm ?_ ?_
+    · by_cases hL : SL.Nonempty
+      · by_cases hR : SR.Nonempty
+        · rw [TTWeightedAggregation.weightedResultScott_sSup_product
+            p hp₀.le hp₁.le SL SR hL hR]
+          apply sSup_le
+          rintro _ ⟨⟨TL, TR⟩, ⟨⟨fuelL, leftT, leftR, hdepthL, rfl⟩,
+              ⟨fuelR, rightT, rightR, hdepthR, rfl⟩⟩, rfl⟩
+          apply le_sSup
+          refine ⟨max fuelL fuelR + 1,
+            wrapProbAt hp₀ hp₁ s left right leftT rightT,
+            wrapProbabilityRealization D₀ j₀ realize hp₀ hp₁ leftT rightT
+              leftR rightR, ?_, ?_⟩
+          · simp [wrapProbAt_depth]
+            omega
+          · exact
+              (restrictedResult_probability_presented D₀ j₀ realize hp₀ hp₁
+                leftT rightT
+                (wrapProbabilityRealization D₀ j₀ realize hp₀ hp₁
+                  leftT rightT leftR rightR)
+                selectors i ξ k hk).symm
+        · have hbot :
+              TTWeightedAggregation.weightedResultScott p hp₀.le hp₁.le
+                (sSup SL, sSup SR) = ⊥ := by
+            have : sSup SR = ⊥ := by
+              have hempty : SR = ∅ :=
+                Set.not_nonempty_iff_eq_empty.mp hR
+              rw [hempty, sSup_empty]
+            rw [this, TTWeightedAggregation.weightedResultScott_bot_right
+              p hp₀ hp₁]
+          rw [hbot]
+          exact bot_le
+      · have hbot :
+            TTWeightedAggregation.weightedResultScott p hp₀.le hp₁.le
+              (sSup SL, sSup SR) = ⊥ := by
+          have : sSup SL = ⊥ := by
+            have hempty : SL = ∅ :=
+              Set.not_nonempty_iff_eq_empty.mp hL
+            rw [hempty, sSup_empty]
+          rw [this, TTWeightedAggregation.weightedResultScott_bot_left
+            p hp₀ hp₁]
+        rw [hbot]
+        exact bot_le
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      exact restrictedResult_of_control_prob_presented D₀ j₀ realize tree R
+        hp₀ hp₁ rfl selectors i ξ k hk
+
+/-- Pauli-X at an empty stack, with definitional primitive control. -/
+noncomputable def pauliXTreeAt {C : Type} (s : ChannelConfig C) (value : C)
+    (hs : s.stack = []) :
+    ChannelTree C {s with control := .term (.prim (.pauliX value))} :=
+  ChannelTree.internal
+    (ChannelInternalStep.pauliXPrimitive
+      (s := {s with control := .term (.prim (.pauliX value))}))
+    (ChannelTree.terminal
+      { value := .payload value, control_eq := rfl, stack_eq := hs })
+
+theorem pauliXTreeAt_depth {C : Type} (s : ChannelConfig C) (value : C)
+    (hs : s.stack = []) :
+    (pauliXTreeAt s value hs).depth = 1 :=
+  rfl
+
+noncomputable def pauliXTreeAtRealization {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C) (value : C) (hs : s.stack = []) :
+    ChannelTreeRealization D₀ j₀ realize (pauliXTreeAt s value hs) where
+  value := payloadLeafValue D₀ j₀ realize
+  related := by
+    intro o
+    rcases o with ⟨⟨⟩, ⟨⟩⟩
+    exact ValueRel.payload value
+
+theorem pauliXTreeAt_leaf_payload {C : Type} (s : ChannelConfig C)
+    (value : C) (hs : s.stack = [])
+    (o : (pauliXTreeAt s value hs).instrument.Outcome) :
+    ((pauliXTreeAt s value hs).instrument.value o).isTerminal.value =
+      .payload value := by
+  rcases o with ⟨⟨⟩, ⟨⟩⟩
+  rfl
+
+theorem pauliXTreeAt_compatible {C : Type} (s : ChannelConfig C)
+    (value : C) (hs : s.stack = []) (selectors : List Bool) (i : ℕ)
+    (o : (pauliXTreeAt s value hs).instrument.Outcome) :
+    OutcomeCompatible (pauliXTreeAt s value hs) selectors i o := by
+  rcases o with ⟨⟨⟩, ⟨⟩⟩
+  simp [OutcomeCompatible, ChannelTree.instrument]
+  exact List.nil_prefix
+
+theorem pauliXTreeAt_realized_eq_ofOperation {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C) (value : C) (hs : s.stack = []) :
+    embed (realizedInstrument D₀ j₀ realize (pauliXTreeAt s value hs)
+      (pauliXTreeAtRealization D₀ j₀ realize s value hs)) =
+      embed (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+        (realize value)) := by
+  let μ := realizedInstrument D₀ j₀ realize (pauliXTreeAt s value hs)
+    (pauliXTreeAtRealization D₀ j₀ realize s value hs)
+  let _ : Unique μ.Outcome :=
+    { default := ⟨⟨⟩, ⟨⟩⟩
+      uniq := by intro o; rcases o with ⟨⟨⟩, ⟨⟩⟩; rfl }
+  refine embed_eq_ofOperation_of_unique μ Qubit.pauliXOp (realize value) ?_ ?_
+  · intro o
+    change payloadLeafValue D₀ j₀ realize
+        ((pauliXTreeAt s value hs).instrument.value o) = realize value
+    rw [payloadLeafValue_payload D₀ j₀ realize _
+      (pauliXTreeAt_leaf_payload s value hs o)]
+  · intro o
+    rcases o with ⟨⟨⟩, ⟨⟩⟩
+    change KrausFamily.comp (KrausFamily.identity 2)
+        (channelInternalOperation
+          {s with control := .term (.prim (.pauliX value))}).kraus =
+      Qubit.pauliXOp.kraus
+    simp [channelInternalOperation]
+
+theorem embed_of_pauliX_tree_at {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {value : C}
+    (hc : s.control = .term (.prim (.pauliX value)))
+    (hs : s.stack = [])
+    (tree : ChannelTree C s)
+    (R : ChannelTreeRealization D₀ j₀ realize tree)
+    (selectors : List Bool) (i : ℕ) :
+    embed (restrictedInstrument D₀ j₀ realize tree R selectors i) =
+      embed (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+        (realize value)) := by
+  cases tree with
+  | terminal hterm =>
+      have := hterm.control_eq.symm.trans hc
+      cases this
+  | internal h next =>
+      have ht := ChannelInternalStep.eq_of_pauliX h hc
+      have hnextctrl := ht.1
+      have hnextstack := ht.2.2.1.trans hs
+      cases next with
+      | terminal hterm =>
+          have hvalue : hterm.value = .payload value := by
+            injection hterm.control_eq.symm.trans hnextctrl
+          have hall : ∀ o, OutcomeCompatible
+              (ChannelTree.internal h (ChannelTree.terminal hterm))
+              selectors i o := by
+            intro o
+            simp [OutcomeCompatible, ChannelTree.instrument]
+            exact List.nil_prefix
+          rw [embed_restricted_of_all_compatible D₀ j₀ realize _ R
+            selectors i hall]
+          let μ := realizedInstrument D₀ j₀ realize
+            (ChannelTree.internal h (ChannelTree.terminal hterm)) R
+          let _ : Unique μ.Outcome :=
+            { default := ⟨⟨⟩, ⟨⟩⟩
+              uniq := by intro o; rcases o with ⟨⟨⟩, ⟨⟩⟩; rfl }
+          refine embed_eq_ofOperation_of_unique μ Qubit.pauliXOp
+            (realize value) ?_ ?_
+          · intro o
+            have hrel := R.related o
+            have hpay :
+                ((ChannelTree.internal h (ChannelTree.terminal hterm)
+                  ).instrument.value o).isTerminal.value =
+                  .payload value := by
+              simp [ChannelTree.instrument]
+              exact hvalue
+            rw [hpay] at hrel
+            exact ValueRel.payload_eq D₀ j₀ hrel
+          · intro o
+            rcases o with ⟨⟨⟩, ⟨⟩⟩
+            change KrausFamily.comp (KrausFamily.identity 2)
+                (channelInternalOperation s).kraus =
+              Qubit.pauliXOp.kraus
+            simp [channelInternalOperation, hc]
+      | internal h' _ =>
+          exact False.elim
+            (ChannelInternalStep.not_value_nil h' hnextctrl hnextstack)
+      | external _ h' _ =>
+          exact False.elim (ChannelExternalStep.not_value h' hnextctrl)
+      | probability _ _ _ _ => cases hnextctrl
+      | probabilityZero _ => cases hnextctrl
+      | probabilityOne _ => cases hnextctrl
+      | measurement _ _ => cases hnextctrl
+  | external _ h _ =>
+      exact False.elim (ChannelExternalStep.not_prim h hc)
+  | probability _ _ _ _ =>
+      cases hc
+  | probabilityZero _ =>
+      cases hc
+  | probabilityOne _ =>
+      cases hc
+  | measurement _ _ =>
+      cases hc
+
+theorem pauliX_empty_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C) (value : C)
+    (hs : s.stack = [])
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term (.prim (.pauliX value))}
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.prim (.pauliX value)) semanticEnv) where
+  selected_result_eq_channelTree_sup_presented := by
+    intro selectors i ξ k hk
+    have hdenote :
+        interp (hardwarePrimitive D₀ j₀ realize)
+            (.prim (.pauliX value)) semanticEnv =
+          taggedEmbed (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+            (realize value)) := by
+      simp [hardwarePrimitive_pauliX]
+    rw [hdenote, selectPath_taggedEmbed, taggedEmbed_apply]
+    refine le_antisymm ?_ ?_
+    · apply le_sSup
+      refine ⟨1, pauliXTreeAt s value hs,
+        pauliXTreeAtRealization D₀ j₀ realize s value hs, ?_, ?_⟩
+      · simp [pauliXTreeAt_depth]
+      · rw [restrictedResult_eq_embed D₀ j₀ realize
+            (pauliXTreeAt s value hs)
+            (pauliXTreeAtRealization D₀ j₀ realize s value hs)
+            selectors i k
+            (by simp [ResultAvailable, resultAvailableAt, pauliXTreeAt]),
+          embed_restricted_of_all_compatible D₀ j₀ realize
+            (pauliXTreeAt s value hs)
+            (pauliXTreeAtRealization D₀ j₀ realize s value hs)
+            selectors i (pauliXTreeAt_compatible s value hs selectors i),
+          pauliXTreeAt_realized_eq_ofOperation]
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      exact (restrictedResult_le_embed D₀ j₀ realize tree R selectors i k
+        ).trans_eq
+        (congrArg (fun f => f k)
+          (embed_of_pauliX_tree_at D₀ j₀ realize
+            (s := {s with control := .term (.prim (.pauliX value))})
+            rfl hs tree R selectors i))
+
+/-- Measure-Z at an empty stack, with definitional primitive control. -/
+noncomputable def measurementTreeAt {C : Type} (s : ChannelConfig C)
+    (zeroValue oneValue : C) (hs : s.stack = []) :
+    ChannelTree C
+      {s with control := .term (.prim (.measureZ zeroValue oneValue))} :=
+  ChannelTree.measurement (s := s)
+    (ChannelTree.terminal
+      { value := .payload zeroValue, control_eq := rfl, stack_eq := hs })
+    (ChannelTree.terminal
+      { value := .payload oneValue, control_eq := rfl, stack_eq := hs })
+
+theorem measurementTreeAt_depth {C : Type} (s : ChannelConfig C)
+    (zeroValue oneValue : C) (hs : s.stack = []) :
+    (measurementTreeAt s zeroValue oneValue hs).depth = 1 :=
+  rfl
+
+noncomputable def measurementTreeAtRealization {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C) (zeroValue oneValue : C) (hs : s.stack = []) :
+    ChannelTreeRealization D₀ j₀ realize
+      (measurementTreeAt s zeroValue oneValue hs) where
+  value := payloadLeafValue D₀ j₀ realize
+  related := by
+    intro o
+    obtain ⟨b, hb⟩ := o
+    cases b <;> exact ValueRel.payload _
+
+theorem measurementTreeAt_leaf_payload {C : Type} (s : ChannelConfig C)
+    (zeroValue oneValue : C) (hs : s.stack = [])
+    (o : (measurementTreeAt s zeroValue oneValue hs).instrument.Outcome) :
+    ((measurementTreeAt s zeroValue oneValue hs).instrument.value o
+      ).isTerminal.value =
+      .payload (match o.1 with
+        | true => oneValue
+        | false => zeroValue) := by
+  obtain ⟨b, hb⟩ := o
+  cases b <;> (cases hb; rfl)
+
+theorem measurementTreeAt_compatible {C : Type} (s : ChannelConfig C)
+    (zeroValue oneValue : C) (hs : s.stack = [])
+    (selectors : List Bool) (i : ℕ)
+    (o : (measurementTreeAt s zeroValue oneValue hs).instrument.Outcome) :
+    OutcomeCompatible (measurementTreeAt s zeroValue oneValue hs)
+      selectors i o := by
+  obtain ⟨b, hb⟩ := o
+  cases b
+  · cases hb
+    simp [OutcomeCompatible, ChannelTree.instrument]
+    exact List.nil_prefix
+  · cases hb
+    simp [OutcomeCompatible, ChannelTree.instrument]
+    exact List.nil_prefix
+
+theorem measurementTreeAt_realized_eq_measureZ {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C) (zeroValue oneValue : C) (hs : s.stack = []) :
+    embed (realizedInstrument D₀ j₀ realize
+        (measurementTreeAt s zeroValue oneValue hs)
+        (measurementTreeAtRealization D₀ j₀ realize s zeroValue oneValue hs)) =
+      embed (Qubit.measureZComp.map
+        (fun b => if b then realize oneValue else realize zeroValue)) := by
+  let μ := realizedInstrument D₀ j₀ realize
+    (measurementTreeAt s zeroValue oneValue hs)
+    (measurementTreeAtRealization D₀ j₀ realize s zeroValue oneValue hs)
+  let ν := Qubit.measureZComp.map
+    (fun b => if b then realize oneValue else realize zeroValue)
+  refine embed_congr_of_outcome_equiv μ ν ?e ?hbranch ?hvalue
+  · exact
+      { toFun := fun o => o.1
+        invFun := fun b =>
+          match b with
+          | true => ⟨true, ⟨⟩⟩
+          | false => ⟨false, ⟨⟩⟩
+        left_inv := by
+          intro o
+          obtain ⟨b, hb⟩ := o
+          cases b <;> (cases hb; rfl)
+        right_inv := by
+          intro b
+          cases b <;> rfl }
+  · intro o
+    obtain ⟨b, hb⟩ := o
+    cases b
+    · cases hb
+      change Qubit.measureZComp.branch false =
+        KrausFamily.comp (KrausFamily.identity 2)
+          (Qubit.measureZComp.branch false)
+      simp
+    · cases hb
+      change Qubit.measureZComp.branch true =
+        KrausFamily.comp (KrausFamily.identity 2)
+          (Qubit.measureZComp.branch true)
+      simp
+  · intro o
+    obtain ⟨b, hb⟩ := o
+    cases b
+    · cases hb
+      change realize zeroValue =
+        payloadLeafValue D₀ j₀ realize
+          ((measurementTreeAt s zeroValue oneValue hs).instrument.value
+            ⟨false, ⟨⟩⟩)
+      rw [payloadLeafValue_payload D₀ j₀ realize _
+        (measurementTreeAt_leaf_payload s zeroValue oneValue hs
+          ⟨false, ⟨⟩⟩)]
+    · cases hb
+      change realize oneValue =
+        payloadLeafValue D₀ j₀ realize
+          ((measurementTreeAt s zeroValue oneValue hs).instrument.value
+            ⟨true, ⟨⟩⟩)
+      rw [payloadLeafValue_payload D₀ j₀ realize _
+        (measurementTreeAt_leaf_payload s zeroValue oneValue hs
+          ⟨true, ⟨⟩⟩)]
+
+theorem embed_of_measureZ_tree_at {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {zeroValue oneValue : C}
+    (hc : s.control = .term (.prim (.measureZ zeroValue oneValue)))
+    (hs : s.stack = [])
+    (tree : ChannelTree C s)
+    (R : ChannelTreeRealization D₀ j₀ realize tree)
+    (selectors : List Bool) (i : ℕ) :
+    embed (restrictedInstrument D₀ j₀ realize tree R selectors i) =
+      embed (Qubit.measureZComp.map
+        (fun b => if b then realize oneValue else realize zeroValue)) := by
+  cases tree with
+  | terminal hterm =>
+      have := hterm.control_eq.symm.trans hc
+      cases this
+  | internal h next =>
+      exact False.elim (ChannelInternalStep.not_measureZ h hc)
+  | external _ h _ =>
+      exact False.elim (ChannelExternalStep.not_prim h hc)
+  | probability _ _ _ _ =>
+      cases hc
+  | probabilityZero _ =>
+      cases hc
+  | probabilityOne _ =>
+      cases hc
+  | @measurement source z' o' zeroTree oneTree =>
+      have hctrl0 :
+          ({source with
+              control := .value (.payload z')
+              quantum := applyOperation (measurementOperation false)
+                source.quantum}).control =
+            .value (.payload z') := rfl
+      have hstack0 :
+          ({source with
+              control := .value (.payload z')
+              quantum := applyOperation (measurementOperation false)
+                source.quantum}).stack = [] := hs
+      have hctrl1 :
+          ({source with
+              control := .value (.payload o')
+              quantum := applyOperation (measurementOperation true)
+                source.quantum}).control =
+            .value (.payload o') := rfl
+      have hstack1 :
+          ({source with
+              control := .value (.payload o')
+              quantum := applyOperation (measurementOperation true)
+                source.quantum}).stack = [] := hs
+      cases zeroTree with
+      | terminal hz =>
+          cases oneTree with
+          | terminal ho =>
+              have hval0 : hz.value = .payload z' :=
+                (by injection hz.control_eq : _ = hz.value).symm
+              have hval1 : ho.value = .payload o' :=
+                (by injection ho.control_eq : _ = ho.value).symm
+              have hzid : z' = zeroValue := by
+                cases hc
+                rfl
+              have hoid : o' = oneValue := by
+                cases hc
+                rfl
+              have hall : ∀ o, OutcomeCompatible
+                  (ChannelTree.measurement
+                    (ChannelTree.terminal hz) (ChannelTree.terminal ho))
+                  selectors i o := by
+                intro o
+                obtain ⟨b, hb⟩ := o
+                cases b
+                · cases hb
+                  simp [OutcomeCompatible, ChannelTree.instrument]
+                  exact List.nil_prefix
+                · cases hb
+                  simp [OutcomeCompatible, ChannelTree.instrument]
+                  exact List.nil_prefix
+              rw [embed_restricted_of_all_compatible D₀ j₀ realize _ R
+                selectors i hall]
+              let μ := realizedInstrument D₀ j₀ realize
+                (ChannelTree.measurement
+                  (ChannelTree.terminal hz) (ChannelTree.terminal ho)) R
+              let ν := Qubit.measureZComp.map
+                (fun b => if b then realize oneValue else realize zeroValue)
+              refine embed_congr_of_outcome_equiv μ ν ?e ?hbranch ?hvalue
+              · exact
+                  { toFun := fun o => o.1
+                    invFun := fun b =>
+                      match b with
+                      | true => ⟨true, ⟨⟩⟩
+                      | false => ⟨false, ⟨⟩⟩
+                    left_inv := by
+                      intro o
+                      obtain ⟨b, hb⟩ := o
+                      cases b <;> (cases hb; rfl)
+                    right_inv := by
+                      intro b
+                      cases b <;> rfl }
+              · intro o
+                obtain ⟨b, hb⟩ := o
+                cases b
+                · cases hb
+                  change Qubit.measureZComp.branch false =
+                    KrausFamily.comp (KrausFamily.identity 2)
+                      (Qubit.measureZComp.branch false)
+                  simp
+                · cases hb
+                  change Qubit.measureZComp.branch true =
+                    KrausFamily.comp (KrausFamily.identity 2)
+                      (Qubit.measureZComp.branch true)
+                  simp
+              · intro o
+                obtain ⟨b, hb⟩ := o
+                cases b
+                · cases hb
+                  have hrel := R.related ⟨false, ⟨⟩⟩
+                  have hpay :
+                      ((ChannelTree.measurement
+                          (ChannelTree.terminal hz)
+                          (ChannelTree.terminal ho)).instrument.value
+                        ⟨false, ⟨⟩⟩).isTerminal.value =
+                        .payload z' := by
+                    simp [ChannelTree.instrument]
+                    exact hval0
+                  rw [hpay] at hrel
+                  exact ((ValueRel.payload_eq D₀ j₀ hrel).trans
+                    (congrArg realize hzid)).symm
+                · cases hb
+                  have hrel := R.related ⟨true, ⟨⟩⟩
+                  have hpay :
+                      ((ChannelTree.measurement
+                          (ChannelTree.terminal hz)
+                          (ChannelTree.terminal ho)).instrument.value
+                        ⟨true, ⟨⟩⟩).isTerminal.value =
+                        .payload o' := by
+                    simp [ChannelTree.instrument]
+                    exact hval1
+                  rw [hpay] at hrel
+                  exact ((ValueRel.payload_eq D₀ j₀ hrel).trans
+                    (congrArg realize hoid)).symm
+          | internal h' _ =>
+              exact False.elim
+                (ChannelInternalStep.not_value_nil h' hctrl1 hstack1)
+          | external _ h' _ =>
+              exact False.elim (ChannelExternalStep.not_value h' hctrl1)
+      | internal h' _ =>
+          exact False.elim
+            (ChannelInternalStep.not_value_nil h' hctrl0 hstack0)
+      | external _ h' _ =>
+          exact False.elim (ChannelExternalStep.not_value h' hctrl0)
+
+theorem measureZ_empty_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C) (zeroValue oneValue : C)
+    (hs : s.stack = [])
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term (.prim (.measureZ zeroValue oneValue))}
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.prim (.measureZ zeroValue oneValue)) semanticEnv) where
+  selected_result_eq_channelTree_sup_presented := by
+    intro selectors i ξ k hk
+    have hdenote :
+        interp (hardwarePrimitive D₀ j₀ realize)
+            (.prim (.measureZ zeroValue oneValue)) semanticEnv =
+          taggedEmbed (Qubit.measureZComp.map
+            (fun b => if b then realize oneValue else realize zeroValue)) := by
+      simp [hardwarePrimitive_measureZ]
+    rw [hdenote, selectPath_taggedEmbed, taggedEmbed_apply]
+    refine le_antisymm ?_ ?_
+    · apply le_sSup
+      refine ⟨1, measurementTreeAt s zeroValue oneValue hs,
+        measurementTreeAtRealization D₀ j₀ realize s zeroValue oneValue hs,
+        ?_, ?_⟩
+      · simp [measurementTreeAt_depth]
+      · rw [restrictedResult_eq_embed D₀ j₀ realize
+            (measurementTreeAt s zeroValue oneValue hs)
+            (measurementTreeAtRealization D₀ j₀ realize
+              s zeroValue oneValue hs)
+            selectors i k
+            (by simp [ResultAvailable, resultAvailableAt, measurementTreeAt]),
+          embed_restricted_of_all_compatible D₀ j₀ realize
+            (measurementTreeAt s zeroValue oneValue hs)
+            (measurementTreeAtRealization D₀ j₀ realize
+              s zeroValue oneValue hs)
+            selectors i
+            (measurementTreeAt_compatible s zeroValue oneValue hs
+              selectors i),
+          measurementTreeAt_realized_eq_measureZ]
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      exact (restrictedResult_le_embed D₀ j₀ realize tree R selectors i k
+        ).trans_eq
+        (congrArg (fun f => f k)
+          (embed_of_measureZ_tree_at D₀ j₀ realize
+            (s :=
+              {s with
+                control := .term (.prim (.measureZ zeroValue oneValue))})
+            rfl hs tree R selectors i))
+
+open Classical
+
+/-- Application-free closed terms are presented-complete at every empty
+stack, including the scaled quantum states of interior probability. -/
+theorem empty_stack_choice_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {code : Term (QubitPrimitive C)}
+    {semanticEnv : Env (HSemanticValue D₀ j₀)}
+    (hclosed : Closed code) (hnoapp : NoApp code)
+    (hc : s.control = .term code) (he : s.env = []) (hs : s.stack = [])
+    (henv : EnvRel D₀ j₀ realize s.env semanticEnv) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize s
+      (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv) := by
+  induction code generalizing s semanticEnv with
+  | var x =>
+      exact False.elim
+        ((closed_iff_forall_not_mem.mp hclosed x) (by simp [free]))
+  | app _ _ =>
+      exact False.elim hnoapp
+  | lam x body _ih =>
+      exact lam_terminal_presentedChannelTreeCompleteness D₀ j₀ realize
+        hc hs (empty_env_closed_wellScoped hclosed hc he hs) henv
+  | recLam self arg body _ih =>
+      exact recLam_terminal_presentedChannelTreeCompleteness D₀ j₀ realize
+        hc hs (empty_env_closed_wellScoped hclosed hc he hs) henv
+  | intern left right ihL ihR =>
+      have ⟨hclL, hclR⟩ := closed_intern hclosed
+      have ⟨hnaL, hnaR⟩ := hnoapp
+      have hL :=
+        ihL hclL hnaL (s := {s with control := .term left})
+          (semanticEnv := semanticEnv) rfl he hs henv
+      have hR :=
+        ihR hclR hnaR (s := {s with control := .term right})
+          (semanticEnv := semanticEnv) rfl he hs henv
+      exact PresentedChannelTreeCompleteness.congr
+        (show {s with control := .term (.intern left right)} = s from
+          ChannelConfig.ext hc.symm rfl rfl rfl)
+        rfl
+        (intern_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+          s left right semanticEnv hL hR)
+  | extern left right ihL ihR =>
+      have ⟨hclL, hclR⟩ := closed_extern hclosed
+      have ⟨hnaL, hnaR⟩ := hnoapp
+      have hL :=
+        ihL hclL hnaL (s := {s with control := .term left})
+          (semanticEnv := semanticEnv) rfl he hs henv
+      have hR :=
+        ihR hclR hnaR (s := {s with control := .term right})
+          (semanticEnv := semanticEnv) rfl he hs henv
+      exact PresentedChannelTreeCompleteness.congr
+        (show {s with control := .term (.extern left right)} = s from
+          ChannelConfig.ext hc.symm rfl rfl rfl)
+        rfl
+        (extern_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+          s left right semanticEnv hL hR)
+  | prob p left right ihL ihR =>
+      have ⟨hclL, hclR⟩ := closed_prob hclosed
+      have ⟨hnaL, hnaR⟩ := hnoapp
+      if hI : 0 ≤ p ∧ p ≤ 1 then
+        if hp0 : p = 0 then
+          subst p
+          have hR :=
+            ihR hclR hnaR (s := {s with control := .term right})
+              (semanticEnv := semanticEnv) rfl he hs henv
+          exact PresentedChannelTreeCompleteness.congr
+            (show {s with control := .term (.prob 0 left right)} = s from
+              ChannelConfig.ext hc.symm rfl rfl rfl)
+            rfl
+            (prob_zero_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+              s left right semanticEnv hR)
+        else if hp1 : p = 1 then
+          subst p
+          have hL :=
+            ihL hclL hnaL (s := {s with control := .term left})
+              (semanticEnv := semanticEnv) rfl he hs henv
+          exact PresentedChannelTreeCompleteness.congr
+            (show {s with control := .term (.prob 1 left right)} = s from
+              ChannelConfig.ext hc.symm rfl rfl rfl)
+            rfl
+            (prob_one_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+              s left right semanticEnv hL)
+        else
+          have hp0ne : p ≠ 0 := hp0
+          have hp1ne : p ≠ 1 := hp1
+          have hp₀ : 0 < p := lt_of_le_of_ne hI.1 hp0ne.symm
+          have hp₁ : p < 1 := lt_of_le_of_ne hI.2 hp1ne
+          have hL :=
+            ihL hclL hnaL
+              (s :=
+                { s with
+                  control := .term left
+                  quantum := applyOperation
+                    (sourceProbabilityOperation p hp₀.le hp₁.le)
+                    s.quantum })
+              (semanticEnv := semanticEnv) rfl he hs henv
+          have hR :=
+            ihR hclR hnaR
+              (s :=
+                { s with
+                  control := .term right
+                  quantum := applyOperation
+                    (sourceProbabilityOperation (1 - p)
+                      (sub_nonneg.mpr hp₁.le) (by linarith))
+                    s.quantum })
+              (semanticEnv := semanticEnv) rfl he hs henv
+          exact PresentedChannelTreeCompleteness.congr
+            (show {s with control := .term (.prob p left right)} = s from
+              ChannelConfig.ext hc.symm rfl rfl rfl)
+            rfl
+            (prob_empty_presented_of_presented_children D₀ j₀ realize
+              s p hp₀ hp₁ left right semanticEnv hL hR)
+      else
+        exact PresentedChannelTreeCompleteness.congr
+          (show {s with control := .term (.prob p left right)} = s from
+            ChannelConfig.ext hc.symm rfl rfl rfl)
+          rfl
+          (prob_invalid_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+            s p hI left right semanticEnv)
+  | prim p =>
+      cases p with
+      | ret value =>
+          exact return_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+            hc hs (empty_env_closed_wellScoped hclosed hc he hs) henv
+      | pauliX value =>
+          exact PresentedChannelTreeCompleteness.congr
+            (show {s with control := .term (.prim (.pauliX value))} = s from
+              ChannelConfig.ext hc.symm rfl rfl rfl)
+            rfl
+            (pauliX_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+              s value hs semanticEnv)
+      | measureZ zeroValue oneValue =>
+          exact PresentedChannelTreeCompleteness.congr
+            (show
+                {s with
+                  control :=
+                    .term (.prim (.measureZ zeroValue oneValue))} = s from
+              ChannelConfig.ext hc.symm rfl rfl rfl)
+            rfl
+            (measureZ_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+              s zeroValue oneValue hs semanticEnv)
+
+/-- Presented completeness for every syntactically closed application-free
+term at a normalized start: ordinary and recursive lambdas, internal and
+external choice, probabilistic choice, and hardware primitives. -/
+theorem closed_lambda_choice_presented_channelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (code : Term (QubitPrimitive C))
+    (hclosed : Closed code) (hnoapp : NoApp code)
+    (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig code quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv) :=
+  empty_stack_choice_presentedChannelTreeCompleteness D₀ j₀ realize
+    hclosed hnoapp rfl rfl rfl (env_nil D₀ j₀ realize semanticEnv)
+
+/-- Token adequacy for the closed lambda-and-choice fragment. -/
+theorem closed_lambda_choice_presented_token_adequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (code : Term (QubitPrimitive C))
+    (hclosed : Closed code) (hnoapp : NoApp code)
+    (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (selectors : List Bool)
+    (ξ : HSemanticValue D₀ j₀ → FiniteInstrumentComp 2 PUnit.{1})
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2))
+    (hk : ∀ d, k d = (ξ d).satisfiedTTTheory resultCode)
+    (i : ℕ) (token : TTObservationToken 2) :
+    token ∈ HardwareAdequacy.selectPath selectors
+        (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv) i k ↔
+      ∃ fuel, ∃ (tree : ChannelTree C
+          (initialChannelConfig code quantum))
+          (R : ChannelTreeRealization D₀ j₀ realize tree),
+        tree.depth ≤ fuel ∧
+        ResultAvailable tree selectors i ∧
+          TTObservationToken.Holds resultCode token
+            ((restrictedInstrument D₀ j₀ realize tree R selectors i).bind
+              ξ) :=
+  presented_channel_tree_token_adequacy_iff D₀ j₀ realize
+    (initialChannelConfig code quantum)
+    (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv)
+    (closed_lambda_choice_presented_channelTreeCompleteness D₀ j₀ realize
+      code hclosed hnoapp quantum semanticEnv)
+    selectors ξ k hk i token
+
 open Classical
 
 def runtimeValueBodySize {C : Type} : RuntimeValue C → ℕ
@@ -9389,25 +10860,26 @@ def runtimeValueBodySize {C : Type} : RuntimeValue C → ℕ
   | .closure _ body _ => termSize body
   | .recClosure _ _ body _ => termSize body
 
-def valueProducedSize {C : Type} (value : RuntimeValue C)
+noncomputable def valueProducedSize {C : Type} (value : RuntimeValue C)
     (runtimeEnv : RuntimeEnv C) : ℕ :=
   if ∃ x, RuntimeEnv.lookup x runtimeEnv = some value then
     0
   else
     runtimeValueBodySize value
 
-def envCharge {C : Type} : RuntimeEnv C → ℕ
+noncomputable def envCharge {C : Type} : RuntimeEnv C → ℕ
   | [] => 0
   | (_, value) :: rest => valueProducedSize value rest + envCharge rest
 
-def stackCharge {C : Type} (runtimeEnv : RuntimeEnv C) : EvalStack C → ℕ
+noncomputable def stackCharge {C : Type} (runtimeEnv : RuntimeEnv C) :
+    EvalStack C → ℕ
   | [] => 0
   | .argument arg _ :: rest =>
       termSize arg + stackCharge runtimeEnv rest
   | .function fn :: rest =>
       valueProducedSize fn runtimeEnv + stackCharge runtimeEnv rest
 
-def controlCharge {C : Type} (s : ChannelConfig C) : ℕ :=
+noncomputable def controlCharge {C : Type} (s : ChannelConfig C) : ℕ :=
   match s.control with
   | .term code => termSize code
   | .value value => valueProducedSize value s.env
@@ -9417,7 +10889,7 @@ def controlPhase {C : Type} (s : ChannelConfig C) : ℕ :=
   | .term _ => 0
   | .value _ => 1
 
-def configMeasure {C : Type} (s : ChannelConfig C) : ℕ :=
+noncomputable def configMeasure {C : Type} (s : ChannelConfig C) : ℕ :=
   2 * (controlCharge s + stackCharge s.env s.stack + envCharge s.env) +
     controlPhase s
 

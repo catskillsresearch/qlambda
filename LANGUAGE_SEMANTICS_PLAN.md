@@ -43,7 +43,9 @@ Remaining boundary:
   compositional internal and external choice, and probabilistic endpoints;
   interior probability is complete at presented continuations by physical
   weighted aggregation. Application and recursion have identity-step and
-  Scott-unfolding scaffolding; a full stacked-application fundamental lemma
+  Scott-unfolding scaffolding. Closed application-free terms have
+  unconditional presented channel-tree completeness and token adequacy at a
+  normalized start; a full stacked-application fundamental lemma
   remains. Recursive denotations are suprema of finite `iterateBot`
   unfoldings, not single finite embeddings. A formal counterexample rules
   out deriving state-independent TT completeness from a single arbitrary

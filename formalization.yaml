@@ -105,7 +105,9 @@ status:
     endpoints; interior probability is complete at presented continuations
     by physical aggregation. Unique-successor identity CEK steps transfer
     completeness, and recursive denotations are Scott suprema of finite
-    unfoldings. A full stacked-application fundamental lemma remains. The
+    unfoldings. Closed application-free terms have unconditional presented
+    channel-tree completeness and token adequacy at a normalized start. A
+    full stacked-application fundamental lemma remains. The
     rank-one Choi-ray obstruction for PhysicalBasisApproximant is formalized
     for register dimension at least two. Nothing in the compared
     statements is imported from a prior Palomar entry.

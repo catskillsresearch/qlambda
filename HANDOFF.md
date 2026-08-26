@@ -87,9 +87,14 @@ identity CEK steps (application, argument evaluation, closure beta, recursive
 beta, lambda, recursive abstraction) transfer completeness, and selector paths
 commute with `semanticBind`, `applyContinuation`, and `semanticUnfold`.
 Recursive denotations are identified with the supremum of finite `iterateBot`
-unfoldings. Token adequacy follows for every closed term whose completeness is
-already known. A full induction over arbitrary stacked applications remains
-the remaining fundamental-lemma obligation.
+unfoldings. Every syntactically closed application-free term (lambdas,
+recursive abstractions, internal/external/probabilistic choice, and hardware
+primitives) has unconditional `PresentedChannelTreeCompleteness` at a
+normalized start, and therefore presented token adequacy, by empty-stack
+induction through scaled interior-probability children. Token adequacy also
+follows for every other closed term whose completeness is already known. A
+full induction over arbitrary stacked applications remains the remaining
+fundamental-lemma obligation.
 
 The rank-one Choi-ray obstruction is formalized in
 `QLambda/ChoiRayObstruction.lean`: for register dimension `2 ≤ n`, mixing
