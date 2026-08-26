@@ -1690,6 +1690,59 @@ theorem terminal_channelTreePointwiseSound {C : Type}
     HardwareAdequacy.selectPath_apply_encode]
   rfl
 
+/-- A well-scoped related terminal tree realizes the denotation exactly,
+not merely as an upper bound. -/
+theorem terminal_restrictedResult_eq {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {s : ChannelConfig C} (hterminal : ChannelTerminal s)
+    (hscoped : ChannelConfig.WellScoped s)
+    {answer : HSemanticComp D₀ j₀}
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer)
+    (R : ChannelTreeRealization D₀ j₀ realize
+      (ChannelTree.terminal hterminal))
+    (selectors : List Bool) (i : ℕ)
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)) :
+    restrictedResult D₀ j₀ realize
+        (ChannelTree.terminal hterminal) R selectors i k =
+      HardwareAdequacy.selectPath selectors answer i k := by
+  obtain ⟨d, hanswer, hrealized⟩ :=
+    terminal_realized_eq_unit D₀ j₀ hterminal hscoped hrel R
+  have hall : ∀ o, OutcomeCompatible
+      (ChannelTree.terminal hterminal) selectors i o := by
+    intro o
+    rcases o with ⟨⟩
+    exact List.nil_prefix
+  rw [restrictedResult_eq_embed D₀ j₀ realize
+    (ChannelTree.terminal hterminal) R selectors i k (by
+      simp [ResultAvailable, resultAvailableAt])]
+  rw [congrArg (fun f : ScottMap
+      (ScottMap (HSemanticValue D₀ j₀) (TTResult 2)) (TTResult 2) => f k)
+    (embed_restricted_of_all_compatible D₀ j₀ realize
+      (ChannelTree.terminal hterminal) R selectors i hall)]
+  rw [hrealized, embed_unit, hanswer,
+    HardwareAdequacy.selectPath_apply_encode]
+  rfl
+
+/-- Canonical realization of a related terminal value. -/
+noncomputable def terminalValueRealization {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {s : ChannelConfig C} (hterminal : ChannelTerminal s)
+    {d : HSemanticValue D₀ j₀}
+    (hd : ValueRel D₀ j₀ realize hterminal.value d) :
+    ChannelTreeRealization D₀ j₀ realize
+      (ChannelTree.terminal hterminal) where
+  value := fun _ => d
+  related := by
+    intro o
+    rcases o with ⟨⟩
+    exact hd
+
 theorem returnTree_branch {C : Type} (value : C)
     (quantum : NormalizedDensity 2)
     (o : (returnTree value quantum).instrument.Outcome) :
@@ -8121,9 +8174,521 @@ theorem valueRel_recClosure_eq_iSup_fuel {C : Type}
         recLambdaValue_eq_iSup_recClosureFuelValue D₀ j₀ realize
           self arg body semanticEnv⟩
 
+/-- Selector paths are monotone in the returned value. -/
+theorem selectPath_semanticUnit_monotone
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {d d' : HSemanticValue D₀ j₀} (hle : d ≤ d')
+    (selectors : List Bool) (i : ℕ)
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)) :
+    HardwareAdequacy.selectPath selectors
+        (semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) d) i k ≤
+      HardwareAdequacy.selectPath selectors
+        (semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) d') i k := by
+  rw [HardwareAdequacy.selectPath_apply_encode,
+    HardwareAdequacy.selectPath_apply_encode]
+  exact
+    (semanticUnit (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀)).monotone hle
+      (HardwareAdequacy.encodePath selectors i) k
+
+/-- The zero unfolding contributes the bottom observation. -/
+theorem selectPath_recClosureFuelValue_zero {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (self arg : Name) (body : Term (QubitPrimitive C))
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (selectors : List Bool) (i : ℕ)
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)) :
+    HardwareAdequacy.selectPath selectors
+        (semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀)
+          (recClosureFuelValue D₀ j₀ realize self arg body
+            semanticEnv 0)) i k =
+      k ⊥ := by
+  rw [recClosureFuelValue_zero, HardwareAdequacy.selectPath_apply_encode]
+  rfl
+
+/-- Each finite unfolding is below the recursive value, after any
+selector path. -/
+theorem selectPath_recClosureFuelValue_le_recLambdaValue {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (self arg : Name) (body : Term (QubitPrimitive C))
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) (fuel : ℕ)
+    (selectors : List Bool) (i : ℕ)
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)) :
+    HardwareAdequacy.selectPath selectors
+        (semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀)
+          (recClosureFuelValue D₀ j₀ realize self arg body
+            semanticEnv fuel)) i k ≤
+      HardwareAdequacy.selectPath selectors
+        (semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀)
+          (recLambdaValue (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) self arg
+            (interp (hardwarePrimitive D₀ j₀ realize) body)
+            semanticEnv)) i k :=
+  selectPath_semanticUnit_monotone D₀ j₀
+    (recClosureFuelValue_le_recLambdaValue D₀ j₀ realize
+      self arg body semanticEnv fuel)
+    selectors i k
+
+/-- The body at a finite `self` unfolding is below the operational
+`recBeta` body, which binds the full recursive value. -/
+theorem interp_body_fuel_le_recBeta {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (self arg : Name) (body : Term (QubitPrimitive C))
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (fuel : ℕ) (d : HSemanticValue D₀ j₀) :
+    interp (hardwarePrimitive D₀ j₀ realize) body
+        (envUpdate (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) arg
+          (envUpdate (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) self
+            (semanticEnv,
+              recClosureFuelValue D₀ j₀ realize self arg body
+                semanticEnv fuel),
+            d)) ≤
+      interp (hardwarePrimitive D₀ j₀ realize) body
+        (envUpdate (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) arg
+          (envUpdate (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) self
+            (semanticEnv,
+              recLambdaValue (Q := TTExternalContinuationPower 2)
+                (D₀ := D₀) (j₀ := j₀) self arg
+                (interp (hardwarePrimitive D₀ j₀ realize) body)
+                semanticEnv),
+            d)) := by
+  refine (interp (hardwarePrimitive D₀ j₀ realize) body).monotone ?_
+  refine (envUpdate (Q := TTExternalContinuationPower 2)
+      (D₀ := D₀) (j₀ := j₀) arg).monotone ?_
+  refine Prod.mk_le_mk.mpr ⟨?_, le_rfl⟩
+  exact (envUpdate (Q := TTExternalContinuationPower 2)
+      (D₀ := D₀) (j₀ := j₀) self).monotone
+    (Prod.mk_le_mk.mpr ⟨le_rfl,
+      recClosureFuelValue_le_recLambdaValue D₀ j₀ realize
+        self arg body semanticEnv fuel⟩)
+
+/-- Applying the successor unfolding is below the operational `recBeta`
+denotation. -/
+theorem applyComp_recClosureFuelValue_succ_le_recBeta {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (self x : Name) (body : Term (QubitPrimitive C))
+    (closureEnv : RuntimeEnv C)
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (_henv : EnvRel D₀ j₀ realize closureEnv semanticEnv)
+    (arg : RuntimeValue C) (d : HSemanticValue D₀ j₀)
+    (_harg : ValueRel D₀ j₀ realize arg d)
+    (fuel : ℕ) :
+    applyComp (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀)
+        ((semanticUnit (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀)).comp
+          (ScottMap.const
+            (recClosureFuelValue D₀ j₀ realize self x body
+              semanticEnv (fuel + 1))))
+        ((semanticUnit (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀)).comp
+          (ScottMap.const d))
+        semanticEnv ≤
+      interp (hardwarePrimitive D₀ j₀ realize) body
+        (envUpdate (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) x
+          (envUpdate (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) self
+            (semanticEnv,
+              recLambdaValue (Q := TTExternalContinuationPower 2)
+                (D₀ := D₀) (j₀ := j₀) self x
+                (interp (hardwarePrimitive D₀ j₀ realize) body)
+                semanticEnv),
+            d)) := by
+  rw [applyComp_recClosureFuelValue_succ]
+  exact interp_body_fuel_le_recBeta D₀ j₀ realize self x body
+    semanticEnv fuel d
+
+/-- Fuel induction step: a lower bound for the body at fuel `n` is a
+lower bound for applying the successor unfolding. -/
+theorem selectPath_applyComp_recClosureFuelValue_succ_le_of_body {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (self arg : Name) (body : Term (QubitPrimitive C))
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (fuel : ℕ) (d : HSemanticValue D₀ j₀)
+    (selectors : List Bool) (i : ℕ)
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2))
+    {T : TTResult 2}
+    (hbody :
+      HardwareAdequacy.selectPath selectors
+        (interp (hardwarePrimitive D₀ j₀ realize) body
+          (envUpdate (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) arg
+            (envUpdate (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) self
+              (semanticEnv,
+                recClosureFuelValue D₀ j₀ realize self arg body
+                  semanticEnv fuel),
+              d))) i k ≤ T) :
+    HardwareAdequacy.selectPath selectors
+        (applyComp (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀)
+          ((semanticUnit (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀)).comp
+            (ScottMap.const
+              (recClosureFuelValue D₀ j₀ realize self arg body
+                semanticEnv (fuel + 1))))
+          ((semanticUnit (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀)).comp
+            (ScottMap.const d))
+          semanticEnv) i k ≤ T := by
+  rwa [applyComp_recClosureFuelValue_succ]
+
+/-- Binding `self` to the current fuel unfolding and `arg` to a related
+value preserves `FuelEnvRel`. -/
+theorem recClosure_unfold_env_fuel {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {self arg : Name} {body : Term (QubitPrimitive C)}
+    {runtimeEnv : RuntimeEnv C}
+    {semanticEnv : Env (HSemanticValue D₀ j₀)}
+    {value : RuntimeValue C} {d : HSemanticValue D₀ j₀}
+    {fuel : ℕ}
+    (henv : FuelEnvRel D₀ j₀ realize fuel runtimeEnv semanticEnv)
+    (hvalue : FuelValueRel D₀ j₀ realize fuel value d) :
+    FuelEnvRel D₀ j₀ realize fuel
+      (RuntimeEnv.bind arg value
+        (RuntimeEnv.bind self
+          (.recClosure self arg body runtimeEnv) runtimeEnv))
+      (envUpdate (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀) arg
+        (envUpdate (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) self
+          (semanticEnv,
+            recClosureFuelValue D₀ j₀ realize self arg body
+              semanticEnv fuel),
+          d)) := by
+  intro y w hw
+  by_cases hyarg : y = arg
+  · subst y
+    simp [RuntimeEnv.bind, RuntimeEnv.lookup] at hw
+    cases hw
+    simpa [envUpdate_apply] using hvalue
+  · by_cases hyself : y = self
+    · subst y
+      simp [RuntimeEnv.bind, RuntimeEnv.lookup, hyarg] at hw
+      cases hw
+      simpa [envUpdate_apply, envUpdate_other hyarg] using
+        FuelValueRel.recClosure (D₀ := D₀) (j₀ := j₀) (realize := realize)
+          fuel self arg body runtimeEnv semanticEnv henv
+    · simp [RuntimeEnv.bind, RuntimeEnv.lookup, hyarg, hyself] at hw
+      have hy : y ≠ arg := hyarg
+      have hy' : y ≠ self := hyself
+      simpa [envUpdate_apply, envUpdate_other hy, envUpdate_other hy'] using
+        henv y w hw
+
+/-- A related empty-stack recursive closure denotes the unit of its
+Scott value. -/
+theorem recClosure_terminal_related {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {self arg : Name}
+    {body : Term (QubitPrimitive C)} {closureEnv : RuntimeEnv C}
+    (hc : s.control = .value (.recClosure self arg body closureEnv))
+    (hstack : s.stack = [])
+    {semanticEnv : Env (HSemanticValue D₀ j₀)}
+    (henv : EnvRel D₀ j₀ realize closureEnv semanticEnv) :
+    ChannelConfigRel D₀ j₀ realize s
+      (semanticUnit (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀)
+        (recLambdaValue (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) self arg
+          (interp (hardwarePrimitive D₀ j₀ realize) body)
+          semanticEnv)) := by
+  refine ⟨semanticUnit (Q := TTExternalContinuationPower 2)
+      (D₀ := D₀) (j₀ := j₀)
+      (recLambdaValue (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀) self arg
+        (interp (hardwarePrimitive D₀ j₀ realize) body) semanticEnv),
+    id, ?_, ?_, rfl⟩
+  · exact hc.symm ▸ ControlRel.value _ _ s.env
+      (recClosure_created D₀ j₀ realize self arg body
+        closureEnv semanticEnv henv)
+  · rw [hstack]
+    exact StackRel.nil
+
+/-- Operational fuel induction at a related empty-stack recursive closure:
+each `iterateBot` stage is below the unique terminal tree, so the Scott
+fixed point is presented-complete. -/
+theorem recClosure_terminal_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {self arg : Name}
+    {body : Term (QubitPrimitive C)} {closureEnv : RuntimeEnv C}
+    (hc : s.control = .value (.recClosure self arg body closureEnv))
+    (hstack : s.stack = [])
+    (hscoped : ChannelConfig.WellScoped s)
+    {semanticEnv : Env (HSemanticValue D₀ j₀)}
+    (henv : EnvRel D₀ j₀ realize closureEnv semanticEnv) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize s
+      (semanticUnit (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀)
+        (recLambdaValue (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) self arg
+          (interp (hardwarePrimitive D₀ j₀ realize) body)
+          semanticEnv)) := by
+  have hrel := recClosure_terminal_related D₀ j₀ realize hc hstack henv
+  have hterminal : ChannelTerminal s := ⟨.recClosure self arg body closureEnv, hc, hstack⟩
+  have hd : ValueRel D₀ j₀ realize hterminal.value
+      (recLambdaValue (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀) self arg
+        (interp (hardwarePrimitive D₀ j₀ realize) body) semanticEnv) := by
+    have hv : hterminal.value =
+        .recClosure self arg body closureEnv := by
+      have hctl := hterminal.control_eq
+      rw [hc] at hctl
+      injection hctl with h
+      exact h.symm
+    rw [hv]
+    exact recClosure_created D₀ j₀ realize self arg body
+      closureEnv semanticEnv henv
+  let R := terminalValueRealization D₀ j₀ hterminal hd
+  refine presented_recLambdaValue_of_iterateBot D₀ j₀ realize s
+    self arg (interp (hardwarePrimitive D₀ j₀ realize) body) semanticEnv
+    ?hsound ?hlower
+  · intro selectors i ξ k hk
+    apply sSup_le
+    rintro T ⟨_, tree, treeR, _, rfl⟩
+    cases tree with
+    | terminal hterm =>
+        exact (terminal_channelTreePointwiseSound D₀ j₀ hterm hscoped
+          hrel treeR).restricted_le_selected selectors i k
+    | internal hstep next =>
+        exact False.elim
+          (ChannelInternalStep.not_value_nil hstep hc hstack)
+    | external _ hex _ =>
+        exact False.elim (by cases hex <;> cases hc)
+    | probability _ _ _ _ =>
+        cases hc
+    | probabilityZero _ =>
+        cases hc
+    | probabilityOne _ =>
+        cases hc
+    | measurement _ _ =>
+        cases hc
+  · intro fuel selectors i ξ k hk
+    refine (selectPath_recClosureFuelValue_le_recLambdaValue D₀ j₀
+      realize self arg body semanticEnv fuel selectors i k).trans ?_
+    have heq :=
+      terminal_restrictedResult_eq D₀ j₀ hterminal hscoped hrel R
+        selectors i k
+    rw [← heq]
+    apply le_sSup
+    exact ⟨0, ChannelTree.terminal hterminal, R, le_rfl, rfl⟩
+
+/-- Recursive abstraction at an empty stack is the identity wrap of the
+related recursive closure, so operational fuel induction lifts through
+`recLam`. -/
+theorem recLam_terminal_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {self arg : Name}
+    {body : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.recLam self arg body))
+    (hstack : s.stack = [])
+    (hscoped : ChannelConfig.WellScoped s)
+    {semanticEnv : Env (HSemanticValue D₀ j₀)}
+    (henv : EnvRel D₀ j₀ realize s.env semanticEnv) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize s
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.recLam self arg body) semanticEnv) := by
+  have hvalueScoped : RuntimeValue.WellScoped
+      (.recClosure self arg body s.env) := by
+    have hctl := hscoped.left
+    rw [hc] at hctl
+    exact RuntimeValue.WellScoped.recClosure self arg body s.env
+      hctl.left fun y hy => hctl.right y hy
+  have henvScoped : RuntimeEnv.WellScoped s.env := by
+    have hctl := hscoped.left
+    rw [hc] at hctl
+    exact hctl.left
+  have hchild : PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .value (.recClosure self arg body s.env)}
+      (semanticUnit (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀)
+        (recLambdaValue (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) self arg
+          (interp (hardwarePrimitive D₀ j₀ realize) body)
+          semanticEnv)) :=
+    recClosure_terminal_presentedChannelTreeCompleteness D₀ j₀ realize
+      (s := {s with control := .value (.recClosure self arg body s.env)})
+      rfl hstack
+      ⟨⟨henvScoped, hvalueScoped⟩, hscoped.right⟩
+      henv
+  let t : ChannelConfig C :=
+    {s with control := .value (.recClosure self arg body s.env)}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with control := .term (.recLam self arg body)} t :=
+      ChannelInternalStep.recursive (s := s) (self := self) (arg := arg)
+        (body := body)
+    have hs : s = {s with control := .term (.recLam self arg body)} :=
+      ChannelConfig.ext hc rfl rfl rfl
+    exact hs.symm ▸ happ
+  rw [interp_recLam_apply]
+  exact identity_step_presentedChannelTreeCompleteness D₀ j₀ realize
+    hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelInternalStep.eq_of_recursive h' hc) hchild
+
+/-- A syntactically closed `recLam` at a normalized start is
+presented-complete: the unique empty-stack unfolding is the Scott
+fixed point of its finite `iterateBot` stages. -/
+theorem recLam_initial_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (self arg : Name) (body : Term (QubitPrimitive C))
+    (hclosed : Closed (.recLam self arg body))
+    (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig (.recLam self arg body) quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.recLam self arg body) semanticEnv) :=
+  recLam_terminal_presentedChannelTreeCompleteness D₀ j₀ realize
+    rfl rfl (initialChannelConfig_wellScoped hclosed quantum)
+    (env_nil D₀ j₀ realize semanticEnv)
+
+/-- Packaged presented completeness for a closed initial `recLam`. -/
+theorem recLam_initial_presentedChannelConfigCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (self arg : Name) (body : Term (QubitPrimitive C))
+    (hclosed : Closed (.recLam self arg body))
+    (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize
+      (initialChannelConfig (.recLam self arg body) quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.recLam self arg body) semanticEnv) where
+  related := initialChannelConfig_related D₀ j₀ realize
+    (.recLam self arg body) quantum semanticEnv
+  complete := recLam_initial_presentedChannelTreeCompleteness D₀ j₀
+    realize self arg body hclosed quantum semanticEnv
+
+/-- Presented completeness is token adequacy at finitely represented
+final continuations. -/
+theorem presented_channel_tree_token_adequacy_iff {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (start : ChannelConfig C) (denotation : HSemanticComp D₀ j₀)
+    (hcomplete : PresentedChannelTreeCompleteness D₀ j₀ realize
+      start denotation)
+    (selectors : List Bool)
+    (ξ : HSemanticValue D₀ j₀ → FiniteInstrumentComp 2 PUnit.{1})
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2))
+    (hk : ∀ d, k d = (ξ d).satisfiedTTTheory resultCode)
+    (i : ℕ) (token : TTObservationToken 2) :
+    token ∈ HardwareAdequacy.selectPath selectors denotation i k ↔
+      ∃ fuel, ∃ (tree : ChannelTree C start)
+          (R : ChannelTreeRealization D₀ j₀ realize tree),
+        tree.depth ≤ fuel ∧
+        ResultAvailable tree selectors i ∧
+          TTObservationToken.Holds resultCode token
+            ((restrictedInstrument D₀ j₀ realize tree R selectors i).bind
+              ξ) := by
+  classical
+  rw [hcomplete.selected_result_eq_channelTree_sup_presented
+    selectors i ξ k hk, RoundedTheory.mem_sSup]
+  constructor
+  · rintro ⟨_, ⟨fuel, tree, R, hdepth, rfl⟩, htoken⟩
+    by_cases havail : ResultAvailable tree selectors i
+    · refine ⟨fuel, tree, R, hdepth, havail, ?_⟩
+      apply (token_of_restrictedInstrument D₀ j₀ realize tree R selectors i
+        ξ k (fun o => hk _) token).1
+      rw [restrictedResult_eq_embed D₀ j₀ realize tree R selectors i k havail]
+        at htoken
+      exact htoken
+    · rw [restrictedResult_eq_bot D₀ j₀ realize tree R selectors i k havail]
+        at htoken
+      have hfalse : False := by
+        rw [← sSup_empty, RoundedTheory.mem_sSup] at htoken
+        simp at htoken
+      exact hfalse.elim
+  · rintro ⟨fuel, tree, R, hdepth, havail, htoken⟩
+    refine ⟨restrictedResult D₀ j₀ realize tree R selectors i k, ?_, ?_⟩
+    · exact ⟨fuel, tree, R, hdepth, rfl⟩
+    · rw [restrictedResult_eq_embed D₀ j₀ realize tree R selectors i k havail]
+      exact (token_of_restrictedInstrument D₀ j₀ realize tree R selectors i
+          ξ k (fun o => hk _) token).2 htoken
+
+/-- Closed `recLam` tokens are finite channel-tree tokens: each
+`iterateBot` stage is below the unique empty-stack tree. -/
+theorem recLam_initial_presented_token_adequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (self arg : Name) (body : Term (QubitPrimitive C))
+    (hclosed : Closed (.recLam self arg body))
+    (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (selectors : List Bool)
+    (ξ : HSemanticValue D₀ j₀ → FiniteInstrumentComp 2 PUnit.{1})
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2))
+    (hk : ∀ d, k d = (ξ d).satisfiedTTTheory resultCode)
+    (i : ℕ) (token : TTObservationToken 2) :
+    token ∈ HardwareAdequacy.selectPath selectors
+        (interp (hardwarePrimitive D₀ j₀ realize)
+          (.recLam self arg body) semanticEnv) i k ↔
+      ∃ fuel, ∃ (tree : ChannelTree C
+          (initialChannelConfig (.recLam self arg body) quantum))
+          (R : ChannelTreeRealization D₀ j₀ realize tree),
+        tree.depth ≤ fuel ∧
+        ResultAvailable tree selectors i ∧
+          TTObservationToken.Holds resultCode token
+            ((restrictedInstrument D₀ j₀ realize tree R selectors i).bind
+              ξ) :=
+  presented_channel_tree_token_adequacy_iff D₀ j₀ realize
+    (initialChannelConfig (.recLam self arg body) quantum)
+    (interp (hardwarePrimitive D₀ j₀ realize)
+      (.recLam self arg body) semanticEnv)
+    (recLam_initial_presentedChannelTreeCompleteness D₀ j₀ realize
+      self arg body hclosed quantum semanticEnv)
+    selectors ξ k hk i token
+
 /-- Token adequacy for every closed term whose channel-tree completeness
-is already known, including those assembled by the application identity
-step and by finite recursive unfoldings. -/
+theorem is already proved. -/
 theorem closed_term_channel_tree_token_adequacy {C : Type}
     (D₀ : QDomain.{0})
     (j₀ : IsContinuousLatticeProjection D₀.carrier
