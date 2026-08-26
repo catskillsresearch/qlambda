@@ -5431,6 +5431,62 @@ theorem path_channel_config_externalSelect {C : Type}
       exact selectPath_extern_coordinate D₀ j₀ realize left right semanticEnv
         selected childCoordinate currentK
 
+theorem path_channel_config_probabilityZero {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {s : ChannelConfig C} {left right : Term (QubitPrimitive C)}
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hrel : PathChannelConfigRel D₀ j₀ realize
+      {s with control := .term (.prob 0 left right)}
+      active observedStack finalK result) :
+    PathChannelConfigRel D₀ j₀ realize
+      {s with
+        control := .term right
+        quantum := applyOperation
+          (sourceProbabilityOperation 1 zero_le_one (le_refl 1)) s.quantum}
+      active observedStack finalK result := by
+  rcases hrel with ⟨herase, current, currentK, hcontrol, hstack, hresult⟩
+  cases hcontrol with
+  | term _ _ semanticEnv henv =>
+      refine ⟨herase,
+        interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv,
+        currentK, ControlRel.term right s.env semanticEnv henv, hstack, ?_⟩
+      rw [hresult]
+      exact selectPath_prob_zero D₀ j₀ realize left right semanticEnv
+        [] active currentK
+
+theorem path_channel_config_probabilityOne {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {s : ChannelConfig C} {left right : Term (QubitPrimitive C)}
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hrel : PathChannelConfigRel D₀ j₀ realize
+      {s with control := .term (.prob 1 left right)}
+      active observedStack finalK result) :
+    PathChannelConfigRel D₀ j₀ realize
+      {s with
+        control := .term left
+        quantum := applyOperation
+          (sourceProbabilityOperation 1 zero_le_one (le_refl 1)) s.quantum}
+      active observedStack finalK result := by
+  rcases hrel with ⟨herase, current, currentK, hcontrol, hstack, hresult⟩
+  cases hcontrol with
+  | term _ _ semanticEnv henv =>
+      refine ⟨herase,
+        interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv,
+        currentK, ControlRel.term left s.env semanticEnv henv, hstack, ?_⟩
+      rw [hresult]
+      exact selectPath_prob_one D₀ j₀ realize left right semanticEnv
+        [] active currentK
+
 /-- Returning a function restores the coordinate saved by its argument
 frame and installs the corresponding function frame at that coordinate. -/
 theorem path_channel_config_evaluateArgument {C : Type}
@@ -6877,6 +6933,126 @@ theorem identity_step_pathChannelTreeTokenAdequacy {C : Type}
           cases hstep
       | measurement _ _ =>
           cases hstep
+
+/-- Token adequacy transfers backwards across one selected external edge.
+Only the active coordinate descends into the selected child; coordinates
+saved in pending frames remain unchanged. -/
+theorem external_step_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s t : ChannelConfig C} {selected : Bool}
+    {left right : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.extern left right))
+    (hstep : ChannelExternalStep s selected t)
+    {childActive : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hsource : PathChannelConfigRel D₀ j₀ realize s
+      (HardwareAdequacy.branchCoordinate selected childActive)
+      observedStack finalK result)
+    (hchild : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      t childActive observedStack finalK result) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize s
+      (HardwareAdequacy.branchCoordinate selected childActive)
+      observedStack finalK result where
+  related := hsource
+  token_iff := by
+    have ht :
+        t = {s with
+          control := .term (if selected then right else left)} :=
+      ChannelExternalStep.eq_of_extern hstep hc
+    subst t
+    intro ξ hk token
+    rw [hchild.token_iff ξ hk token]
+    constructor
+    · rintro ⟨tree, R, havail, htoken⟩
+      let sourceTree := ChannelTree.external selected hstep tree
+      let sourceR :=
+        wrapExternalRealization D₀ j₀ realize selected hstep tree R
+      refine ⟨sourceTree, sourceR, ?_, ?_⟩
+      · cases selected
+        · change ∃ rest,
+            HardwareAdequacy.coordinatePath
+                (HardwareAdequacy.branchCoordinate false childActive) =
+              false :: rest ∧
+              resultAvailableAt tree rest
+          exact ⟨HardwareAdequacy.coordinatePath childActive, by simp, havail⟩
+        · change ∃ rest,
+            HardwareAdequacy.coordinatePath
+                (HardwareAdequacy.branchCoordinate true childActive) =
+              true :: rest ∧
+              resultAvailableAt tree rest
+          exact ⟨HardwareAdequacy.coordinatePath childActive, by simp, havail⟩
+      · apply (token_of_restrictedInstrument D₀ j₀ realize
+          sourceTree sourceR []
+          (HardwareAdequacy.branchCoordinate selected childActive)
+          ξ finalK (fun o => hk _) token).mp
+        rw [embed_restricted_external_coordinate D₀ j₀ realize
+          selected hstep tree sourceR childActive]
+        exact
+          (token_of_restrictedInstrument D₀ j₀ realize
+            tree
+            (externalChildRealization D₀ j₀ realize selected hstep tree sourceR)
+            [] childActive ξ finalK (fun o => hk _) token).mpr htoken
+    · rintro ⟨tree, R, havail, htoken⟩
+      cases tree with
+      | terminal hterminal =>
+          have := hterminal.control_eq.symm.trans hc
+          cases this
+      | internal hinternal next =>
+          exact False.elim (by cases hinternal <;> cases hc)
+      | @external _ t' selected' hstep' next =>
+          have hselected : selected' = selected := by
+            cases selected' <;> cases selected
+            · rfl
+            · exfalso
+              rcases havail with ⟨rest, hpath, _⟩
+              rw [HardwareAdequacy.coordinatePath_right] at hpath
+              cases hpath
+            · exfalso
+              rcases havail with ⟨rest, hpath, _⟩
+              rw [HardwareAdequacy.coordinatePath_left] at hpath
+              cases hpath
+            · rfl
+          subst selected'
+          have ht' :
+              t' = {s with
+                control := .term (if selected then right else left)} :=
+            ChannelExternalStep.eq_of_extern hstep' hc
+          subst t'
+          let childR :=
+            externalChildRealization D₀ j₀ realize selected hstep' next R
+          refine ⟨next, childR, ?_, ?_⟩
+          · rcases havail with ⟨rest, hpath, havailChild⟩
+            cases selected
+            · rw [HardwareAdequacy.coordinatePath_left] at hpath
+              injection hpath with hrest
+              subst rest
+              exact havailChild
+            · rw [HardwareAdequacy.coordinatePath_right] at hpath
+              injection hpath with hrest
+              subst rest
+              exact havailChild
+          · apply (token_of_restrictedInstrument D₀ j₀ realize
+              next childR [] childActive ξ finalK
+              (fun o => hk _) token).mp
+            rw [← embed_restricted_external_coordinate D₀ j₀ realize
+              selected hstep' next R childActive]
+            exact
+              (token_of_restrictedInstrument D₀ j₀ realize
+                (ChannelTree.external selected hstep' next) R []
+                (HardwareAdequacy.branchCoordinate selected childActive)
+                ξ finalK (fun o => hk _) token).mpr htoken
+      | probability _ _ _ _ =>
+          cases hc
+      | probabilityZero _ =>
+          cases hc
+      | probabilityOne _ =>
+          cases hc
+      | measurement _ _ =>
+          cases hc
 
 end HardwareChannelSemantics
 end QLambda
