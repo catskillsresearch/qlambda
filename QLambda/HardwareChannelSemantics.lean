@@ -4005,6 +4005,64 @@ noncomputable def measurementOneRealization {C : Type}
     intro o
     exact R.related ⟨true, o⟩
 
+/-- A canonical semantic representative for any channel leaf for which a
+logical-relation witness exists.  This is used to combine independently
+chosen realizations of the two measurement children. -/
+noncomputable def relatedLeafValue {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (leaf : ChannelLeaf C) : HSemanticValue D₀ j₀ :=
+  by
+    classical
+    exact if h : ∃ d, ValueRel D₀ j₀ realize leaf.isTerminal.value d then
+      Classical.choose h
+    else
+      ⊥
+
+theorem relatedLeafValue_related {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (leaf : ChannelLeaf C)
+    (h : ∃ d, ValueRel D₀ j₀ realize leaf.isTerminal.value d) :
+    ValueRel D₀ j₀ realize leaf.isTerminal.value
+      (relatedLeafValue D₀ j₀ realize leaf) := by
+  rw [relatedLeafValue, dif_pos h]
+  exact Classical.choose_spec h
+
+/-- Reassemble independently realized measurement children.  Unlike source
+probability, measurement does not record a branch tag in `ChannelLeaf`, so a
+canonical representative of the leaf's logical value is used. -/
+noncomputable def wrapMeasurementRealization {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {zeroValue oneValue : C}
+    (zero : ChannelTree C
+      { s with
+        control := .value (.payload zeroValue)
+        quantum := applyOperation (measurementOperation false) s.quantum })
+    (one : ChannelTree C
+      { s with
+        control := .value (.payload oneValue)
+        quantum := applyOperation (measurementOperation true) s.quantum })
+    (zeroR : ChannelTreeRealization D₀ j₀ realize zero)
+    (oneR : ChannelTreeRealization D₀ j₀ realize one) :
+    ChannelTreeRealization D₀ j₀ realize
+      (ChannelTree.measurement zero one) where
+  value := relatedLeafValue D₀ j₀ realize
+  related := by
+    rintro ⟨b, o⟩
+    cases b
+    · exact relatedLeafValue_related D₀ j₀ realize _
+        ⟨zeroR.value (zero.instrument.value o), zeroR.related o⟩
+    · exact relatedLeafValue_related D₀ j₀ realize _
+        ⟨oneR.value (one.instrument.value o), oneR.related o⟩
+
 /-- Restriction commutes with an interior computational-basis measurement.
 The parent restriction and the measurement of its restricted children differ
 only by their nested proof-subtype outcome representation. -/
@@ -4107,6 +4165,90 @@ theorem satisfiedTTTheory_bind_assoc
         (KrausFamily.applySemEq_symm
           (FiniteInstrumentComp.wpKraus_bind_semEq μ
             (fun d => (f d).bind g) P))))
+
+/-- On a well-scoped tree, changing a leaf realization does not change any
+finite observation: `ValueRel` is functional on every terminal leaf. -/
+theorem holds_restrictedInstrument_bind_iff_of_wellScoped {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} (tree : ChannelTree C s)
+    (hscoped : ChannelConfig.WellScoped s)
+    (R S : ChannelTreeRealization D₀ j₀ realize tree)
+    (selectors : List Bool) (i : ℕ)
+    (ξ : HSemanticValue D₀ j₀ → FiniteInstrumentComp 2 PUnit.{1})
+    (token : TTObservationToken 2) :
+    TTObservationToken.Holds resultCode token
+        ((restrictedInstrument D₀ j₀ realize tree R selectors i).bind ξ) ↔
+      TTObservationToken.Holds resultCode token
+        ((restrictedInstrument D₀ j₀ realize tree S selectors i).bind ξ) := by
+  classical
+  let μ := restrictedInstrument D₀ j₀ realize tree R selectors i
+  let ν := restrictedInstrument D₀ j₀ realize tree S selectors i
+  have hvalue : ∀ o : μ.Outcome, ν.value o = μ.value o := by
+    intro o
+    apply valueRel_functional D₀ j₀ realize
+      (tree.terminalValues_wellScoped hscoped o.1)
+    · exact S.related o.1
+    · exact R.related o.1
+  have htheory :
+      (μ.bind ξ).satisfiedTTTheory resultCode =
+        (ν.bind ξ).satisfiedTTTheory resultCode := by
+    apply satisfiedTTTheory_eq_of_wpKraus_semEq
+    intro P
+    exact FiniteInstrumentComp.bind_wpKraus_congr_of_outcome_equiv
+      μ ν (Equiv.refl _) (fun _ => rfl) hvalue ξ P
+  constructor
+  · intro h
+    apply (FiniteInstrumentComp.mem_satisfiedTTTheory
+      resultCode (ν.bind ξ) token).mp
+    rw [← htheory]
+    exact (FiniteInstrumentComp.mem_satisfiedTTTheory
+      resultCode (μ.bind ξ) token).2 h
+  · intro h
+    apply (FiniteInstrumentComp.mem_satisfiedTTTheory
+      resultCode (μ.bind ξ) token).mp
+    rw [htheory]
+    exact (FiniteInstrumentComp.mem_satisfiedTTTheory
+      resultCode (ν.bind ξ) token).2 h
+
+/-- Well-scoped trees make restricted results independent of the chosen
+leaf realization.  Measurement wrap uses a canonical leaf value, so this
+recovers the child restricted result after projection. -/
+theorem restrictedResult_eq_of_wellScoped {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} (tree : ChannelTree C s)
+    (hscoped : ChannelConfig.WellScoped s)
+    (R S : ChannelTreeRealization D₀ j₀ realize tree)
+    (selectors : List Bool) (i : ℕ)
+    (ξ : HSemanticValue D₀ j₀ → FiniteInstrumentComp 2 PUnit.{1})
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2))
+    (hk : ∀ d, k d = (ξ d).satisfiedTTTheory resultCode) :
+    restrictedResult D₀ j₀ realize tree R selectors i k =
+      restrictedResult D₀ j₀ realize tree S selectors i k := by
+  classical
+  by_cases havail : ResultAvailable tree selectors i
+  · rw [restrictedResult_eq_embed D₀ j₀ realize tree R selectors i k havail,
+      restrictedResult_eq_embed D₀ j₀ realize tree S selectors i k havail]
+    have hR :=
+      TTPhysicalEmbedding.embed_satisfied
+        (restrictedInstrument D₀ j₀ realize tree R selectors i) ξ k
+        (fun _ => hk _)
+    have hS :=
+      TTPhysicalEmbedding.embed_satisfied
+        (restrictedInstrument D₀ j₀ realize tree S selectors i) ξ k
+        (fun _ => hk _)
+    rw [hR, hS]
+    apply RoundedTheory.ext
+    ext token
+    exact holds_restrictedInstrument_bind_iff_of_wellScoped D₀ j₀ realize
+      tree hscoped R S selectors i ξ token
+  · rw [restrictedResult_eq_bot D₀ j₀ realize tree R selectors i k havail,
+      restrictedResult_eq_bot D₀ j₀ realize tree S selectors i k havail]
 
 /-- At a finitely-presented continuation, restriction of an interior
 probability node is exactly physical weighted aggregation of the two
@@ -7388,6 +7530,348 @@ theorem probabilityOne_step_pathChannelTreeTokenAdequacy {C : Type}
             ξ finalK (fun o => hk _) token).mpr htoken
     | measurement _ _ =>
         cases hc
+
+/-! ### Measurement aggregation -/
+
+/-- Two branch-local observations force a target observation after a physical
+computational-basis measurement.  The two source tokens are independent;
+membership of one parent token in both branches is not assumed. -/
+def MeasurementDerives
+    (zero one target : TTObservationToken 2) : Prop :=
+  ∀ μ ν : FiniteInstrumentComp 2 PUnit.{1},
+    TTObservationToken.Holds resultCode zero μ →
+    TTObservationToken.Holds resultCode one ν →
+    TTObservationToken.Holds resultCode target
+      (Qubit.measureZComp.bind (fun b => if b then ν else μ))
+
+/-- Rounded token aggregation for computational-basis measurement.  This is
+the measurement-specialized form of `TTTokenTheory.aggregateResult`; it takes
+two unrelated branch theories rather than incorrectly requiring one token to
+belong to both. -/
+noncomputable def measurementResult
+    (zeroResult oneResult : TTResult 2) : TTResult 2 :=
+  sSup {T | ∃ zero ∈ zeroResult, ∃ one ∈ oneResult, ∃ target,
+    MeasurementDerives zero one target ∧
+    T = RoundedTheory.principal
+      (TTObservationToken.roundedBasis resultCode) target}
+
+theorem mem_measurementResult
+    (zeroResult oneResult : TTResult 2) (token : TTObservationToken 2) :
+    token ∈ measurementResult zeroResult oneResult ↔
+      ∃ zero ∈ zeroResult, ∃ one ∈ oneResult, ∃ target,
+        MeasurementDerives zero one target ∧
+        TTObservationToken.RoundedBelow resultCode token target := by
+  rw [measurementResult, RoundedTheory.mem_sSup]
+  constructor
+  · rintro ⟨T, ⟨zero, hzero, one, hone, target, hderives, rfl⟩, ht⟩
+    exact ⟨zero, hzero, one, hone, target, hderives,
+      (RoundedTheory.mem_principal
+        (B := TTObservationToken.roundedBasis resultCode)).mp ht⟩
+  · rintro ⟨zero, hzero, one, hone, target, hderives, ht⟩
+    exact
+      ⟨RoundedTheory.principal
+          (TTObservationToken.roundedBasis resultCode) target,
+        ⟨zero, hzero, one, hone, target, hderives, rfl⟩,
+        (RoundedTheory.mem_principal
+          (B := TTObservationToken.roundedBasis resultCode)).2 ht⟩
+
+/-- The token-generated measurement aggregate agrees with physical
+`measureZ` bind whenever both branches are finite result instruments. -/
+theorem measurementResult_satisfied
+    (μ ν : FiniteInstrumentComp 2 PUnit.{1}) :
+    measurementResult
+        (μ.satisfiedTTTheory resultCode)
+        (ν.satisfiedTTTheory resultCode) =
+      (Qubit.measureZComp.bind
+        (fun b => if b then ν else μ)).satisfiedTTTheory resultCode := by
+  apply RoundedTheory.ext
+  ext t
+  constructor
+  · intro ht
+    obtain ⟨zero, hzero, one, hone, target, hderives, httarget⟩ :=
+      (mem_measurementResult _ _ t).mp ht
+    have htarget :
+        TTObservationToken.Holds resultCode target
+          (Qubit.measureZComp.bind (fun b => if b then ν else μ)) :=
+      hderives μ ν
+        ((FiniteInstrumentComp.mem_satisfiedTTTheory resultCode μ zero).mp
+          hzero)
+        ((FiniteInstrumentComp.mem_satisfiedTTTheory resultCode ν one).mp
+          hone)
+    exact TTObservationToken.roundedBelow_entails resultCode httarget
+      (Qubit.measureZComp.bind (fun b => if b then ν else μ)) htarget
+  · intro ht
+    obtain ⟨target, httarget, htarget⟩ :=
+      TTObservationToken.exists_stronglyBelow_holds resultCode
+        (Qubit.measureZComp.bind (fun b => if b then ν else μ)) ht
+    obtain ⟨sources, hsources, hall⟩ :=
+      TTResultApproximation.exists_bind_source_tokens
+        Qubit.measureZComp target (fun b => if b then ν else μ) htarget
+    let zero := sources false
+    let one := sources true
+    apply (mem_measurementResult _ _ t).2
+    refine ⟨zero, ?_, one, ?_, target, ?_, ?_⟩
+    · apply (FiniteInstrumentComp.mem_satisfiedTTTheory resultCode μ zero).2
+      simpa [zero, resultCode, Qubit.measureZComp] using hsources false
+    · apply (FiniteInstrumentComp.mem_satisfiedTTTheory resultCode ν one).2
+      simpa [one, resultCode, Qubit.measureZComp] using hsources true
+    · intro μ' ν' hzero hone
+      apply hall (fun b => if b then ν' else μ')
+      intro b
+      cases b
+      · exact hzero
+      · exact hone
+    · exact ⟨t, TTObservationToken.entails_refl resultCode t, httarget⟩
+
+/-- At a finitely-presented continuation, an available measurement node is
+exactly token aggregation of its restricted children. -/
+theorem restrictedResult_measurement_eq_measurementResult {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {zeroValue oneValue : C}
+    (zero : ChannelTree C
+      { s with
+        control := .value (.payload zeroValue)
+        quantum := applyOperation (measurementOperation false) s.quantum })
+    (one : ChannelTree C
+      { s with
+        control := .value (.payload oneValue)
+        quantum := applyOperation (measurementOperation true) s.quantum })
+    (R : ChannelTreeRealization D₀ j₀ realize
+      (ChannelTree.measurement zero one))
+    (selectors : List Bool) (i : ℕ)
+    (hzero : ResultAvailable zero selectors i)
+    (hone : ResultAvailable one selectors i)
+    (ξ : HSemanticValue D₀ j₀ → FiniteInstrumentComp 2 PUnit.{1})
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2))
+    (hk : ∀ d, k d = (ξ d).satisfiedTTTheory resultCode) :
+    restrictedResult D₀ j₀ realize
+        (ChannelTree.measurement zero one) R selectors i k =
+      measurementResult
+        (restrictedResult D₀ j₀ realize zero
+          (measurementZeroRealization D₀ j₀ realize zero one R) selectors i k)
+        (restrictedResult D₀ j₀ realize one
+          (measurementOneRealization D₀ j₀ realize zero one R)
+          selectors i k) := by
+  classical
+  let zeroR := measurementZeroRealization D₀ j₀ realize zero one R
+  let oneR := measurementOneRealization D₀ j₀ realize zero one R
+  let μZ := restrictedInstrument D₀ j₀ realize zero zeroR selectors i
+  let μO := restrictedInstrument D₀ j₀ realize one oneR selectors i
+  let μM := Qubit.measureZComp.bind
+    (fun b => if b then μO else μZ)
+  have havail_iff :
+      ResultAvailable (ChannelTree.measurement zero one) selectors i ↔
+        ResultAvailable zero selectors i ∧ ResultAvailable one selectors i :=
+    Iff.rfl
+  rw [restrictedResult_eq_embed D₀ j₀ realize
+      (ChannelTree.measurement zero one) R selectors i k
+      (havail_iff.mpr ⟨hzero, hone⟩),
+    restrictedResult_eq_embed D₀ j₀ realize zero zeroR selectors i k hzero,
+    restrictedResult_eq_embed D₀ j₀ realize one oneR selectors i k hone,
+    embed_restricted_measurement D₀ j₀ realize zero one R selectors i]
+  change embed μM k = measurementResult (embed μZ k) (embed μO k)
+  calc
+    embed μM k =
+        (μM.bind ξ).satisfiedTTTheory resultCode :=
+      TTPhysicalEmbedding.embed_satisfied μM ξ k (fun _ => hk _)
+    _ = (Qubit.measureZComp.bind
+          (fun b => (if b then μO else μZ).bind ξ)).satisfiedTTTheory
+          resultCode := by
+      have hassoc :=
+        satisfiedTTTheory_bind_assoc Qubit.measureZComp
+          (fun b => if b then μO else μZ) ξ
+      exact hassoc
+    _ = (Qubit.measureZComp.bind
+          (fun b => if b then μO.bind ξ else μZ.bind ξ)).satisfiedTTTheory
+          resultCode := by
+      have hif : ∀ b : Bool,
+          (if b then μO else μZ).bind ξ =
+            if b then μO.bind ξ else μZ.bind ξ := by
+        intro b
+        split_ifs <;> rfl
+      congr 1
+      exact congrArg Qubit.measureZComp.bind (funext hif)
+    _ = measurementResult
+          ((μZ.bind ξ).satisfiedTTTheory resultCode)
+          ((μO.bind ξ).satisfiedTTTheory resultCode) :=
+      (measurementResult_satisfied (μZ.bind ξ) (μO.bind ξ)).symm
+    _ = measurementResult (embed μZ k) (embed μO k) := by
+      rw [TTPhysicalEmbedding.embed_satisfied μZ ξ k (fun _ => hk _),
+        TTPhysicalEmbedding.embed_satisfied μO ξ k (fun _ => hk _)]
+
+/-- Token adequacy aggregates backwards through computational-basis
+measurement.  The branch results correspond to the two unnormalized child
+states in `ChannelTree.measurement`; aggregation uses branch-local source
+tokens and `MeasurementDerives`, not common-token intersection. -/
+theorem measurement_step_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {zeroValue oneValue : C}
+    (hc : s.control =
+      .term (.prim (.measureZ zeroValue oneValue)))
+    (hscoped : ChannelConfig.WellScoped s)
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {zeroResult oneResult result : TTResult 2}
+    (hsource : PathChannelConfigRel D₀ j₀ realize
+      s active observedStack finalK result)
+    (hzero : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with
+        control := .value (.payload zeroValue)
+        quantum := applyOperation (measurementOperation false) s.quantum}
+      active observedStack finalK zeroResult)
+    (hone : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with
+        control := .value (.payload oneValue)
+        quantum := applyOperation (measurementOperation true) s.quantum}
+      active observedStack finalK oneResult)
+    (hresult : result = measurementResult zeroResult oneResult) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize
+      s active observedStack finalK result := by
+  refine
+    { related := hsource
+      token_iff := ?_ }
+  intro ξ hk token
+  rw [hresult, mem_measurementResult]
+  constructor
+  · rintro ⟨zeroToken, hzeroToken, oneToken, honeToken,
+        target, hderives, hrounded⟩
+    obtain ⟨zeroTree, zeroR, hzeroAvail, hzeroHolds⟩ :=
+      (hzero.token_iff ξ hk zeroToken).mp hzeroToken
+    obtain ⟨oneTree, oneR, honeAvail, honeHolds⟩ :=
+      (hone.token_iff ξ hk oneToken).mp honeToken
+    rcases s with ⟨control, env, stack, quantum⟩
+    simp only at hc
+    subst control
+    let sourceTree := ChannelTree.measurement zeroTree oneTree
+    let sourceR := wrapMeasurementRealization D₀ j₀ realize
+      zeroTree oneTree zeroR oneR
+    let projectedZeroR :=
+      measurementZeroRealization D₀ j₀ realize zeroTree oneTree sourceR
+    let projectedOneR :=
+      measurementOneRealization D₀ j₀ realize zeroTree oneTree sourceR
+    have hzeroScoped : ChannelConfig.WellScoped
+        (⟨.value (.payload zeroValue), env, stack,
+          applyOperation (measurementOperation false) quantum⟩ :
+          ChannelConfig C) := by
+      rcases hscoped with ⟨⟨henv, _⟩, hstack⟩
+      exact ⟨⟨henv, .payload zeroValue⟩, hstack⟩
+    have honeScoped : ChannelConfig.WellScoped
+        (⟨.value (.payload oneValue), env, stack,
+          applyOperation (measurementOperation true) quantum⟩ :
+          ChannelConfig C) := by
+      rcases hscoped with ⟨⟨henv, _⟩, hstack⟩
+      exact ⟨⟨henv, .payload oneValue⟩, hstack⟩
+    have hzeroRestricted :
+        zeroToken ∈ restrictedResult D₀ j₀ realize zeroTree zeroR
+          [] active finalK := by
+      rw [restrictedResult_eq_embed D₀ j₀ realize zeroTree zeroR
+        [] active finalK hzeroAvail]
+      exact
+        (token_of_restrictedInstrument D₀ j₀ realize zeroTree zeroR
+          [] active ξ finalK (fun o => hk _) zeroToken).mpr hzeroHolds
+    have honeRestricted :
+        oneToken ∈ restrictedResult D₀ j₀ realize oneTree oneR
+          [] active finalK := by
+      rw [restrictedResult_eq_embed D₀ j₀ realize oneTree oneR
+        [] active finalK honeAvail]
+      exact
+        (token_of_restrictedInstrument D₀ j₀ realize oneTree oneR
+          [] active ξ finalK (fun o => hk _) oneToken).mpr honeHolds
+    refine ⟨sourceTree, sourceR, ⟨hzeroAvail, honeAvail⟩, ?_⟩
+    have hparentRestricted :
+        token ∈ restrictedResult D₀ j₀ realize sourceTree sourceR
+          [] active finalK := by
+      rw [restrictedResult_measurement_eq_measurementResult D₀ j₀ realize
+        zeroTree oneTree sourceR [] active hzeroAvail honeAvail ξ finalK hk,
+        ← restrictedResult_eq_of_wellScoped D₀ j₀ realize zeroTree hzeroScoped
+          zeroR projectedZeroR [] active ξ finalK hk,
+        ← restrictedResult_eq_of_wellScoped D₀ j₀ realize oneTree honeScoped
+          oneR projectedOneR [] active ξ finalK hk]
+      exact (mem_measurementResult _ _ token).2
+        ⟨zeroToken, hzeroRestricted, oneToken, honeRestricted,
+          target, hderives, hrounded⟩
+    apply (token_of_restrictedInstrument D₀ j₀ realize
+      sourceTree sourceR [] active ξ finalK (fun o => hk _) token).mp
+    rw [← restrictedResult_eq_embed D₀ j₀ realize sourceTree sourceR
+      [] active finalK ⟨hzeroAvail, honeAvail⟩]
+    exact hparentRestricted
+  · rintro ⟨tree, parentR, havail, htoken⟩
+    cases tree with
+    | terminal hterminal =>
+        have := hterminal.control_eq.symm.trans hc
+        cases this
+    | internal hstep _ =>
+        exact False.elim (ChannelInternalStep.not_measureZ hstep hc)
+    | external _ hstep _ =>
+        exact False.elim (by cases hstep <;> cases hc)
+    | probability _ _ _ _ =>
+        cases hc
+    | probabilityZero _ =>
+        cases hc
+    | probabilityOne _ =>
+        cases hc
+    | @measurement source zeroValue' oneValue' zeroTree oneTree =>
+        injection hc with hterm
+        injection hterm with hmeasure
+        injection hmeasure with hzeroValue honeValue
+        subst zeroValue'
+        subst oneValue'
+        rcases havail with ⟨hzeroAvail, honeAvail⟩
+        let zeroR :=
+          measurementZeroRealization D₀ j₀ realize zeroTree oneTree parentR
+        let oneR :=
+          measurementOneRealization D₀ j₀ realize zeroTree oneTree parentR
+        have hparentRestricted :
+            token ∈ restrictedResult D₀ j₀ realize
+              (ChannelTree.measurement zeroTree oneTree) parentR
+              [] active finalK := by
+          rw [restrictedResult_eq_embed D₀ j₀ realize
+            (ChannelTree.measurement zeroTree oneTree) parentR
+            [] active finalK ⟨hzeroAvail, honeAvail⟩]
+          exact
+            (token_of_restrictedInstrument D₀ j₀ realize
+              (ChannelTree.measurement zeroTree oneTree) parentR
+              [] active ξ finalK (fun o => hk _) token).mpr htoken
+        rw [restrictedResult_measurement_eq_measurementResult D₀ j₀ realize
+          zeroTree oneTree parentR [] active hzeroAvail honeAvail ξ finalK hk]
+          at hparentRestricted
+        obtain ⟨zeroToken, hzeroRestricted, oneToken, honeRestricted,
+            target, hderives, hrounded⟩ :=
+          (mem_measurementResult _ _ token).mp hparentRestricted
+        have hzeroHolds :
+            TTObservationToken.Holds resultCode zeroToken
+              ((restrictedInstrument D₀ j₀ realize zeroTree zeroR
+                [] active).bind ξ) := by
+          apply (token_of_restrictedInstrument D₀ j₀ realize
+            zeroTree zeroR [] active ξ finalK
+            (fun o => hk _) zeroToken).mp
+          rw [← restrictedResult_eq_embed D₀ j₀ realize zeroTree zeroR
+            [] active finalK hzeroAvail]
+          exact hzeroRestricted
+        have honeHolds :
+            TTObservationToken.Holds resultCode oneToken
+              ((restrictedInstrument D₀ j₀ realize oneTree oneR
+                [] active).bind ξ) := by
+          apply (token_of_restrictedInstrument D₀ j₀ realize
+            oneTree oneR [] active ξ finalK
+            (fun o => hk _) oneToken).mp
+          rw [← restrictedResult_eq_embed D₀ j₀ realize oneTree oneR
+            [] active finalK honeAvail]
+          exact honeRestricted
+        have hzeroMember : zeroToken ∈ zeroResult :=
+          (hzero.token_iff ξ hk zeroToken).mpr
+            ⟨zeroTree, zeroR, hzeroAvail, hzeroHolds⟩
+        have honeMember : oneToken ∈ oneResult :=
+          (hone.token_iff ξ hk oneToken).mpr
+            ⟨oneTree, oneR, honeAvail, honeHolds⟩
+        exact ⟨zeroToken, hzeroMember, oneToken, honeMember,
+          target, hderives, hrounded⟩
 
 end HardwareChannelSemantics
 end QLambda
