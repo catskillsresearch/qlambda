@@ -7076,15 +7076,15 @@ theorem identity_step_pathChannelTreeTokenAdequacy {C : Type}
     (hstep : ChannelInternalStep s t)
     (hop : channelInternalOperation s = QuantumOperation.identity 2)
     (hunq : ∀ {t'}, ChannelInternalStep s t' → t' = t)
-    {active : ℕ} {observedStack : ObservedStack C}
+    {active : ℕ} {sourceObserved childObserved : ObservedStack C}
     {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
     {result : TTResult 2}
     (hsource : PathChannelConfigRel D₀ j₀ realize
-      s active observedStack finalK result)
+      s active sourceObserved finalK result)
     (hchild : PathChannelTreeTokenAdequacy D₀ j₀ realize
-      t active observedStack finalK result) :
+      t active childObserved finalK result) :
     PathChannelTreeTokenAdequacy D₀ j₀ realize
-      s active observedStack finalK result where
+      s active sourceObserved finalK result where
   related := hsource
   token_iff := by
     intro ξ hk token
@@ -7134,6 +7134,224 @@ theorem identity_step_pathChannelTreeTokenAdequacy {C : Type}
           cases hstep
       | measurement _ _ =>
           cases hstep
+
+/-- Application is an identity step that installs the argument frame at the
+active coordinate.  The child adequacy is taken at the same coordinate with
+the pushed observed stack. -/
+theorem application_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {fn arg : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.app fn arg))
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hsource : PathChannelConfigRel D₀ j₀ realize
+      s active observedStack finalK result)
+    (hchild : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with
+        control := .term fn
+        stack := .argument arg s.env :: s.stack}
+      active ((.argument arg s.env, active) :: observedStack)
+      finalK result) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize
+      s active observedStack finalK result := by
+  let t : ChannelConfig C :=
+    {s with
+      control := .term fn
+      stack := .argument arg s.env :: s.stack}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with control := .term (.app fn arg)} t :=
+      ChannelInternalStep.application (s := s) (fn := fn) (arg := arg)
+    have hs : s = {s with control := .term (.app fn arg)} :=
+      ChannelConfig.ext hc rfl rfl rfl
+    exact hs.symm ▸ happ
+  exact identity_step_pathChannelTreeTokenAdequacy D₀ j₀ realize
+    hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelInternalStep.eq_of_application h' hc)
+    hsource hchild
+
+/-- Argument evaluation restores the saved frame coordinate.  Token
+restriction is well-defined for the identity wrap only when that restored
+coordinate is the current active one. -/
+theorem evaluateArgument_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {fn : RuntimeValue C}
+    {arg : Term (QubitPrimitive C)} {callEnv : RuntimeEnv C}
+    {rest : EvalStack C} {active saved : ℕ}
+    {observedRest : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hc : s.control = .value fn)
+    (hs : s.stack = .argument arg callEnv :: rest)
+    (hcoord : active = saved)
+    (hsource : PathChannelConfigRel D₀ j₀ realize
+      s active ((.argument arg callEnv, saved) :: observedRest)
+      finalK result)
+    (hchild : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with
+        control := .term arg
+        env := callEnv
+        stack := .function fn :: rest}
+      saved ((.function fn, saved) :: observedRest) finalK result) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize
+      s active ((.argument arg callEnv, saved) :: observedRest)
+      finalK result := by
+  subst saved
+  let t : ChannelConfig C :=
+    {s with
+      control := .term arg
+      env := callEnv
+      stack := .function fn :: rest}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with
+            control := .value fn
+            stack := .argument arg callEnv :: rest} t :=
+      ChannelInternalStep.evaluateArgument
+        (s := s) (fn := fn) (arg := arg) (callEnv := callEnv)
+        (rest := rest)
+    have hsrc :
+        s = {s with
+          control := .value fn
+          stack := .argument arg callEnv :: rest} :=
+      ChannelConfig.ext hc rfl hs rfl
+    exact hsrc.symm ▸ happ
+  exact identity_step_pathChannelTreeTokenAdequacy D₀ j₀ realize
+    hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelInternalStep.eq_of_evaluateArgument h' hc hs)
+    hsource hchild
+
+/-- Closure beta pops the function frame and resumes the body at the saved
+coordinate.  As with argument evaluation, the identity wrap requires that
+coordinate to be the current active one. -/
+theorem beta_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {x : Name}
+    {body : Term (QubitPrimitive C)} {closureEnv : RuntimeEnv C}
+    {arg : RuntimeValue C} {rest : EvalStack C}
+    {active saved : ℕ} {observedRest : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hc : s.control = .value arg)
+    (hs : s.stack = .function (.closure x body closureEnv) :: rest)
+    (hcoord : active = saved)
+    (hsource : PathChannelConfigRel D₀ j₀ realize
+      s active
+      ((.function (.closure x body closureEnv), saved) :: observedRest)
+      finalK result)
+    (hchild : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with
+        control := .term body
+        env := RuntimeEnv.bind x arg closureEnv
+        stack := rest}
+      saved observedRest finalK result) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize
+      s active
+      ((.function (.closure x body closureEnv), saved) :: observedRest)
+      finalK result := by
+  subst saved
+  let t : ChannelConfig C :=
+    {s with
+      control := .term body
+      env := RuntimeEnv.bind x arg closureEnv
+      stack := rest}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with
+            control := .value arg
+            stack := .function (.closure x body closureEnv) :: rest} t :=
+      ChannelInternalStep.beta (s := s) (x := x) (body := body)
+        (closureEnv := closureEnv) (arg := arg) (rest := rest)
+    have hsrc :
+        s = {s with
+          control := .value arg
+          stack := .function (.closure x body closureEnv) :: rest} :=
+      ChannelConfig.ext hc rfl hs rfl
+    exact hsrc.symm ▸ happ
+  exact identity_step_pathChannelTreeTokenAdequacy D₀ j₀ realize
+    hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelInternalStep.eq_of_beta h' hc hs)
+    hsource hchild
+
+/-- Recursive-closure beta is the same identity wrap as ordinary beta, with
+both recursive binders installed in the body environment. -/
+theorem recBeta_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {self x : Name}
+    {body : Term (QubitPrimitive C)} {closureEnv : RuntimeEnv C}
+    {arg : RuntimeValue C} {rest : EvalStack C}
+    {active saved : ℕ} {observedRest : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hc : s.control = .value arg)
+    (hs : s.stack =
+      .function (.recClosure self x body closureEnv) :: rest)
+    (hcoord : active = saved)
+    (hsource : PathChannelConfigRel D₀ j₀ realize
+      s active
+      ((.function (.recClosure self x body closureEnv), saved) ::
+        observedRest)
+      finalK result)
+    (hchild : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with
+        control := .term body
+        env :=
+          RuntimeEnv.bind x arg
+            (RuntimeEnv.bind self
+              (.recClosure self x body closureEnv) closureEnv)
+        stack := rest}
+      saved observedRest finalK result) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize
+      s active
+      ((.function (.recClosure self x body closureEnv), saved) ::
+        observedRest)
+      finalK result := by
+  subst saved
+  let t : ChannelConfig C :=
+    {s with
+      control := .term body
+      env :=
+        RuntimeEnv.bind x arg
+          (RuntimeEnv.bind self
+            (.recClosure self x body closureEnv) closureEnv)
+      stack := rest}
+  have hstep : ChannelInternalStep s t := by
+    have happ :
+        ChannelInternalStep
+          {s with
+            control := .value arg
+            stack :=
+              .function (.recClosure self x body closureEnv) :: rest} t :=
+      ChannelInternalStep.recBeta (s := s) (self := self) (x := x)
+        (body := body) (closureEnv := closureEnv) (arg := arg)
+        (rest := rest)
+    have hsrc :
+        s = {s with
+          control := .value arg
+          stack :=
+            .function (.recClosure self x body closureEnv) :: rest} :=
+      ChannelConfig.ext hc rfl hs rfl
+    exact hsrc.symm ▸ happ
+  exact identity_step_pathChannelTreeTokenAdequacy D₀ j₀ realize
+    hstep (by simp [channelInternalOperation, hc])
+    (fun h' => ChannelInternalStep.eq_of_recBeta h' hc hs)
+    hsource hchild
 
 /-- Token adequacy for a Pauli-X primitive at an empty stack.  The parent
 result is the embedded physical operation, not the child's unit return. -/
