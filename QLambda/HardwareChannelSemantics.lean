@@ -2974,6 +2974,65 @@ theorem restrictedResult_internal_of_identity {C : Type}
         restrictedResult_eq_bot D₀ j₀ realize next childR selectors i k
           hunavailableChild]
 
+/-- An internal step embeds as its declared operation bound to the restricted
+child.  Identity is the special case whose Kraus family is absorbed. -/
+theorem embed_restricted_internal {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s t : ChannelConfig C} (h : ChannelInternalStep s t)
+    (next : ChannelTree C t)
+    (R : ChannelTreeRealization D₀ j₀ realize (ChannelTree.internal h next))
+    (selectors : List Bool) (i : ℕ) :
+    embed (restrictedInstrument D₀ j₀ realize
+        (ChannelTree.internal h next) R selectors i) =
+      embed
+        ((FiniteInstrumentComp.ofOperation
+            (channelInternalOperation s) ()).bind
+          (fun _ =>
+            restrictedInstrument D₀ j₀ realize next
+              (internalChildRealization D₀ j₀ realize h next R)
+              selectors i)) := by
+  let μ := restrictedInstrument D₀ j₀ realize
+    (ChannelTree.internal h next) R selectors i
+  let childR := internalChildRealization D₀ j₀ realize h next R
+  let ν :=
+    (FiniteInstrumentComp.ofOperation
+        (channelInternalOperation s) ()).bind
+      (fun _ =>
+        restrictedInstrument D₀ j₀ realize next childR selectors i)
+  refine embed_congr_of_outcome_equiv μ ν ?e ?hbranch ?hvalue
+  · exact
+      { toFun := fun p => ⟨⟨⟩, ⟨p.1.2, p.2⟩⟩
+        invFun := fun q => ⟨⟨⟨⟩, q.2.1⟩, q.2.2⟩
+        left_inv := by
+          intro p
+          rcases p with ⟨⟨⟨⟩, o⟩, hp⟩
+          rfl
+        right_inv := by
+          intro q
+          rcases q with ⟨⟨⟩, ⟨o, ho⟩⟩
+          rfl }
+  · intro p
+    rfl
+  · intro p
+    rfl
+
+theorem ChannelInternalStep.eq_config_of_pauliX {C : Type}
+    {s t : ChannelConfig C} {value : C}
+    (h : ChannelInternalStep s t)
+    (hc : s.control = .term (.prim (.pauliX value))) :
+    t = {s with
+      control := .value (.payload value)
+      quantum := applyOperation Qubit.pauliXOp s.quantum} := by
+  have ht := ChannelInternalStep.eq_of_pauliX h hc
+  apply ChannelConfig.ext
+  · exact ht.1
+  · exact ht.2.1
+  · exact ht.2.2.1
+  · exact ht.2.2.2
+
 theorem selectPath_intern {C : Type}
     (D₀ : QDomain.{0})
     (j₀ : IsContinuousLatticeProjection D₀.carrier
@@ -7075,6 +7134,186 @@ theorem identity_step_pathChannelTreeTokenAdequacy {C : Type}
           cases hstep
       | measurement _ _ =>
           cases hstep
+
+/-- Token adequacy for a Pauli-X primitive at an empty stack.  The parent
+result is the embedded physical operation, not the child's unit return. -/
+theorem pauliX_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {value : C}
+    (hc : s.control = .term (.prim (.pauliX value)))
+    (hstack : s.stack = [])
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hsource : PathChannelConfigRel D₀ j₀ realize
+      s active observedStack finalK result) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize
+      s active observedStack finalK result := by
+  refine
+    { related := hsource
+      token_iff := ?_ }
+  intro ξ hk token
+  rcases hsource with
+    ⟨herase, current, currentK, hcontrol, hstackRel, hresult⟩
+  have hobserved : observedStack = [] := by
+    cases observedStack with
+    | nil => rfl
+    | cons frame rest =>
+        rw [ObservedStack.erase_cons, hstack] at herase
+        cases herase
+  subst observedStack
+  cases hstackRel
+  rw [hc] at hcontrol
+  cases hcontrol with
+  | term _ _ semanticEnv henv =>
+      have hresultEq :
+          result =
+            embed (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+              (realize value)) finalK := by
+        rw [hresult, interp_prim_apply, hardwarePrimitive_pauliX,
+          taggedEmbed_apply]
+      rcases s with ⟨control, env, stack, quantum⟩
+      simp only at hc hstack
+      subst control
+      subst stack
+      let child : ChannelConfig C :=
+        { control := .value (.payload value)
+          env := env
+          stack := []
+          quantum := applyOperation Qubit.pauliXOp quantum }
+      let hterminal : ChannelTerminal child :=
+        { value := .payload value
+          control_eq := rfl
+          stack_eq := rfl }
+      let childTree : ChannelTree C child :=
+        ChannelTree.terminal hterminal
+      let hstep : ChannelInternalStep
+          ⟨.term (.prim (.pauliX value)), env, [], quantum⟩ child :=
+        ChannelInternalStep.pauliXPrimitive
+          (s := ⟨.term (.prim (.pauliX value)), env, [], quantum⟩)
+          (value := value)
+      let sourceTree := ChannelTree.internal hstep childTree
+      let childR : ChannelTreeRealization D₀ j₀ realize childTree :=
+        { value := fun _ => realize value
+          related := by
+            intro o
+            change ValueRel D₀ j₀ realize (.payload value) (realize value)
+            exact ValueRel.payload value }
+      let sourceR :=
+        wrapInternalRealization D₀ j₀ realize hstep childTree childR
+      have hembed :
+          embed (restrictedInstrument D₀ j₀ realize sourceTree sourceR
+              [] active) =
+            embed (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+              (realize value)) := by
+        rw [embed_restricted_internal D₀ j₀ realize hstep childTree sourceR
+          [] active]
+        let μ :=
+          (FiniteInstrumentComp.ofOperation Qubit.pauliXOp ()).bind
+            (fun _ =>
+              restrictedInstrument D₀ j₀ realize childTree
+                (internalChildRealization D₀ j₀ realize hstep childTree
+                  sourceR)
+                [] active)
+        let _ : Unique μ.Outcome :=
+          { default := ⟨⟨⟩, ⟨⟨⟩, List.nil_prefix⟩⟩
+            uniq := by
+              intro o
+              rcases o with ⟨⟨⟩, ⟨⟨⟩, _⟩⟩
+              rfl }
+        refine embed_eq_ofOperation_of_unique μ Qubit.pauliXOp
+          (realize value) ?_ ?_
+        · intro o
+          rfl
+        · intro o
+          change KrausFamily.comp (KrausFamily.identity 2)
+              Qubit.pauliXOp.kraus =
+            Qubit.pauliXOp.kraus
+          simp
+      constructor
+      · intro htoken
+        refine ⟨sourceTree, sourceR, trivial, ?_⟩
+        apply (token_of_restrictedInstrument D₀ j₀ realize
+          sourceTree sourceR [] active ξ finalK
+          (fun o => hk _) token).mp
+        rw [hembed, ← hresultEq]
+        exact htoken
+      · rintro ⟨tree, R, havail, htoken⟩
+        cases tree with
+        | terminal hterminal' =>
+            cases hterminal'.control_eq
+        | @internal _ t' hstep' next =>
+            have ht :=
+              ChannelInternalStep.eq_config_of_pauliX hstep' rfl
+            subst t'
+            cases next with
+            | terminal hterm =>
+                have hembed' :
+                    embed (restrictedInstrument D₀ j₀ realize
+                        (ChannelTree.internal hstep'
+                          (ChannelTree.terminal hterm)) R [] active) =
+                      embed (FiniteInstrumentComp.ofOperation
+                        Qubit.pauliXOp (realize value)) := by
+                  have hall' : ∀ o, OutcomeCompatible
+                      (ChannelTree.internal hstep'
+                        (ChannelTree.terminal hterm)) [] active o := by
+                    intro o
+                    exact List.nil_prefix
+                  rw [embed_restricted_of_all_compatible D₀ j₀ realize
+                    _ R [] active hall']
+                  let μ := realizedInstrument D₀ j₀ realize
+                    (ChannelTree.internal hstep'
+                      (ChannelTree.terminal hterm)) R
+                  let _ : Unique μ.Outcome :=
+                    { default := ⟨⟨⟩, ⟨⟩⟩
+                      uniq := by
+                        intro o
+                        rcases o with ⟨⟨⟩, ⟨⟩⟩
+                        rfl }
+                  refine embed_eq_ofOperation_of_unique μ Qubit.pauliXOp
+                    (realize value) ?_ ?_
+                  · intro o
+                    have hrel := R.related o
+                    have hpay :
+                        ((ChannelTree.internal hstep'
+                            (ChannelTree.terminal hterm)).instrument.value
+                          o).isTerminal.value =
+                          .payload value := by
+                      have hv : hterm.value = .payload value := by
+                        injection hterm.control_eq with h
+                        exact h.symm
+                      simp [ChannelTree.instrument]
+                      exact hv
+                    rw [hpay] at hrel
+                    exact ValueRel.payload_eq D₀ j₀ hrel
+                  · intro o
+                    rcases o with ⟨⟨⟩, ⟨⟩⟩
+                    change KrausFamily.comp (KrausFamily.identity 2)
+                        (channelInternalOperation
+                          ⟨.term (.prim (.pauliX value)), env, [],
+                            quantum⟩).kraus =
+                      Qubit.pauliXOp.kraus
+                    simp [channelInternalOperation]
+                rw [hresultEq, ← hembed']
+                exact
+                  (token_of_restrictedInstrument D₀ j₀ realize
+                    (ChannelTree.internal hstep'
+                      (ChannelTree.terminal hterm)) R [] active ξ finalK
+                    (fun o => hk _) token).mpr htoken
+            | internal h' _ =>
+                exact False.elim
+                  (ChannelInternalStep.not_value_nil h'
+                    (ChannelInternalStep.eq_of_pauliX hstep' rfl).1
+                    ((ChannelInternalStep.eq_of_pauliX hstep' rfl).2.2.1))
+            | external _ hex _ =>
+                exact False.elim
+                  (ChannelExternalStep.not_value hex
+                    (ChannelInternalStep.eq_of_pauliX hstep' rfl).1)
+        | external _ hex _ =>
+            exact False.elim (ChannelExternalStep.not_prim hex rfl)
 
 /-- Token adequacy transfers backwards across one selected external edge.
 Only the active coordinate descends into the selected child; coordinates
