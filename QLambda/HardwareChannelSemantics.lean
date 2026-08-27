@@ -3097,6 +3097,132 @@ theorem ChannelInternalStep.eq_config_of_pauliX {C : Type}
   · exact ht.2.2.1
   · exact ht.2.2.2
 
+/-- The Pauli-X embedding reads the result continuation only at the
+returned payload. -/
+theorem embed_ofOperation_eval {n : ℕ} {D : Type} [CompleteLattice D]
+    (Φ : QuantumOperation n n) (d : D)
+    (k : ScottMap D (TTContinuation.TTResult n)) :
+    embed (FiniteInstrumentComp.ofOperation Φ d) k =
+      embed (FiniteInstrumentComp.ofOperation Φ d)
+        (ScottMap.const (k d)) := by
+  apply RoundedTheory.ext
+  ext t
+  constructor
+  · intro ht
+    obtain ⟨sources, hsources, target, hderives, htt⟩ :=
+      (TTTokenTheory.mem_aggregateResult
+        (FiniteInstrumentComp.ofOperation Φ d) k t).mp (by
+          simpa [embed] using ht)
+    apply (TTTokenTheory.mem_aggregateResult
+        (FiniteInstrumentComp.ofOperation Φ d)
+        (ScottMap.const (k d)) t).2
+    refine ⟨sources, ?_, target, hderives, htt⟩
+    intro o
+    exact hsources o
+  · intro ht
+    obtain ⟨sources, hsources, target, hderives, htt⟩ :=
+      (TTTokenTheory.mem_aggregateResult
+        (FiniteInstrumentComp.ofOperation Φ d)
+        (ScottMap.const (k d)) t).mp (by
+          simpa [embed] using ht)
+    apply (TTTokenTheory.mem_aggregateResult
+        (FiniteInstrumentComp.ofOperation Φ d) k t).2
+    refine ⟨sources, ?_, target, hderives, htt⟩
+    intro o
+    exact hsources o
+
+/-- Evaluating a Pauli-X embedding at a lattice supremum of result
+theories is the supremum of the pointwise evaluations. -/
+theorem embed_ofOperation_const_sSup {n : ℕ} {D : Type}
+    [CompleteLattice D]
+    (Φ : QuantumOperation n n) (d : D)
+    (S : Set (TTContinuation.TTResult n)) :
+    embed (FiniteInstrumentComp.ofOperation Φ d)
+        (ScottMap.const (sSup S)) =
+      sSup ((fun r =>
+        embed (FiniteInstrumentComp.ofOperation Φ d)
+          (ScottMap.const r)) '' S) := by
+  apply RoundedTheory.ext
+  ext t
+  constructor
+  · intro ht
+    obtain ⟨sources, hsources, target, hderives, htt⟩ :=
+      (TTTokenTheory.mem_aggregateResult
+        (FiniteInstrumentComp.ofOperation Φ d)
+        (ScottMap.const (sSup S) : ScottMap D (TTContinuation.TTResult n)) t).mp (by
+          simpa [embed] using ht)
+    have hmem : sources () ∈ (sSup S : TTContinuation.TTResult n) :=
+      hsources ()
+    change sources () ∈
+        (sSup S : TTContinuation.TTResult n) at hmem
+    rw [RoundedTheory.mem_sSup] at hmem
+    obtain ⟨r, hrS, hsr⟩ := hmem
+    change t ∈
+      (sSup ((fun r =>
+        embed (FiniteInstrumentComp.ofOperation Φ d)
+          (ScottMap.const r)) '' S) : TTContinuation.TTResult n)
+    rw [RoundedTheory.mem_sSup]
+    refine ⟨embed (FiniteInstrumentComp.ofOperation Φ d)
+          (ScottMap.const r : ScottMap D (TTContinuation.TTResult n)),
+        ⟨r, hrS, rfl⟩, ?_⟩
+    apply (TTTokenTheory.mem_aggregateResult
+        (FiniteInstrumentComp.ofOperation Φ d)
+        (ScottMap.const r : ScottMap D (TTContinuation.TTResult n)) t).2
+    refine ⟨sources, ?_, target, hderives, htt⟩
+    intro o
+    exact hsr
+  · intro ht
+    change t ∈
+      (sSup ((fun r =>
+        embed (FiniteInstrumentComp.ofOperation Φ d)
+          (ScottMap.const r)) '' S) : TTContinuation.TTResult n) at ht
+    rw [RoundedTheory.mem_sSup] at ht
+    obtain ⟨T, ⟨r, hrS, rfl⟩, htT⟩ := ht
+    obtain ⟨sources, hsources, target, hderives, htt⟩ :=
+      (TTTokenTheory.mem_aggregateResult
+        (FiniteInstrumentComp.ofOperation Φ d)
+        (ScottMap.const r : ScottMap D (TTContinuation.TTResult n)) t).mp
+        (by simpa [embed] using htT)
+    apply (TTTokenTheory.mem_aggregateResult
+        (FiniteInstrumentComp.ofOperation Φ d)
+        (ScottMap.const (sSup S) : ScottMap D (TTContinuation.TTResult n)) t).2
+    refine ⟨sources, ?_, target, hderives, htt⟩
+    intro o
+    change sources o ∈ (sSup S : TTContinuation.TTResult n)
+    rw [RoundedTheory.mem_sSup]
+    exact ⟨r, hrS, hsources o⟩
+
+theorem embed_ofOperation_const_bot {n : ℕ} {D : Type}
+    [CompleteLattice D]
+    (Φ : QuantumOperation n n) (d : D) :
+    embed (FiniteInstrumentComp.ofOperation Φ d)
+        (ScottMap.const (⊥ : TTContinuation.TTResult n)) = ⊥ := by
+  apply RoundedTheory.ext
+  ext t
+  constructor
+  · intro ht
+    obtain ⟨sources, hsources, _, _, _⟩ :=
+      (TTTokenTheory.mem_aggregateResult
+        (FiniteInstrumentComp.ofOperation Φ d)
+        (ScottMap.const (⊥ : TTContinuation.TTResult n) :
+          ScottMap D (TTContinuation.TTResult n)) t).mp (by
+          simpa [embed] using ht)
+    have hbot : sources () ∈
+        (sSup (∅ : Set (TTContinuation.TTResult n)) :
+          TTContinuation.TTResult n) := by
+      simpa [sSup_empty] using hsources ()
+    rw [RoundedTheory.mem_sSup] at hbot
+    obtain ⟨_, hempty, _⟩ := hbot
+    exact False.elim hempty
+  · intro ht
+    have hbot : t ∈
+        (sSup (∅ : Set (TTContinuation.TTResult n)) :
+          TTContinuation.TTResult n) := by
+      simpa [sSup_empty] using ht
+    rw [RoundedTheory.mem_sSup] at hbot
+    obtain ⟨_, hempty, _⟩ := hbot
+    exact False.elim hempty
+
 theorem selectPath_intern {C : Type}
     (D₀ : QDomain.{0})
     (j₀ : IsContinuousLatticeProjection D₀.carrier
@@ -4305,8 +4431,113 @@ theorem satisfiedTTTheory_bind_assoc
           KrausFamily.applySemEq_symm
             (FiniteInstrumentComp.wpKraus_bind_semEq (f d) g P))
         (KrausFamily.applySemEq_symm
-          (FiniteInstrumentComp.wpKraus_bind_semEq μ
-            (fun d => (f d).bind g) P))))
+        (FiniteInstrumentComp.wpKraus_bind_semEq μ
+          (fun d => (f d).bind g) P))))
+
+/-- On a finitely presented final continuation, wrapping `Φ` around an
+embedded child is evaluation of the `ofOperation` embedding. -/
+theorem embed_ofOperation_const_embed {D : Type} [CompleteLattice D]
+    (Φ : QuantumOperation 2 2) (d : D)
+    (μ : FiniteInstrumentComp 2 D)
+    (ξ : D → FiniteInstrumentComp 2 PUnit.{1})
+    (k : ScottMap D (TTContinuation.TTResult 2))
+    (hk : ∀ x, k x = (ξ x).satisfiedTTTheory TTContinuation.resultCode) :
+    embed (FiniteInstrumentComp.ofOperation Φ d)
+        (ScottMap.const (embed μ k)) =
+      embed
+        ((FiniteInstrumentComp.ofOperation Φ ()).bind fun _ => μ) k := by
+  have hμ := embed_satisfied μ ξ k (fun q => hk (μ.value q))
+  have hleft :=
+    embed_satisfied (FiniteInstrumentComp.ofOperation Φ d)
+      (fun _ => μ.bind ξ) (ScottMap.const (embed μ k))
+      (by
+        intro o
+        change embed μ k =
+          ((μ.bind ξ).satisfiedTTTheory TTContinuation.resultCode)
+        exact hμ)
+  have hassoc :=
+    satisfiedTTTheory_bind_assoc
+      (FiniteInstrumentComp.ofOperation Φ d)
+      (fun _ => μ) ξ
+  have hν :
+      embed ((FiniteInstrumentComp.ofOperation Φ d).bind fun _ => μ) =
+        embed
+          ((FiniteInstrumentComp.ofOperation Φ ()).bind fun _ => μ) := by
+    refine embed_congr_of_outcome_equiv _ _ ?e ?hb ?hv
+    · exact
+        { toFun := fun p => p
+          invFun := fun q => q
+          left_inv := fun p => rfl
+          right_inv := fun q => rfl }
+    · intro p
+      rfl
+    · intro p
+      rfl
+  calc
+    embed (FiniteInstrumentComp.ofOperation Φ d)
+        (ScottMap.const (embed μ k)) =
+      ((FiniteInstrumentComp.ofOperation Φ d).bind
+          fun _ => μ.bind ξ).satisfiedTTTheory resultCode :=
+      hleft
+    _ = (((FiniteInstrumentComp.ofOperation Φ d).bind fun _ => μ).bind
+          ξ).satisfiedTTTheory resultCode :=
+      hassoc.symm
+    _ = embed ((FiniteInstrumentComp.ofOperation Φ d).bind fun _ => μ) k :=
+      (embed_satisfied
+        ((FiniteInstrumentComp.ofOperation Φ d).bind fun _ => μ) ξ k
+        (fun p => hk _)).symm
+    _ = embed
+          ((FiniteInstrumentComp.ofOperation Φ ()).bind fun _ => μ) k := by
+      rw [hν]
+
+theorem restrictedResult_internal_pauliX {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s t : ChannelConfig C} {value : C}
+    (h : ChannelInternalStep s t)
+    (hc : s.control = .term (.prim (.pauliX value)))
+    (next : ChannelTree C t)
+    (R : ChannelTreeRealization D₀ j₀ realize (ChannelTree.internal h next))
+    (selectors : List Bool) (i : ℕ)
+    (ξ : HSemanticValue D₀ j₀ → FiniteInstrumentComp 2 PUnit.{1})
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2))
+    (hk : ∀ d, k d = (ξ d).satisfiedTTTheory resultCode) :
+    restrictedResult D₀ j₀ realize (ChannelTree.internal h next) R
+        selectors i k =
+      embed (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+          (realize value))
+        (ScottMap.const
+          (restrictedResult D₀ j₀ realize next
+            (internalChildRealization D₀ j₀ realize h next R)
+            selectors i k)) := by
+  have hop : channelInternalOperation s = Qubit.pauliXOp := by
+    simp [channelInternalOperation, hc]
+  have havail_iff :
+      ResultAvailable (ChannelTree.internal h next) selectors i ↔
+        ResultAvailable next selectors i :=
+    Iff.rfl
+  by_cases havail :
+      ResultAvailable (ChannelTree.internal h next) selectors i
+  · have havailChild := havail_iff.mp havail
+    rw [restrictedResult_eq_embed D₀ j₀ realize _ R selectors i k havail,
+      embed_restricted_internal D₀ j₀ realize h next R selectors i, hop,
+      restrictedResult_eq_embed D₀ j₀ realize next
+        (internalChildRealization D₀ j₀ realize h next R)
+        selectors i k havailChild,
+      embed_ofOperation_const_embed Qubit.pauliXOp (realize value)
+        (restrictedInstrument D₀ j₀ realize next
+          (internalChildRealization D₀ j₀ realize h next R)
+          selectors i)
+        ξ k hk]
+  · have hunavailChild : ¬ ResultAvailable next selectors i :=
+      fun hc => havail (havail_iff.mpr hc)
+    rw [restrictedResult_eq_bot D₀ j₀ realize _ R selectors i k havail,
+      restrictedResult_eq_bot D₀ j₀ realize next
+        (internalChildRealization D₀ j₀ realize h next R)
+        selectors i k hunavailChild,
+      embed_ofOperation_const_bot Qubit.pauliXOp (realize value)]
 
 /-- On a well-scoped tree, changing a leaf realization does not change any
 finite observation: `ValueRel` is functional on every terminal leaf. -/
@@ -6166,6 +6397,83 @@ theorem channel_config_return {C : Type}
           (payload_related D₀ j₀ realize value), hstack, ?_⟩
       rw [interp_prim_apply, hardwarePrimitive_ret]
       rfl
+
+theorem channel_config_pauliX {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {s : ChannelConfig C} {value : C}
+    {answer : HSemanticComp D₀ j₀}
+    (hrel : ChannelConfigRel D₀ j₀ realize
+      {s with control := .term (.prim (.pauliX value))} answer) :
+    ∃ k : HSemanticComp D₀ j₀ → HSemanticComp D₀ j₀,
+      ChannelConfigRel D₀ j₀ realize
+          {s with
+            control := .value (.payload value)
+            quantum := applyOperation Qubit.pauliXOp s.quantum}
+          (k (semanticUnit (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) (realize value))) ∧
+        answer =
+          k (taggedEmbed (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+            (realize value))) := by
+  rcases hrel with ⟨current, k, hcontrol, hstack, rfl⟩
+  cases hcontrol with
+  | term _ _ semanticEnv henv =>
+      refine ⟨k, ?_, ?_⟩
+      · exact ⟨semanticUnit (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) (realize value), k,
+          ControlRel.value _ _ s.env
+            (payload_related D₀ j₀ realize value), hstack, rfl⟩
+      · rw [interp_prim_apply, hardwarePrimitive_pauliX]
+
+/-- Binding a residual continuation around a Pauli-X embedding evaluates
+the operation at the returned payload, then continues. -/
+theorem semanticBind_ofOperation_eval
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (h : ScottMap (HSemanticValue D₀ j₀) (HSemanticComp D₀ j₀))
+    (Φ : QuantumOperation 2 2)
+    (d : HSemanticValue D₀ j₀)
+    (coord : ℕ)
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)) :
+    semanticBind (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀) h
+        (taggedEmbed (FiniteInstrumentComp.ofOperation Φ d))
+        coord k =
+      embed (FiniteInstrumentComp.ofOperation Φ d)
+        (ScottMap.const
+          (semanticBind (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) h
+            (semanticUnit (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) d)
+            coord k)) := by
+  change
+      (TTContinuation.atCoordinate coord
+        (TTContinuation.taggedBindScott (n := 2) h
+          (taggedEmbed (FiniteInstrumentComp.ofOperation Φ d)))) k =
+        embed (FiniteInstrumentComp.ofOperation Φ d)
+          (ScottMap.const
+            (semanticBind (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) h
+              (semanticUnit (Q := TTExternalContinuationPower 2)
+                (D₀ := D₀) (j₀ := j₀) d)
+              coord k))
+  rw [TTContinuation.taggedBind_atCoordinate, TTContinuation.bind_apply]
+  change
+      embed (FiniteInstrumentComp.ofOperation Φ d)
+          (TTContinuation.continuation
+            ((TTContinuation.atCoordinate coord).comp h) k) =
+        embed (FiniteInstrumentComp.ofOperation Φ d)
+          (ScottMap.const
+            (semanticBind (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) h
+              (semanticUnit (Q := TTExternalContinuationPower 2)
+                (D₀ := D₀) (j₀ := j₀) d)
+              coord k))
+  rw [embed_ofOperation_eval]
+  congr 1
 
 theorem channel_config_application {C : Type}
     (D₀ : QDomain.{0})
@@ -9455,8 +9763,8 @@ def NoApp {Prim : Type} : Term Prim → Prop
   | .var _ => True
   | .prim _ => True
 
-/-- Application-free terms that evaluate by identity CEK steps and intern
-only.  Pauli-X, measurement, extern, and probability change the physical
+/-- Application-free terms that evaluate by identity CEK steps, intern,
+and Pauli-X.  Measurement, extern, and probability change the physical
 tree shape under a residual stack and are excluded here. -/
 def AdminNoApp {C : Type} : Term (QubitPrimitive C) → Prop
   | .app _ _ => False
@@ -9467,7 +9775,7 @@ def AdminNoApp {C : Type} : Term (QubitPrimitive C) → Prop
   | .lam _ _ => True
   | .recLam _ _ _ => True
   | .prim (.ret _) => True
-  | .prim (.pauliX _) => False
+  | .prim (.pauliX _) => True
   | .prim (.measureZ _ _) => False
 
 theorem empty_env_closed_wellScoped {C : Type}
@@ -11732,6 +12040,146 @@ theorem value_under_closure_nil_presentedChannelConfigCompleteness {C : Type}
     (s := s) (x := x) (body := body) (closureEnv := cloEnv)
     (arg := arg) (rest := []) hc hs hrel hchild
 
+/-- Pauli-X under a single closure frame applies the operation, then
+betas the payload into an application-free body. -/
+theorem pauliX_under_closure_nil_presentedChannelConfigCompleteness
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {value : C} {x : Name}
+    {body : Term (QubitPrimitive C)} {cloEnv : RuntimeEnv C}
+    {answer : HSemanticComp D₀ j₀}
+    (hc : s.control = .term (.prim (.pauliX value)))
+    (hs : s.stack = [.function (.closure x body cloEnv)])
+    (hnoapp : NoApp body)
+    (hscoped : ChannelConfig.WellScoped s)
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer := by
+  have hsPx :
+      {s with control := .term (.prim (.pauliX value))} = s :=
+    ChannelConfig.ext hc.symm rfl rfl rfl
+  obtain ⟨semanticEnv, kStack, henv, hstack, rfl⟩ :=
+    channelConfigRel_term_inv D₀ j₀ hc hrel
+  rw [hs] at hstack
+  cases hstack
+  case function f krest hfn hrest =>
+    cases hrest
+    let sVal : ChannelConfig C :=
+      {s with
+        control := .value (.payload value)
+        quantum := applyOperation Qubit.pauliXOp s.quantum}
+    have hstep : ChannelInternalStep s sVal := by
+      have happ :
+          ChannelInternalStep
+            {s with control := .term (.prim (.pauliX value))}
+            sVal :=
+        ChannelInternalStep.pauliXPrimitive (s := s) (value := value)
+      exact hsPx.symm ▸ happ
+    have hscopedVal : ChannelConfig.WellScoped sVal :=
+      ChannelInternalStep.preserve_wellScoped hstep hscoped
+    have hrelVal : ChannelConfigRel D₀ j₀ realize sVal
+        ((fun ma =>
+          id (semanticBind (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀)
+            (semanticUnfold (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) f) ma))
+          (semanticUnit (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) (realize value))) :=
+      ⟨semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) (realize value),
+        fun ma =>
+          id (semanticBind (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀)
+            (semanticUnfold (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) f) ma),
+        ControlRel.value _ _ s.env
+          (payload_related D₀ j₀ realize value),
+        hs.symm ▸
+          StackRel.function (.closure x body cloEnv) f [] id hfn
+            StackRel.nil, rfl⟩
+    have hval :=
+      value_under_closure_nil_presentedChannelConfigCompleteness
+        D₀ j₀ realize (s := sVal) (arg := .payload value)
+        (x := x) (body := body) (cloEnv := cloEnv) rfl hs
+        hnoapp hscopedVal hrelVal
+    refine
+      { related := hrel
+        complete := ?_ }
+    constructor
+    intro selectors i ξ kξ hk
+    have hchildEq :=
+      hval.complete.selected_result_eq_channelTree_sup_presented
+        selectors i ξ kξ hk
+    have hden :
+        interp (hardwarePrimitive D₀ j₀ realize)
+            (.prim (.pauliX value)) semanticEnv =
+          taggedEmbed
+            (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+              (realize value)) := by
+      simp [hardwarePrimitive_pauliX]
+    have hchildCoord :
+        semanticBind (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀)
+            (semanticUnfold (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) f)
+            (semanticUnit (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) (realize value))
+            (HardwareAdequacy.encodePath selectors i) kξ =
+          sSup (channelTreeResults D₀ j₀ realize sVal selectors i
+            kξ) := by
+      simp only [id] at hchildEq
+      rw [← selectPath_semanticBind, hchildEq]
+    simp only [id]
+    rw [hden, selectPath_semanticBind,
+      semanticBind_ofOperation_eval D₀ j₀
+        (semanticUnfold (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) f)
+        Qubit.pauliXOp (realize value),
+      hchildCoord, embed_ofOperation_const_sSup]
+    apply le_antisymm
+    · apply sSup_le
+      rintro T ⟨r, ⟨fuel, child, R, hdepth, rfl⟩, rfl⟩
+      apply le_sSup
+      refine ⟨fuel + 1, ChannelTree.internal hstep child,
+        wrapInternalRealization D₀ j₀ realize hstep child R, ?_, ?_⟩
+      · change child.depth + 1 ≤ fuel + 1
+        omega
+      · exact
+          (restrictedResult_internal_pauliX D₀ j₀ realize hstep hc
+            child
+            (wrapInternalRealization D₀ j₀ realize hstep child R)
+            selectors i ξ kξ hk).symm
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      cases tree with
+      | terminal hterm =>
+          cases hterm.control_eq.symm.trans hc
+      | @internal _ t' h next =>
+          have ht : t' = sVal :=
+            ChannelInternalStep.eq_config_of_pauliX h hc
+          subst t'
+          rw [restrictedResult_internal_pauliX D₀ j₀ realize h hc
+            next R selectors i ξ kξ hk]
+          apply le_sSup
+          refine ⟨restrictedResult D₀ j₀ realize next
+              (internalChildRealization D₀ j₀ realize h next R)
+              selectors i kξ,
+            ⟨next.depth, next,
+              internalChildRealization D₀ j₀ realize h next R,
+              le_rfl, rfl⟩, rfl⟩
+      | external _ hex _ =>
+          exact False.elim (ChannelExternalStep.not_prim hex hc)
+      | probability _ _ _ _ =>
+          cases hc
+      | probabilityZero _ =>
+          cases hc
+      | probabilityOne _ =>
+          cases hc
+      | measurement _ _ =>
+          cases hc
+
 /-- A return under a single closure frame betas to the body at the empty
 stack.  Application-free bodies are then presented by empty-stack NoApp. -/
 theorem ret_under_closure_nil_presentedChannelConfigCompleteness {C : Type}
@@ -11954,8 +12402,9 @@ theorem admin_noapp_under_closure_nil_presentedChannelConfigCompleteness
       | ret value =>
           exact ret_under_closure_nil_presentedChannelConfigCompleteness
             D₀ j₀ realize hc hs hnoapp hscoped hrel
-      | pauliX _ =>
-          exact False.elim hadmin
+      | pauliX value =>
+          exact pauliX_under_closure_nil_presentedChannelConfigCompleteness
+            D₀ j₀ realize hc hs hnoapp hscoped hrel
       | measureZ _ _ =>
           exact False.elim hadmin
 
