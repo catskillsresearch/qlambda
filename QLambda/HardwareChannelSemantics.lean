@@ -10387,6 +10387,86 @@ theorem MixedSpineOk.cons {C : Type} {x : Name}
   | [], hne, _ => exact False.elim (hne rfl)
   | y :: rest, _, hok => exact ⟨hadmin, hok⟩
 
+/-- After leftover argument frames are absorbed, the residual body is
+an earlier function-spine body (`AdminNoApp`), not the last `NoApp`
+body. -/
+def BodyUnderArgsThenAdmin {C : Type} :
+    Nat → Term (QubitPrimitive C) → Prop
+  | 0, t => AdminNoApp t
+  | n + 1, t =>
+      match t with
+      | .lam _ b => BodyUnderArgsThenAdmin n b
+      | _ => False
+
+/-- A lambda `lam x body` can absorb `n` leftover argument frames
+before a residual function-frame spine. -/
+def LamAbsorbsThenAdmin {C : Type} :
+    Nat → Term (QubitPrimitive C) → Prop
+  | 0, _ => True
+  | n + 1, body => BodyUnderArgsThenAdmin n body
+
+@[simp]
+theorem BodyUnderArgsThenAdmin_zero {C : Type}
+    {t : Term (QubitPrimitive C)} :
+    BodyUnderArgsThenAdmin 0 t ↔ AdminNoApp t :=
+  Iff.rfl
+
+@[simp]
+theorem BodyUnderArgsThenAdmin_succ_lam {C : Type} {n : Nat}
+    {x : Name} {b : Term (QubitPrimitive C)} :
+    BodyUnderArgsThenAdmin (n + 1) (.lam x b) ↔
+      BodyUnderArgsThenAdmin n b :=
+  Iff.rfl
+
+theorem BodyUnderArgsThenAdmin_succ_inv {C : Type} {n : Nat}
+    {t : Term (QubitPrimitive C)}
+    (h : BodyUnderArgsThenAdmin (n + 1) t) :
+    ∃ x b, t = .lam x b ∧ BodyUnderArgsThenAdmin n b := by
+  cases t with
+  | lam x b => exact ⟨x, b, rfl, h⟩
+  | app _ _ => cases h
+  | var _ => cases h
+  | recLam _ _ _ => cases h
+  | intern _ _ => cases h
+  | extern _ _ => cases h
+  | prob _ _ _ => cases h
+  | prim _ => cases h
+
+@[simp]
+theorem LamAbsorbsThenAdmin_zero {C : Type}
+    {body : Term (QubitPrimitive C)} :
+    LamAbsorbsThenAdmin 0 body ↔ True :=
+  Iff.rfl
+
+@[simp]
+theorem LamAbsorbsThenAdmin_succ {C : Type} {n : Nat}
+    {body : Term (QubitPrimitive C)} :
+    LamAbsorbsThenAdmin (n + 1) body ↔
+      BodyUnderArgsThenAdmin n body :=
+  Iff.rfl
+
+/-- Leftover argument frames over a residual function-frame spine. -/
+def argumentThenFunctionStack {C : Type}
+    (args : List (Term (QubitPrimitive C) × RuntimeEnv C))
+    (rest : List (Name × Term (QubitPrimitive C) × RuntimeEnv C)) :
+    EvalStack C :=
+  argumentStack args ++ functionStack rest
+
+@[simp]
+theorem argumentThenFunctionStack_nil {C : Type}
+    (rest : List (Name × Term (QubitPrimitive C) × RuntimeEnv C)) :
+    argumentThenFunctionStack [] rest = functionStack rest :=
+  rfl
+
+@[simp]
+theorem argumentThenFunctionStack_cons {C : Type}
+    (arg : Term (QubitPrimitive C)) (callEnv : RuntimeEnv C)
+    (args : List (Term (QubitPrimitive C) × RuntimeEnv C))
+    (rest : List (Name × Term (QubitPrimitive C) × RuntimeEnv C)) :
+    argumentThenFunctionStack ((arg, callEnv) :: args) rest =
+      .argument arg callEnv :: argumentThenFunctionStack args rest :=
+  rfl
+
 theorem empty_env_closed_wellScoped {C : Type}
     {s : ChannelConfig C} {code : Term (QubitPrimitive C)}
     (hclosed : Closed code)
@@ -22653,6 +22733,1091 @@ theorem closed_lam_app_app_lam_lam_admin_noapp_presented_token_adequacy
     (closed_lam_app_app_lam_lam_admin_noapp_presented_channelTreeCompleteness
       D₀ j₀ realize x y z bodyX body arg1 arg2 hclosed hnoappX
       hadminBody hadmin1 hadmin2 quantum semanticEnv)
+    selectors ξ k hk i token
+
+/-- Value completeness under one function frame, leftover argument
+frames, and a residual function-frame spine. -/
+def ValueUnderFunctionArgumentThenFunctionSpine {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (args : List (Term (QubitPrimitive C) × RuntimeEnv C))
+    (rest : List (Name × Term (QubitPrimitive C) × RuntimeEnv C)) :
+    Prop :=
+  ∀ {s : ChannelConfig C} {arg : RuntimeValue C} {x : Name}
+    {body : Term (QubitPrimitive C)} {cloX : RuntimeEnv C}
+    {answer : HSemanticComp D₀ j₀},
+    s.control = .value arg →
+    s.stack =
+      .function (.closure x body cloX) ::
+        argumentThenFunctionStack args rest →
+    BodyUnderArgsThenAdmin args.length body →
+    ChannelConfig.WellScoped s →
+    ChannelConfigRel D₀ j₀ realize s answer →
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer
+
+theorem pauliX_under_function_argument_then_function_spine_of_value
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (args : List (Term (QubitPrimitive C) × RuntimeEnv C))
+    (rest : List (Name × Term (QubitPrimitive C) × RuntimeEnv C))
+    (hVal : ValueUnderFunctionArgumentThenFunctionSpine D₀ j₀ realize
+      args rest)
+    {s : ChannelConfig C} {value : C} {x : Name}
+    {body : Term (QubitPrimitive C)} {cloX : RuntimeEnv C}
+    {answer : HSemanticComp D₀ j₀}
+    (hc : s.control = .term (.prim (.pauliX value)))
+    (hs : s.stack =
+      .function (.closure x body cloX) ::
+        argumentThenFunctionStack args rest)
+    (hbody : BodyUnderArgsThenAdmin args.length body)
+    (hscoped : ChannelConfig.WellScoped s)
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer := by
+  have hsPx :
+      {s with control := .term (.prim (.pauliX value))} = s :=
+    ChannelConfig.ext hc.symm rfl rfl rfl
+  obtain ⟨semanticEnv, kStack, henv, hstack, rfl⟩ :=
+    channelConfigRel_term_inv D₀ j₀ hc hrel
+  let sVal : ChannelConfig C :=
+    {s with
+      control := .value (.payload value)
+      quantum := applyOperation Qubit.pauliXOp s.quantum}
+  have hstep : ChannelInternalStep s sVal := by
+    have happ :
+        ChannelInternalStep
+          {s with control := .term (.prim (.pauliX value))}
+          sVal :=
+      ChannelInternalStep.pauliXPrimitive (s := s) (value := value)
+    exact hsPx.symm ▸ happ
+  have hscopedVal : ChannelConfig.WellScoped sVal :=
+    ChannelInternalStep.preserve_wellScoped hstep hscoped
+  have hrelVal : ChannelConfigRel D₀ j₀ realize sVal
+      (kStack
+        (semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) (realize value))) :=
+    ⟨semanticUnit (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀) (realize value),
+      kStack,
+      ControlRel.value _ _ s.env
+        (payload_related D₀ j₀ realize value),
+      hstack, rfl⟩
+  have hval :=
+    hVal (s := sVal) (arg := .payload value) (x := x) (body := body)
+      (cloX := cloX) rfl hs hbody hscopedVal hrelVal
+  refine
+    { related := hrel
+      complete := ?_ }
+  constructor
+  intro selectors i ξ kξ hk
+  have hchildEq :=
+    hval.complete.selected_result_eq_channelTree_sup_presented
+      selectors i ξ kξ hk
+  have hden :
+      interp (hardwarePrimitive D₀ j₀ realize)
+          (.prim (.pauliX value)) semanticEnv =
+        taggedEmbed
+          (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+            (realize value)) := by
+    simp [hardwarePrimitive_pauliX]
+  have hne : s.stack ≠ [] := by
+    rw [hs]
+    exact List.cons_ne_nil _ _
+  let unitVal : HSemanticComp D₀ j₀ :=
+    semanticUnit (Q := TTExternalContinuationPower 2)
+      (D₀ := D₀) (j₀ := j₀) (realize value)
+  let opVal : HSemanticComp D₀ j₀ :=
+    taggedEmbed
+      (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+        (realize value))
+  have hchildCoord :
+      kStack unitVal (HardwareAdequacy.encodePath selectors i) kξ =
+        sSup (channelTreeResults D₀ j₀ realize sVal selectors i
+          kξ) := by
+    have hsel :
+        HardwareAdequacy.selectPath selectors (kStack unitVal) i kξ =
+          kStack unitVal (HardwareAdequacy.encodePath selectors i)
+            kξ :=
+      congrArg (fun f => f kξ)
+        (HardwareAdequacy.selectPath_apply_encode selectors
+          (kStack unitVal) i)
+    exact hsel.symm.trans hchildEq
+  have hselParent :
+      HardwareAdequacy.selectPath selectors (kStack opVal) i kξ =
+        kStack opVal (HardwareAdequacy.encodePath selectors i) kξ :=
+    congrArg (fun f => f kξ)
+      (HardwareAdequacy.selectPath_apply_encode selectors
+        (kStack opVal) i)
+  have hop :
+      kStack opVal (HardwareAdequacy.encodePath selectors i) kξ =
+        embed (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+            (realize value))
+          (ScottMap.const
+            (kStack unitVal (HardwareAdequacy.encodePath selectors i)
+              kξ)) :=
+    stackRel_ofOperation_eval D₀ j₀ hstack hne
+      Qubit.pauliXOp (realize value)
+      (HardwareAdequacy.encodePath selectors i) kξ
+  rw [hden, hselParent, hop, hchildCoord, embed_ofOperation_const_sSup]
+  apply le_antisymm
+  · apply sSup_le
+    rintro T ⟨r, ⟨fuel, child, R, hdepth, rfl⟩, rfl⟩
+    apply le_sSup
+    refine ⟨fuel + 1, ChannelTree.internal hstep child,
+      wrapInternalRealization D₀ j₀ realize hstep child R, ?_, ?_⟩
+    · change child.depth + 1 ≤ fuel + 1
+      omega
+    · exact
+        (restrictedResult_internal_pauliX D₀ j₀ realize hstep hc
+          child
+          (wrapInternalRealization D₀ j₀ realize hstep child R)
+          selectors i ξ kξ hk).symm
+  · apply sSup_le
+    rintro T ⟨_, tree, R, _, rfl⟩
+    cases tree with
+    | terminal hterm =>
+        cases hterm.control_eq.symm.trans hc
+    | @internal _ t' h next =>
+        have ht : t' = sVal :=
+          ChannelInternalStep.eq_config_of_pauliX h hc
+        subst t'
+        rw [restrictedResult_internal_pauliX D₀ j₀ realize h hc
+          next R selectors i ξ kξ hk]
+        apply le_sSup
+        refine ⟨restrictedResult D₀ j₀ realize next
+            (internalChildRealization D₀ j₀ realize h next R)
+            selectors i kξ,
+          ⟨next.depth, next,
+            internalChildRealization D₀ j₀ realize h next R,
+            le_rfl, rfl⟩, rfl⟩
+    | external _ hex _ =>
+        exact False.elim (ChannelExternalStep.not_prim hex hc)
+    | probability _ _ _ _ =>
+        cases hc
+    | probabilityZero _ =>
+        cases hc
+    | probabilityOne _ =>
+        cases hc
+    | measurement _ _ =>
+        cases hc
+
+theorem admin_noapp_under_function_argument_then_function_spine_of_value
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (args : List (Term (QubitPrimitive C) × RuntimeEnv C))
+    (rest : List (Name × Term (QubitPrimitive C) × RuntimeEnv C))
+    (hVal : ValueUnderFunctionArgumentThenFunctionSpine D₀ j₀ realize
+      args rest)
+    {s : ChannelConfig C} {code : Term (QubitPrimitive C)}
+    {x : Name} {body : Term (QubitPrimitive C)} {cloX : RuntimeEnv C}
+    {answer : HSemanticComp D₀ j₀}
+    (hadmin : AdminNoApp code)
+    (hc : s.control = .term code)
+    (hs : s.stack =
+      .function (.closure x body cloX) ::
+        argumentThenFunctionStack args rest)
+    (hbody : BodyUnderArgsThenAdmin args.length body)
+    (hscoped : ChannelConfig.WellScoped s)
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer := by
+  induction code generalizing s answer with
+  | var z =>
+      have hctl := hscoped.left
+      rw [hc] at hctl
+      obtain ⟨v, hlookup⟩ := hctl.right z (by simp [free])
+      have hsVar :
+          {s with control := .term (.var z)} = s :=
+        ChannelConfig.ext hc.symm rfl rfl rfl
+      have hrelVar : ChannelConfigRel D₀ j₀ realize
+          {s with control := .term (.var z)} answer :=
+        hsVar.symm ▸ hrel
+      have hrelVal :=
+        channel_config_variable D₀ j₀ hlookup hrelVar
+      have hscopedVal : ChannelConfig.WellScoped
+          {s with control := .value v} :=
+        ⟨⟨hctl.left, hctl.left z v hlookup⟩, hscoped.right⟩
+      have hval :=
+        hVal (s := {s with control := .value v}) (arg := v)
+          (x := x) (body := body) (cloX := cloX)
+          rfl hs hbody hscopedVal hrelVal
+      exact variable_presentedChannelConfigCompleteness D₀ j₀ realize
+        hc hlookup hrel hval
+  | app _ _ =>
+      exact False.elim hadmin
+  | lam z M _ih =>
+      have hsLam :
+          {s with control := .term (.lam z M)} = s :=
+        ChannelConfig.ext hc.symm rfl rfl rfl
+      have hrelLam : ChannelConfigRel D₀ j₀ realize
+          {s with control := .term (.lam z M)} answer :=
+        hsLam.symm ▸ hrel
+      have hrelVal :=
+        channel_config_lambda D₀ j₀ (s := s) hrelLam
+      have hstepLam : ChannelInternalStep s
+          {s with control := .value (.closure z M s.env)} := by
+        have happ :
+            ChannelInternalStep
+              {s with control := .term (.lam z M)}
+              {s with control := .value (.closure z M s.env)} :=
+          ChannelInternalStep.lambda (s := s) (x := z) (body := M)
+        exact hsLam.symm ▸ happ
+      have hscopedVal : ChannelConfig.WellScoped
+          {s with control := .value (.closure z M s.env)} :=
+        ChannelInternalStep.preserve_wellScoped hstepLam hscoped
+      have hval :=
+        hVal (s := {s with control := .value (.closure z M s.env)})
+          (arg := .closure z M s.env) (x := x) (body := body)
+          (cloX := cloX) rfl hs hbody hscopedVal hrelVal
+      exact lambda_presentedChannelConfigCompleteness D₀ j₀ realize
+        hc hrel hval
+  | recLam self z M _ih =>
+      have hsRec :
+          {s with control := .term (.recLam self z M)} = s :=
+        ChannelConfig.ext hc.symm rfl rfl rfl
+      have hrelRec : ChannelConfigRel D₀ j₀ realize
+          {s with control := .term (.recLam self z M)} answer :=
+        hsRec.symm ▸ hrel
+      have hrelVal :=
+        channel_config_recursive D₀ j₀ (s := s) hrelRec
+      have hstepRec : ChannelInternalStep s
+          {s with control := .value (.recClosure self z M s.env)} := by
+        have happ :
+            ChannelInternalStep
+              {s with control := .term (.recLam self z M)}
+              {s with
+                control := .value (.recClosure self z M s.env)} :=
+          ChannelInternalStep.recursive (s := s) (self := self)
+            (arg := z) (body := M)
+        exact hsRec.symm ▸ happ
+      have hscopedVal : ChannelConfig.WellScoped
+          {s with control := .value (.recClosure self z M s.env)} :=
+        ChannelInternalStep.preserve_wellScoped hstepRec hscoped
+      have hval :=
+        hVal
+          (s :=
+            {s with control := .value (.recClosure self z M s.env)})
+          (arg := .recClosure self z M s.env) (x := x) (body := body)
+          (cloX := cloX) rfl hs hbody hscopedVal hrelVal
+      exact recLam_presentedChannelConfigCompleteness D₀ j₀ realize
+        hc hrel hval
+  | intern left right ihL ihR =>
+      have ⟨hnaL, hnaR⟩ := hadmin
+      have hscopedL :=
+        wellScoped_term_child (child := left) hc hscoped
+          (fun z hz => by simp [free, hz])
+      have hscopedR :=
+        wellScoped_term_child (child := right) hc hscoped
+          (fun z hz => by simp [free, hz])
+      refine intern_related_presentedChannelConfigCompleteness
+        D₀ j₀ realize hc hrel ?_ ?_
+      · intro semanticEnv k henv hstack
+        exact ihL hnaL (s := {s with control := .term left}) rfl hs
+          hscopedL
+          ⟨interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv, k,
+            ControlRel.term left s.env semanticEnv henv, hstack, rfl⟩
+      · intro semanticEnv k henv hstack
+        exact ihR hnaR (s := {s with control := .term right}) rfl hs
+          hscopedR
+          ⟨interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv, k,
+            ControlRel.term right s.env semanticEnv henv, hstack, rfl⟩
+  | extern _ _ _ _ =>
+      exact False.elim hadmin
+  | prob p left right ihL ihR =>
+      have ⟨hnaL, hnaR⟩ := hadmin
+      have hscopedL :=
+        wellScoped_term_child (child := left) hc hscoped
+          (fun z hz => by simp [free, hz])
+      have hscopedR :=
+        wellScoped_term_child (child := right) hc hscoped
+          (fun z hz => by simp [free, hz])
+      refine prob_related_presentedChannelConfigCompleteness
+        D₀ j₀ realize hc hrel ?_ ?_
+      · intro semanticEnv k quantum henv hstack
+        exact ihL hnaL
+          (s := {s with control := .term left, quantum := quantum})
+          rfl hs ⟨hscopedL.left, hscopedL.right⟩
+          ⟨interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv, k,
+            ControlRel.term left s.env semanticEnv henv, hstack, rfl⟩
+      · intro semanticEnv k quantum henv hstack
+        exact ihR hnaR
+          (s := {s with control := .term right, quantum := quantum})
+          rfl hs ⟨hscopedR.left, hscopedR.right⟩
+          ⟨interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv, k,
+            ControlRel.term right s.env semanticEnv henv, hstack, rfl⟩
+  | prim prim =>
+      cases prim with
+      | ret value =>
+          have hsRet :
+              {s with control := .term (.prim (.ret value))} = s :=
+            ChannelConfig.ext hc.symm rfl rfl rfl
+          have hrelRet : ChannelConfigRel D₀ j₀ realize
+              {s with control := .term (.prim (.ret value))} answer :=
+            hsRet.symm ▸ hrel
+          have hrelVal :=
+            channel_config_return D₀ j₀ hrelRet
+          have hstepRet : ChannelInternalStep s
+              {s with control := .value (.payload value)} := by
+            have happ :
+                ChannelInternalStep
+                  {s with control := .term (.prim (.ret value))}
+                  {s with control := .value (.payload value)} :=
+              ChannelInternalStep.returnPrimitive (s := s)
+                (value := value)
+            exact hsRet.symm ▸ happ
+          have hscopedVal : ChannelConfig.WellScoped
+              {s with control := .value (.payload value)} :=
+            ChannelInternalStep.preserve_wellScoped hstepRet hscoped
+          have hval :=
+            hVal (s := {s with control := .value (.payload value)})
+              (arg := .payload value) (x := x) (body := body)
+              (cloX := cloX) rfl hs hbody hscopedVal hrelVal
+          exact return_presentedChannelConfigCompleteness D₀ j₀ realize
+            hc hrel hval
+      | pauliX value =>
+          exact
+            pauliX_under_function_argument_then_function_spine_of_value
+              D₀ j₀ realize args rest hVal hc hs hbody hscoped hrel
+      | measureZ _ _ =>
+          exact False.elim hadmin
+
+/-- Leftover argument frames over a residual function-frame spine. -/
+theorem argument_then_function_spine_presented
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (args : List (Term (QubitPrimitive C) × RuntimeEnv C))
+    (rest : List (Name × Term (QubitPrimitive C) × RuntimeEnv C))
+    (hargs : ArgumentFramesOk args) (hok : FunctionSpineOk rest) :
+    (∀ {s : ChannelConfig C} {x : Name}
+        {body : Term (QubitPrimitive C)} {answer : HSemanticComp D₀ j₀},
+      s.control = .term (.lam x body) →
+      s.stack = argumentThenFunctionStack args rest →
+      LamAbsorbsThenAdmin args.length body →
+      ChannelConfig.WellScoped s →
+      ChannelConfigRel D₀ j₀ realize s answer →
+      PresentedChannelConfigCompleteness D₀ j₀ realize s answer)
+    ∧
+    ValueUnderFunctionArgumentThenFunctionSpine D₀ j₀ realize args rest
+    ∧
+    (∀ {s : ChannelConfig C} {code : Term (QubitPrimitive C)}
+        {x : Name} {body : Term (QubitPrimitive C)}
+        {cloX : RuntimeEnv C} {answer : HSemanticComp D₀ j₀},
+      AdminNoApp code →
+      s.control = .term code →
+      s.stack =
+        .function (.closure x body cloX) ::
+          argumentThenFunctionStack args rest →
+      BodyUnderArgsThenAdmin args.length body →
+      ChannelConfig.WellScoped s →
+      ChannelConfigRel D₀ j₀ realize s answer →
+      PresentedChannelConfigCompleteness D₀ j₀ realize s answer) := by
+  induction args with
+  | nil =>
+      refine ⟨?hlam, ?hval, ?hadmin⟩
+      · intro s x body answer hc hs _habs hscoped hrel
+        have hsLam :
+            {s with control := .term (.lam x body)} = s :=
+          ChannelConfig.ext hc.symm rfl rfl rfl
+        have hrelLam : ChannelConfigRel D₀ j₀ realize
+            {s with control := .term (.lam x body)} answer :=
+          hsLam.symm ▸ hrel
+        have hrelVal :=
+          channel_config_lambda D₀ j₀ (s := s) hrelLam
+        have hstepLam : ChannelInternalStep s
+            {s with control := .value (.closure x body s.env)} := by
+          have happ :
+              ChannelInternalStep
+                {s with control := .term (.lam x body)}
+                {s with control := .value (.closure x body s.env)} :=
+            ChannelInternalStep.lambda (s := s) (x := x) (body := body)
+          exact hsLam.symm ▸ happ
+        have hscopedVal : ChannelConfig.WellScoped
+            {s with control := .value (.closure x body s.env)} :=
+          ChannelInternalStep.preserve_wellScoped hstepLam hscoped
+        have hs' : ({s with
+              control := .value (.closure x body s.env)}).stack =
+            functionStack rest := by
+          simpa [argumentThenFunctionStack] using hs
+        have hval :=
+          value_under_function_spine_presentedChannelConfigCompleteness
+            D₀ j₀ realize rest hok
+            (s := {s with control := .value (.closure x body s.env)})
+            rfl hs' hscopedVal hrelVal
+        exact lambda_presentedChannelConfigCompleteness D₀ j₀ realize
+          hc hrel hval
+      · intro s arg x body cloX answer hc hs hbody hscoped hrel
+        have hs' : s.stack =
+            functionStack ((x, body, cloX) :: rest) := by
+          simpa [argumentThenFunctionStack, functionStack] using hs
+        have hokFull : FunctionSpineOk ((x, body, cloX) :: rest) :=
+          FunctionSpineOk.cons hok.ne_nil hbody hok
+        exact
+          value_under_function_spine_presentedChannelConfigCompleteness
+            D₀ j₀ realize ((x, body, cloX) :: rest) hokFull hc hs'
+            hscoped hrel
+      · intro s code x body cloX answer hadmin hc hs hbody hscoped
+          hrel
+        have hs' : s.stack =
+            functionStack ((x, body, cloX) :: rest) := by
+          simpa [argumentThenFunctionStack, functionStack] using hs
+        have hokFull : FunctionSpineOk ((x, body, cloX) :: rest) :=
+          FunctionSpineOk.cons hok.ne_nil hbody hok
+        exact
+          admin_noapp_under_function_spine_presentedChannelConfigCompleteness
+            D₀ j₀ realize ((x, body, cloX) :: rest) hokFull hadmin hc
+            hs' hscoped hrel
+  | cons p restArgs ih =>
+      rcases p with ⟨arg, callEnv⟩
+      have hadminArg : AdminNoApp arg :=
+        hargs (arg, callEnv) (by simp)
+      have hargsRest : ArgumentFramesOk restArgs :=
+        fun q hq => hargs q (by simp [hq])
+      obtain ⟨ihLam, ihVal, ihAdmin⟩ := ih hargsRest
+      have hlam :
+          ∀ {s : ChannelConfig C} {x : Name}
+            {body : Term (QubitPrimitive C)}
+            {answer : HSemanticComp D₀ j₀},
+          s.control = .term (.lam x body) →
+          s.stack =
+            argumentThenFunctionStack ((arg, callEnv) :: restArgs)
+              rest →
+          LamAbsorbsThenAdmin
+            ((arg, callEnv) :: restArgs).length body →
+          ChannelConfig.WellScoped s →
+          ChannelConfigRel D₀ j₀ realize s answer →
+          PresentedChannelConfigCompleteness D₀ j₀ realize s
+            answer := by
+        intro s x body answer hc hs habs hscoped hrel
+        have hsLam :
+            {s with control := .term (.lam x body)} = s :=
+          ChannelConfig.ext hc.symm rfl rfl rfl
+        have hrelLam : ChannelConfigRel D₀ j₀ realize
+            {s with control := .term (.lam x body)} answer :=
+          hsLam.symm ▸ hrel
+        have hrelClo :=
+          channel_config_lambda D₀ j₀ (s := s) hrelLam
+        have hsrcClo :
+            {s with control := .value (.closure x body s.env)} =
+              {s with
+                control := .value (.closure x body s.env)
+                stack :=
+                  .argument arg callEnv ::
+                    argumentThenFunctionStack restArgs rest} :=
+          ChannelConfig.ext rfl rfl hs rfl
+        have hrelFn :=
+          channel_config_evaluateArgument D₀ j₀
+            (s := {s with control := .value (.closure x body s.env)})
+            (fn := .closure x body s.env) (arg := arg)
+            (callEnv := callEnv)
+            (rest := argumentThenFunctionStack restArgs rest)
+            (hsrcClo ▸ hrelClo)
+        have hstepLam : ChannelInternalStep s
+            {s with control := .value (.closure x body s.env)} := by
+          have happ :
+              ChannelInternalStep
+                {s with control := .term (.lam x body)}
+                {s with control := .value (.closure x body s.env)} :=
+            ChannelInternalStep.lambda (s := s) (x := x) (body := body)
+          exact hsLam.symm ▸ happ
+        have hstepArg : ChannelInternalStep
+            {s with control := .value (.closure x body s.env)}
+            {s with
+              control := .term arg
+              env := callEnv
+              stack :=
+                .function (.closure x body s.env) ::
+                  argumentThenFunctionStack restArgs rest} := by
+          have happ :
+              ChannelInternalStep
+                {s with
+                  control := .value (.closure x body s.env)
+                  stack :=
+                    .argument arg callEnv ::
+                      argumentThenFunctionStack restArgs rest}
+                {s with
+                  control := .term arg
+                  env := callEnv
+                  stack :=
+                    .function (.closure x body s.env) ::
+                      argumentThenFunctionStack restArgs rest} :=
+            ChannelInternalStep.evaluateArgument
+              (s := {s with control := .value (.closure x body s.env)})
+              (fn := .closure x body s.env) (arg := arg)
+              (callEnv := callEnv)
+              (rest := argumentThenFunctionStack restArgs rest)
+          exact hsrcClo.symm ▸ happ
+        have hscopedFn : ChannelConfig.WellScoped
+            {s with
+              control := .term arg
+              env := callEnv
+              stack :=
+                .function (.closure x body s.env) ::
+                  argumentThenFunctionStack restArgs rest} :=
+          ChannelInternalStep.preserve_wellScoped hstepArg
+            (ChannelInternalStep.preserve_wellScoped hstepLam hscoped)
+        have hbodyRest : BodyUnderArgsThenAdmin restArgs.length body :=
+          by simpa [LamAbsorbsThenAdmin] using habs
+        have harg :
+            PresentedChannelConfigCompleteness D₀ j₀ realize
+              {s with
+                control := .term arg
+                env := callEnv
+                stack :=
+                  .function (.closure x body s.env) ::
+                    argumentThenFunctionStack restArgs rest}
+              answer :=
+          ihAdmin hadminArg rfl rfl hbodyRest hscopedFn hrelFn
+        have hClo :=
+          evaluateArgument_presentedChannelConfigCompleteness
+            D₀ j₀ realize
+            (s := {s with control := .value (.closure x body s.env)})
+            (fn := .closure x body s.env) (arg := arg)
+            (callEnv := callEnv)
+            (rest := argumentThenFunctionStack restArgs rest)
+            rfl hs hrelClo harg
+        exact lambda_presentedChannelConfigCompleteness D₀ j₀ realize
+          hc hrel hClo
+      have hval : ValueUnderFunctionArgumentThenFunctionSpine
+          D₀ j₀ realize ((arg, callEnv) :: restArgs) rest := by
+        intro s v x body cloX answer hc hs hbody hscoped hrel
+        obtain ⟨y, body', rfl, hbody'⟩ :=
+          BodyUnderArgsThenAdmin_succ_inv (n := restArgs.length) hbody
+        have hsEq :
+            {s with
+              control := .value v
+              stack :=
+                .function (.closure x (.lam y body') cloX) ::
+                  argumentThenFunctionStack
+                    ((arg, callEnv) :: restArgs) rest} = s :=
+          ChannelConfig.ext hc.symm rfl hs.symm rfl
+        have hrel' : ChannelConfigRel D₀ j₀ realize
+            {s with
+              control := .value v
+              stack :=
+                .function (.closure x (.lam y body') cloX) ::
+                  argumentThenFunctionStack
+                    ((arg, callEnv) :: restArgs) rest}
+            answer :=
+          hsEq.symm ▸ hrel
+        have hrelBody :=
+          channel_config_beta D₀ j₀ (s := s) (x := x)
+            (body := .lam y body') (closureEnv := cloX) (arg := v)
+            (rest :=
+              argumentThenFunctionStack
+                ((arg, callEnv) :: restArgs) rest)
+            hrel'
+        let sBody : ChannelConfig C :=
+          {s with
+            control := .term (.lam y body')
+            env := RuntimeEnv.bind x v cloX
+            stack :=
+              argumentThenFunctionStack
+                ((arg, callEnv) :: restArgs) rest}
+        have hstepBeta : ChannelInternalStep s sBody := by
+          have happ :
+              ChannelInternalStep
+                {s with
+                  control := .value v
+                  stack :=
+                    .function (.closure x (.lam y body') cloX) ::
+                      argumentThenFunctionStack
+                        ((arg, callEnv) :: restArgs) rest}
+                sBody :=
+            ChannelInternalStep.beta (s := s) (x := x)
+              (body := .lam y body') (closureEnv := cloX) (arg := v)
+              (rest :=
+                argumentThenFunctionStack
+                  ((arg, callEnv) :: restArgs) rest)
+          exact hsEq.symm ▸ happ
+        have hscopedBody : ChannelConfig.WellScoped sBody :=
+          ChannelInternalStep.preserve_wellScoped hstepBeta hscoped
+        have habs : LamAbsorbsThenAdmin
+            ((arg, callEnv) :: restArgs).length body' :=
+          hbody'
+        have hchild :=
+          hlam (s := sBody) (x := y) (body := body') rfl rfl habs
+            hscopedBody hrelBody
+        exact beta_presentedChannelConfigCompleteness D₀ j₀ realize
+          (s := s) (x := x) (body := .lam y body')
+          (closureEnv := cloX) (arg := v)
+          (rest :=
+            argumentThenFunctionStack
+              ((arg, callEnv) :: restArgs) rest)
+          hc hs hrel hchild
+      exact ⟨hlam, hval,
+        fun {s} {code} {x} {body} {cloX} {answer} =>
+          admin_noapp_under_function_argument_then_function_spine_of_value
+            D₀ j₀ realize ((arg, callEnv) :: restArgs) rest hval⟩
+
+theorem lam_under_argument_then_function_spine_presentedChannelConfigCompleteness
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (args : List (Term (QubitPrimitive C) × RuntimeEnv C))
+    (rest : List (Name × Term (QubitPrimitive C) × RuntimeEnv C))
+    (hargs : ArgumentFramesOk args) (hok : FunctionSpineOk rest)
+    {s : ChannelConfig C} {x : Name}
+    {body : Term (QubitPrimitive C)} {answer : HSemanticComp D₀ j₀}
+    (hc : s.control = .term (.lam x body))
+    (hs : s.stack = argumentThenFunctionStack args rest)
+    (habs : LamAbsorbsThenAdmin args.length body)
+    (hscoped : ChannelConfig.WellScoped s)
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer :=
+  (argument_then_function_spine_presented D₀ j₀ realize args rest
+    hargs hok).1 hc hs habs hscoped hrel
+
+theorem value_under_function_argument_then_function_spine_presentedChannelConfigCompleteness
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (args : List (Term (QubitPrimitive C) × RuntimeEnv C))
+    (rest : List (Name × Term (QubitPrimitive C) × RuntimeEnv C))
+    (hargs : ArgumentFramesOk args) (hok : FunctionSpineOk rest)
+    {s : ChannelConfig C} {arg : RuntimeValue C} {x : Name}
+    {body : Term (QubitPrimitive C)} {cloX : RuntimeEnv C}
+    {answer : HSemanticComp D₀ j₀}
+    (hc : s.control = .value arg)
+    (hs : s.stack =
+      .function (.closure x body cloX) ::
+        argumentThenFunctionStack args rest)
+    (hbody : BodyUnderArgsThenAdmin args.length body)
+    (hscoped : ChannelConfig.WellScoped s)
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer :=
+  (argument_then_function_spine_presented D₀ j₀ realize args rest
+    hargs hok).2.1 hc hs hbody hscoped hrel
+
+theorem admin_noapp_under_function_argument_then_function_spine_presentedChannelConfigCompleteness
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (args : List (Term (QubitPrimitive C) × RuntimeEnv C))
+    (rest : List (Name × Term (QubitPrimitive C) × RuntimeEnv C))
+    (hargs : ArgumentFramesOk args) (hok : FunctionSpineOk rest)
+    {s : ChannelConfig C} {code : Term (QubitPrimitive C)}
+    {x : Name} {body : Term (QubitPrimitive C)} {cloX : RuntimeEnv C}
+    {answer : HSemanticComp D₀ j₀}
+    (hadmin : AdminNoApp code)
+    (hc : s.control = .term code)
+    (hs : s.stack =
+      .function (.closure x body cloX) ::
+        argumentThenFunctionStack args rest)
+    (hbody : BodyUnderArgsThenAdmin args.length body)
+    (hscoped : ChannelConfig.WellScoped s)
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer :=
+  (argument_then_function_spine_presented D₀ j₀ realize args rest
+    hargs hok).2.2 hadmin hc hs hbody hscoped hrel
+
+/-- Inner `app (lam x body) arg` under leftover argument frames over a
+residual function-frame spine. -/
+theorem app_lam_under_argument_then_function_spine_presentedChannelConfigCompleteness
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (args : List (Term (QubitPrimitive C) × RuntimeEnv C))
+    (rest : List (Name × Term (QubitPrimitive C) × RuntimeEnv C))
+    (hargs : ArgumentFramesOk args) (hok : FunctionSpineOk rest)
+    {s : ChannelConfig C} {x : Name}
+    {body arg : Term (QubitPrimitive C)} {answer : HSemanticComp D₀ j₀}
+    (hc : s.control = .term (.app (.lam x body) arg))
+    (hs : s.stack = argumentThenFunctionStack args rest)
+    (hadminArg : AdminNoApp arg)
+    (hbody : BodyUnderArgsThenAdmin args.length body)
+    (hscoped : ChannelConfig.WellScoped s)
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer := by
+  have hsApp :
+      {s with control := .term (.app (.lam x body) arg)} = s :=
+    ChannelConfig.ext hc.symm rfl rfl rfl
+  have hrelApp : ChannelConfigRel D₀ j₀ realize
+      {s with control := .term (.app (.lam x body) arg)} answer :=
+    hsApp.symm ▸ hrel
+  have hrelLam :=
+    channel_config_application D₀ j₀ (s := s) (fn := .lam x body)
+      (arg := arg) hrelApp
+  have hrelClo :=
+    channel_config_lambda D₀ j₀
+      (s := {s with stack := .argument arg s.env :: s.stack})
+      hrelLam
+  have hrelArg :=
+    channel_config_evaluateArgument D₀ j₀
+      (s :=
+        {s with
+          control := .value (.closure x body s.env)
+          stack := .argument arg s.env :: s.stack})
+      (fn := .closure x body s.env) (arg := arg)
+      (callEnv := s.env) (rest := s.stack) hrelClo
+  let sArg : ChannelConfig C :=
+    {s with
+      control := .term arg
+      stack := .function (.closure x body s.env) :: s.stack}
+  have hstepApp : ChannelInternalStep s
+      {s with
+        control := .term (.lam x body)
+        stack := .argument arg s.env :: s.stack} := by
+    have happ :
+        ChannelInternalStep
+          {s with control := .term (.app (.lam x body) arg)}
+          {s with
+            control := .term (.lam x body)
+            stack := .argument arg s.env :: s.stack} :=
+      ChannelInternalStep.application (s := s)
+        (fn := .lam x body) (arg := arg)
+    exact hsApp.symm ▸ happ
+  have hstepLam : ChannelInternalStep
+      {s with
+        control := .term (.lam x body)
+        stack := .argument arg s.env :: s.stack}
+      {s with
+        control := .value (.closure x body s.env)
+        stack := .argument arg s.env :: s.stack} :=
+    ChannelInternalStep.lambda
+      (s := {s with stack := .argument arg s.env :: s.stack})
+      (x := x) (body := body)
+  have hstepArg : ChannelInternalStep
+      {s with
+        control := .value (.closure x body s.env)
+        stack := .argument arg s.env :: s.stack}
+      sArg :=
+    ChannelInternalStep.evaluateArgument
+      (s :=
+        {s with
+          control := .value (.closure x body s.env)
+          stack := .argument arg s.env :: s.stack})
+      (fn := .closure x body s.env) (arg := arg)
+      (callEnv := s.env) (rest := s.stack)
+  have hscopedArg : ChannelConfig.WellScoped sArg :=
+    ChannelInternalStep.preserve_wellScoped hstepArg
+      (ChannelInternalStep.preserve_wellScoped hstepLam
+        (ChannelInternalStep.preserve_wellScoped hstepApp hscoped))
+  have hsArg :
+      sArg.stack =
+        .function (.closure x body s.env) ::
+          argumentThenFunctionStack args rest := by
+    simp [sArg, hs]
+  have harg :
+      PresentedChannelConfigCompleteness D₀ j₀ realize sArg answer :=
+    admin_noapp_under_function_argument_then_function_spine_presentedChannelConfigCompleteness
+      D₀ j₀ realize args rest hargs hok (s := sArg) (code := arg)
+      (x := x) (body := body) (cloX := s.env) hadminArg rfl hsArg
+      hbody hscopedArg
+      (by
+        change ChannelConfigRel D₀ j₀ realize
+            {s with
+              control := .term arg
+              env := s.env
+              stack :=
+                .function (.closure x body s.env) :: s.stack}
+            _
+        exact hrelArg)
+  exact stacked_lam_app_presentedChannelConfigCompleteness D₀ j₀ realize
+    (s := s) (x := x) (body := body) (arg := arg) hc hrel harg
+
+/-- Closed triple curry under an outer lambda:
+`app (lam x bodyX) (app (app (app (lam y (lam z (lam w body))) arg1) arg2) arg3)`. -/
+theorem closed_lam_app_app_app_lam_lam_lam_admin_noapp_presented_channelTreeCompleteness
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (x y z w : Name) (bodyX body arg1 arg2 arg3 : Term (QubitPrimitive C))
+    (hclosed : Closed
+      (.app (.lam x bodyX)
+        (.app (.app (.app (.lam y (.lam z (.lam w body))) arg1) arg2)
+          arg3)))
+    (hnoappX : NoApp bodyX)
+    (hadminBody : AdminNoApp body)
+    (hadmin1 : AdminNoApp arg1) (hadmin2 : AdminNoApp arg2)
+    (hadmin3 : AdminNoApp arg3)
+    (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig
+        (.app (.lam x bodyX)
+          (.app (.app (.app (.lam y (.lam z (.lam w body))) arg1) arg2)
+            arg3))
+        quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.app (.lam x bodyX)
+          (.app (.app (.app (.lam y (.lam z (.lam w body))) arg1) arg2)
+            arg3))
+        semanticEnv) := by
+  let inner : Term (QubitPrimitive C) :=
+    .app (.app (.app (.lam y (.lam z (.lam w body))) arg1) arg2) arg3
+  let code : Term (QubitPrimitive C) := .app (.lam x bodyX) inner
+  let s : ChannelConfig C := initialChannelConfig code quantum
+  have hc : s.control = .term code := rfl
+  have hrel :=
+    initialChannelConfig_related D₀ j₀ realize code quantum semanticEnv
+  have hscoped :=
+    initialChannelConfig_wellScoped hclosed quantum
+  have hsApp :
+      {s with control := .term (.app (.lam x bodyX) inner)} = s :=
+    ChannelConfig.ext hc.symm rfl rfl rfl
+  have hrelApp : ChannelConfigRel D₀ j₀ realize
+      {s with control := .term (.app (.lam x bodyX) inner)}
+      (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv) :=
+    hsApp.symm ▸ hrel
+  have hrelLam :=
+    channel_config_application D₀ j₀ (s := s)
+      (fn := .lam x bodyX) (arg := inner) hrelApp
+  have hrelClo :=
+    channel_config_lambda D₀ j₀
+      (s := {s with stack := .argument inner s.env :: s.stack})
+      hrelLam
+  have hrelInner :=
+    channel_config_evaluateArgument D₀ j₀
+      (s :=
+        {s with
+          control := .value (.closure x bodyX s.env)
+          stack := .argument inner s.env :: s.stack})
+      (fn := .closure x bodyX s.env) (arg := inner)
+      (callEnv := s.env) (rest := s.stack) hrelClo
+  let sInner : ChannelConfig C :=
+    {s with
+      control := .term inner
+      stack := .function (.closure x bodyX s.env) :: s.stack}
+  have hstepApp : ChannelInternalStep s
+      {s with
+        control := .term (.lam x bodyX)
+        stack := .argument inner s.env :: s.stack} := by
+    have happ :
+        ChannelInternalStep
+          {s with control := .term (.app (.lam x bodyX) inner)}
+          {s with
+            control := .term (.lam x bodyX)
+            stack := .argument inner s.env :: s.stack} :=
+      ChannelInternalStep.application (s := s)
+        (fn := .lam x bodyX) (arg := inner)
+    exact hsApp.symm ▸ happ
+  have hstepLam : ChannelInternalStep
+      {s with
+        control := .term (.lam x bodyX)
+        stack := .argument inner s.env :: s.stack}
+      {s with
+        control := .value (.closure x bodyX s.env)
+        stack := .argument inner s.env :: s.stack} :=
+    ChannelInternalStep.lambda
+      (s := {s with stack := .argument inner s.env :: s.stack})
+      (x := x) (body := bodyX)
+  have hstepInner : ChannelInternalStep
+      {s with
+        control := .value (.closure x bodyX s.env)
+        stack := .argument inner s.env :: s.stack}
+      sInner :=
+    ChannelInternalStep.evaluateArgument
+      (s :=
+        {s with
+          control := .value (.closure x bodyX s.env)
+          stack := .argument inner s.env :: s.stack})
+      (fn := .closure x bodyX s.env) (arg := inner)
+      (callEnv := s.env) (rest := s.stack)
+  have hscopedInner : ChannelConfig.WellScoped sInner :=
+    ChannelInternalStep.preserve_wellScoped hstepInner
+      (ChannelInternalStep.preserve_wellScoped hstepLam
+        (ChannelInternalStep.preserve_wellScoped hstepApp hscoped))
+  have hokX : FunctionSpineOk [(x, bodyX, s.env)] := hnoappX
+  let inner2 : Term (QubitPrimitive C) :=
+    .app (.app (.lam y (.lam z (.lam w body))) arg1) arg2
+  have hsApp2 :
+      {sInner with control := .term (.app inner2 arg3)} = sInner :=
+    ChannelConfig.ext rfl rfl rfl rfl
+  have hrelApp2 : ChannelConfigRel D₀ j₀ realize
+      {sInner with control := .term (.app inner2 arg3)}
+      (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv) := by
+    change ChannelConfigRel D₀ j₀ realize
+        {s with
+          control := .term inner
+          env := s.env
+          stack := .function (.closure x bodyX s.env) :: s.stack}
+        _
+    exact hrelInner
+  have hrelInner2 :=
+    channel_config_application D₀ j₀ (s := sInner) (fn := inner2)
+      (arg := arg3) hrelApp2
+  let sInner2 : ChannelConfig C :=
+    {sInner with
+      control := .term inner2
+      stack := .argument arg3 sInner.env :: sInner.stack}
+  have hstepApp2 : ChannelInternalStep sInner sInner2 := by
+    have happ :
+        ChannelInternalStep
+          {sInner with control := .term (.app inner2 arg3)}
+          sInner2 :=
+      ChannelInternalStep.application (s := sInner) (fn := inner2)
+        (arg := arg3)
+    exact hsApp2.symm ▸ happ
+  have hscopedInner2 : ChannelConfig.WellScoped sInner2 :=
+    ChannelInternalStep.preserve_wellScoped hstepApp2 hscopedInner
+  let inner1 : Term (QubitPrimitive C) :=
+    .app (.lam y (.lam z (.lam w body))) arg1
+  have hsApp1 :
+      {sInner2 with control := .term (.app inner1 arg2)} = sInner2 :=
+    ChannelConfig.ext rfl rfl rfl rfl
+  have hrelApp1 : ChannelConfigRel D₀ j₀ realize
+      {sInner2 with control := .term (.app inner1 arg2)}
+      (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv) := by
+    change ChannelConfigRel D₀ j₀ realize
+        {sInner with
+          control := .term inner2
+          env := sInner.env
+          stack := .argument arg3 sInner.env :: sInner.stack}
+        _
+    exact hrelInner2
+  have hrelInner1 :=
+    channel_config_application D₀ j₀ (s := sInner2) (fn := inner1)
+      (arg := arg2) hrelApp1
+  let sInner1 : ChannelConfig C :=
+    {sInner2 with
+      control := .term inner1
+      stack := .argument arg2 sInner2.env :: sInner2.stack}
+  have hstepApp1 : ChannelInternalStep sInner2 sInner1 := by
+    have happ :
+        ChannelInternalStep
+          {sInner2 with control := .term (.app inner1 arg2)}
+          sInner1 :=
+      ChannelInternalStep.application (s := sInner2) (fn := inner1)
+        (arg := arg2)
+    exact hsApp1.symm ▸ happ
+  have hscopedInner1 : ChannelConfig.WellScoped sInner1 :=
+    ChannelInternalStep.preserve_wellScoped hstepApp1 hscopedInner2
+  have hsInner1 :
+      sInner1.stack =
+        argumentThenFunctionStack
+          [(arg2, s.env), (arg3, s.env)] [(x, bodyX, s.env)] := by
+    simp [sInner1, sInner2, sInner, s, argumentThenFunctionStack,
+      initialChannelConfig, ofConfig, initialConfig]
+  have hargs23 : ArgumentFramesOk [(arg2, s.env), (arg3, s.env)] := by
+    intro p hp
+    simp at hp
+    rcases hp with h | h <;> cases h <;> assumption
+  have hbodyYZ : BodyUnderArgsThenAdmin 2 (.lam z (.lam w body)) :=
+    hadminBody
+  have hinner1 :
+      PresentedChannelConfigCompleteness D₀ j₀ realize sInner1
+        (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv) :=
+    app_lam_under_argument_then_function_spine_presentedChannelConfigCompleteness
+      D₀ j₀ realize [(arg2, s.env), (arg3, s.env)]
+      [(x, bodyX, s.env)] hargs23 hokX (s := sInner1)
+      (x := y) (body := .lam z (.lam w body)) (arg := arg1)
+      rfl hsInner1 hadmin1 hbodyYZ hscopedInner1
+      (by
+        change ChannelConfigRel D₀ j₀ realize
+            {sInner2 with
+              control := .term inner1
+              env := sInner2.env
+              stack := .argument arg2 sInner2.env :: sInner2.stack}
+            _
+        exact hrelInner1)
+  have hinner2 :
+      PresentedChannelConfigCompleteness D₀ j₀ realize sInner2
+        (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv) :=
+    application_presentedChannelConfigCompleteness D₀ j₀ realize
+      (s := sInner2) (fn := inner1) (arg := arg2) rfl
+      (by
+        change ChannelConfigRel D₀ j₀ realize
+            {sInner with
+              control := .term inner2
+              env := sInner.env
+              stack := .argument arg3 sInner.env :: sInner.stack}
+            _
+        exact hrelInner2)
+      hinner1
+  have hinner :
+      PresentedChannelConfigCompleteness D₀ j₀ realize sInner
+        (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv) :=
+    application_presentedChannelConfigCompleteness D₀ j₀ realize
+      (s := sInner) (fn := inner2) (arg := arg3) rfl
+      (by
+        change ChannelConfigRel D₀ j₀ realize
+            {s with
+              control := .term inner
+              env := s.env
+              stack := .function (.closure x bodyX s.env) :: s.stack}
+            _
+        exact hrelInner)
+      hinner2
+  exact (stacked_lam_app_presentedChannelConfigCompleteness D₀ j₀ realize
+    (s := s) (x := x) (body := bodyX) (arg := inner) hc hrel
+    hinner).complete
+
+/-- Token adequacy for closed triple curry under an outer lambda. -/
+theorem closed_lam_app_app_app_lam_lam_lam_admin_noapp_presented_token_adequacy
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (x y z w : Name) (bodyX body arg1 arg2 arg3 : Term (QubitPrimitive C))
+    (hclosed : Closed
+      (.app (.lam x bodyX)
+        (.app (.app (.app (.lam y (.lam z (.lam w body))) arg1) arg2)
+          arg3)))
+    (hnoappX : NoApp bodyX)
+    (hadminBody : AdminNoApp body)
+    (hadmin1 : AdminNoApp arg1) (hadmin2 : AdminNoApp arg2)
+    (hadmin3 : AdminNoApp arg3)
+    (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (selectors : List Bool)
+    (ξ : HSemanticValue D₀ j₀ → FiniteInstrumentComp 2 PUnit.{1})
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2))
+    (hk : ∀ d, k d = (ξ d).satisfiedTTTheory resultCode)
+    (i : ℕ) (token : TTObservationToken 2) :
+    token ∈ HardwareAdequacy.selectPath selectors
+        (interp (hardwarePrimitive D₀ j₀ realize)
+          (.app (.lam x bodyX)
+            (.app (.app (.app (.lam y (.lam z (.lam w body))) arg1)
+                arg2)
+              arg3))
+          semanticEnv) i k ↔
+      ∃ fuel, ∃ (tree : ChannelTree C
+          (initialChannelConfig
+            (.app (.lam x bodyX)
+              (.app (.app (.app (.lam y (.lam z (.lam w body))) arg1)
+                  arg2)
+                arg3))
+            quantum))
+          (R : ChannelTreeRealization D₀ j₀ realize tree),
+        tree.depth ≤ fuel ∧
+        ResultAvailable tree selectors i ∧
+          TTObservationToken.Holds resultCode token
+            ((restrictedInstrument D₀ j₀ realize tree R selectors i).bind
+              ξ) :=
+  presented_channel_tree_token_adequacy_iff D₀ j₀ realize
+    (initialChannelConfig
+      (.app (.lam x bodyX)
+        (.app (.app (.app (.lam y (.lam z (.lam w body))) arg1) arg2)
+          arg3))
+      quantum)
+    (interp (hardwarePrimitive D₀ j₀ realize)
+      (.app (.lam x bodyX)
+        (.app (.app (.app (.lam y (.lam z (.lam w body))) arg1) arg2)
+          arg3))
+      semanticEnv)
+    (closed_lam_app_app_app_lam_lam_lam_admin_noapp_presented_channelTreeCompleteness
+      D₀ j₀ realize x y z w bodyX body arg1 arg2 arg3 hclosed hnoappX
+      hadminBody hadmin1 hadmin2 hadmin3 quantum semanticEnv)
     selectors ξ k hk i token
 
 end HardwareChannelSemantics
