@@ -16,6 +16,8 @@ Layer of the hardware channel-tree semantics.  All layers share the
 `FunAppFrag` (not only administrative NoApp), so closed stacked apps
 such as `app (lam x body) (app (lam y M) N)` are covered by
 `closed_produces_*` whenever the pieces inhabit FunAppFrag / Produces.
+`FunAppFrag.app_recLam` covers nested recursive-lambda applications,
+including under mixed ordinary/recursive function-frame spines.
 -/
 
 set_option maxHeartbeats 800000
@@ -164,6 +166,26 @@ theorem closed_funAppFrag_presented_channelTreeCompleteness
     hfrag rfl rfl (initialChannelConfig_wellScoped hclosed quantum)
     (initialChannelConfig_related D₀ j₀ realize code quantum
       semanticEnv)).complete
+
+/-- Closed nested `app (recLam …) arg` as a FunAppFrag fragment. -/
+theorem closed_funAppFrag_app_recLam_presented_channelTreeCompleteness
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (self x : Name) (body arg : Term (QubitPrimitive C))
+    (hclosed : Closed (.app (.recLam self x body) arg))
+    (hbody : FunAppFrag body) (harg : FunAppFrag arg)
+    (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig (.app (.recLam self x body) arg) quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.app (.recLam self x body) arg) semanticEnv) :=
+  closed_funAppFrag_presented_channelTreeCompleteness D₀ j₀ realize
+    (.app (.recLam self x body) arg) hclosed
+    (FunAppFrag.app_recLam hbody harg) quantum semanticEnv
 
 theorem closed_funAppFrag_presented_token_adequacy
     {C : Type}

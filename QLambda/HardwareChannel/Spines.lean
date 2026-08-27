@@ -56,11 +56,10 @@ def AdminNoApp {C : Type} : Term (QubitPrimitive C) → Prop
   | .prim (.pauliX _) => True
   | .prim (.measureZ _ _) => False
 
-/-- Body-nested and argument-nested lambda applications.
-Stuck `app (ret c) M` is excluded: the function must be a syntactic
-lambda. Left-nested `app (app …) …` is covered by `Produces`.
-Recursive-lambda applications are covered by `Produces.recLam` /
-`Produces.app`; nesting them inside FunAppFrag is a later cut. -/
+/-- Body-nested and argument-nested lambda / recursive-lambda
+applications. Stuck `app (ret c) M` is excluded: the function must be
+a syntactic lambda or recursive lambda. Left-nested `app (app …) …`
+is covered by `Produces`. -/
 inductive FunAppFrag {C : Type} : Term (QubitPrimitive C) → Prop
   | admin {t : Term (QubitPrimitive C)} :
       AdminNoApp t → FunAppFrag t
@@ -68,6 +67,10 @@ inductive FunAppFrag {C : Type} : Term (QubitPrimitive C) → Prop
       FunAppFrag body →
       FunAppFrag arg →
       FunAppFrag (.app (.lam x body) arg)
+  | app_recLam {self x : Name} {body arg : Term (QubitPrimitive C)} :
+      FunAppFrag body →
+      FunAppFrag arg →
+      FunAppFrag (.app (.recLam self x body) arg)
 
 /-- Terms that absorb exactly `n` leftover argument frames without
 getting stuck. `Produces 0` is FunAppFrag. A lambda or recursive
@@ -262,12 +265,106 @@ theorem FunAppFramesOk.of_argumentFramesOk {C : Type}
     (h : ArgumentFramesOk args) : FunAppFramesOk args :=
   fun p hp => FunAppFrag.of_admin (h p hp)
 
+/-- Ordinary or recursive closure frames pushed by FunAppFrag apps. -/
+inductive FunFrame (C : Type) where
+  | clo (x : Name) (body : Term (QubitPrimitive C)) (env : RuntimeEnv C)
+  | recClo (self x : Name) (body : Term (QubitPrimitive C)) (env : RuntimeEnv C)
+
+/-- Stack projection of a mixed ordinary/recursive function-frame spine. -/
+def funFrameStack {C : Type} : List (FunFrame C) → EvalStack C
+  | [] => []
+  | .clo x body env :: rest =>
+      .function (.closure x body env) :: funFrameStack rest
+  | .recClo self x body env :: rest =>
+      .function (.recClosure self x body env) :: funFrameStack rest
+
+@[simp]
+theorem funFrameStack_nil {C : Type} :
+    funFrameStack ([] : List (FunFrame C)) = [] :=
+  rfl
+
+@[simp]
+theorem funFrameStack_clo_cons {C : Type} (x : Name)
+    (body : Term (QubitPrimitive C)) (env : RuntimeEnv C)
+    (rest : List (FunFrame C)) :
+    funFrameStack (.clo x body env :: rest) =
+      .function (.closure x body env) :: funFrameStack rest :=
+  rfl
+
+@[simp]
+theorem funFrameStack_recClo_cons {C : Type} (self x : Name)
+    (body : Term (QubitPrimitive C)) (env : RuntimeEnv C)
+    (rest : List (FunFrame C)) :
+    funFrameStack (.recClo self x body env :: rest) =
+      .function (.recClosure self x body env) :: funFrameStack rest :=
+  rfl
+
+/-- Ordinary closure triples as FunFrame.clo frames. -/
+def cloFrames {C : Type} :
+    List (Name × Term (QubitPrimitive C) × RuntimeEnv C) →
+      List (FunFrame C)
+  | [] => []
+  | (x, body, env) :: rest => .clo x body env :: cloFrames rest
+
+@[simp]
+theorem cloFrames_nil {C : Type} :
+    cloFrames
+      ([] : List (Name × Term (QubitPrimitive C) × RuntimeEnv C)) =
+      [] :=
+  rfl
+
+@[simp]
+theorem cloFrames_cons {C : Type} (x : Name)
+    (body : Term (QubitPrimitive C)) (env : RuntimeEnv C)
+    (rest : List (Name × Term (QubitPrimitive C) × RuntimeEnv C)) :
+    cloFrames ((x, body, env) :: rest) =
+      .clo x body env :: cloFrames rest :=
+  rfl
+
+theorem funFrameStack_cloFrames {C : Type}
+    (frames : List (Name × Term (QubitPrimitive C) × RuntimeEnv C)) :
+    funFrameStack (cloFrames frames) = functionStack frames := by
+  induction frames with
+  | nil => rfl
+  | cons p rest ih =>
+      rcases p with ⟨x, body, env⟩
+      simp [cloFrames, functionStack, ih]
+
+theorem funFrameStack_ne_nil_of_cons {C : Type}
+    (f : FunFrame C) (rest : List (FunFrame C)) :
+    funFrameStack (f :: rest) ≠ [] := by
+  cases f <;> simp [funFrameStack]
+
 /-- A function-frame spine over leftover argument frames. -/
 def mixedStack {C : Type}
     (fns : List (Name × Term (QubitPrimitive C) × RuntimeEnv C))
     (args : List (Term (QubitPrimitive C) × RuntimeEnv C)) :
     EvalStack C :=
   functionStack fns ++ argumentStack args
+
+theorem funFrameStack_cloFrames_append_args {C : Type}
+    (fns : List (Name × Term (QubitPrimitive C) × RuntimeEnv C))
+    (args : List (Term (QubitPrimitive C) × RuntimeEnv C)) :
+    funFrameStack (cloFrames fns) ++ argumentStack args =
+      mixedStack fns args := by
+  simp [mixedStack, funFrameStack_cloFrames]
+
+theorem funFrameStack_cloFrames_recClo_append_args {C : Type}
+    (fns : List (Name × Term (QubitPrimitive C) × RuntimeEnv C))
+    (self x : Name) (body : Term (QubitPrimitive C))
+    (env : RuntimeEnv C)
+    (args : List (Term (QubitPrimitive C) × RuntimeEnv C)) :
+    funFrameStack
+        (cloFrames fns ++ [.recClo self x body env]) ++
+          argumentStack args =
+      functionStack fns ++
+        (.function (.recClosure self x body env) ::
+          argumentStack args) := by
+  induction fns with
+  | nil => simp [cloFrames, functionStack, funFrameStack]
+  | cons p rest ih =>
+      rcases p with ⟨y, M, clo⟩
+      simp [cloFrames, functionStack, funFrameStack, ih]
 
 @[simp]
 theorem mixedStack_nil_fns {C : Type}
