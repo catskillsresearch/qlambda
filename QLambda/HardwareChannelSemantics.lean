@@ -6427,6 +6427,46 @@ theorem channel_config_pauliX {C : Type}
             (payload_related D₀ j₀ realize value), hstack, rfl⟩
       · rw [interp_prim_apply, hardwarePrimitive_pauliX]
 
+theorem channel_config_measureZ {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {s : ChannelConfig C} {zeroValue oneValue : C}
+    {answer : HSemanticComp D₀ j₀}
+    (hrel : ChannelConfigRel D₀ j₀ realize
+      {s with control := .term (.prim (.measureZ zeroValue oneValue))}
+      answer) :
+    ∃ k : HSemanticComp D₀ j₀ → HSemanticComp D₀ j₀,
+      ChannelConfigRel D₀ j₀ realize
+          {s with
+            control := .value (.payload zeroValue)
+            quantum := applyOperation (measurementOperation false) s.quantum}
+          (k (semanticUnit (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) (realize zeroValue))) ∧
+      ChannelConfigRel D₀ j₀ realize
+          {s with
+            control := .value (.payload oneValue)
+            quantum := applyOperation (measurementOperation true) s.quantum}
+          (k (semanticUnit (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) (realize oneValue))) ∧
+        answer =
+          k (taggedEmbed (Qubit.measureZComp.map
+            (fun b => if b then realize oneValue else realize zeroValue))) := by
+  rcases hrel with ⟨current, k, hcontrol, hstack, rfl⟩
+  cases hcontrol with
+  | term _ _ semanticEnv henv =>
+      refine ⟨k, ?_, ?_, ?_⟩
+      · exact ⟨semanticUnit (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) (realize zeroValue), k,
+          ControlRel.value _ _ s.env
+            (payload_related D₀ j₀ realize zeroValue), hstack, rfl⟩
+      · exact ⟨semanticUnit (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) (realize oneValue), k,
+          ControlRel.value _ _ s.env
+            (payload_related D₀ j₀ realize oneValue), hstack, rfl⟩
+      · rw [interp_prim_apply, hardwarePrimitive_measureZ]
+
 /-- Binding a residual continuation around a Pauli-X embedding evaluates
 the operation at the returned payload, then continues. -/
 theorem semanticBind_ofOperation_eval
@@ -14386,6 +14426,524 @@ theorem measurement_step_pathChannelTreeTokenAdequacy {C : Type}
             ⟨oneTree, oneR, honeAvail, honeHolds⟩
         exact ⟨zeroToken, hzeroMember, oneToken, honeMember,
           target, hderives, hrounded⟩
+
+theorem measureZ_map_bind {D : Type} [Preorder D]
+    (f : Bool → D) (ν : D → FiniteInstrumentComp 2 PUnit.{1}) :
+    (Qubit.measureZComp.map f).bind ν =
+      Qubit.measureZComp.bind (fun b => ν (f b)) :=
+  rfl
+
+theorem aggregateDerives_measureZ_map_of_measurement {D : Type}
+    [CompleteLattice D]
+    (f : Bool → D)
+    (sources : Bool → TTObservationToken 2)
+    (target : TTObservationToken 2)
+    (h : MeasurementDerives (sources false) (sources true) target) :
+    TTTokenTheory.AggregateDerives (Qubit.measureZComp.map f) sources
+      target := by
+  intro ν hν
+  have hholds :=
+    h (ν (f false)) (ν (f true)) (hν false) (hν true)
+  have hif :
+      (fun b : Bool => if b then ν (f true) else ν (f false)) =
+        fun b => ν (f b) := by
+    funext b
+    cases b <;> rfl
+  change TTObservationToken.Holds _ target
+    ((Qubit.measureZComp.map f).bind ν)
+  rw [measureZ_map_bind, ← hif]
+  exact hholds
+
+theorem aggregateDerives_measureZ_map_to_measurement {D : Type}
+    [CompleteLattice D]
+    (f : Bool → D)
+    (hf : f false ≠ f true)
+    (sources : Bool → TTObservationToken 2)
+    (target : TTObservationToken 2)
+    (h : TTTokenTheory.AggregateDerives (Qubit.measureZComp.map f) sources
+      target) :
+    MeasurementDerives (sources false) (sources true) target := by
+  intro μ ν hμ hν
+  let g : D → FiniteInstrumentComp 2 PUnit.{1} :=
+    fun x => if x = f false then μ else if x = f true then ν else μ
+  have hg0 : g (f false) = μ := if_pos rfl
+  have hg1 : g (f true) = ν := by
+    have hne : ¬ f true = f false := fun heq => hf heq.symm
+    simp [g, hne]
+  have hholds : ∀ o : Bool,
+      TTObservationToken.Holds resultCode (sources o)
+        (g (f o)) := by
+    intro o
+    cases o
+    · simpa [hg0] using hμ
+    · simpa [hg1] using hν
+  have htarget := h g (by
+    intro o
+    change TTObservationToken.Holds _ (sources o) (g (f o))
+    exact hholds o)
+  have hbind :
+      (Qubit.measureZComp.map f).bind g =
+        Qubit.measureZComp.bind
+          (fun b => if b then ν else μ) := by
+    rw [measureZ_map_bind]
+    apply congrArg Qubit.measureZComp.bind
+    funext b
+    cases b
+    · exact hg0
+    · exact hg1
+  change TTObservationToken.Holds _ target
+    (Qubit.measureZComp.bind (fun b => if b then ν else μ))
+  rw [← hbind]
+  exact htarget
+
+theorem embed_measureZ_map_eq_measurementResult_of_ne {D : Type}
+    [CompleteLattice D]
+    (f : Bool → D) (hf : f false ≠ f true)
+    (k : ScottMap D (TTResult 2)) :
+    embed (Qubit.measureZComp.map f) k =
+      measurementResult (k (f false)) (k (f true)) := by
+  apply RoundedTheory.ext
+  ext t
+  constructor
+  · intro ht
+    obtain ⟨sources, hsources, target, hderives, htt⟩ :=
+      (TTTokenTheory.mem_aggregateResult
+        (Qubit.measureZComp.map f) k t).mp (by
+          simpa [embed] using ht)
+    apply (mem_measurementResult (k (f false)) (k (f true)) t).2
+    refine ⟨sources false, hsources false, sources true, hsources true,
+      target, ?_, htt⟩
+    exact aggregateDerives_measureZ_map_to_measurement f hf sources
+      target hderives
+  · intro ht
+    obtain ⟨zero, hzero, one, hone, target, hderives, htt⟩ :=
+      (mem_measurementResult (k (f false)) (k (f true)) t).mp ht
+    apply (TTTokenTheory.mem_aggregateResult
+        (Qubit.measureZComp.map f) k t).2
+    refine ⟨fun b : Bool => if b then one else zero, ?_, target, ?_, htt⟩
+    · intro o
+      cases o
+      · exact hzero
+      · exact hone
+    · exact aggregateDerives_measureZ_map_of_measurement f
+        (fun b : Bool => if b then one else zero) target hderives
+
+theorem embed_measureZ_map_eq_measurementResult_presented {D : Type}
+    [CompleteLattice D]
+    (f : Bool → D)
+    (ξ : D → FiniteInstrumentComp 2 PUnit.{1})
+    (k : ScottMap D (TTResult 2))
+    (hk : ∀ x, k x = (ξ x).satisfiedTTTheory resultCode) :
+    embed (Qubit.measureZComp.map f) k =
+      measurementResult (k (f false)) (k (f true)) := by
+  have hsat :=
+    TTPhysicalEmbedding.embed_satisfied (Qubit.measureZComp.map f) ξ k
+      (fun _ => hk _)
+  have hif :
+      (fun b : Bool => ξ (f b)) =
+        fun b => if b then ξ (f true) else ξ (f false) := by
+    funext b
+    cases b <;> rfl
+  calc
+    embed (Qubit.measureZComp.map f) k =
+        ((Qubit.measureZComp.map f).bind ξ).satisfiedTTTheory resultCode :=
+      hsat
+    _ = (Qubit.measureZComp.bind (fun b => ξ (f b))).satisfiedTTTheory
+          resultCode := by
+      rw [measureZ_map_bind]
+    _ = (Qubit.measureZComp.bind
+          (fun b => if b then ξ (f true) else ξ (f false))).satisfiedTTTheory
+          resultCode := by
+      rw [hif]
+    _ = measurementResult
+          ((ξ (f false)).satisfiedTTTheory resultCode)
+          ((ξ (f true)).satisfiedTTTheory resultCode) :=
+      (measurementResult_satisfied (ξ (f false)) (ξ (f true))).symm
+    _ = measurementResult (k (f false)) (k (f true)) := by
+      rw [hk (f false), hk (f true)]
+
+theorem measurementResult_sSup (A B : Set (TTResult 2)) :
+    measurementResult (sSup A) (sSup B) =
+      sSup ((fun p : TTResult 2 × TTResult 2 =>
+        measurementResult p.1 p.2) '' (A ×ˢ B)) := by
+  apply RoundedTheory.ext
+  ext t
+  constructor
+  · intro ht
+    change t ∈
+      (measurementResult (sSup A : TTResult 2) (sSup B : TTResult 2)) at ht
+    obtain ⟨zero, hzero, one, hone, target, hderives, htt⟩ :=
+      (mem_measurementResult _ _ t).mp ht
+    change zero ∈ (sSup A : TTResult 2) at hzero
+    change one ∈ (sSup B : TTResult 2) at hone
+    rw [RoundedTheory.mem_sSup] at hzero
+    rw [RoundedTheory.mem_sSup] at hone
+    obtain ⟨a, haA, hza⟩ := hzero
+    obtain ⟨b, hbB, hob⟩ := hone
+    change t ∈
+      (sSup ((fun p : TTResult 2 × TTResult 2 =>
+        measurementResult p.1 p.2) '' (A ×ˢ B)) : TTResult 2)
+    rw [RoundedTheory.mem_sSup]
+    refine ⟨measurementResult a b, ?_, ?_⟩
+    · exact ⟨(a, b), ⟨haA, hbB⟩, rfl⟩
+    · exact (mem_measurementResult a b t).2
+        ⟨zero, hza, one, hob, target, hderives, htt⟩
+  · intro ht
+    change t ∈
+      (sSup ((fun p : TTResult 2 × TTResult 2 =>
+        measurementResult p.1 p.2) '' (A ×ˢ B)) : TTResult 2) at ht
+    rw [RoundedTheory.mem_sSup] at ht
+    obtain ⟨T, ⟨⟨a, b⟩, ⟨haA, hbB⟩, rfl⟩, htT⟩ := ht
+    obtain ⟨zero, hza, one, hob, target, hderives, htt⟩ :=
+      (mem_measurementResult a b t).mp htT
+    apply (mem_measurementResult
+        (sSup A : TTResult 2) (sSup B : TTResult 2) t).2
+    refine ⟨zero, ?_, one, ?_, target, hderives, htt⟩
+    · rw [RoundedTheory.mem_sSup]
+      exact ⟨a, haA, hza⟩
+    · rw [RoundedTheory.mem_sSup]
+      exact ⟨b, hbB, hob⟩
+
+theorem semanticBind_measureZ_eval_of_ne
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (h : ScottMap (HSemanticValue D₀ j₀) (HSemanticComp D₀ j₀))
+    (f : Bool → HSemanticValue D₀ j₀)
+    (hf : f false ≠ f true)
+    (coord : ℕ)
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)) :
+    semanticBind (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀) h
+        (taggedEmbed (Qubit.measureZComp.map f))
+        coord k =
+      measurementResult
+        (semanticBind (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) h
+          (semanticUnit (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) (f false))
+          coord k)
+        (semanticBind (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) h
+          (semanticUnit (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) (f true))
+          coord k) := by
+  change
+      (TTContinuation.atCoordinate coord
+        (TTContinuation.taggedBindScott (n := 2) h
+          (taggedEmbed (Qubit.measureZComp.map f)))) k =
+        measurementResult _ _
+  rw [TTContinuation.taggedBind_atCoordinate, TTContinuation.bind_apply]
+  change
+      embed (Qubit.measureZComp.map f)
+          (TTContinuation.continuation
+            ((TTContinuation.atCoordinate coord).comp h) k) =
+        measurementResult _ _
+  rw [embed_measureZ_map_eq_measurementResult_of_ne f hf]
+  congr 1
+
+theorem measurementResult_bot_left (B : TTResult 2) :
+    measurementResult ⊥ B = ⊥ := by
+  apply le_antisymm
+  · intro t ht
+    obtain ⟨zero, hzero, _⟩ := (mem_measurementResult ⊥ B t).mp ht
+    have hbot : (⊥ : TTResult 2) = sSup (∅ : Set (TTResult 2)) :=
+      sSup_empty.symm
+    rw [hbot, RoundedTheory.mem_sSup] at hzero
+    obtain ⟨_, ⟨⟩, _⟩ := hzero
+  · exact bot_le
+
+theorem measurementResult_bot_right (A : TTResult 2) :
+    measurementResult A ⊥ = ⊥ := by
+  apply le_antisymm
+  · intro t ht
+    obtain ⟨_, _, one, hone, _⟩ := (mem_measurementResult A ⊥ t).mp ht
+    have hbot : (⊥ : TTResult 2) = sSup (∅ : Set (TTResult 2)) :=
+      sSup_empty.symm
+    rw [hbot, RoundedTheory.mem_sSup] at hone
+    obtain ⟨_, ⟨⟩, _⟩ := hone
+  · exact bot_le
+
+theorem measurementResult_le_embed_measureZ_map {D : Type}
+    [CompleteLattice D]
+    (f : Bool → D) (k : ScottMap D (TTResult 2)) :
+    measurementResult (k (f false)) (k (f true)) ≤
+      embed (Qubit.measureZComp.map f) k := by
+  intro t ht
+  obtain ⟨zero, hzero, one, hone, target, hderives, htt⟩ :=
+    (mem_measurementResult (k (f false)) (k (f true)) t).mp ht
+  apply (TTTokenTheory.mem_aggregateResult
+      (Qubit.measureZComp.map f) k t).2
+  refine ⟨fun b : Bool => if b then one else zero, ?_, target, ?_, htt⟩
+  · intro o
+    cases o
+    · exact hzero
+    · exact hone
+  · exact aggregateDerives_measureZ_map_of_measurement f
+      (fun b : Bool => if b then one else zero) target hderives
+
+/-- Measure-Z under a single closure frame splits into the two payload
+children, each of which still carries the function frame and then betas
+into an application-free body.  The two realized payloads must be
+distinct so `measureZ.map` can interpolate the two child instruments
+independently. -/
+theorem measureZ_under_closure_nil_presentedChannelConfigCompleteness
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {zeroValue oneValue : C} {x : Name}
+    {body : Term (QubitPrimitive C)} {cloEnv : RuntimeEnv C}
+    {answer : HSemanticComp D₀ j₀}
+    (hc : s.control = .term (.prim (.measureZ zeroValue oneValue)))
+    (hs : s.stack = [.function (.closure x body cloEnv)])
+    (hnoapp : NoApp body)
+    (hscoped : ChannelConfig.WellScoped s)
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer)
+    (hne : realize zeroValue ≠ realize oneValue) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer := by
+  let sMz : ChannelConfig C :=
+    {s with control := .term (.prim (.measureZ zeroValue oneValue))}
+  have hsMz : sMz = s := ChannelConfig.ext hc.symm rfl rfl rfl
+  obtain ⟨semanticEnv, kStack, henv, hstack, rfl⟩ :=
+    channelConfigRel_term_inv D₀ j₀ hc hrel
+  rw [hs] at hstack
+  cases hstack
+  case function f krest hfn hrest =>
+    cases hrest
+    let sZero : ChannelConfig C :=
+      {s with
+        control := .value (.payload zeroValue)
+        quantum := applyOperation (measurementOperation false) s.quantum}
+    let sOne : ChannelConfig C :=
+      {s with
+        control := .value (.payload oneValue)
+        quantum := applyOperation (measurementOperation true) s.quantum}
+    have hscopedZero : ChannelConfig.WellScoped sZero := by
+      have hctl := hscoped.left
+      rw [hc] at hctl
+      exact ⟨⟨hctl.left, .payload zeroValue⟩, hscoped.right⟩
+    have hscopedOne : ChannelConfig.WellScoped sOne := by
+      have hctl := hscoped.left
+      rw [hc] at hctl
+      exact ⟨⟨hctl.left, .payload oneValue⟩, hscoped.right⟩
+    have hstackFn : StackRel D₀ j₀ realize
+        [.function (.closure x body cloEnv)]
+        (fun ma =>
+          id (semanticBind (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀)
+            (semanticUnfold (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) f) ma)) :=
+      StackRel.function (.closure x body cloEnv) f [] id hfn
+        StackRel.nil
+    let childK : HSemanticComp D₀ j₀ → HSemanticComp D₀ j₀ :=
+      fun ma =>
+        id (semanticBind (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀)
+          (semanticUnfold (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) f) ma)
+    have hrelZero : ChannelConfigRel D₀ j₀ realize sZero
+        (childK (semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) (realize zeroValue))) :=
+      ⟨semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) (realize zeroValue),
+        childK,
+        ControlRel.value _ _ s.env
+          (payload_related D₀ j₀ realize zeroValue),
+        hs.symm ▸ hstackFn, rfl⟩
+    have hrelOne : ChannelConfigRel D₀ j₀ realize sOne
+        (childK (semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) (realize oneValue))) :=
+      ⟨semanticUnit (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) (realize oneValue),
+        childK,
+        ControlRel.value _ _ s.env
+          (payload_related D₀ j₀ realize oneValue),
+        hs.symm ▸ hstackFn, rfl⟩
+    have hzero :=
+      value_under_closure_nil_presentedChannelConfigCompleteness
+        D₀ j₀ realize (s := sZero) (arg := .payload zeroValue)
+        (x := x) (body := body) (cloEnv := cloEnv) rfl hs
+        hnoapp hscopedZero hrelZero
+    have hone :=
+      value_under_closure_nil_presentedChannelConfigCompleteness
+        D₀ j₀ realize (s := sOne) (arg := .payload oneValue)
+        (x := x) (body := body) (cloEnv := cloEnv) rfl hs
+        hnoapp hscopedOne hrelOne
+    refine
+      { related := hrel
+        complete :=
+          PresentedChannelTreeCompleteness.congr hsMz rfl
+            { selected_result_eq_channelTree_sup_presented := ?_ } }
+    intro selectors i ξ kξ hk
+    have hzeroEq :=
+      hzero.complete.selected_result_eq_channelTree_sup_presented
+        selectors i ξ kξ hk
+    have honeEq :=
+      hone.complete.selected_result_eq_channelTree_sup_presented
+        selectors i ξ kξ hk
+    have hden :
+        interp (hardwarePrimitive D₀ j₀ realize)
+            (.prim (.measureZ zeroValue oneValue)) semanticEnv =
+          taggedEmbed (Qubit.measureZComp.map
+            (fun b => if b then realize oneValue else realize zeroValue)) := by
+      simp [hardwarePrimitive_measureZ]
+    let payload : Bool → HSemanticValue D₀ j₀ :=
+      fun b => if b then realize oneValue else realize zeroValue
+    have hzeroCoord :
+        semanticBind (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀)
+            (semanticUnfold (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) f)
+            (semanticUnit (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) (realize zeroValue))
+            (HardwareAdequacy.encodePath selectors i) kξ =
+          sSup (channelTreeResults D₀ j₀ realize sZero selectors i
+            kξ) := by
+      simpa [childK, id] using
+        (selectPath_semanticBind D₀ j₀
+          (semanticUnfold (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) f)
+          (semanticUnit (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) (realize zeroValue))
+          selectors i kξ).symm.trans hzeroEq
+    have honeCoord :
+        semanticBind (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀)
+            (semanticUnfold (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) f)
+            (semanticUnit (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) (realize oneValue))
+            (HardwareAdequacy.encodePath selectors i) kξ =
+          sSup (channelTreeResults D₀ j₀ realize sOne selectors i
+            kξ) := by
+      simpa [childK, id] using
+        (selectPath_semanticBind D₀ j₀
+          (semanticUnfold (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) f)
+          (semanticUnit (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) (realize oneValue))
+          selectors i kξ).symm.trans honeEq
+    have hpayload0 : payload false = realize zeroValue := rfl
+    have hpayload1 : payload true = realize oneValue := rfl
+    have hpairs_le_wraps :
+        sSup ((fun p : TTResult 2 × TTResult 2 =>
+            measurementResult p.1 p.2) ''
+          (channelTreeResults D₀ j₀ realize sZero selectors i kξ ×ˢ
+            channelTreeResults D₀ j₀ realize sOne selectors i kξ)) ≤
+          sSup (channelTreeResults D₀ j₀ realize sMz selectors i kξ) := by
+      apply sSup_le
+      rintro T ⟨⟨r, q⟩, ⟨hr, hq⟩, rfl⟩
+      obtain ⟨fuelz, ztree, zR, hzdepth, rfl⟩ := hr
+      obtain ⟨fuelo, otree, oR, hodepth, rfl⟩ := hq
+      apply le_sSup
+      refine ⟨max fuelz fuelo + 1,
+        ChannelTree.measurement ztree otree,
+        wrapMeasurementRealization D₀ j₀ realize ztree otree zR oR,
+        ?_, ?_⟩
+      · change max ztree.depth otree.depth + 1 ≤ max fuelz fuelo + 1
+        omega
+      · by_cases havail :
+            ResultAvailable (ChannelTree.measurement ztree otree)
+              selectors i
+        · have ⟨hza, hoa⟩ := havail
+          let wrapR :=
+            wrapMeasurementRealization D₀ j₀ realize ztree otree zR oR
+          let zR' :=
+            measurementZeroRealization D₀ j₀ realize ztree otree wrapR
+          let oR' :=
+            measurementOneRealization D₀ j₀ realize ztree otree wrapR
+          rw [restrictedResult_measurement_eq_measurementResult D₀ j₀
+            realize ztree otree wrapR selectors i hza hoa ξ kξ hk,
+            ← restrictedResult_eq_of_wellScoped D₀ j₀ realize ztree
+              hscopedZero zR zR' selectors i ξ kξ hk,
+            ← restrictedResult_eq_of_wellScoped D₀ j₀ realize otree
+              hscopedOne oR oR' selectors i ξ kξ hk]
+        · rw [restrictedResult_eq_bot D₀ j₀ realize
+            (ChannelTree.measurement ztree otree)
+            (wrapMeasurementRealization D₀ j₀ realize ztree otree zR oR)
+            selectors i kξ havail]
+          by_cases hza : ResultAvailable ztree selectors i
+          · by_cases hoa : ResultAvailable otree selectors i
+            · exact False.elim (havail ⟨hza, hoa⟩)
+            · change measurementResult
+                  (restrictedResult D₀ j₀ realize ztree zR selectors i kξ)
+                  (restrictedResult D₀ j₀ realize otree oR selectors i kξ) =
+                ⊥
+              rw [restrictedResult_eq_bot D₀ j₀ realize otree oR
+                selectors i kξ hoa, measurementResult_bot_right]
+          · change measurementResult
+                (restrictedResult D₀ j₀ realize ztree zR selectors i kξ)
+                (restrictedResult D₀ j₀ realize otree oR selectors i kξ) =
+              ⊥
+            rw [restrictedResult_eq_bot D₀ j₀ realize ztree zR
+              selectors i kξ hza, measurementResult_bot_left]
+    have hwraps_le_pairs :
+        sSup (channelTreeResults D₀ j₀ realize sMz selectors i kξ) ≤
+          sSup ((fun p : TTResult 2 × TTResult 2 =>
+            measurementResult p.1 p.2) ''
+          (channelTreeResults D₀ j₀ realize sZero selectors i kξ ×ˢ
+            channelTreeResults D₀ j₀ realize sOne selectors i kξ)) := by
+      rw [hsMz]
+      apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      cases tree with
+      | terminal hterm =>
+          cases hterm.control_eq.symm.trans hc
+      | internal h next =>
+          exact False.elim (ChannelInternalStep.not_measureZ h hc)
+      | external _ hex _ =>
+          exact False.elim (ChannelExternalStep.not_prim hex hc)
+      | probability _ _ _ _ =>
+          cases hc
+      | probabilityZero _ =>
+          cases hc
+      | probabilityOne _ =>
+          cases hc
+      | @measurement source zv ov ztree otree =>
+          injection hc with hterm
+          injection hterm with hmeasure
+          injection hmeasure with hzv hov
+          subst zv
+          subst ov
+          by_cases havail :
+              ResultAvailable (ChannelTree.measurement ztree otree)
+                selectors i
+          · have ⟨hza, hoa⟩ := havail
+            rw [restrictedResult_measurement_eq_measurementResult D₀ j₀
+              realize ztree otree R selectors i hza hoa ξ kξ hk]
+            let a :=
+              restrictedResult D₀ j₀ realize ztree
+                (measurementZeroRealization D₀ j₀ realize ztree otree R)
+                selectors i kξ
+            let b :=
+              restrictedResult D₀ j₀ realize otree
+                (measurementOneRealization D₀ j₀ realize ztree otree R)
+                selectors i kξ
+            have ha : a ∈ channelTreeResults D₀ j₀ realize sZero
+                selectors i kξ :=
+              ⟨ztree.depth, ztree,
+                measurementZeroRealization D₀ j₀ realize ztree otree R,
+                le_rfl, rfl⟩
+            have hb : b ∈ channelTreeResults D₀ j₀ realize sOne
+                selectors i kξ :=
+              ⟨otree.depth, otree,
+                measurementOneRealization D₀ j₀ realize ztree otree R,
+                le_rfl, rfl⟩
+            exact le_sSup ⟨(a, b), ⟨ha, hb⟩, rfl⟩
+          · rw [restrictedResult_eq_bot D₀ j₀ realize
+              (ChannelTree.measurement ztree otree) R selectors i kξ
+              havail]
+            exact bot_le
+    simp only [id]
+    rw [hden, selectPath_semanticBind,
+      semanticBind_measureZ_eval_of_ne D₀ j₀
+        (semanticUnfold (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) f)
+        payload hne, hpayload0, hpayload1, hzeroCoord, honeCoord,
+      measurementResult_sSup]
+    exact le_antisymm hpairs_le_wraps hwraps_le_pairs
 
 end HardwareChannelSemantics
 end QLambda
