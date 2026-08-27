@@ -10388,6 +10388,136 @@ theorem extern_empty_presentedChannelTreeCompleteness {C : Type}
                 (external_coordinate_channelTreeSup_at D₀ j₀ realize s
                   left right true (n / 2) k).symm
 
+/-- External choice under a stack continuation that commutes with
+selection and is strict at the unresolved root.  Ordinary Kleisli
+stack frames are root-strict; they commute with selection precisely
+when their unfoldings are coordinate-constant. -/
+theorem extern_stacked_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (k : HSemanticComp D₀ j₀ → HSemanticComp D₀ j₀)
+    (hcommute :
+      ∀ selected q,
+        TTContinuation.selectBranch selected (k q) =
+          k (TTContinuation.selectBranch selected q))
+    (hroot :
+      k (interp (hardwarePrimitive D₀ j₀ realize) (.extern left right)
+          semanticEnv) 0 =
+        ⊥)
+    (hleft : PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term left}
+      (k (interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv)))
+    (hright : PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term right}
+      (k (interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv))) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term (.extern left right)}
+      (k (interp (hardwarePrimitive D₀ j₀ realize) (.extern left right)
+        semanticEnv)) where
+  selected_result_eq_channelTree_sup_presented := by
+    intro selectors i ξ kξ hk
+    cases selectors with
+    | cons b selectors =>
+        rw [HardwareAdequacy.selectPath_cons, hcommute,
+          interp_extern_apply]
+        cases b
+        · rw [TTContinuation.computation_extern_select_false]
+          rw [hleft.selected_result_eq_channelTree_sup_presented
+            selectors i ξ kξ hk,
+            external_cons_channelTreeSup_at]
+          simp
+        · rw [TTContinuation.computation_extern_select_true]
+          rw [hright.selected_result_eq_channelTree_sup_presented
+            selectors i ξ kξ hk,
+            external_cons_channelTreeSup_at]
+          simp
+    | nil =>
+        cases i with
+        | zero =>
+            rw [HardwareAdequacy.selectPath_nil, hroot,
+              external_root_channelTreeSup_at]
+            exact ScottMap.bot_apply
+              (D := ScottMap (HSemanticValue D₀ j₀) (TTResult 2))
+              (D' := TTResult 2) kξ
+        | succ n =>
+            by_cases heven : n % 2 = 0
+            · have hi : n + 1 =
+                  HardwareAdequacy.branchCoordinate false (n / 2) := by
+                simp [HardwareAdequacy.branchCoordinate]
+                omega
+              have hsel :
+                  TTContinuation.selectBranch false
+                      (k (interp (hardwarePrimitive D₀ j₀ realize)
+                        (.extern left right) semanticEnv))
+                      (n / 2) =
+                    k (interp (hardwarePrimitive D₀ j₀ realize)
+                      (.extern left right) semanticEnv)
+                      (n + 1) := by
+                rw [hi]
+                rfl
+              have hchild :
+                  k (interp (hardwarePrimitive D₀ j₀ realize)
+                      (.extern left right) semanticEnv)
+                      (n + 1) kξ =
+                    k (interp (hardwarePrimitive D₀ j₀ realize) left
+                      semanticEnv) (n / 2) kξ := by
+                rw [← hsel, hcommute, interp_extern_apply,
+                  TTContinuation.computation_extern_select_false]
+              have hc :=
+                hleft.selected_result_eq_channelTree_sup_presented
+                  [] (n / 2) ξ kξ hk
+              have hc' :
+                  k (interp (hardwarePrimitive D₀ j₀ realize) left
+                      semanticEnv) (n / 2) kξ =
+                    sSup (channelTreeResults D₀ j₀ realize
+                      {s with control := .term left} [] (n / 2) kξ) := by
+                simpa using hc
+              rw [HardwareAdequacy.selectPath_nil, hchild, hc', hi]
+              exact
+                (external_coordinate_channelTreeSup_at D₀ j₀ realize s
+                  left right false (n / 2) kξ).symm
+            · have hodd : n % 2 = 1 := by omega
+              have hi : n + 1 =
+                  HardwareAdequacy.branchCoordinate true (n / 2) := by
+                simp [HardwareAdequacy.branchCoordinate]
+                omega
+              have hsel :
+                  TTContinuation.selectBranch true
+                      (k (interp (hardwarePrimitive D₀ j₀ realize)
+                        (.extern left right) semanticEnv))
+                      (n / 2) =
+                    k (interp (hardwarePrimitive D₀ j₀ realize)
+                      (.extern left right) semanticEnv)
+                      (n + 1) := by
+                rw [hi]
+                rfl
+              have hchild :
+                  k (interp (hardwarePrimitive D₀ j₀ realize)
+                      (.extern left right) semanticEnv)
+                      (n + 1) kξ =
+                    k (interp (hardwarePrimitive D₀ j₀ realize) right
+                      semanticEnv) (n / 2) kξ := by
+                rw [← hsel, hcommute, interp_extern_apply,
+                  TTContinuation.computation_extern_select_true]
+              have hc :=
+                hright.selected_result_eq_channelTree_sup_presented
+                  [] (n / 2) ξ kξ hk
+              have hc' :
+                  k (interp (hardwarePrimitive D₀ j₀ realize) right
+                      semanticEnv) (n / 2) kξ =
+                    sSup (channelTreeResults D₀ j₀ realize
+                      {s with control := .term right} [] (n / 2) kξ) := by
+                simpa using hc
+              rw [HardwareAdequacy.selectPath_nil, hchild, hc', hi]
+              exact
+                (external_coordinate_channelTreeSup_at D₀ j₀ realize s
+                  left right true (n / 2) kξ).symm
+
 noncomputable def wrapProbAt {C : Type} {p : ℝ} (hp₀ : 0 < p) (hp₁ : p < 1)
     (s : ChannelConfig C)
     (left right : Term (QubitPrimitive C))
@@ -12017,6 +12147,270 @@ theorem intern_related_presentedChannelConfigCompleteness {C : Type}
               (D₀ := D₀) (j₀ := j₀) hstack)
             (hleft semanticEnv k henv hstack).complete
             (hright semanticEnv k henv hstack).complete) }
+
+theorem taggedEmbed_coordinateConstant {D : Type} [CompleteLattice D]
+    (μ : FiniteInstrumentComp 2 D) :
+    CoordinateConstant (taggedEmbed μ) := by
+  intro i j
+  rfl
+
+theorem intern_coordinateConstant
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (q r : HSemanticComp D₀ j₀)
+    (hq : CoordinateConstant q)
+    (hr : CoordinateConstant r) :
+    CoordinateConstant
+      (HasComputationChoice.intern (q, r)) := by
+  intro i j
+  rw [TTContinuation.computation_intern_apply,
+    TTContinuation.computation_intern_apply, hq i j, hr i j]
+
+theorem adminNoApp_interp_coordinateConstant {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {code : Term (QubitPrimitive C)}
+    (hadmin : AdminNoApp code)
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    CoordinateConstant
+      (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv) := by
+  induction code with
+  | var y =>
+      intro i j
+      rfl
+  | app _ _ =>
+      exact False.elim hadmin
+  | lam _ _ _ =>
+      intro i j
+      rfl
+  | recLam _ _ _ _ =>
+      intro i j
+      rfl
+  | intern left right ihL ihR =>
+      have ⟨hL, hR⟩ := hadmin
+      exact intern_coordinateConstant D₀ j₀
+        (interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv)
+        (interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv)
+        (ihL hL) (ihR hR)
+  | extern _ _ _ _ =>
+      exact False.elim hadmin
+  | prob _ _ _ _ _ =>
+      exact False.elim hadmin
+  | prim p =>
+      cases p with
+      | ret _ =>
+          intro i j
+          rfl
+      | pauliX value =>
+          simpa [interp_prim_apply, hardwarePrimitive_pauliX] using
+            taggedEmbed_coordinateConstant
+              (FiniteInstrumentComp.ofOperation Qubit.pauliXOp
+                (realize value))
+      | measureZ _ _ =>
+          exact False.elim hadmin
+
+theorem semanticUnfold_lambdaValue
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (x : Name)
+    (body : ScottMap (Env (HSemanticValue D₀ j₀)) (HSemanticComp D₀ j₀))
+    (ρ : Env (HSemanticValue D₀ j₀))
+    (d : HSemanticValue D₀ j₀) :
+    semanticUnfold (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀)
+        (lambdaValue (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) x body ρ) d =
+      body (envUpdate (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀) x (ρ, d)) := by
+  change
+      qEmbInfInf (QModel (TTExternalContinuationPower 2)) D₀ j₀
+        (qProjInfInf (QModel (TTExternalContinuationPower 2)) D₀ j₀
+          (scottLambda
+            (body.comp
+              (envUpdate (Q := TTExternalContinuationPower 2)
+                (D₀ := D₀) (j₀ := j₀) x))
+            ρ)) d =
+        body (envUpdate (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) x (ρ, d))
+  rw [qEmbInfInf_qProjInfInf]
+  rfl
+
+theorem semanticBind_select_of_unfold_constant
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (f : HSemanticValue D₀ j₀)
+    (hf : ∀ d, CoordinateConstant
+      (semanticUnfold (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀) f d))
+    (q : HSemanticComp D₀ j₀)
+    (b : Bool) :
+    TTContinuation.selectBranch b
+        (semanticBind (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀)
+          (semanticUnfold (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) f) q) =
+      semanticBind (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀)
+        (semanticUnfold (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) f)
+        (TTContinuation.selectBranch b q) :=
+  TTContinuation.selectBranch_taggedBind_of_coordinateConstant
+    (semanticUnfold (Q := TTExternalContinuationPower 2)
+      (D₀ := D₀) (j₀ := j₀) f) hf q b
+
+theorem semanticBind_root_bot
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (h : ScottMap (HSemanticValue D₀ j₀) (HSemanticComp D₀ j₀))
+    (q : HSemanticComp D₀ j₀)
+    (hq : q 0 = ⊥) :
+    semanticBind (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀) h q 0 =
+      ⊥ :=
+  TTContinuation.taggedBind_root_bot h q hq
+
+/-- External choice at a related state is presented-complete once both
+children are, when the stack continuation commutes with selection and
+is strict at the unresolved root. -/
+theorem extern_related_presentedChannelConfigCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {left right : Term (QubitPrimitive C)}
+    {answer : HSemanticComp D₀ j₀}
+    (hc : s.control = .term (.extern left right))
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer)
+    (hcommute :
+      ∀ semanticEnv k,
+        EnvRel D₀ j₀ realize s.env semanticEnv →
+        StackRel D₀ j₀ realize s.stack k →
+        ∀ selected q,
+          selectBranch selected (k q) =
+            k (selectBranch selected q))
+    (hroot :
+      ∀ semanticEnv k,
+        EnvRel D₀ j₀ realize s.env semanticEnv →
+        StackRel D₀ j₀ realize s.stack k →
+        k (interp (hardwarePrimitive D₀ j₀ realize) (.extern left right)
+            semanticEnv) 0 =
+          ⊥)
+    (hleft :
+      ∀ semanticEnv k,
+        EnvRel D₀ j₀ realize s.env semanticEnv →
+        StackRel D₀ j₀ realize s.stack k →
+        PresentedChannelConfigCompleteness D₀ j₀ realize
+          {s with control := .term left}
+          (k (interp (hardwarePrimitive D₀ j₀ realize) left
+            semanticEnv)))
+    (hright :
+      ∀ semanticEnv k,
+        EnvRel D₀ j₀ realize s.env semanticEnv →
+        StackRel D₀ j₀ realize s.stack k →
+        PresentedChannelConfigCompleteness D₀ j₀ realize
+          {s with control := .term right}
+          (k (interp (hardwarePrimitive D₀ j₀ realize) right
+            semanticEnv))) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer := by
+  obtain ⟨semanticEnv, k, henv, hstack, rfl⟩ :=
+    channelConfigRel_term_inv D₀ j₀ hc hrel
+  refine
+    { related := hrel
+      complete :=
+        PresentedChannelTreeCompleteness.congr
+          (show {s with control := .term (.extern left right)} = s from
+            ChannelConfig.ext hc.symm rfl rfl rfl)
+          rfl
+          (extern_stacked_presentedChannelTreeCompleteness
+            D₀ j₀ realize s left right semanticEnv k
+            (hcommute semanticEnv k henv hstack)
+            (hroot semanticEnv k henv hstack)
+            (hleft semanticEnv k henv hstack).complete
+            (hright semanticEnv k henv hstack).complete) }
+
+/-- Extern under a single closure frame whose body is administrative
+NoApp.  The body must not contain `extern`, otherwise selection would
+reindex the residual heap through the closure unfolding. -/
+theorem extern_under_closure_nil_presentedChannelConfigCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {left right : Term (QubitPrimitive C)}
+    {x : Name} {body : Term (QubitPrimitive C)} {cloEnv : RuntimeEnv C}
+    {answer : HSemanticComp D₀ j₀}
+    (hc : s.control = .term (.extern left right))
+    (hs : s.stack = [.function (.closure x body cloEnv)])
+    (hadmin : AdminNoApp body)
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer)
+    (hleft :
+      ∀ semanticEnv k,
+        EnvRel D₀ j₀ realize s.env semanticEnv →
+        StackRel D₀ j₀ realize s.stack k →
+        PresentedChannelConfigCompleteness D₀ j₀ realize
+          {s with control := .term left}
+          (k (interp (hardwarePrimitive D₀ j₀ realize) left
+            semanticEnv)))
+    (hright :
+      ∀ semanticEnv k,
+        EnvRel D₀ j₀ realize s.env semanticEnv →
+        StackRel D₀ j₀ realize s.stack k →
+        PresentedChannelConfigCompleteness D₀ j₀ realize
+          {s with control := .term right}
+          (k (interp (hardwarePrimitive D₀ j₀ realize) right
+            semanticEnv))) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer := by
+  refine extern_related_presentedChannelConfigCompleteness
+    D₀ j₀ realize hc hrel ?_ ?_ hleft hright
+  · intro semanticEnv k henv hstack selected q
+    rw [hs] at hstack
+    cases hstack
+    case function f krest hfn hrest =>
+      cases hrest
+      cases hfn
+      case closure cloSem _ =>
+        have hunfold :
+            ∀ d, CoordinateConstant
+              (semanticUnfold (Q := TTExternalContinuationPower 2)
+                (D₀ := D₀) (j₀ := j₀)
+                (lambdaValue (Q := TTExternalContinuationPower 2)
+                  (D₀ := D₀) (j₀ := j₀) x
+                  (interp (hardwarePrimitive D₀ j₀ realize) body)
+                  cloSem)
+                d) := by
+          intro d
+          rw [semanticUnfold_lambdaValue]
+          exact adminNoApp_interp_coordinateConstant D₀ j₀ realize
+            hadmin
+            (envUpdate (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) x (cloSem, d))
+        simp only [id]
+        exact semanticBind_select_of_unfold_constant D₀ j₀ _ hunfold q
+          selected
+  · intro semanticEnv k henv hstack
+    rw [hs] at hstack
+    cases hstack
+    case function f krest hfn hrest =>
+      cases hrest
+      have hextern0 :
+          interp (hardwarePrimitive D₀ j₀ realize)
+              (.extern left right) semanticEnv 0 =
+            ⊥ := by
+        rw [interp_extern_apply]
+        exact TTContinuation.externalChoice_root_bot _ _
+      simp only [id]
+      exact semanticBind_root_bot D₀ j₀
+        (semanticUnfold (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) f)
+        (interp (hardwarePrimitive D₀ j₀ realize)
+          (.extern left right) semanticEnv)
+        hextern0
 
 /-- A value under a single closure frame betas to the body at the empty
 stack.  Application-free bodies are then presented by empty-stack NoApp. -/

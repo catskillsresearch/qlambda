@@ -367,6 +367,55 @@ theorem taggedBind_atCoordinate
       TTContinuation.bind ((atCoordinate i).comp h) (q i) := by
   rfl
 
+/-- A tagged computation that does not use the external-branch heap. -/
+def CoordinateConstant {C : Type u} [CompleteLattice C]
+    (q : BranchTagged C) : Prop :=
+  ∀ i j : ℕ, q i = q j
+
+theorem taggedUnit_coordinateConstant (d : D) :
+    CoordinateConstant
+      (taggedUnit (n := n) d : TTExternalContinuationPower n D) := by
+  intro i j
+  rfl
+
+theorem selectBranch_coordinateConstant {C : Type u} [CompleteLattice C]
+    (b : Bool) {q : BranchTagged C} (hq : CoordinateConstant q) :
+    selectBranch b q = q := by
+  funext i
+  cases b
+  · exact hq (2 * i + 1) i
+  · exact hq (2 * i + 2) i
+
+/-- If the Kleisli continuation is coordinate-constant, selection commutes
+past bind without reindexing `h`. -/
+theorem selectBranch_taggedBind_of_coordinateConstant
+    (h : ScottMap D (TTExternalContinuationPower n E))
+    (hh : ∀ d, CoordinateConstant (h d))
+    (q : TTExternalContinuationPower n D)
+    (b : Bool) :
+    selectBranch b (taggedBindScott (n := n) h q) =
+      taggedBindScott (n := n) h (selectBranch b q) := by
+  have hcomp : (selectBranch b).comp h = h := by
+    apply ScottMap.ext
+    intro d
+    exact selectBranch_coordinateConstant b (hh d)
+  rw [selectBranch_taggedBind, hcomp]
+
+theorem taggedBind_root_bot
+    (h : ScottMap D (TTExternalContinuationPower n E))
+    (q : TTExternalContinuationPower n D)
+    (hq : q 0 = ⊥) :
+    taggedBindScott (n := n) h q 0 = ⊥ := by
+  change
+      TTContinuation.bind
+        ((evalBranch (C := TTContinuationPower n E) 0).comp h) (q 0) = ⊥
+  rw [hq]
+  apply ScottMap.ext
+  intro k
+  rw [bind_apply,
+    ScottMap.bot_apply (D := ScottMap D (TTResult n)) (D' := TTResult n),
+    ScottMap.bot_apply (D := ScottMap E (TTResult n)) (D' := TTResult n)]
+
 theorem taggedBind_unit :
     taggedBindScott (n := n)
       (taggedUnit (n := n) : ScottMap D (TTExternalContinuationPower n D)) =
