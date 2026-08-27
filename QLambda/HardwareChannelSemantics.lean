@@ -10402,9 +10402,13 @@ theorem extern_stacked_presentedChannelTreeCompleteness {C : Type}
     (semanticEnv : Env (HSemanticValue D₀ j₀))
     (k : HSemanticComp D₀ j₀ → HSemanticComp D₀ j₀)
     (hcommute :
-      ∀ selected q,
-        TTContinuation.selectBranch selected (k q) =
-          k (TTContinuation.selectBranch selected q))
+      ∀ selected,
+        TTContinuation.selectBranch selected
+            (k (interp (hardwarePrimitive D₀ j₀ realize)
+              (.extern left right) semanticEnv)) =
+          k (TTContinuation.selectBranch selected
+            (interp (hardwarePrimitive D₀ j₀ realize)
+              (.extern left right) semanticEnv)))
     (hroot :
       k (interp (hardwarePrimitive D₀ j₀ realize) (.extern left right)
           semanticEnv) 0 =
@@ -12291,9 +12295,13 @@ theorem extern_related_presentedChannelConfigCompleteness {C : Type}
       ∀ semanticEnv k,
         EnvRel D₀ j₀ realize s.env semanticEnv →
         StackRel D₀ j₀ realize s.stack k →
-        ∀ selected q,
-          selectBranch selected (k q) =
-            k (selectBranch selected q))
+        ∀ selected,
+          selectBranch selected
+              (k (interp (hardwarePrimitive D₀ j₀ realize)
+                (.extern left right) semanticEnv)) =
+            k (selectBranch selected
+              (interp (hardwarePrimitive D₀ j₀ realize)
+                (.extern left right) semanticEnv)))
     (hroot :
       ∀ semanticEnv k,
         EnvRel D₀ j₀ realize s.env semanticEnv →
@@ -12368,7 +12376,7 @@ theorem extern_under_closure_nil_presentedChannelConfigCompleteness {C : Type}
     PresentedChannelConfigCompleteness D₀ j₀ realize s answer := by
   refine extern_related_presentedChannelConfigCompleteness
     D₀ j₀ realize hc hrel ?_ ?_ hleft hright
-  · intro semanticEnv k henv hstack selected q
+  · intro semanticEnv k henv hstack selected
     rw [hs] at hstack
     cases hstack
     case function f krest hfn hrest =>
@@ -12391,7 +12399,9 @@ theorem extern_under_closure_nil_presentedChannelConfigCompleteness {C : Type}
             (envUpdate (Q := TTExternalContinuationPower 2)
               (D₀ := D₀) (j₀ := j₀) x (cloSem, d))
         simp only [id]
-        exact semanticBind_select_of_unfold_constant D₀ j₀ _ hunfold q
+        exact semanticBind_select_of_unfold_constant D₀ j₀ _ hunfold
+          (interp (hardwarePrimitive D₀ j₀ realize)
+            (.extern left right) semanticEnv)
           selected
   · intro semanticEnv k henv hstack
     rw [hs] at hstack
@@ -15724,6 +15734,394 @@ theorem closed_lam_extern_admin_noapp_presented_token_adequacy {C : Type}
     (closed_lam_extern_admin_noapp_presented_channelTreeCompleteness
       D₀ j₀ realize x body left right hclosed hnoapp hadminBody
       hadminL hadminR quantum semanticEnv)
+    selectors ξ k hk i token
+
+theorem applyContinuation_lambda_admin_coordinateConstant {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (x : Name) (body arg : Term (QubitPrimitive C))
+    (hadminBody : AdminNoApp body) (hadminArg : AdminNoApp arg)
+    (ρ cloEnv : Env (HSemanticValue D₀ j₀)) :
+    CoordinateConstant
+      (applyContinuation (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀)
+        (interp (hardwarePrimitive D₀ j₀ realize) arg) ρ
+        (lambdaValue (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) x
+          (interp (hardwarePrimitive D₀ j₀ realize) body) cloEnv)) := by
+  intro i j
+  let h : ScottMap (HSemanticValue D₀ j₀) (HSemanticComp D₀ j₀) :=
+    semanticUnfold (Q := TTExternalContinuationPower 2)
+      (D₀ := D₀) (j₀ := j₀)
+      (lambdaValue (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀) x
+        (interp (hardwarePrimitive D₀ j₀ realize) body) cloEnv)
+  have hbody :
+      ∀ d, CoordinateConstant
+        (interp (hardwarePrimitive D₀ j₀ realize) body
+          (envUpdate (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) x (cloEnv, d))) :=
+    fun d =>
+      adminNoApp_interp_coordinateConstant D₀ j₀ realize hadminBody
+        (envUpdate (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) x (cloEnv, d))
+  have harg :
+      CoordinateConstant
+        (interp (hardwarePrimitive D₀ j₀ realize) arg ρ) :=
+    adminNoApp_interp_coordinateConstant D₀ j₀ realize hadminArg ρ
+  rw [applyContinuation_apply]
+  change
+      TTContinuation.bind ((TTContinuation.atCoordinate i).comp h)
+          (interp (hardwarePrimitive D₀ j₀ realize) arg ρ i) =
+        TTContinuation.bind ((TTContinuation.atCoordinate j).comp h)
+          (interp (hardwarePrimitive D₀ j₀ realize) arg ρ j)
+  have hh :
+      (TTContinuation.atCoordinate i).comp h =
+        (TTContinuation.atCoordinate j).comp h := by
+    apply ScottMap.ext
+    intro d
+    change h d i = h d j
+    rw [semanticUnfold_lambdaValue]
+    exact hbody d i j
+  rw [hh, harg i j]
+
+/-- A lambda under a single argument frame evaluates the argument under
+the resulting closure. -/
+theorem lam_under_argument_nil_admin_noapp_presentedChannelConfigCompleteness
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {x : Name}
+    {body arg : Term (QubitPrimitive C)}
+    {answer : HSemanticComp D₀ j₀}
+    (hc : s.control = .term (.lam x body))
+    (hs : s.stack = [.argument arg s.env])
+    (hnoapp : NoApp body) (hadminArg : AdminNoApp arg)
+    (hscoped : ChannelConfig.WellScoped s)
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer := by
+  have hsLam :
+      {s with control := .term (.lam x body)} = s :=
+    ChannelConfig.ext hc.symm rfl rfl rfl
+  have hrelLam : ChannelConfigRel D₀ j₀ realize
+      {s with control := .term (.lam x body)} answer :=
+    hsLam.symm ▸ hrel
+  have hrelClo :=
+    channel_config_lambda D₀ j₀ (s := s) hrelLam
+  have hsrcClo :
+      {s with control := .value (.closure x body s.env)} =
+        {s with
+          control := .value (.closure x body s.env)
+          stack := .argument arg s.env :: []} :=
+    ChannelConfig.ext rfl rfl hs rfl
+  have hrelFn :=
+    channel_config_evaluateArgument D₀ j₀
+      (s := {s with control := .value (.closure x body s.env)})
+      (fn := .closure x body s.env) (arg := arg)
+      (callEnv := s.env) (rest := [])
+      (hsrcClo ▸ hrelClo)
+  have hstepLam : ChannelInternalStep s
+      {s with control := .value (.closure x body s.env)} := by
+    have happ :
+        ChannelInternalStep
+          {s with control := .term (.lam x body)}
+          {s with control := .value (.closure x body s.env)} :=
+      ChannelInternalStep.lambda (s := s) (x := x) (body := body)
+    exact hsLam.symm ▸ happ
+  have hstepArg : ChannelInternalStep
+      {s with control := .value (.closure x body s.env)}
+      {s with
+        control := .term arg
+        env := s.env
+        stack := .function (.closure x body s.env) :: []} := by
+    have happ :
+        ChannelInternalStep
+          {s with
+            control := .value (.closure x body s.env)
+            stack := .argument arg s.env :: []}
+          {s with
+            control := .term arg
+            env := s.env
+            stack := .function (.closure x body s.env) :: []} :=
+      ChannelInternalStep.evaluateArgument
+        (s := {s with control := .value (.closure x body s.env)})
+        (fn := .closure x body s.env) (arg := arg)
+        (callEnv := s.env) (rest := [])
+    exact hsrcClo.symm ▸ happ
+  have hscopedFn : ChannelConfig.WellScoped
+      {s with
+        control := .term arg
+        env := s.env
+        stack := .function (.closure x body s.env) :: []} :=
+    ChannelInternalStep.preserve_wellScoped hstepArg
+      (ChannelInternalStep.preserve_wellScoped hstepLam hscoped)
+  have harg :
+      PresentedChannelConfigCompleteness D₀ j₀ realize
+        {s with
+          control := .term arg
+          env := s.env
+          stack := .function (.closure x body s.env) :: []}
+        answer :=
+    admin_noapp_under_closure_nil_presentedChannelConfigCompleteness
+      D₀ j₀ realize
+      (s :=
+        {s with
+          control := .term arg
+          env := s.env
+          stack := .function (.closure x body s.env) :: []})
+      (code := arg) (x := x) (body := body) (cloEnv := s.env)
+      hadminArg rfl rfl hnoapp hscopedFn hrelFn
+  have hClo :=
+    evaluateArgument_presentedChannelConfigCompleteness D₀ j₀ realize
+      (s := {s with control := .value (.closure x body s.env)})
+      (fn := .closure x body s.env) (arg := arg)
+      (callEnv := s.env) (rest := []) rfl hs hrelClo harg
+  exact lambda_presentedChannelConfigCompleteness D₀ j₀ realize
+    hc hrel hClo
+
+/-- Extern of two lambdas under a single argument frame.  The argument
+and both lambda bodies must be administrative NoApp so apply-continuation
+is coordinate-constant at the two lambda values. -/
+theorem extern_lams_under_argument_nil_presentedChannelConfigCompleteness
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {xL xR : Name}
+    {bodyL bodyR arg : Term (QubitPrimitive C)}
+    {answer : HSemanticComp D₀ j₀}
+    (hc : s.control =
+      .term (.extern (.lam xL bodyL) (.lam xR bodyR)))
+    (hs : s.stack = [.argument arg s.env])
+    (hnoappL : NoApp bodyL) (hnoappR : NoApp bodyR)
+    (hadminL : AdminNoApp bodyL) (hadminR : AdminNoApp bodyR)
+    (hadminArg : AdminNoApp arg)
+    (hscoped : ChannelConfig.WellScoped s)
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer := by
+  have hscopedL : ChannelConfig.WellScoped
+      {s with control := .term (.lam xL bodyL)} :=
+    wellScoped_term_child (s := s)
+      (code := .extern (.lam xL bodyL) (.lam xR bodyR))
+      (child := .lam xL bodyL) hc hscoped
+      fun z hz => List.mem_append.mpr (Or.inl hz)
+  have hscopedR : ChannelConfig.WellScoped
+      {s with control := .term (.lam xR bodyR)} :=
+    wellScoped_term_child (s := s)
+      (code := .extern (.lam xL bodyL) (.lam xR bodyR))
+      (child := .lam xR bodyR) hc hscoped
+      fun z hz => List.mem_append.mpr (Or.inr hz)
+  refine extern_related_presentedChannelConfigCompleteness
+    D₀ j₀ realize hc hrel ?_ ?_ ?_ ?_
+  · intro semanticEnv k henv hstack selected
+    rw [hs] at hstack
+    cases hstack
+    case argument semanticEnv' krest henvArg hrest =>
+      cases hrest
+      simp only [id]
+      have hL :=
+        applyContinuation_lambda_admin_coordinateConstant D₀ j₀ realize
+          xL bodyL arg hadminL hadminArg semanticEnv' semanticEnv
+      have hR :=
+        applyContinuation_lambda_admin_coordinateConstant D₀ j₀ realize
+          xR bodyR arg hadminR hadminArg semanticEnv' semanticEnv
+      have hden :
+          interp (hardwarePrimitive D₀ j₀ realize)
+              (.extern (.lam xL bodyL) (.lam xR bodyR)) semanticEnv =
+            HasComputationChoice.extern
+              (semanticUnit (Q := TTExternalContinuationPower 2)
+                (D₀ := D₀) (j₀ := j₀)
+                (lambdaValue (Q := TTExternalContinuationPower 2)
+                  (D₀ := D₀) (j₀ := j₀) xL
+                  (interp (hardwarePrimitive D₀ j₀ realize) bodyL)
+                  semanticEnv),
+                semanticUnit (Q := TTExternalContinuationPower 2)
+                  (D₀ := D₀) (j₀ := j₀)
+                  (lambdaValue (Q := TTExternalContinuationPower 2)
+                    (D₀ := D₀) (j₀ := j₀) xR
+                    (interp (hardwarePrimitive D₀ j₀ realize) bodyR)
+                    semanticEnv)) := by
+        simp [interp_extern_apply, interp_lam_apply]
+      rw [hden]
+      exact TTContinuation.selectBranch_taggedBind_extern_units
+        (applyContinuation (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀)
+          (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv')
+        (lambdaValue (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) xL
+          (interp (hardwarePrimitive D₀ j₀ realize) bodyL) semanticEnv)
+        (lambdaValue (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) xR
+          (interp (hardwarePrimitive D₀ j₀ realize) bodyR) semanticEnv)
+        hL hR selected
+  · intro semanticEnv k henv hstack
+    rw [hs] at hstack
+    cases hstack
+    case argument semanticEnv' krest henvArg hrest =>
+      cases hrest
+      have hextern0 :
+          interp (hardwarePrimitive D₀ j₀ realize)
+              (.extern (.lam xL bodyL) (.lam xR bodyR)) semanticEnv 0 =
+            ⊥ := by
+        rw [interp_extern_apply]
+        exact TTContinuation.externalChoice_root_bot _ _
+      simp only [id]
+      exact semanticBind_root_bot D₀ j₀
+        (applyContinuation (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀)
+          (interp (hardwarePrimitive D₀ j₀ realize) arg) _)
+        (interp (hardwarePrimitive D₀ j₀ realize)
+          (.extern (.lam xL bodyL) (.lam xR bodyR)) semanticEnv)
+        hextern0
+  · intro semanticEnv k henv hstack
+    exact lam_under_argument_nil_admin_noapp_presentedChannelConfigCompleteness
+      D₀ j₀ realize (s := {s with control := .term (.lam xL bodyL)})
+      rfl (by simp [hs]) hnoappL hadminArg hscopedL
+      ⟨interp (hardwarePrimitive D₀ j₀ realize) (.lam xL bodyL)
+          semanticEnv,
+        k, ControlRel.term _ s.env semanticEnv henv, hstack, rfl⟩
+  · intro semanticEnv k henv hstack
+    exact lam_under_argument_nil_admin_noapp_presentedChannelConfigCompleteness
+      D₀ j₀ realize (s := {s with control := .term (.lam xR bodyR)})
+      rfl (by simp [hs]) hnoappR hadminArg hscopedR
+      ⟨interp (hardwarePrimitive D₀ j₀ realize) (.lam xR bodyR)
+          semanticEnv,
+        k, ControlRel.term _ s.env semanticEnv henv, hstack, rfl⟩
+
+/-- Closed `app (extern (lam x bodyL) (lam y bodyR)) arg` is
+presented-complete when the argument and both bodies are administrative
+NoApp. -/
+theorem closed_app_extern_lams_admin_noapp_presented_channelTreeCompleteness
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (xL xR : Name) (bodyL bodyR arg : Term (QubitPrimitive C))
+    (hclosed : Closed
+      (.app (.extern (.lam xL bodyL) (.lam xR bodyR)) arg))
+    (hnoappL : NoApp bodyL) (hnoappR : NoApp bodyR)
+    (hadminL : AdminNoApp bodyL) (hadminR : AdminNoApp bodyR)
+    (hadminArg : AdminNoApp arg)
+    (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀)) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig
+        (.app (.extern (.lam xL bodyL) (.lam xR bodyR)) arg) quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.app (.extern (.lam xL bodyL) (.lam xR bodyR)) arg)
+        semanticEnv) := by
+  let code : Term (QubitPrimitive C) :=
+    .app (.extern (.lam xL bodyL) (.lam xR bodyR)) arg
+  let s : ChannelConfig C := initialChannelConfig code quantum
+  have hc : s.control = .term code := rfl
+  have hrel :=
+    initialChannelConfig_related D₀ j₀ realize code quantum semanticEnv
+  have hscoped :=
+    initialChannelConfig_wellScoped hclosed quantum
+  have hsApp :
+      {s with control := .term code} = s :=
+    ChannelConfig.ext hc.symm rfl rfl rfl
+  have hrelApp : ChannelConfigRel D₀ j₀ realize
+      {s with control := .term code}
+      (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv) :=
+    hsApp.symm ▸ hrel
+  have hrelExt :=
+    channel_config_application D₀ j₀ (s := s)
+      (fn := .extern (.lam xL bodyL) (.lam xR bodyR)) (arg := arg)
+      hrelApp
+  have hstepApp : ChannelInternalStep s
+      {s with
+        control := .term (.extern (.lam xL bodyL) (.lam xR bodyR))
+        stack := .argument arg s.env :: s.stack} := by
+    have happ :
+        ChannelInternalStep
+          {s with control := .term code}
+          {s with
+            control :=
+              .term (.extern (.lam xL bodyL) (.lam xR bodyR))
+            stack := .argument arg s.env :: s.stack} :=
+      ChannelInternalStep.application (s := s)
+        (fn := .extern (.lam xL bodyL) (.lam xR bodyR)) (arg := arg)
+    exact hsApp.symm ▸ happ
+  have hscopedExt : ChannelConfig.WellScoped
+      {s with
+        control := .term (.extern (.lam xL bodyL) (.lam xR bodyR))
+        stack := .argument arg s.env :: s.stack} :=
+    ChannelInternalStep.preserve_wellScoped hstepApp hscoped
+  have hsExt :
+      ({s with
+          control := .term (.extern (.lam xL bodyL) (.lam xR bodyR))
+          stack := .argument arg s.env :: s.stack}).stack =
+        [.argument arg s.env] := by
+    simp [s, initialChannelConfig, ofConfig, initialConfig]
+  have hext :
+      PresentedChannelConfigCompleteness D₀ j₀ realize
+        {s with
+          control := .term (.extern (.lam xL bodyL) (.lam xR bodyR))
+          stack := .argument arg s.env :: s.stack}
+        (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv) :=
+    extern_lams_under_argument_nil_presentedChannelConfigCompleteness
+      D₀ j₀ realize
+      (s :=
+        {s with
+          control := .term (.extern (.lam xL bodyL) (.lam xR bodyR))
+          stack := .argument arg s.env :: s.stack})
+      rfl hsExt hnoappL hnoappR hadminL hadminR hadminArg
+      hscopedExt hrelExt
+  exact (application_presentedChannelConfigCompleteness D₀ j₀ realize
+    (s := s)
+    (fn := .extern (.lam xL bodyL) (.lam xR bodyR)) (arg := arg)
+    hc hrel hext).complete
+
+/-- Token adequacy for closed `app (extern (lam x bodyL) (lam y bodyR)) arg`
+with administrative NoApp argument and bodies. -/
+theorem closed_app_extern_lams_admin_noapp_presented_token_adequacy
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (xL xR : Name) (bodyL bodyR arg : Term (QubitPrimitive C))
+    (hclosed : Closed
+      (.app (.extern (.lam xL bodyL) (.lam xR bodyR)) arg))
+    (hnoappL : NoApp bodyL) (hnoappR : NoApp bodyR)
+    (hadminL : AdminNoApp bodyL) (hadminR : AdminNoApp bodyR)
+    (hadminArg : AdminNoApp arg)
+    (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (selectors : List Bool)
+    (ξ : HSemanticValue D₀ j₀ → FiniteInstrumentComp 2 PUnit.{1})
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2))
+    (hk : ∀ d, k d = (ξ d).satisfiedTTTheory resultCode)
+    (i : ℕ) (token : TTObservationToken 2) :
+    token ∈ HardwareAdequacy.selectPath selectors
+        (interp (hardwarePrimitive D₀ j₀ realize)
+          (.app (.extern (.lam xL bodyL) (.lam xR bodyR)) arg)
+          semanticEnv) i k ↔
+      ∃ fuel, ∃ (tree : ChannelTree C
+          (initialChannelConfig
+            (.app (.extern (.lam xL bodyL) (.lam xR bodyR)) arg)
+            quantum))
+          (R : ChannelTreeRealization D₀ j₀ realize tree),
+        tree.depth ≤ fuel ∧
+        ResultAvailable tree selectors i ∧
+          TTObservationToken.Holds resultCode token
+            ((restrictedInstrument D₀ j₀ realize tree R selectors i).bind
+              ξ) :=
+  presented_channel_tree_token_adequacy_iff D₀ j₀ realize
+    (initialChannelConfig
+      (.app (.extern (.lam xL bodyL) (.lam xR bodyR)) arg) quantum)
+    (interp (hardwarePrimitive D₀ j₀ realize)
+      (.app (.extern (.lam xL bodyL) (.lam xR bodyR)) arg) semanticEnv)
+    (closed_app_extern_lams_admin_noapp_presented_channelTreeCompleteness
+      D₀ j₀ realize xL xR bodyL bodyR arg hclosed hnoappL hnoappR
+      hadminL hadminR hadminArg quantum semanticEnv)
     selectors ξ k hk i token
 
 end HardwareChannelSemantics

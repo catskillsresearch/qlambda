@@ -448,6 +448,46 @@ theorem taggedUnit_bind
     ((evalBranch (C := TTContinuationPower n E) i).comp h)
   exact congrArg (fun f : ScottMap D (TTContinuationPower n E) => f d) hu
 
+/-- Selection commutes past bind of an external pairing of units when
+the Kleisli map is coordinate-constant at those two values. -/
+theorem selectBranch_taggedBind_extern_units
+    (h : ScottMap D (TTExternalContinuationPower n E))
+    (vL vR : D)
+    (hL : CoordinateConstant (h vL))
+    (hR : CoordinateConstant (h vR))
+    (b : Bool) :
+    selectBranch b
+        (taggedBindScott (n := n) h
+          (externalChoice (taggedUnit (n := n) vL,
+            taggedUnit (n := n) vR))) =
+      taggedBindScott (n := n) h
+        (selectBranch b
+          (externalChoice (taggedUnit (n := n) vL,
+            taggedUnit (n := n) vR))) := by
+  have hunit (v : D) :
+      taggedBindScott (n := n) h (taggedUnit (n := n) v) = h v :=
+    congrArg (fun g : ScottMap D (TTExternalContinuationPower n E) =>
+      g v) (taggedUnit_bind (n := n) (E := E) h)
+  cases b
+  · rw [selectBranch_taggedBind, selectBranch_false_external]
+    have hsel :
+        taggedBindScott (n := n) ((selectBranch false).comp h)
+            (taggedUnit (n := n) vL) =
+          selectBranch false (h vL) :=
+      congrArg (fun g : ScottMap D (TTExternalContinuationPower n E) =>
+        g vL) (taggedUnit_bind (n := n) (E := E)
+          ((selectBranch false).comp h))
+    rw [hsel, selectBranch_coordinateConstant false hL, hunit]
+  · rw [selectBranch_taggedBind, selectBranch_true_external]
+    have hsel :
+        taggedBindScott (n := n) ((selectBranch true).comp h)
+            (taggedUnit (n := n) vR) =
+          selectBranch true (h vR) :=
+      congrArg (fun g : ScottMap D (TTExternalContinuationPower n E) =>
+        g vR) (taggedUnit_bind (n := n) (E := E)
+          ((selectBranch true).comp h))
+    rw [hsel, selectBranch_coordinateConstant true hR, hunit]
+
 theorem taggedBind_assoc
     (h : ScottMap D (TTExternalContinuationPower n E))
     (g : ScottMap E (TTExternalContinuationPower n F)) :
