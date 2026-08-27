@@ -1113,6 +1113,78 @@ theorem stack_monotone {C : Type}
           (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f)).monotone
           hab
 
+/-- Every stack continuation is a composite of Kleisli extensions, so it
+preserves TT internal choice exactly. -/
+theorem stackRel_map_intern {C : Type}
+    {realize : C → HSemanticValue D₀ j₀}
+    {stack : EvalStack C}
+    {k : HSemanticComp D₀ j₀ → HSemanticComp D₀ j₀}
+    (hstack : StackRel D₀ j₀ realize stack k)
+    (q r : HSemanticComp D₀ j₀) :
+    k (HasComputationChoice.intern (q, r)) =
+      HasComputationChoice.intern (k q, k r) := by
+  induction hstack with
+  | nil => rfl
+  | argument arg runtimeEnv semanticEnv rest k henv hrest ih =>
+      change k
+          (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+            (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
+            (HasComputationChoice.intern (q, r))) =
+        HasComputationChoice.intern
+          (k (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+            (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
+            q),
+            k (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
+              r))
+      rw [show
+          semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                (interp (hardwarePrimitive D₀ j₀ realize) arg)
+                semanticEnv)
+              (HasComputationChoice.intern (q, r)) =
+            HasComputationChoice.intern
+              (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                  (interp (hardwarePrimitive D₀ j₀ realize) arg)
+                  semanticEnv)
+                q,
+                semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                  (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                    (interp (hardwarePrimitive D₀ j₀ realize) arg)
+                    semanticEnv)
+                  r) from
+          taggedBind_intern
+            (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
+            q r]
+      exact ih _ _
+  | function fn f rest k hfn hrest ih =>
+      change k
+          (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+            (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f)
+            (HasComputationChoice.intern (q, r))) =
+        HasComputationChoice.intern
+          (k (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+            (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) q),
+            k (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) r))
+      rw [show
+          semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f)
+              (HasComputationChoice.intern (q, r)) =
+            HasComputationChoice.intern
+              (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) q,
+                semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                  (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) r) from
+          taggedBind_intern
+            (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) q r]
+      exact ih _ _
+
 /-- Internal-left scheduling produces a related target whose denotation
 refines that of the unresolved source, through every related stack. -/
 theorem config_internalLeft {C : Type}

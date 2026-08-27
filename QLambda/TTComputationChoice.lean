@@ -57,6 +57,29 @@ theorem computation_intern_apply
     HasComputationChoice.intern (q, r) i =
       internalChoice (q i, r i) := rfl
 
+/-- Kleisli extension of a tagged continuation preserves TT internal
+choice exactly, because bind is evaluated coordinatewise. -/
+theorem taggedBind_intern
+    (h : ScottMap D (TTExternalContinuationPower n E))
+    (q r : TTExternalContinuationPower n D) :
+    taggedBindScott (n := n) h
+        (HasComputationChoice.intern (q, r)) =
+      HasComputationChoice.intern
+        (taggedBindScott (n := n) h q,
+          taggedBindScott (n := n) h r) := by
+  funext i
+  have hsrc :=
+    taggedBind_atCoordinate (n := n) (E := E) h
+      (HasComputationChoice.intern (q, r)) i
+  have hleft := taggedBind_atCoordinate (n := n) (E := E) h q i
+  have hright := taggedBind_atCoordinate (n := n) (E := E) h r i
+  change TTContinuation.bind ((atCoordinate i).comp h)
+      (HasComputationChoice.intern (q, r) i) =
+    HasComputationChoice.intern
+      (taggedBindScott (n := n) h q, taggedBindScott (n := n) h r) i
+  rw [computation_intern_apply, bind_internalChoice,
+    computation_intern_apply, hleft, hright]
+
 theorem computation_extern_select_false
     (q r : TTExternalContinuationPower n D) :
     selectBranch false (HasComputationChoice.extern (q, r)) = q :=

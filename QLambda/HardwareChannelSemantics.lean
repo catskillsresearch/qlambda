@@ -3107,6 +3107,25 @@ theorem selectPath_intern {C : Type}
     TTContinuation.internalChoice_apply, HardwareAdequacy.selectPath_apply_encode,
     HardwareAdequacy.selectPath_apply_encode]
 
+/-- Internal choice of any two related computations is the join of their
+selected results, independently of how those computations were obtained. -/
+theorem selectPath_computation_intern
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (q r : HSemanticComp D₀ j₀)
+    (selectors : List Bool) (i : ℕ)
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)) :
+    HardwareAdequacy.selectPath selectors
+        (HasComputationChoice.intern (q, r)) i k =
+      HardwareAdequacy.selectPath selectors q i k ⊔
+        HardwareAdequacy.selectPath selectors r i k := by
+  rw [HardwareAdequacy.selectPath_apply_encode,
+    TTContinuation.computation_intern_apply,
+    TTContinuation.internalChoice_apply,
+    HardwareAdequacy.selectPath_apply_encode,
+    HardwareAdequacy.selectPath_apply_encode]
+
 /-- Internal choice of any two completed closed terms is the join of their
 channel-tree suprema. -/
 theorem intern_channelTreeCompleteness {C : Type}
@@ -9577,6 +9596,115 @@ theorem intern_empty_presentedChannelTreeCompleteness {C : Type}
       | external _ hex _ =>
           exact False.elim (ChannelExternalStep.not_intern hex hctrl)
 
+/-- Internal choice under an arbitrary stack continuation.  The continuation
+must preserve intern, which every `StackRel` continuation does. -/
+theorem intern_stacked_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (s : ChannelConfig C)
+    (left right : Term (QubitPrimitive C))
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (k : HSemanticComp D₀ j₀ → HSemanticComp D₀ j₀)
+    (hk : ∀ q r, k (HasComputationChoice.intern (q, r)) =
+      HasComputationChoice.intern (k q, k r))
+    (hleft : PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term left}
+      (k (interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv)))
+    (hright : PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term right}
+      (k (interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv))) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize
+      {s with control := .term (.intern left right)}
+      (k (interp (hardwarePrimitive D₀ j₀ realize) (.intern left right)
+        semanticEnv)) where
+  selected_result_eq_channelTree_sup_presented := by
+    intro selectors i ξ kξ hkξ
+    rw [interp_intern_apply, hk,
+      selectPath_computation_intern D₀ j₀,
+      hleft.selected_result_eq_channelTree_sup_presented
+        selectors i ξ kξ hkξ,
+      hright.selected_result_eq_channelTree_sup_presented
+        selectors i ξ kξ hkξ]
+    have hop :
+        channelInternalOperation
+          {s with control := .term (.intern left right)} =
+          QuantumOperation.identity 2 :=
+      rfl
+    refine le_antisymm ?_ ?_
+    · apply sup_le
+      · apply sSup_le
+        rintro T ⟨fuel, child, R, hdepth, rfl⟩
+        apply le_sSup
+        refine ⟨fuel + 1, wrapInternLeftAt s left right child,
+          wrapInternalRealization D₀ j₀ realize
+            (ChannelInternalStep.internalLeft
+              (s := {s with control := .term (.intern left right)}))
+            child R, ?_, ?_⟩
+        · simpa [wrapInternLeftAt_depth] using Nat.succ_le_succ hdepth
+        · exact
+            (restrictedResult_internal_of_identity D₀ j₀ realize
+              (ChannelInternalStep.internalLeft
+                (s := {s with control := .term (.intern left right)}))
+              hop child
+              (wrapInternalRealization D₀ j₀ realize
+                (ChannelInternalStep.internalLeft
+                  (s := {s with control := .term (.intern left right)}))
+                child R)
+              selectors i kξ).symm
+      · apply sSup_le
+        rintro T ⟨fuel, child, R, hdepth, rfl⟩
+        apply le_sSup
+        refine ⟨fuel + 1, wrapInternRightAt s left right child,
+          wrapInternalRealization D₀ j₀ realize
+            (ChannelInternalStep.internalRight
+              (s := {s with control := .term (.intern left right)}))
+            child R, ?_, ?_⟩
+        · simpa [wrapInternRightAt_depth] using Nat.succ_le_succ hdepth
+        · exact
+            (restrictedResult_internal_of_identity D₀ j₀ realize
+              (ChannelInternalStep.internalRight
+                (s := {s with control := .term (.intern left right)}))
+              hop child
+              (wrapInternalRealization D₀ j₀ realize
+                (ChannelInternalStep.internalRight
+                  (s := {s with control := .term (.intern left right)}))
+                child R)
+              selectors i kξ).symm
+    · apply sSup_le
+      rintro T ⟨_, tree, R, _, rfl⟩
+      have hctrl :
+          ({s with control := .term (.intern left right)}).control =
+            .term (.intern left right) :=
+        rfl
+      cases tree with
+      | terminal hterm =>
+          have := hterm.control_eq.symm.trans hctrl
+          cases this
+      | @internal _ t h next =>
+          rcases ChannelInternalStep.eq_of_intern h hctrl with ht | ht
+          · cases ht
+            have := restrictedResult_internal_of_identity D₀ j₀ realize
+              h hop next R selectors i kξ
+            rw [this]
+            apply le_sup_of_le_left
+            apply le_sSup
+            exact ⟨next.depth, next,
+              internalChildRealization D₀ j₀ realize h next R,
+              le_rfl, rfl⟩
+          · cases ht
+            have := restrictedResult_internal_of_identity D₀ j₀ realize
+              h hop next R selectors i kξ
+            rw [this]
+            apply le_sup_of_le_right
+            apply le_sSup
+            exact ⟨next.depth, next,
+              internalChildRealization D₀ j₀ realize h next R,
+              le_rfl, rfl⟩
+      | external _ hex _ =>
+          exact False.elim (ChannelExternalStep.not_intern hex hctrl)
+
 /-- Wrap a completed child under one external-selection node at an
 arbitrary source with definitional extern control. -/
 def wrapExternAt {C : Type} (s : ChannelConfig C) (b : Bool)
@@ -10855,6 +10983,211 @@ theorem closed_lambda_choice_presented_token_adequacy {C : Type}
 
 open Classical
 
+/-- Application-free terms that are well-scoped in the current environment
+are presented-complete at every empty stack.  After beta the body is
+typically not closed, so this is the empty-stack lemma used by stacked
+application. -/
+theorem empty_stack_noapp_presentedChannelTreeCompleteness {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {code : Term (QubitPrimitive C)}
+    {semanticEnv : Env (HSemanticValue D₀ j₀)}
+    (hnoapp : NoApp code)
+    (hc : s.control = .term code) (hs : s.stack = [])
+    (hscoped : ChannelConfig.WellScoped s)
+    (henv : EnvRel D₀ j₀ realize s.env semanticEnv) :
+    PresentedChannelTreeCompleteness D₀ j₀ realize s
+      (interp (hardwarePrimitive D₀ j₀ realize) code semanticEnv) := by
+  induction code generalizing s semanticEnv with
+  | var x =>
+      have hctl := hscoped.left
+      rw [hc] at hctl
+      obtain ⟨v, hlookup⟩ := hctl.right x (by simp [free])
+      have hrel :
+          ChannelConfigRel D₀ j₀ realize
+            {s with control := .term (.var x)}
+            (interp (hardwarePrimitive D₀ j₀ realize) (.var x)
+              semanticEnv) :=
+        ⟨interp (hardwarePrimitive D₀ j₀ realize) (.var x) semanticEnv,
+          id, ControlRel.term _ s.env semanticEnv henv,
+          (by rw [hs]; exact StackRel.nil), rfl⟩
+      have hrelv :=
+        channel_config_variable D₀ j₀ hlookup hrel
+      have hscopedv : ChannelConfig.WellScoped
+          {s with control := .value v} :=
+        ⟨⟨hctl.left, hctl.left x v hlookup⟩, hscoped.right⟩
+      have hchild :
+          PresentedChannelConfigCompleteness D₀ j₀ realize
+            {s with control := .value v}
+            (interp (hardwarePrimitive D₀ j₀ realize) (.var x)
+              semanticEnv) :=
+        { related := hrelv
+          complete :=
+            terminal_presentedChannelTreeCompleteness D₀ j₀ realize
+              (s := {s with control := .value v})
+              ⟨v, rfl, hs⟩ hscopedv hrelv }
+      exact PresentedChannelTreeCompleteness.congr
+        (show {s with control := .term (.var x)} = s from
+          ChannelConfig.ext hc.symm rfl rfl rfl)
+        rfl
+        (variable_presentedChannelConfigCompleteness D₀ j₀ realize
+          (s := {s with control := .term (.var x)}) rfl hlookup hrel
+          hchild).complete
+  | app _ _ =>
+      exact False.elim hnoapp
+  | lam x body _ih =>
+      exact lam_terminal_presentedChannelTreeCompleteness D₀ j₀ realize
+        hc hs hscoped henv
+  | recLam self arg body _ih =>
+      exact recLam_terminal_presentedChannelTreeCompleteness D₀ j₀ realize
+        hc hs hscoped henv
+  | intern left right ihL ihR =>
+      have ⟨hnaL, hnaR⟩ := hnoapp
+      have hctl := hscoped.left
+      rw [hc] at hctl
+      have hscopedL : ChannelConfig.WellScoped
+          {s with control := .term left} :=
+        ⟨⟨hctl.left, fun x hx => hctl.right x (by simp [free, hx])⟩,
+          hscoped.right⟩
+      have hscopedR : ChannelConfig.WellScoped
+          {s with control := .term right} :=
+        ⟨⟨hctl.left, fun x hx => hctl.right x (by simp [free, hx])⟩,
+          hscoped.right⟩
+      have hL :=
+        ihL hnaL (s := {s with control := .term left})
+          (semanticEnv := semanticEnv) rfl hs hscopedL henv
+      have hR :=
+        ihR hnaR (s := {s with control := .term right})
+          (semanticEnv := semanticEnv) rfl hs hscopedR henv
+      exact PresentedChannelTreeCompleteness.congr
+        (show {s with control := .term (.intern left right)} = s from
+          ChannelConfig.ext hc.symm rfl rfl rfl)
+        rfl
+        (intern_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+          s left right semanticEnv hL hR)
+  | extern left right ihL ihR =>
+      have ⟨hnaL, hnaR⟩ := hnoapp
+      have hctl := hscoped.left
+      rw [hc] at hctl
+      have hscopedL : ChannelConfig.WellScoped
+          {s with control := .term left} :=
+        ⟨⟨hctl.left, fun x hx => hctl.right x (by simp [free, hx])⟩,
+          hscoped.right⟩
+      have hscopedR : ChannelConfig.WellScoped
+          {s with control := .term right} :=
+        ⟨⟨hctl.left, fun x hx => hctl.right x (by simp [free, hx])⟩,
+          hscoped.right⟩
+      have hL :=
+        ihL hnaL (s := {s with control := .term left})
+          (semanticEnv := semanticEnv) rfl hs hscopedL henv
+      have hR :=
+        ihR hnaR (s := {s with control := .term right})
+          (semanticEnv := semanticEnv) rfl hs hscopedR henv
+      exact PresentedChannelTreeCompleteness.congr
+        (show {s with control := .term (.extern left right)} = s from
+          ChannelConfig.ext hc.symm rfl rfl rfl)
+        rfl
+        (extern_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+          s left right semanticEnv hL hR)
+  | prob p left right ihL ihR =>
+      have ⟨hnaL, hnaR⟩ := hnoapp
+      have hctl := hscoped.left
+      rw [hc] at hctl
+      have hscopedL : ChannelConfig.WellScoped
+          {s with control := .term left} :=
+        ⟨⟨hctl.left, fun x hx => hctl.right x (by simp [free, hx])⟩,
+          hscoped.right⟩
+      have hscopedR : ChannelConfig.WellScoped
+          {s with control := .term right} :=
+        ⟨⟨hctl.left, fun x hx => hctl.right x (by simp [free, hx])⟩,
+          hscoped.right⟩
+      if hI : 0 ≤ p ∧ p ≤ 1 then
+        if hp0 : p = 0 then
+          subst p
+          have hR :=
+            ihR hnaR (s := {s with control := .term right})
+              (semanticEnv := semanticEnv) rfl hs hscopedR henv
+          exact PresentedChannelTreeCompleteness.congr
+            (show {s with control := .term (.prob 0 left right)} = s from
+              ChannelConfig.ext hc.symm rfl rfl rfl)
+            rfl
+            (prob_zero_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+              s left right semanticEnv hR)
+        else if hp1 : p = 1 then
+          subst p
+          have hL :=
+            ihL hnaL (s := {s with control := .term left})
+              (semanticEnv := semanticEnv) rfl hs hscopedL henv
+          exact PresentedChannelTreeCompleteness.congr
+            (show {s with control := .term (.prob 1 left right)} = s from
+              ChannelConfig.ext hc.symm rfl rfl rfl)
+            rfl
+            (prob_one_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+              s left right semanticEnv hL)
+        else
+          have hp0ne : p ≠ 0 := hp0
+          have hp1ne : p ≠ 1 := hp1
+          have hp₀ : 0 < p := lt_of_le_of_ne hI.1 hp0ne.symm
+          have hp₁ : p < 1 := lt_of_le_of_ne hI.2 hp1ne
+          have hL :=
+            ihL hnaL
+              (s :=
+                { s with
+                  control := .term left
+                  quantum := applyOperation
+                    (sourceProbabilityOperation p hp₀.le hp₁.le)
+                    s.quantum })
+              (semanticEnv := semanticEnv) rfl hs hscopedL henv
+          have hR :=
+            ihR hnaR
+              (s :=
+                { s with
+                  control := .term right
+                  quantum := applyOperation
+                    (sourceProbabilityOperation (1 - p)
+                      (sub_nonneg.mpr hp₁.le) (by linarith))
+                    s.quantum })
+              (semanticEnv := semanticEnv) rfl hs hscopedR henv
+          exact PresentedChannelTreeCompleteness.congr
+            (show {s with control := .term (.prob p left right)} = s from
+              ChannelConfig.ext hc.symm rfl rfl rfl)
+            rfl
+            (prob_empty_presented_of_presented_children D₀ j₀ realize
+              s p hp₀ hp₁ left right semanticEnv hL hR)
+      else
+        exact PresentedChannelTreeCompleteness.congr
+          (show {s with control := .term (.prob p left right)} = s from
+            ChannelConfig.ext hc.symm rfl rfl rfl)
+          rfl
+          (prob_invalid_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+            s p hI left right semanticEnv)
+  | prim p =>
+      cases p with
+      | ret value =>
+          exact return_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+            hc hs hscoped henv
+      | pauliX value =>
+          exact PresentedChannelTreeCompleteness.congr
+            (show {s with control := .term (.prim (.pauliX value))} = s from
+              ChannelConfig.ext hc.symm rfl rfl rfl)
+            rfl
+            (pauliX_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+              s value hs semanticEnv)
+      | measureZ zeroValue oneValue =>
+          exact PresentedChannelTreeCompleteness.congr
+            (show
+                {s with
+                  control :=
+                    .term (.prim (.measureZ zeroValue oneValue))} = s from
+              ChannelConfig.ext hc.symm rfl rfl rfl)
+            rfl
+            (measureZ_empty_presentedChannelTreeCompleteness D₀ j₀ realize
+              s zeroValue oneValue hs semanticEnv)
+
+open Classical
+
 def runtimeValueBodySize {C : Type} : RuntimeValue C → ℕ
   | .payload _ => 0
   | .closure _ body _ => termSize body
@@ -10889,9 +11222,291 @@ def controlPhase {C : Type} (s : ChannelConfig C) : ℕ :=
   | .term _ => 0
   | .value _ => 1
 
+/-- Environment charge is retained for later stacked-beta accounting, but the
+active well-founded measure does not include it: binding a recursive
+closure would otherwise double-count the body against the opened control. -/
 noncomputable def configMeasure {C : Type} (s : ChannelConfig C) : ℕ :=
-  2 * (controlCharge s + stackCharge s.env s.stack + envCharge s.env) +
-    controlPhase s
+  2 * (controlCharge s + stackCharge s.env s.stack) + controlPhase s
+
+@[simp] theorem runtimeValueBodySize_payload {C : Type} (value : C) :
+    runtimeValueBodySize (RuntimeValue.payload value) = 0 :=
+  rfl
+
+@[simp] theorem runtimeValueBodySize_closure {C : Type}
+    (x : Name) (body : Term (QubitPrimitive C)) (runtimeEnv : RuntimeEnv C) :
+    runtimeValueBodySize (RuntimeValue.closure x body runtimeEnv) =
+      termSize body :=
+  rfl
+
+@[simp] theorem runtimeValueBodySize_recClosure {C : Type}
+    (self arg : Name) (body : Term (QubitPrimitive C))
+    (runtimeEnv : RuntimeEnv C) :
+    runtimeValueBodySize
+        (RuntimeValue.recClosure self arg body runtimeEnv) =
+      termSize body :=
+  rfl
+
+theorem valueProducedSize_of_mem {C : Type} {value : RuntimeValue C}
+    {runtimeEnv : RuntimeEnv C}
+    (h : ∃ x, RuntimeEnv.lookup x runtimeEnv = some value) :
+    valueProducedSize value runtimeEnv = 0 := by
+  simp [valueProducedSize, h]
+
+theorem valueProducedSize_of_lookup {C : Type}
+    {value : RuntimeValue C} {runtimeEnv : RuntimeEnv C} {x : Name}
+    (h : RuntimeEnv.lookup x runtimeEnv = some value) :
+    valueProducedSize value runtimeEnv = 0 :=
+  valueProducedSize_of_mem ⟨x, h⟩
+
+theorem valueProducedSize_le_body {C : Type} (value : RuntimeValue C)
+    (runtimeEnv : RuntimeEnv C) :
+    valueProducedSize value runtimeEnv ≤ runtimeValueBodySize value := by
+  unfold valueProducedSize
+  split_ifs <;> omega
+
+theorem valueProducedSize_of_fresh {C : Type} {value : RuntimeValue C}
+    {runtimeEnv : RuntimeEnv C}
+    (h : ∀ y, RuntimeEnv.lookup y runtimeEnv ≠ some value) :
+    valueProducedSize value runtimeEnv = runtimeValueBodySize value := by
+  simp [valueProducedSize]
+  intro x hx
+  exact (h x hx).elim
+
+theorem envCharge_bind {C : Type} (x : Name) (value : RuntimeValue C)
+    (runtimeEnv : RuntimeEnv C) :
+    envCharge (RuntimeEnv.bind x value runtimeEnv) =
+      valueProducedSize value runtimeEnv + envCharge runtimeEnv :=
+  rfl
+
+theorem stackCharge_argument {C : Type} (runtimeEnv : RuntimeEnv C)
+    (arg : Term (QubitPrimitive C)) (callEnv : RuntimeEnv C)
+    (rest : EvalStack C) :
+    stackCharge runtimeEnv (.argument arg callEnv :: rest) =
+      termSize arg + stackCharge runtimeEnv rest :=
+  rfl
+
+theorem stackCharge_function {C : Type} (runtimeEnv : RuntimeEnv C)
+    (fn : RuntimeValue C) (rest : EvalStack C) :
+    stackCharge runtimeEnv (.function fn :: rest) =
+      valueProducedSize fn runtimeEnv + stackCharge runtimeEnv rest :=
+  rfl
+
+theorem configMeasure_application {C : Type} {s : ChannelConfig C}
+    {fn arg : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.app fn arg)) :
+    configMeasure
+        {s with
+          control := .term fn
+          stack := .argument arg s.env :: s.stack} <
+      configMeasure s := by
+  unfold configMeasure controlCharge controlPhase
+  rw [hc]
+  simp [termSize, stackCharge_argument]
+  omega
+
+theorem configMeasure_lambda {C : Type} {s : ChannelConfig C}
+    {x : Name} {body : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.lam x body)) :
+    configMeasure {s with control := .value (.closure x body s.env)} <
+      configMeasure s := by
+  unfold configMeasure controlCharge controlPhase
+  rw [hc]
+  simp [termSize]
+  have hle :
+      valueProducedSize (RuntimeValue.closure x body s.env) s.env ≤
+        termSize body :=
+    valueProducedSize_le_body _ _
+  omega
+
+theorem configMeasure_recLam {C : Type} {s : ChannelConfig C}
+    {self arg : Name} {body : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.recLam self arg body)) :
+    configMeasure
+        {s with control := .value (.recClosure self arg body s.env)} <
+      configMeasure s := by
+  unfold configMeasure controlCharge controlPhase
+  rw [hc]
+  simp [termSize]
+  have hle :
+      valueProducedSize
+          (RuntimeValue.recClosure self arg body s.env) s.env ≤
+        termSize body :=
+    valueProducedSize_le_body _ _
+  omega
+
+theorem configMeasure_variable {C : Type} {s : ChannelConfig C}
+    {x : Name} {v : RuntimeValue C}
+    (hc : s.control = .term (.var x))
+    (hlookup : RuntimeEnv.lookup x s.env = some v) :
+    configMeasure {s with control := .value v} < configMeasure s := by
+  simp [configMeasure, controlCharge, controlPhase, hc,
+    valueProducedSize_of_lookup hlookup, termSize]
+  omega
+
+theorem configMeasure_intern_left {C : Type} {s : ChannelConfig C}
+    {left right : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.intern left right)) :
+    configMeasure {s with control := .term left} < configMeasure s := by
+  simp [configMeasure, controlCharge, controlPhase, hc, termSize]
+
+theorem configMeasure_intern_right {C : Type} {s : ChannelConfig C}
+    {left right : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.intern left right)) :
+    configMeasure {s with control := .term right} < configMeasure s := by
+  simp [configMeasure, controlCharge, controlPhase, hc, termSize]
+
+theorem configMeasure_extern_left {C : Type} {s : ChannelConfig C}
+    {left right : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.extern left right)) :
+    configMeasure {s with control := .term left} < configMeasure s := by
+  simp [configMeasure, controlCharge, controlPhase, hc, termSize]
+
+theorem configMeasure_extern_right {C : Type} {s : ChannelConfig C}
+    {left right : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.extern left right)) :
+    configMeasure {s with control := .term right} < configMeasure s := by
+  simp [configMeasure, controlCharge, controlPhase, hc, termSize]
+
+theorem configMeasure_prob_left {C : Type} {s : ChannelConfig C}
+    {p : ℝ} {left right : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.prob p left right)) :
+    configMeasure {s with control := .term left} < configMeasure s := by
+  simp [configMeasure, controlCharge, controlPhase, hc, termSize]
+
+theorem configMeasure_prob_right {C : Type} {s : ChannelConfig C}
+    {p : ℝ} {left right : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.prob p left right)) :
+    configMeasure {s with control := .term right} < configMeasure s := by
+  simp [configMeasure, controlCharge, controlPhase, hc, termSize]
+
+theorem configMeasure_congr_quantum {C : Type} {s : ChannelConfig C}
+    (quantum : SubNormalizedDensity 2) :
+    configMeasure {s with quantum := quantum} = configMeasure s :=
+  rfl
+
+theorem configMeasure_return {C : Type} {s : ChannelConfig C} {value : C}
+    (hc : s.control = .term (.prim (.ret value))) :
+    configMeasure {s with control := .value (.payload value)} <
+      configMeasure s := by
+  unfold configMeasure controlCharge controlPhase valueProducedSize
+    runtimeValueBodySize
+  rw [hc]
+  simp [termSize]
+  omega
+
+theorem configMeasure_evaluateArgument {C : Type} {s : ChannelConfig C}
+    {fn : RuntimeValue C} {arg : Term (QubitPrimitive C)}
+    {callEnv : RuntimeEnv C} {rest : EvalStack C}
+    (hc : s.control = .value fn)
+    (hs : s.stack = .argument arg callEnv :: rest)
+    (henv : s.env = callEnv) :
+    configMeasure
+        {s with
+          control := .term arg
+          env := callEnv
+          stack := .function fn :: rest} <
+      configMeasure s := by
+  unfold configMeasure controlCharge controlPhase
+  rw [hc, hs, henv]
+  simp [stackCharge_argument, stackCharge_function]
+  omega
+
+theorem configMeasure_beta {C : Type} {s : ChannelConfig C} {x : Name}
+    {body : Term (QubitPrimitive C)} {closureEnv : RuntimeEnv C}
+    {arg : RuntimeValue C} {rest : EvalStack C}
+    (hc : s.control = .value arg)
+    (hs : s.stack = .function (.closure x body closureEnv) :: rest)
+    (hfresh :
+      ∀ y, RuntimeEnv.lookup y s.env ≠
+        some (.closure x body closureEnv))
+    (hrest :
+      stackCharge (RuntimeEnv.bind x arg closureEnv) rest ≤
+        stackCharge s.env rest) :
+    configMeasure
+        {s with
+          control := .term body
+          env := RuntimeEnv.bind x arg closureEnv
+          stack := rest} <
+      configMeasure s := by
+  have hfn :
+      valueProducedSize (RuntimeValue.closure x body closureEnv) s.env =
+        termSize body := by
+    simpa [runtimeValueBodySize] using
+      valueProducedSize_of_fresh hfresh
+  simp [configMeasure, controlCharge, controlPhase, hc, hs, hfn,
+    termSize, stackCharge_function]
+  omega
+
+theorem configMeasure_beta_nil {C : Type} {s : ChannelConfig C} {x : Name}
+    {body : Term (QubitPrimitive C)} {closureEnv : RuntimeEnv C}
+    {arg : RuntimeValue C}
+    (hc : s.control = .value arg)
+    (hs : s.stack = [.function (.closure x body closureEnv)])
+    (hfresh :
+      ∀ y, RuntimeEnv.lookup y s.env ≠
+        some (.closure x body closureEnv)) :
+    configMeasure
+        {s with
+          control := .term body
+          env := RuntimeEnv.bind x arg closureEnv
+          stack := []} <
+      configMeasure s :=
+  configMeasure_beta hc hs hfresh (by simp [stackCharge])
+
+theorem configMeasure_recBeta {C : Type} {s : ChannelConfig C}
+    {self x : Name} {body : Term (QubitPrimitive C)}
+    {closureEnv : RuntimeEnv C} {arg : RuntimeValue C}
+    {rest : EvalStack C}
+    (hc : s.control = .value arg)
+    (hs : s.stack =
+      .function (.recClosure self x body closureEnv) :: rest)
+    (hfresh :
+      ∀ y, RuntimeEnv.lookup y s.env ≠
+        some (.recClosure self x body closureEnv))
+    (hrest :
+      stackCharge
+          (RuntimeEnv.bind x arg
+            (RuntimeEnv.bind self
+              (.recClosure self x body closureEnv) closureEnv))
+          rest ≤
+        stackCharge s.env rest) :
+    configMeasure
+        {s with
+          control := .term body
+          env :=
+            RuntimeEnv.bind x arg
+              (RuntimeEnv.bind self
+                (.recClosure self x body closureEnv) closureEnv)
+          stack := rest} <
+      configMeasure s := by
+  have hfn :
+      valueProducedSize
+          (RuntimeValue.recClosure self x body closureEnv) s.env =
+        termSize body := by
+    simpa [runtimeValueBodySize] using
+      valueProducedSize_of_fresh hfresh
+  simp [configMeasure, controlCharge, controlPhase, hc, hs, hfn,
+    termSize, stackCharge_function]
+  omega
+
+theorem configMeasure_recBeta_nil {C : Type} {s : ChannelConfig C}
+    {self x : Name} {body : Term (QubitPrimitive C)}
+    {closureEnv : RuntimeEnv C} {arg : RuntimeValue C}
+    (hc : s.control = .value arg)
+    (hs : s.stack = [.function (.recClosure self x body closureEnv)])
+    (hfresh :
+      ∀ y, RuntimeEnv.lookup y s.env ≠
+        some (.recClosure self x body closureEnv)) :
+    configMeasure
+        {s with
+          control := .term body
+          env :=
+            RuntimeEnv.bind x arg
+              (RuntimeEnv.bind self
+                (.recClosure self x body closureEnv) closureEnv)
+          stack := []} <
+      configMeasure s :=
+  configMeasure_recBeta hc hs hfresh (by simp [stackCharge])
 
 /-- Token adequacy for every closed term whose channel-tree completeness
 theorem is already proved. -/
