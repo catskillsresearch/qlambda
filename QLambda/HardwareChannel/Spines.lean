@@ -58,7 +58,9 @@ def AdminNoApp {C : Type} : Term (QubitPrimitive C) → Prop
 
 /-- Body-nested and argument-nested lambda applications.
 Stuck `app (ret c) M` is excluded: the function must be a syntactic
-lambda. Left-nested `app (app …) …` is a separate spine. -/
+lambda. Left-nested `app (app …) …` is covered by `Produces`.
+Recursive-lambda applications are covered by `Produces.recLam` /
+`Produces.app`; nesting them inside FunAppFrag is a later cut. -/
 inductive FunAppFrag {C : Type} : Term (QubitPrimitive C) → Prop
   | admin {t : Term (QubitPrimitive C)} :
       AdminNoApp t → FunAppFrag t
@@ -70,7 +72,7 @@ inductive FunAppFrag {C : Type} : Term (QubitPrimitive C) → Prop
 /-- Terms that absorb exactly `n` leftover argument frames without
 getting stuck. `Produces 0` is FunAppFrag. A lambda or recursive
 lambda raises the arity; an application consumes one arity if the
-argument is administrative. -/
+argument is in the FunAppFrag fragment (including admin NoApp). -/
 inductive Produces {C : Type} : Nat → Term (QubitPrimitive C) → Prop
   | frag {t : Term (QubitPrimitive C)} :
       FunAppFrag t → Produces 0 t
@@ -80,7 +82,7 @@ inductive Produces {C : Type} : Nat → Term (QubitPrimitive C) → Prop
       Produces n body → Produces (n + 1) (.recLam self x body)
   | app {n : Nat} {fn arg : Term (QubitPrimitive C)} :
       Produces (n + 1) fn →
-      AdminNoApp arg →
+      FunAppFrag arg →
       Produces n (.app fn arg)
 
 /-- After beta, a body may sit under `n` leftover argument frames.
@@ -245,6 +247,20 @@ theorem FunctionSpineOk.cons {C : Type} {x : Name}
 def ArgumentFramesOk {C : Type}
     (args : List (Term (QubitPrimitive C) × RuntimeEnv C)) : Prop :=
   ∀ p ∈ args, AdminNoApp p.1
+
+/-- Residual argument frames in the FunAppFrag fragment (stacked apps). -/
+def FunAppFramesOk {C : Type}
+    (args : List (Term (QubitPrimitive C) × RuntimeEnv C)) : Prop :=
+  ∀ p ∈ args, FunAppFrag p.1
+
+theorem FunAppFrag.of_admin {C : Type} {t : Term (QubitPrimitive C)}
+    (h : AdminNoApp t) : FunAppFrag t :=
+  FunAppFrag.admin h
+
+theorem FunAppFramesOk.of_argumentFramesOk {C : Type}
+    {args : List (Term (QubitPrimitive C) × RuntimeEnv C)}
+    (h : ArgumentFramesOk args) : FunAppFramesOk args :=
+  fun p hp => FunAppFrag.of_admin (h p hp)
 
 /-- A function-frame spine over leftover argument frames. -/
 def mixedStack {C : Type}
