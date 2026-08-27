@@ -1197,6 +1197,88 @@ theorem stackRel_map_intern {C : Type}
         (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
           (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) r)
 
+theorem stackRel_map_prob {C : Type}
+    {realize : C → HSemanticValue D₀ j₀}
+    {stack : EvalStack C}
+    {k : HSemanticComp D₀ j₀ → HSemanticComp D₀ j₀}
+    (hstack : StackRel D₀ j₀ realize stack k)
+    (p : Prob) (q r : HSemanticComp D₀ j₀) :
+    k (HasComputationChoice.prob p (q, r)) =
+      HasComputationChoice.prob p (k q, k r) := by
+  induction hstack generalizing q r with
+  | nil => rfl
+  | argument arg runtimeEnv semanticEnv rest k henv hrest ih =>
+      change k
+          (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+            (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
+            (HasComputationChoice.prob p (q, r))) =
+        HasComputationChoice.prob p
+          (k (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+            (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
+            q),
+            k (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
+              r))
+      rw [show
+          semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                (interp (hardwarePrimitive D₀ j₀ realize) arg)
+                semanticEnv)
+              (HasComputationChoice.prob p (q, r)) =
+            HasComputationChoice.prob p
+              (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                  (interp (hardwarePrimitive D₀ j₀ realize) arg)
+                  semanticEnv)
+                q,
+                semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                  (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                    (interp (hardwarePrimitive D₀ j₀ realize) arg)
+                    semanticEnv)
+                  r) from
+          TTContinuation.taggedBind_prob
+            (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
+            p q r]
+      exact ih
+        (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+          (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+            (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
+          q)
+        (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+          (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+            (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
+          r)
+  | function fn f rest k hfn hrest ih =>
+      change k
+          (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+            (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f)
+            (HasComputationChoice.prob p (q, r))) =
+        HasComputationChoice.prob p
+          (k (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+            (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) q),
+            k (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) r))
+      rw [show
+          semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+              (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f)
+              (HasComputationChoice.prob p (q, r)) =
+            HasComputationChoice.prob p
+              (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) q,
+                semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+                  (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) r) from
+          TTContinuation.taggedBind_prob
+            (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) p q r]
+      exact ih
+        (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+          (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) q)
+        (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+          (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) r)
+
 /-- Internal-left scheduling produces a related target whose denotation
 refines that of the unresolved source, through every related stack. -/
 theorem config_internalLeft {C : Type}

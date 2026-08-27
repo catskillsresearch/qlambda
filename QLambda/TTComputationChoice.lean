@@ -92,6 +92,41 @@ theorem taggedBind_intern
             taggedBindScott (n := n) h r) i := by
       simp [atCoordinate_apply, computation_intern_apply]
 
+/-- Kleisli extension preserves TT probabilistic choice exactly,
+because bind is evaluated coordinatewise. -/
+theorem taggedBind_prob
+    (h : ScottMap D (TTExternalContinuationPower n E))
+    (p : Prob) (q r : TTExternalContinuationPower n D) :
+    taggedBindScott (n := n) h
+        (HasComputationChoice.prob p (q, r)) =
+      HasComputationChoice.prob p
+        (taggedBindScott (n := n) h q,
+          taggedBindScott (n := n) h r) := by
+  funext i
+  calc
+    taggedBindScott (n := n) h
+        (HasComputationChoice.prob p (q, r)) i =
+      TTContinuation.bind ((atCoordinate i).comp h)
+        (HasComputationChoice.prob p (q, r) i) :=
+      taggedBind_atCoordinate (n := n) (E := E) h
+        (HasComputationChoice.prob p (q, r)) i
+    _ = TTContinuation.bind ((atCoordinate i).comp h)
+          (probChoice p (q i, r i)) := by
+      rw [computation_prob_apply]
+    _ = probChoice p
+          (TTContinuation.bind ((atCoordinate i).comp h) (q i),
+            TTContinuation.bind ((atCoordinate i).comp h) (r i)) :=
+      bind_probChoice ((atCoordinate i).comp h) p (q i) (r i)
+    _ = probChoice p
+          (atCoordinate i (taggedBindScott (n := n) h q),
+            atCoordinate i (taggedBindScott (n := n) h r)) := by
+      rw [← taggedBind_atCoordinate (n := n) (E := E) h q i,
+        ← taggedBind_atCoordinate (n := n) (E := E) h r i]
+    _ = HasComputationChoice.prob p
+          (taggedBindScott (n := n) h q,
+            taggedBindScott (n := n) h r) i := by
+      simp [atCoordinate_apply, computation_prob_apply]
+
 theorem computation_extern_select_false
     (q r : TTExternalContinuationPower n D) :
     selectBranch false (HasComputationChoice.extern (q, r)) = q :=
