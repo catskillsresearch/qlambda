@@ -68,17 +68,29 @@ theorem taggedBind_intern
         (taggedBindScott (n := n) h q,
           taggedBindScott (n := n) h r) := by
   funext i
-  have hsrc :=
-    taggedBind_atCoordinate (n := n) (E := E) h
-      (HasComputationChoice.intern (q, r)) i
-  have hleft := taggedBind_atCoordinate (n := n) (E := E) h q i
-  have hright := taggedBind_atCoordinate (n := n) (E := E) h r i
-  change TTContinuation.bind ((atCoordinate i).comp h)
-      (HasComputationChoice.intern (q, r) i) =
-    HasComputationChoice.intern
-      (taggedBindScott (n := n) h q, taggedBindScott (n := n) h r) i
-  rw [computation_intern_apply, bind_internalChoice,
-    computation_intern_apply, hleft, hright]
+  calc
+    taggedBindScott (n := n) h
+        (HasComputationChoice.intern (q, r)) i =
+      TTContinuation.bind ((atCoordinate i).comp h)
+        (HasComputationChoice.intern (q, r) i) :=
+      taggedBind_atCoordinate (n := n) (E := E) h
+        (HasComputationChoice.intern (q, r)) i
+    _ = TTContinuation.bind ((atCoordinate i).comp h)
+          (internalChoice (q i, r i)) := by
+      rw [computation_intern_apply]
+    _ = internalChoice
+          (TTContinuation.bind ((atCoordinate i).comp h) (q i),
+            TTContinuation.bind ((atCoordinate i).comp h) (r i)) :=
+      bind_internalChoice ((atCoordinate i).comp h) (q i) (r i)
+    _ = internalChoice
+          (atCoordinate i (taggedBindScott (n := n) h q),
+            atCoordinate i (taggedBindScott (n := n) h r)) := by
+      rw [← taggedBind_atCoordinate (n := n) (E := E) h q i,
+        ← taggedBind_atCoordinate (n := n) (E := E) h r i]
+    _ = HasComputationChoice.intern
+          (taggedBindScott (n := n) h q,
+            taggedBindScott (n := n) h r) i := by
+      simp [atCoordinate_apply, computation_intern_apply]
 
 theorem computation_extern_select_false
     (q r : TTExternalContinuationPower n D) :

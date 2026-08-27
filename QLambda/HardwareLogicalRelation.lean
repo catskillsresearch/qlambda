@@ -1123,7 +1123,7 @@ theorem stackRel_map_intern {C : Type}
     (q r : HSemanticComp D₀ j₀) :
     k (HasComputationChoice.intern (q, r)) =
       HasComputationChoice.intern (k q, k r) := by
-  induction hstack with
+  induction hstack generalizing q r with
   | nil => rfl
   | argument arg runtimeEnv semanticEnv rest k henv hrest ih =>
       change k
@@ -1157,11 +1157,19 @@ theorem stackRel_map_intern {C : Type}
                     (interp (hardwarePrimitive D₀ j₀ realize) arg)
                     semanticEnv)
                   r) from
-          taggedBind_intern
+          TTContinuation.taggedBind_intern
             (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
               (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
             q r]
-      exact ih _ _
+      exact ih
+        (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+          (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+            (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
+          q)
+        (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+          (applyContinuation (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+            (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
+          r)
   | function fn f rest k hfn hrest ih =>
       change k
           (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
@@ -1181,9 +1189,13 @@ theorem stackRel_map_intern {C : Type}
                 (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) q,
                 semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
                   (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) r) from
-          taggedBind_intern
+          TTContinuation.taggedBind_intern
             (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) q r]
-      exact ih _ _
+      exact ih
+        (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+          (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) q)
+        (semanticBind (Q := QubitQ) (D₀ := D₀) (j₀ := j₀)
+          (semanticUnfold (Q := QubitQ) (D₀ := D₀) (j₀ := j₀) f) r)
 
 /-- Internal-left scheduling produces a related target whose denotation
 refines that of the unresolved source, through every related stack. -/
