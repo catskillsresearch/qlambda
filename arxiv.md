@@ -533,7 +533,7 @@ theorem TTPhysicalEmbedding.embed_unit (d : D) :
 3. **Interpretation.** Compositional Scott-continuous `interp` into $Q(D_\infty)$; ordinary and recursive β; recursive denotations as Scott fixed points / finite-iterate suprema.
 4. **Choice.** Internal join, physical weighted probability (not lattice join), and tagged external selection are separated and registered as lawful effect instances.
 5. **Hardware adequacy infrastructure.** Normalized CEK machine; subnormalized channel trees; logical relations; token adequacy for realized trees; completeness transfer across unique-successor identity steps.
-6. **Stacked-application fragment and path-indexed fundamental theorem.** `FunAppFrag` / `Produces n` under residual frames; closed wrappers `closed_produces_*` / `closed_funAppFrag_*`; `PathChannelEvaluation` / `related_pathChannelTreeTokenAdequacy` / `closed_term_presented_*` in `HardwareChannel/Fundamental.lean` (NoApp closed terms need no evaluation derivation). `HardwareChannel/Productive.lean` constructs the derivation for atomic closed terms and closed `app (lam / recLam) arg` with atomic pieces (`closed_term_presented_*_of_productive`).
+6. **Stacked-application fragment and path-indexed fundamental theorem.** `FunAppFrag` / `Produces n` under residual frames; closed wrappers `closed_produces_*` / `closed_funAppFrag_*`; `PathChannelEvaluation` / `related_pathChannelTreeTokenAdequacy` / `closed_term_presented_*` in `HardwareChannel/Fundamental.lean` (NoApp closed terms need no evaluation derivation). `HardwareChannel/Productive.lean` constructs the derivation for `Productive 0` (leftover-arity spines, intern-in-body, measure-Z / probability arguments), nested `app` as an argument, and closed `extern` with Atomic children (`closed_term_presented_*_of_productive`).
 
 A compact status table and the open-hole list appear in the next section.
 
@@ -556,14 +556,14 @@ A compact status table and the open-hole list appear in the next section.
 | Presented completeness for `Produces` / `FunAppFrag` (incl. `app_lam`, `app_recLam`, FunAppFrag leftover args) | Done (fragment) | `Spines`, `FunApp`, `Closed` |
 | Path-indexed fundamental theorem (`PathChannelEvaluation`) | Done | `HardwareChannel/Fundamental` |
 | Closed-term presented completeness (NoApp; or any closed term with a branch-complete `PathChannelEvaluation`) | Done | `closed_term_presented_*`, `closed_term_presented_*_of_noApp` |
-| Automatic `PathChannelEvaluation` for atomic closed terms and `app (lam / recLam) arg` with atomic body and argument (incl. measure-Z / probability args) | Done | `HardwareChannel/Productive`, `closed_term_presented_*_of_productive` |
+| Automatic `PathChannelEvaluation` for `Productive 0` (leftover-arity spines, intern-in-body, measure-Z / probability args), nested `app` as an argument, and closed `extern` | Done | `HardwareChannel/Productive`, `closed_term_presented_*_of_productive` |
 | Stuck `app (ret) _` / payload-under-function completeness for arbitrary `realize` | Excluded | `stuck_payload_under_function_no_internal_step` |
 
 ### Currently open holes
 
 The following are **not** claimed as proved. They are the remaining semantic obligations beyond the path-indexed fundamental theorem.
 
-1. **Deriving `PathChannelEvaluation` beyond the atomic-argument fragment.** Closed atomic terms and closed `app (lam / recLam) arg` with atomic body and argument (including measure-Z and probability arguments) now get an automatic derivation (`closed_term_presented_channelTreeCompleteness_of_productive`). Leftover-arity spines (`app (app (lam (lam ·)) ·) ·`), `app` as an argument, `extern` as an argument, and intern-in-body with a non-`FunAppFrag` argument remain outside this construction: `extern` changes the active coordinate so later `beta` / `evaluateArgument` cannot apply, and `intern` has no path constructor.
+1. **Deriving `PathChannelEvaluation` for `extern` as a leftover argument.** `Productive 0` now includes leftover-arity spines and intern-in-body; nested `app (lam) (app (lam) ·)` is covered; closed `extern` with Atomic children is covered at the empty stack. What remains is external choice *as an argument* under a function frame: `externBranch` changes the active coordinate so later `beta` concludes at the frame's saved coordinate rather than the child's.
 
 2. **General related-state completeness without an evaluation derivation.** `related_pathChannelTreeTokenAdequacy` / `related_presentedChannelConfigCompleteness` take a `PathChannelEvaluation` (and empty stack for the presented bridge). A measure-based induction over arbitrary related CEK states is blocked: `configMeasure` need not decrease at `evaluateArgument` or `beta` in general.
 

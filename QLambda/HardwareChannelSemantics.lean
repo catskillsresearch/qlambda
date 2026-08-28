@@ -35,7 +35,9 @@ The development is layered under `QLambda/HardwareChannel/`:
 * `Fundamental` — path-indexed fundamental theorem and closed-term
   completeness under branch-complete evaluation derivations
 * `Productive` — automatic `PathChannelEvaluation` for `Productive 0`
-  closed applications (measure-Z / probability arguments included)
+  closed applications (leftover-arity spines, intern-in-body, nested
+  `app` as an argument, measure-Z / probability arguments, closed
+  `extern`)
 
 All layers contribute to the shared namespace
 `QLambda.HardwareChannelSemantics`.

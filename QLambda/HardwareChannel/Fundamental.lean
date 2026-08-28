@@ -22,16 +22,14 @@ induction is therefore on an explicit branch-complete evaluation
 derivation `PathChannelEvaluation`, whose constructors are exactly the
 situations covered by a path transfer lemma.
 
-Two operational situations are deliberately *not* constructors, because
-the equality demanded by `PathChannelTreeTokenAdequacy` fails there:
-
-* internal choice `intern`, whose `ChannelInternalStep` has two
-  successors, so no unique-successor identity transfer applies;
-* a value under a payload function frame, which is stuck.  A stuck state
-  has no channel tree, while `semanticUnfold (realize c)` is an arbitrary
-  element of the model, so the denotation side need not be `⊥`.  The same
-  example (`app (prim (ret c)) (prim (ret c'))`) shows that unrestricted
-  closed-term channel-tree completeness is false for a general `realize`.
+Internal choice now has a two-child constructor, matching probability:
+both successors are retained, so the unique-successor identity transfer
+is not used.  A value under a payload function frame remains excluded
+(stuck).  A stuck state has no channel tree, while
+`semanticUnfold (realize c)` is an arbitrary element of the model, so
+the denotation side need not be `⊥`.  The same example
+(`app (prim (ret c)) (prim (ret c'))`) shows that unrestricted
+closed-term channel-tree completeness is false for a general `realize`.
 -/
 
 set_option maxHeartbeats 800000
@@ -325,6 +323,49 @@ theorem path_channel_config_measureZ {C : Type}
           (by simpa using hne) currentK
       simpa using h
 
+/-- Internal choice at the path level: both children are related at the
+same coordinate and the parent observation is their join. -/
+theorem path_channel_config_intern {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {s : ChannelConfig C} {left right : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.intern left right))
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {result : TTResult 2}
+    (hrel : PathChannelConfigRel D₀ j₀ realize
+      s active observedStack finalK result) :
+    ∃ leftResult rightResult,
+      PathChannelConfigRel D₀ j₀ realize
+        {s with control := .term left}
+        active observedStack finalK leftResult ∧
+      PathChannelConfigRel D₀ j₀ realize
+        {s with control := .term right}
+        active observedStack finalK rightResult ∧
+      result = leftResult ⊔ rightResult := by
+  rcases hrel with ⟨herase, current, currentK, hcontrol, hstack, hresult⟩
+  rw [hc] at hcontrol
+  cases hcontrol with
+  | term _ _ semanticEnv henv =>
+      refine
+        ⟨interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv active
+            currentK,
+          interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv active
+            currentK,
+          ⟨herase,
+            interp (hardwarePrimitive D₀ j₀ realize) left semanticEnv,
+            currentK, ControlRel.term left s.env semanticEnv henv,
+            hstack, rfl⟩,
+          ⟨herase,
+            interp (hardwarePrimitive D₀ j₀ realize) right semanticEnv,
+            currentK, ControlRel.term right s.env semanticEnv henv,
+            hstack, rfl⟩, ?_⟩
+      rw [hresult, interp_intern_apply,
+        TTContinuation.computation_intern_apply,
+        TTContinuation.internalChoice_apply]
+
 /-! ## Steps recovered from a control equation -/
 
 theorem channelInternalStep_of_application {C : Type} {s : ChannelConfig C}
@@ -486,15 +527,182 @@ theorem wellScoped_payload_child {C : Type} {s : ChannelConfig C}
   rw [hc] at hctl
   exact ⟨⟨hctl.left, .payload value⟩, hstack⟩
 
+theorem wellScoped_intern_left {C : Type} {s : ChannelConfig C}
+    {left right : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.intern left right))
+    (hscoped : ChannelConfig.WellScoped s) :
+    ChannelConfig.WellScoped {s with control := .term left} :=
+  wellScoped_term_child hc hscoped (fun x hx => by simp [free, hx])
+
+theorem wellScoped_intern_right {C : Type} {s : ChannelConfig C}
+    {left right : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.intern left right))
+    (hscoped : ChannelConfig.WellScoped s) :
+    ChannelConfig.WellScoped {s with control := .term right} :=
+  wellScoped_term_child hc hscoped (fun x hx => by simp [free, hx])
+
+theorem channelExternalStep_of_extern {C : Type} {s : ChannelConfig C}
+    {left right : Term (QubitPrimitive C)} {selected : Bool}
+    (hc : s.control = .term (.extern left right)) :
+    ChannelExternalStep s selected
+      {s with control := .term (if selected then right else left)} := by
+  have hsrc : s = {s with control := .term (.extern left right)} :=
+    ChannelConfig.ext hc rfl rfl rfl
+  cases selected with
+  | false =>
+      exact hsrc.symm ▸
+        ChannelExternalStep.selectFalse (s := s) (left := left)
+          (right := right)
+  | true =>
+      exact hsrc.symm ▸
+        ChannelExternalStep.selectTrue (s := s) (left := left)
+          (right := right)
+
+theorem branchCoordinate_succ (i : ℕ) :
+    HardwareAdequacy.branchCoordinate (i % 2 ≠ 0) (i / 2) = i + 1 := by
+  unfold HardwareAdequacy.branchCoordinate
+  split_ifs with hsel
+  · have : i % 2 = 1 := by
+      have hmod := Nat.mod_two_eq_zero_or_one i
+      rcases hmod with h0 | h1
+      · simp [h0] at hsel
+      · exact h1
+    omega
+  · have : i % 2 = 0 := by
+      have hmod := Nat.mod_two_eq_zero_or_one i
+      rcases hmod with h0 | h1
+      · exact h0
+      · simp [h1] at hsel
+    omega
+
+/-- Token adequacy of internal choice is the join of the two identity-wrapped
+children.  Both successors are retained, matching the denotation. -/
+theorem intern_step_pathChannelTreeTokenAdequacy {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {left right : Term (QubitPrimitive C)}
+    (hc : s.control = .term (.intern left right))
+    {active : ℕ} {observedStack : ObservedStack C}
+    {finalK : ScottMap (HSemanticValue D₀ j₀) (TTResult 2)}
+    {leftResult rightResult result : TTResult 2}
+    (hsource : PathChannelConfigRel D₀ j₀ realize
+      s active observedStack finalK result)
+    (hleft : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with control := .term left}
+      active observedStack finalK leftResult)
+    (hright : PathChannelTreeTokenAdequacy D₀ j₀ realize
+      {s with control := .term right}
+      active observedStack finalK rightResult)
+    (hresult : result = leftResult ⊔ rightResult) :
+    PathChannelTreeTokenAdequacy D₀ j₀ realize
+      s active observedStack finalK result := by
+  refine
+    { related := hsource
+      token_iff := ?_ }
+  intro ξ hk token
+  rw [hresult, Adequacy.mem_sup_iff]
+  have hop :
+      channelInternalOperation
+        {s with control := .term (.intern left right)} =
+        QuantumOperation.identity 2 :=
+    rfl
+  constructor
+  · intro htoken
+    rcases s with ⟨control, env, stack, quantum⟩
+    simp only at hc
+    subst control
+    rcases htoken with hL | hR
+    · obtain ⟨tree, R, havail, hholds⟩ :=
+        (hleft.token_iff ξ hk token).mp hL
+      let hstep :=
+        ChannelInternalStep.internalLeft
+          (s := ⟨.term (.intern left right), env, stack, quantum⟩)
+          (left := left) (right := right)
+      let sourceTree := ChannelTree.internal hstep tree
+      let sourceR :=
+        wrapInternalRealization D₀ j₀ realize hstep tree R
+      refine ⟨sourceTree, sourceR, havail, ?_⟩
+      apply (token_of_restrictedInstrument D₀ j₀ realize
+        sourceTree sourceR [] active ξ finalK (fun o => hk _) token).mp
+      rw [embed_restricted_internal_of_identity D₀ j₀ realize
+        hstep hop tree sourceR [] active]
+      exact
+        (token_of_restrictedInstrument D₀ j₀ realize
+          tree
+          (internalChildRealization D₀ j₀ realize hstep tree sourceR)
+          [] active ξ finalK (fun o => hk _) token).mpr hholds
+    · obtain ⟨tree, R, havail, hholds⟩ :=
+        (hright.token_iff ξ hk token).mp hR
+      let hstep :=
+        ChannelInternalStep.internalRight
+          (s := ⟨.term (.intern left right), env, stack, quantum⟩)
+          (left := left) (right := right)
+      let sourceTree := ChannelTree.internal hstep tree
+      let sourceR :=
+        wrapInternalRealization D₀ j₀ realize hstep tree R
+      refine ⟨sourceTree, sourceR, havail, ?_⟩
+      apply (token_of_restrictedInstrument D₀ j₀ realize
+        sourceTree sourceR [] active ξ finalK (fun o => hk _) token).mp
+      rw [embed_restricted_internal_of_identity D₀ j₀ realize
+        hstep hop tree sourceR [] active]
+      exact
+        (token_of_restrictedInstrument D₀ j₀ realize
+          tree
+          (internalChildRealization D₀ j₀ realize hstep tree sourceR)
+          [] active ξ finalK (fun o => hk _) token).mpr hholds
+  · rintro ⟨tree, parentR, havail, hholds⟩
+    cases tree with
+    | terminal hterminal =>
+        have := hterminal.control_eq.symm.trans hc
+        cases this
+    | @internal _ t hstep next =>
+        have hop' : channelInternalOperation s = QuantumOperation.identity 2 := by
+          simp [channelInternalOperation, hc]
+        rcases ChannelInternalStep.eq_of_intern hstep hc with ht | ht
+        · subst t
+          let childR :=
+            internalChildRealization D₀ j₀ realize hstep next parentR
+          refine Or.inl ((hleft.token_iff ξ hk token).mpr ⟨next, childR, havail, ?_⟩)
+          apply (token_of_restrictedInstrument D₀ j₀ realize
+            next childR [] active ξ finalK (fun o => hk _) token).mp
+          rw [← embed_restricted_internal_of_identity D₀ j₀ realize
+            hstep hop' next parentR [] active]
+          exact
+            (token_of_restrictedInstrument D₀ j₀ realize
+              (ChannelTree.internal hstep next) parentR [] active ξ finalK
+              (fun o => hk _) token).mpr hholds
+        · subst t
+          let childR :=
+            internalChildRealization D₀ j₀ realize hstep next parentR
+          refine Or.inr ((hright.token_iff ξ hk token).mpr ⟨next, childR, havail, ?_⟩)
+          apply (token_of_restrictedInstrument D₀ j₀ realize
+            next childR [] active ξ finalK (fun o => hk _) token).mp
+          rw [← embed_restricted_internal_of_identity D₀ j₀ realize
+            hstep hop' next parentR [] active]
+          exact
+            (token_of_restrictedInstrument D₀ j₀ realize
+              (ChannelTree.internal hstep next) parentR [] active ξ finalK
+              (fun o => hk _) token).mpr hholds
+    | external _ hex _ =>
+        exact False.elim (ChannelExternalStep.not_intern hex hc)
+    | probability _ _ _ _ =>
+        cases hc
+    | probabilityZero _ =>
+        cases hc
+    | probabilityOne _ =>
+        cases hc
+    | measurement _ _ =>
+        cases hc
+
 /-! ## Branch-complete evaluation derivations
 
-Each constructor is one situation for which `Spines` supplies a path
-transfer lemma, together with the coordinate and observed-stack
-bookkeeping that lemma performs.  `intern` has no constructor (its
-internal step has two successors), values under payload function frames
-have no constructor (they are stuck), and `pauliX` has one only at the
-empty stack (its physical operation is not aggregated through a pending
-stack). -/
+Each constructor is one situation for which a path transfer lemma exists,
+together with the coordinate and observed-stack bookkeeping that lemma
+performs.  Values under payload function frames have no constructor
+(they are stuck), and `pauliX` has one only at the empty stack (its
+physical operation is not aggregated through a pending stack). -/
 inductive PathChannelEvaluation {C : Type}
     (D₀ : QDomain.{0})
     (j₀ : IsContinuousLatticeProjection D₀.carrier
@@ -661,6 +869,14 @@ inductive PathChannelEvaluation {C : Type}
           quantum := applyOperation (measurementOperation true) s.quantum}
         active observed) :
       PathChannelEvaluation D₀ j₀ realize s active observed
+  | intern {s : ChannelConfig C} {left right : Term (QubitPrimitive C)}
+      {active : ℕ} {observed : ObservedStack C}
+      (hc : s.control = .term (.intern left right))
+      (hleft : PathChannelEvaluation D₀ j₀ realize
+        {s with control := .term left} active observed)
+      (hright : PathChannelEvaluation D₀ j₀ realize
+        {s with control := .term right} active observed) :
+      PathChannelEvaluation D₀ j₀ realize s active observed
 
 /-! ## The path-indexed fundamental theorem -/
 
@@ -825,6 +1041,15 @@ theorem pathChannelEvaluation_pathChannelTreeTokenAdequacy {C : Type}
           zeroResult hrelZ)
         (ihO (wellScoped_payload_child hc hscoped oneValue _) finalK
           oneResult hrelO)
+        hres
+  | @intern s left right active observed hc _ _ ihL ihR =>
+      intro hscoped finalK result hrel
+      obtain ⟨leftResult, rightResult, hrelL, hrelR, hres⟩ :=
+        path_channel_config_intern D₀ j₀ hc hrel
+      exact intern_step_pathChannelTreeTokenAdequacy D₀ j₀ realize hc
+        hrel
+        (ihL (wellScoped_intern_left hc hscoped) finalK leftResult hrelL)
+        (ihR (wellScoped_intern_right hc hscoped) finalK rightResult hrelR)
         hres
 
 /-- Path-indexed fundamental theorem, in applied form. -/
