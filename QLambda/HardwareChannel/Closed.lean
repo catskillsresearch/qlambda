@@ -18,6 +18,12 @@ such as `app (lam x body) (app (lam y M) N)` are covered by
 `closed_produces_*` whenever the pieces inhabit FunAppFrag / Produces.
 `FunAppFrag.app_recLam` covers nested recursive-lambda applications,
 including under mixed ordinary/recursive function-frame spines.
+
+The path-indexed fundamental theorem and the closed-term theorems that
+take a branch-complete `PathChannelEvaluation` live in
+`QLambda.HardwareChannel.Fundamental` (re-exported by the barrel).
+Application-free closed terms need no evaluation derivation:
+`closed_term_presented_channelTreeCompleteness_of_noApp`.
 -/
 
 set_option maxHeartbeats 800000

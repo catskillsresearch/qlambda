@@ -206,8 +206,9 @@ flowchart LR
   UnderFrame["UnderFrame<br/>under-frame lemmas<br/>closed specials"]
   FunApp["FunApp<br/>fragment inductions<br/>under residual frames"]
   Closed["Closed<br/>closed Produces /<br/>FunAppFrag + tokens"]
+  Fundamental["Fundamental<br/>PathChannelEvaluation<br/>closed-term bridge"]
 
-  Config --> Identity --> Spines --> UnderFrame --> FunApp --> Closed
+  Config --> Identity --> Spines --> UnderFrame --> FunApp --> Closed --> Fundamental
 ```
 
 Upstream of `Config`: `HardwareAdequacy` (which rests on `HardwareLogicalRelation`, `HardwareObservation`, `HardwareOperational`, and the TT/adequacy stack above).
@@ -473,7 +474,7 @@ The domain construction supplies the space in which a fixed-register untyped qua
 1. **Computation-valued term interpretation — complete for the stated core.** `interp` is compositional and Scott-continuous; renaming, weakening, capture-avoiding value substitution, β, and recursive β are proved.
 2. **Operational semantics — hardware core complete.** The CEK machine carries a normalized qubit density matrix, closures, environments, and a continuation stack. Kraus transitions satisfy exact Born normalization and trace bounds.
 3. **Probabilistic, internal, and external choice — concrete and separated.** Probability uses physical weighted aggregation, internal choice uses join, and external choice uses explicit branch tags and selectors.
-4. **Adequacy — channel-tree completeness through choice, identity CEK steps, and a stacked-application fragment.** Normalized hardware runs model executable positive outcomes; subnormalized channel trees retain every CP branch and fold into finite TNI instruments with exact TT token characterizations. A formal basis-state counterexample rules out reconstructing a state-independent channel from one arbitrary normalized run. Scott recursion is the supremum of finite unfoldings. `ChannelTreeCompleteness` is proved for closed return, Pauli-X, measure-Z, compositional internal and external choice, and probabilistic endpoints; interior probability is complete at presented continuations. Application, argument evaluation, and beta steps transfer completeness by unique-successor identity wrapping. The inductive fragments `FunAppFrag` and `Produces n` give presented completeness for nested lambda / recursive-lambda applications under matching leftover argument frames (`closed_produces_*`, `closed_funAppFrag_*`, including `FunAppFrag.app_recLam` and FunAppFrag residual arguments). The remaining obligation is presented completeness for every closed term at a related CEK state without a fragment hypothesis. A separate rank-one Choi-ray obstruction shows why finitely generated physical-basis approximants cannot interpolate every ray when the register dimension is at least two.
+4. **Adequacy — channel-tree completeness through choice, identity CEK steps, stacked-application fragments, and the path-indexed fundamental theorem.** Normalized hardware runs model executable positive outcomes; subnormalized channel trees retain every CP branch and fold into finite TNI instruments with exact TT token characterizations. A formal basis-state counterexample rules out reconstructing a state-independent channel from one arbitrary normalized run. Scott recursion is the supremum of finite unfoldings. `ChannelTreeCompleteness` is proved for closed return, Pauli-X, measure-Z, compositional internal and external choice, and probabilistic endpoints; interior probability is complete at presented continuations. Application, argument evaluation, and beta steps transfer completeness by unique-successor identity wrapping. The inductive fragments `FunAppFrag` and `Produces n` give presented completeness for nested lambda / recursive-lambda applications under matching leftover argument frames. `HardwareChannel/Fundamental.lean` assembles path transfer lemmas into `PathChannelEvaluation` / `related_pathChannelTreeTokenAdequacy`, yielding closed-term presented completeness for every application-free closed term and for every closed term equipped with a branch-complete evaluation derivation. Stuck `app (ret) _` states are excluded (`stuck_payload_under_function_no_internal_step`). A separate rank-one Choi-ray obstruction shows why finitely generated physical-basis approximants cannot interpolate every ray when the register dimension is at least two.
 
 ---
 
@@ -481,7 +482,7 @@ The domain construction supplies the space in which a fixed-register untyped qua
 
 The formalization is constructed in Lean 4 on top of the `Scott1972` continuous lattice library (`https://github.com/catskillsresearch/scott1972`). Chen–Kou–Lyu-style finite-separation and saturation lemmas are mechanized in `QLambda/Saturation.lean`, and `omegaQVA_closed_under_functionSpace` proves Cartesian closure by finite-separator step-map sampling. `QLambda/QuantumInstrument.lean` develops finite Kraus instruments and proves residual CP refinement equivalent to Choi order. `QLambda/RefinementCounterexample.lean` proves indicator observations too weak for TT refinement. `QLambda/RationalCP.lean`, `QLambda/TTObservationBasis.lean`, and `QLambda/TTRefinement.lean` replace them by countable physical finitary CP-valued postconditions and prove exact satisfied-theory order correspondence. `QLambda/TTRoundedTheory.lean` forms their saturated continuous completion. `QLambda/RoundedTheoryOmega.lean` proves generically that every encodable rounded basis is an $\omega\mathbf{QVA}$ by explicit one-dimensional density factorizations. `QLambda/TTResultAlgebra.lean`, `QLambda/TTResultApproximation.lean`, and `QLambda/TTResultOperations.lean` establish TNI result normalization, rational local approximation, and Scott-continuous token-local aggregation. `QLambda/TTContinuationMonad.lean` defines $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$, proves every `IsQuantumPowerModel` and `IsQuantumMonad` field, and bundles `TTContinuation.model n`. `QLambda/TTPhysicalEmbedding.lean` embeds finite physical instruments, proves finite monad compatibility on the precisely stated fragment, proves represented-test refinement recovery, and formalizes the directed-supremum obstruction to a finite-image Scott retract.
 
-Language and hardware layers continue from that domain. `QLambda/Interp.lean` and `QLambda/Soundness.lean` give computation-valued interpretation and operational soundness. Choice algebras live in `TTInternalChoice`, `TTProbChoice`, `TTExternalChoice`, and `TTComputationChoice`. The hardware CEK machine and observation/logical-relation stack occupy `HardwareOperational` through `HardwareAdequacy`. Channel-tree completeness is developed in the layered import DAG `QLambda/HardwareChannel/{Config,Identity,Spines,UnderFrame,FunApp,Closed}.lean`, re-exported by `HardwareChannelSemantics.lean`. The capstone domain theorem is:
+Language and hardware layers continue from that domain. `QLambda/Interp.lean` and `QLambda/Soundness.lean` give computation-valued interpretation and operational soundness. Choice algebras live in `TTInternalChoice`, `TTProbChoice`, `TTExternalChoice`, and `TTComputationChoice`. The hardware CEK machine and observation/logical-relation stack occupy `HardwareOperational` through `HardwareAdequacy`. Channel-tree completeness is developed in the layered import DAG `QLambda/HardwareChannel/{Config,Identity,Spines,UnderFrame,FunApp,Closed,Fundamental}.lean`, re-exported by `HardwareChannelSemantics.lean`. The capstone domain theorem is:
 
 ```lean
 class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) where
@@ -532,7 +533,7 @@ theorem TTPhysicalEmbedding.embed_unit (d : D) :
 3. **Interpretation.** Compositional Scott-continuous `interp` into $Q(D_\infty)$; ordinary and recursive β; recursive denotations as Scott fixed points / finite-iterate suprema.
 4. **Choice.** Internal join, physical weighted probability (not lattice join), and tagged external selection are separated and registered as lawful effect instances.
 5. **Hardware adequacy infrastructure.** Normalized CEK machine; subnormalized channel trees; logical relations; token adequacy for realized trees; completeness transfer across unique-successor identity steps.
-6. **Stacked-application fragment.** `FunAppFrag` (admin NoApp, `app_lam`, `app_recLam`) and `Produces n` (arity under leftover FunAppFrag argument frames), with completeness under mixed ordinary/recursive `FunFrame` spines; closed wrappers `closed_produces_*` and `closed_funAppFrag_*`.
+6. **Stacked-application fragment and path-indexed fundamental theorem.** `FunAppFrag` / `Produces n` under residual frames; closed wrappers `closed_produces_*` / `closed_funAppFrag_*`; `PathChannelEvaluation` / `related_pathChannelTreeTokenAdequacy` / `closed_term_presented_*` in `HardwareChannel/Fundamental.lean` (NoApp closed terms need no evaluation derivation).
 
 A compact status table and the open-hole list appear in the next section.
 
@@ -553,23 +554,25 @@ A compact status table and the open-hole list appear in the next section.
 | Hardware CEK + channel trees + token adequacy infrastructure | Done | `HardwareOperational` … `HardwareAdequacy` |
 | Channel-tree completeness: ret, Pauli-X, measure-Z, choice, identity CEK steps | Done | `HardwareChannel/Config`, `Identity` |
 | Presented completeness for `Produces` / `FunAppFrag` (incl. `app_lam`, `app_recLam`, FunAppFrag leftover args) | Done (fragment) | `Spines`, `FunApp`, `Closed` |
-| Unconditional closed-term presented completeness | **Open** | — |
+| Path-indexed fundamental theorem (`PathChannelEvaluation`) | Done | `HardwareChannel/Fundamental` |
+| Closed-term presented completeness (NoApp; or any closed term with a branch-complete `PathChannelEvaluation`) | Done | `closed_term_presented_*`, `closed_term_presented_*_of_noApp` |
+| Stuck `app (ret) _` / payload-under-function completeness for arbitrary `realize` | Excluded | `stuck_payload_under_function_no_internal_step` |
 
 ### Currently open holes
 
-The following are **not** claimed as proved. They are the remaining semantic obligations toward a closed-term theorem and stronger completeness statements.
+The following are **not** claimed as proved. They are the remaining semantic obligations beyond the path-indexed fundamental theorem.
 
-1. **Unconditional closed-term presented completeness.** There is no theorem stating that every syntactically closed term at `initialChannelConfig` has `PresentedChannelTreeCompleteness` with no fragment hypothesis. Existing closed theorems require `Produces 0` or `FunAppFrag` (or specialize those fragments). Token adequacy for a closed term still takes completeness as a hypothesis outside the fragment.
+1. **Deriving `PathChannelEvaluation` for every productive closed application.** Closed terms with a branch-complete evaluation derivation are presented-complete (`closed_term_presented_channelTreeCompleteness`). Application-free closed terms need no derivation (`closed_term_presented_channelTreeCompleteness_of_noApp`). Automatically constructing a derivation for every non-stuck closed application (without a `Produces` / `FunAppFrag` hypothesis) remains.
 
-2. **General related-state / stacked-application fundamental lemma.** Completeness is not proved for an arbitrary related well-scoped CEK configuration (arbitrary control, environment, and stack). The fragment lemmas cover specific spines (`functionStack`, `argumentStack`, `funFrameStack`, mixed ordinary+`recClo` over leftover FunAppFrag args). A mutual induction over `ControlRel` / `ValueRel` / `StackRel` at general stacks remains.
+2. **General related-state completeness without an evaluation derivation.** `related_pathChannelTreeTokenAdequacy` / `related_presentedChannelConfigCompleteness` take a `PathChannelEvaluation` (and empty stack for the presented bridge). A measure-based induction over arbitrary related CEK states is blocked: `configMeasure` need not decrease at `evaluateArgument` or `beta` in general.
 
-3. **Fragment exclusions inside `AdminNoApp` / `FunAppFrag`.** Stuck applications `app (ret c) M` are intentionally excluded. Bare `measureZ` and `extern` are excluded from administrative NoApp (they change physical control or branch structure); they need separate wrappers rather than riding the admin induction. Terms whose leftover-argument arity does not match a `Produces n` derivation are outside the fragment.
+3. **Stuck applications.** Stuck `app (ret c) M` reaches a value under a payload function frame (`stuck_payload_under_function_no_internal_step`). For a general `realize`, presented completeness need not hold there, so unrestricted “every closed term” completeness is false; those states are excluded from `PathChannelEvaluation`.
 
 4. **Interior probability at arbitrary continuations.** For $0<p<1$, completeness is at **finitely presented** continuations (`PresentedChannelTreeCompleteness`). Full `ChannelTreeCompleteness` at arbitrary Scott continuations would need Scott density of presented continuations (or an equivalent approximation argument).
 
 5. **Stronger physical / domain claims not pursued.** A finite-image Scott retract onto embedded instruments is **refuted**, not missing. Raw `InstrumentPower` as an $\omega\mathbf{QVA}$ carrier is not claimed; the Choi-ray obstruction rules out a particular physical-basis approximant scheme for $n\ge 2$, not the continuation-power construction in use.
 
-6. **Documentation lag.** `HANDOFF.md` may still describe an earlier “application-free only / full stacked lemma remains” cut; this file (*Claimed domain equation*, *Formal Verification*, and *Claims formalized in Lean 4*) is the narrative status of record for the domain equation and the stacked-application fragment.
+6. **Documentation lag.** `HANDOFF.md` may still describe an earlier cut; this file (*Claimed domain equation*, *Formal Verification*, and *Claims formalized in Lean 4*) is the narrative status of record.
 
 ---
 

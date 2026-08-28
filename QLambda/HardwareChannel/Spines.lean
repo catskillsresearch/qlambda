@@ -3037,6 +3037,47 @@ theorem configMeasure_return {C : Type} {s : ChannelConfig C} {value : C}
   simp [termSize]
   omega
 
+theorem configMeasure_pauliX {C : Type} {s : ChannelConfig C} {value : C}
+    (hc : s.control = .term (.prim (.pauliX value))) :
+    configMeasure
+        {s with
+          control := .value (.payload value)
+          quantum := applyOperation Qubit.pauliXOp s.quantum} <
+      configMeasure s := by
+  unfold configMeasure controlCharge controlPhase valueProducedSize
+    runtimeValueBodySize
+  rw [hc]
+  simp [termSize]
+  omega
+
+theorem configMeasure_measureZ_zero {C : Type} {s : ChannelConfig C}
+    {zeroValue oneValue : C}
+    (hc : s.control = .term (.prim (.measureZ zeroValue oneValue))) :
+    configMeasure
+        {s with
+          control := .value (.payload zeroValue)
+          quantum := applyOperation (measurementOperation false) s.quantum} <
+      configMeasure s := by
+  unfold configMeasure controlCharge controlPhase valueProducedSize
+    runtimeValueBodySize
+  rw [hc]
+  simp [termSize]
+  omega
+
+theorem configMeasure_measureZ_one {C : Type} {s : ChannelConfig C}
+    {zeroValue oneValue : C}
+    (hc : s.control = .term (.prim (.measureZ zeroValue oneValue))) :
+    configMeasure
+        {s with
+          control := .value (.payload oneValue)
+          quantum := applyOperation (measurementOperation true) s.quantum} <
+      configMeasure s := by
+  unfold configMeasure controlCharge controlPhase valueProducedSize
+    runtimeValueBodySize
+  rw [hc]
+  simp [termSize]
+  omega
+
 theorem configMeasure_evaluateArgument {C : Type} {s : ChannelConfig C}
     {fn : RuntimeValue C} {arg : Term (QubitPrimitive C)}
     {callEnv : RuntimeEnv C} {rest : EvalStack C}
@@ -3459,9 +3500,35 @@ theorem semanticBind_root_bot
       ⊥ :=
   TTContinuation.taggedBind_root_bot h q hq
 
+/-- Every stack continuation is root-strict: if the current computation is
+`⊥` at the unresolved root, so is its image under the Kleisli stack map. -/
+theorem stackRel_root_bot {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    {realize : C → HSemanticValue D₀ j₀}
+    {stack : EvalStack C}
+    {k : HSemanticComp D₀ j₀ → HSemanticComp D₀ j₀}
+    (hstack : StackRel D₀ j₀ realize stack k)
+    {q : HSemanticComp D₀ j₀} (hq : q 0 = ⊥) :
+    k q 0 = ⊥ := by
+  induction hstack generalizing q with
+  | nil => exact hq
+  | argument arg runtimeEnv semanticEnv rest krest henv hrest ih =>
+      exact ih (semanticBind_root_bot D₀ j₀
+        (applyContinuation (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀)
+          (interp (hardwarePrimitive D₀ j₀ realize) arg) semanticEnv)
+        q hq)
+  | function fn f rest krest hfn hrest ih =>
+      exact ih (semanticBind_root_bot D₀ j₀
+        (semanticUnfold (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) f)
+        q hq)
+
 /-- External choice at a related state is presented-complete once both
-children are, when the stack continuation commutes with selection and
-is strict at the unresolved root. -/
+children are and the stack continuation commutes with selection.
+Root-strictness is free from `stackRel_root_bot`. -/
 theorem extern_related_presentedChannelConfigCompleteness {C : Type}
     (D₀ : QDomain.{0})
     (j₀ : IsContinuousLatticeProjection D₀.carrier
@@ -3482,13 +3549,6 @@ theorem extern_related_presentedChannelConfigCompleteness {C : Type}
             k (selectBranch selected
               (interp (hardwarePrimitive D₀ j₀ realize)
                 (.extern left right) semanticEnv)))
-    (hroot :
-      ∀ semanticEnv k,
-        EnvRel D₀ j₀ realize s.env semanticEnv →
-        StackRel D₀ j₀ realize s.stack k →
-        k (interp (hardwarePrimitive D₀ j₀ realize) (.extern left right)
-            semanticEnv) 0 =
-          ⊥)
     (hleft :
       ∀ semanticEnv k,
         EnvRel D₀ j₀ realize s.env semanticEnv →
@@ -3508,6 +3568,17 @@ theorem extern_related_presentedChannelConfigCompleteness {C : Type}
     PresentedChannelConfigCompleteness D₀ j₀ realize s answer := by
   obtain ⟨semanticEnv, k, henv, hstack, rfl⟩ :=
     channelConfigRel_term_inv D₀ j₀ hc hrel
+  have hroot :
+      k (interp (hardwarePrimitive D₀ j₀ realize) (.extern left right)
+          semanticEnv) 0 =
+        ⊥ := by
+    have hextern0 :
+        interp (hardwarePrimitive D₀ j₀ realize) (.extern left right)
+            semanticEnv 0 =
+          ⊥ := by
+      rw [interp_extern_apply]
+      exact TTContinuation.externalChoice_root_bot _ _
+    exact stackRel_root_bot D₀ j₀ hstack hextern0
   refine
     { related := hrel
       complete :=
@@ -3518,7 +3589,7 @@ theorem extern_related_presentedChannelConfigCompleteness {C : Type}
           (extern_stacked_presentedChannelTreeCompleteness
             D₀ j₀ realize s left right semanticEnv k
             (hcommute semanticEnv k henv hstack)
-            (hroot semanticEnv k henv hstack)
+            hroot
             (hleft semanticEnv k henv hstack).complete
             (hright semanticEnv k henv hstack).complete) }
 
@@ -3555,7 +3626,7 @@ theorem extern_under_closure_nil_presentedChannelConfigCompleteness {C : Type}
             semanticEnv))) :
     PresentedChannelConfigCompleteness D₀ j₀ realize s answer := by
   refine extern_related_presentedChannelConfigCompleteness
-    D₀ j₀ realize hc hrel ?_ ?_ hleft hright
+    D₀ j₀ realize hc hrel ?_ hleft hright
   · intro semanticEnv k henv hstack selected
     rw [hs] at hstack
     cases hstack
@@ -3583,24 +3654,6 @@ theorem extern_under_closure_nil_presentedChannelConfigCompleteness {C : Type}
           (interp (hardwarePrimitive D₀ j₀ realize)
             (.extern left right) semanticEnv)
           selected
-  · intro semanticEnv k henv hstack
-    rw [hs] at hstack
-    cases hstack
-    case function f krest hfn hrest =>
-      cases hrest
-      have hextern0 :
-          interp (hardwarePrimitive D₀ j₀ realize)
-              (.extern left right) semanticEnv 0 =
-            ⊥ := by
-        rw [interp_extern_apply]
-        exact TTContinuation.externalChoice_root_bot _ _
-      simp only [id]
-      exact semanticBind_root_bot D₀ j₀
-        (semanticUnfold (Q := TTExternalContinuationPower 2)
-          (D₀ := D₀) (j₀ := j₀) f)
-        (interp (hardwarePrimitive D₀ j₀ realize)
-          (.extern left right) semanticEnv)
-        hextern0
 
 /-- A value under a single closure frame betas to the body at the empty
 stack.  Application-free bodies are then presented by empty-stack NoApp. -/
@@ -7529,7 +7582,7 @@ theorem extern_lams_under_argument_nil_presentedChannelConfigCompleteness
       (child := .lam xR bodyR) hc hscoped
       fun z hz => List.mem_append.mpr (Or.inr hz)
   refine extern_related_presentedChannelConfigCompleteness
-    D₀ j₀ realize hc hrel ?_ ?_ ?_ ?_
+    D₀ j₀ realize hc hrel ?_ ?_ ?_
   · intro semanticEnv k henv hstack selected
     rw [hs] at hstack
     cases hstack
@@ -7571,25 +7624,6 @@ theorem extern_lams_under_argument_nil_presentedChannelConfigCompleteness
           (D₀ := D₀) (j₀ := j₀) xR
           (interp (hardwarePrimitive D₀ j₀ realize) bodyR) semanticEnv)
         hL hR selected
-  · intro semanticEnv k henv hstack
-    rw [hs] at hstack
-    cases hstack
-    case argument semanticEnv' krest henvArg hrest =>
-      cases hrest
-      have hextern0 :
-          interp (hardwarePrimitive D₀ j₀ realize)
-              (.extern (.lam xL bodyL) (.lam xR bodyR)) semanticEnv 0 =
-            ⊥ := by
-        rw [interp_extern_apply]
-        exact TTContinuation.externalChoice_root_bot _ _
-      simp only [id]
-      exact semanticBind_root_bot D₀ j₀
-        (applyContinuation (Q := TTExternalContinuationPower 2)
-          (D₀ := D₀) (j₀ := j₀)
-          (interp (hardwarePrimitive D₀ j₀ realize) arg) _)
-        (interp (hardwarePrimitive D₀ j₀ realize)
-          (.extern (.lam xL bodyL) (.lam xR bodyR)) semanticEnv)
-        hextern0
   · intro semanticEnv k henv hstack
     exact lam_under_argument_nil_admin_noapp_presentedChannelConfigCompleteness
       D₀ j₀ realize (s := {s with control := .term (.lam xL bodyL)})
