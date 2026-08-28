@@ -40,7 +40,7 @@ LISTING_CHUNK_LINES = 400
 
 AUTHOR = "Lars Warren Ericson"
 COMPANY = "Catskills Research Company"
-GITHUB_URL = r"https://github.com/catskillsresearch/scott1972"
+GITHUB_URL = r"https://github.com/catskillsresearch/qlambda"
 ORCID = "0000-0001-8299-9361"
 EMAIL = "lars.ericson@catskillsresearch.com"
 
@@ -96,7 +96,7 @@ HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 FENCE_RE = re.compile(r"^```([^\n]*)\n(.*?)^```\s*$", re.MULTILINE | re.DOTALL)
 MANUAL_SECTION_NUM = re.compile(r"^(#{1,6})[ \t]+\d+(?:\.\d+)*\.?[ \t]+", re.MULTILINE)
 NARRATIVE_MARKER = "# Narrative (from arxiv.md)"
-LEAN_MODULE_RE = re.compile(r"^###\s+(Scott1972(?:\.lean|/[^\s{]+))\s*$", re.MULTILINE)
+LEAN_MODULE_RE = re.compile(r"^###\s+([A-Za-z0-9_./-]+\.lean)\s*$", re.MULTILINE)
 
 
 def github_math_to_tex(text: str) -> str:
@@ -126,7 +126,7 @@ def normalize_appendix_headings(text: str) -> str:
         flags=re.MULTILINE,
     )
     text = re.sub(
-        r"^##\s+`(Scott1972(?:\.lean|/[^`]+))`\s*$",
+        r"^##\s+`([A-Za-z0-9_./-]+\.lean)`\s*$",
         r"### \1",
         text,
         flags=re.MULTILINE,
@@ -183,7 +183,7 @@ def extract_lean_titles(text: str) -> dict[str, str]:
         prefix = text[:pos].rstrip("\n")
         module = None
         for line in reversed(prefix.splitlines()[-4:]):
-            m = re.match(r"^###\s+(Scott1972(?:\.lean|/[^\s{]+))", line.strip())
+            m = re.match(r"^###\s+([A-Za-z0-9_./-]+\.lean)", line.strip())
             if m:
                 module = m.group(1)
                 break

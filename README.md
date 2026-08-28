@@ -8,7 +8,7 @@ finite CP instruments. The library builds on top
 of a vendored [`scott1972`](https://github.com/catskillsresearch/scott1972)
 formalization of Dana Scott, *Continuous Lattices* (LNM 274).
 
-The **Palomar statement of record** is the capstone
+The **Palomar compared statement of record** is the domain capstone
 
 `omegaQVA_quantum_domain_equation_solved` :
 
@@ -27,7 +27,14 @@ exactly, agrees with finite map and bind on finitely presented result
 continuations, and recovers explicitly Scott-represented finitary TT
 tests from embedding order.
 
-## Roadmap
+The final hardware adequacy capstones are
+`closed_stuck_free_presented_channelTreeCompleteness` and
+`closed_stuck_free_presented_token_adequacy`. They apply exactly to closed
+programs carrying a `ClosedStuckFreeCoverage` witness, including the
+restricted ordinary and recursive lambda applications with an external
+choice argument represented by `RestrictedExternApplication`.
+
+## Status and boundaries
 
 The domain construction is complete at its stated interface:
 
@@ -37,29 +44,30 @@ The domain construction is complete at its stated interface:
 - represented-test refinement recovery and the directed-supremum
   obstruction to a finite-image Scott retract.
 
-A complete quantum λ-calculus semantics still requires:
-
-1. completion of the renaming, weakening, and capture-avoiding
-   substitution laws for the computation-valued interpretation;
-2. operational soundness and computational adequacy;
-3. concrete probabilistic, internal, and external choice operations on the
-   continuation model, with finite-instrument compatibility.
-
 The core language layer is now implemented: syntax is parameterized by
 closed quantum primitives and includes recursive abstractions;
 `QLambda.interp` maps every term compositionally into `Q(D_∞)`, with pure
 values lifted by monadic `unit`, call-by-value application implemented by
 Scott-continuous `bind`, and recursion interpreted by Scott `fix`.
 Environment lookup/update, constructor equations, value purity,
-compositional Scott continuity, recursive unfolding, and the pure semantic
-β-equation are proved. The choice clauses remain parameterized by
-`HasComputationChoice`; no unsupported identification of the three effects
-is made.
+compositional Scott continuity, recursive unfolding, substitution and
+β-equations, and operational soundness are proved. The concrete TT model
+keeps probabilistic, internal, and external choice distinct. The hardware
+result is presented channel-tree completeness and token adequacy at the
+named `ClosedStuckFreeCoverage` boundary, not an unrestricted theorem for
+every closed term or arbitrary Scott continuation.
 
+See `THEOREMS.md` for the compact theorem/file index and exact boundaries.
 See `arxiv.md` for the proof journey, definitions, theorem statements,
-examples, boundaries, and detailed mini-roadmaps.
+examples, and narrative status.
 
-Narrative: `arxiv.md`. Palomar metadata: `comparator.json`,
+The formalized result is the quantum `ωQVA` domain theorem and its language
+and hardware interfaces. Chen–Kou–Lyu `ωFVA` / Jung–Tix is motivating
+classical literature and is not re-formalized here in full. The Qiskit
+material in `arxiv.md` is an operational comparison through shared CP
+denotations, not a compiler or verified Qiskit equivalence.
+
+Narrative: `arxiv.md`. Theorem index: `THEOREMS.md`. Palomar metadata: `comparator.json`,
 `formalization.yaml`. Vendor / attribution: `PROVENANCE.md`,
 `vendor/FROZEN.txt`.
 

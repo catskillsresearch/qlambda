@@ -11,6 +11,7 @@ import QLambda.HardwareChannel.FunApp
 import QLambda.HardwareChannel.Closed
 import QLambda.HardwareChannel.Fundamental
 import QLambda.HardwareChannel.Productive
+import QLambda.HardwareChannel.Coverage
 
 /-!
 # Proof-only channel semantics for the hardware CEK machine
@@ -35,10 +36,16 @@ The development is layered under `QLambda/HardwareChannel/`:
 * `Fundamental` — path-indexed fundamental theorem and closed-term
   completeness under branch-complete evaluation derivations
 * `Productive` — automatic `PathChannelEvaluation` for `Productive 0`
-  closed applications (leftover-arity spines, intern-in-body, nested
-  `app` as an argument, measure-Z / probability arguments, closed
-  `extern`)
+  closed applications, plus `RestrictedExternApplication` /
+  `ProductiveClosedCase` and direct presented completeness for the
+  restricted ordinary / recursive lambda applications with an `extern`
+  argument
+* `Coverage` — `ClosedStuckFreeCoverage` and the final
+  `closed_stuck_free_presented_channelTreeCompleteness` /
+  `closed_stuck_free_presented_token_adequacy` capstones
 
 All layers contribute to the shared namespace
-`QLambda.HardwareChannelSemantics`.
+`QLambda.HardwareChannelSemantics`.  The coverage predicate is the exact
+proved sufficient boundary; the barrel does not assert completeness for
+every closed term.
 -/

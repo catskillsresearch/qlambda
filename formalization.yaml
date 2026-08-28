@@ -12,7 +12,10 @@ project:
     quantum tower D_{n+1} = [D_n → Q(D_n)] lies in ωQVA and is
     order-isomorphic to its own function space. The wider development
     instantiates Q by a fixed-register continuation model and embeds finite
-    physical instruments into it. Account: arxiv.md.
+    physical instruments into it. Its final hardware capstones prove
+    presented channel-tree completeness and token adequacy for the exact
+    ClosedStuckFreeCoverage boundary. Account: arxiv.md; theorem index:
+    THEOREMS.md.
   authors:
     - "Lars Warren Ericson"
   license: "Apache-2.0"
@@ -106,8 +109,14 @@ status:
     by physical aggregation. Unique-successor identity CEK steps transfer
     completeness, and recursive denotations are Scott suprema of finite
     unfoldings. Closed application-free terms have unconditional presented
-    channel-tree completeness and token adequacy at a normalized start. A
-    full stacked-application fundamental lemma remains. The
+    channel-tree completeness and token adequacy at a normalized start.
+    RestrictedExternApplication adds ordinary and recursive lambda
+    applications with an external-choice argument under explicit NoApp,
+    AdminNoApp, and Atomic hypotheses. ClosedStuckFreeCoverage consolidates
+    these routes with NoApp, FunAppFrag, Produces 0, and productive closed
+    cases; closed_stuck_free_presented_channelTreeCompleteness and
+    closed_stuck_free_presented_token_adequacy are proved at that exact
+    boundary. This is not unrestricted adequacy for every closed term. The
     rank-one Choi-ray obstruction for PhysicalBasisApproximant is formalized
     for register dimension at least two. Nothing in the compared
     statements is imported from a prior Palomar entry.
@@ -132,6 +141,16 @@ status:
       sorry_count: 0
       axioms: ["propext", "Quot.sound", "Classical.choice"]
       comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.HardwareChannelSemantics.closed_stuck_free_presented_channelTreeCompleteness"
+      file: "QLambda/HardwareChannel/Coverage.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      literature_dependencies: []
+    - declaration: "QLambda.HardwareChannelSemantics.closed_stuck_free_presented_token_adequacy"
+      file: "QLambda/HardwareChannel/Coverage.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
       literature_dependencies: []
 
 fidelity:
@@ -255,7 +274,9 @@ review:
     review has been performed.
 
 known_gaps:
-  - "Close the remaining stacked-application ChannelTreeCompleteness fundamental lemma so every closed term, not only the constructed choice and identity-step fragment, is complete."
+  - "ClosedStuckFreeCoverage is a proved sufficient boundary, not a decision procedure or completeness classification for all non-stuck closed programs."
+  - "Arbitrary stuck applications, including payload-under-function states, are excluded."
+  - "Interior probability is complete at finitely presented continuations, not at every Scott continuation."
 
 limitations:
   - >-
@@ -273,17 +294,20 @@ limitations:
     compared theorem. TTContinuation.model is a concrete instance, and
     TTPhysicalEmbedding.embed now gives the finite physical instrument
     embedding into that carrier. Exact return and finitely presented
-    map/bind compatibility are proved. The refinement result is
-    conditional on explicit CodedTestRepresentation witnesses, and the
-    retract result is a directed-supremum closure obstruction rather than
-    an unconditional no-retract theorem. The tower maps, inverse
+    map/bind compatibility are proved. Every rational coded test has a
+    proved CodedTestRepresentation witness, so embedding order
+    unconditionally implies FinitaryTTRefines. A concrete directed
+    dyadic-prefix family yields the unconditional
+    no_finiteImageScottRetraction_dyadic theorem. The tower maps, inverse
     identities, and order iso are defined from the spec
     (map, map_mono, map_iSup).
     ωQVA membership of the limit is the retract-of-product argument.
   - >-
     Saturation Lean in this repo is an original mechanization of
     arXiv:2608.03073 Lemmas 6.5–6.7. The concrete continuation power
-    satisfies omegaQVA closure; physical adequacy is not discharged.
+    satisfies omegaQVA closure. Presented physical channel-tree
+    completeness and token adequacy are discharged exactly for
+    ClosedStuckFreeCoverage, not for every closed term.
 
 alignment:
   namespace: "Scott1972.ContinuousLattice"
@@ -291,7 +315,7 @@ alignment:
     - source: "D_∞ of the quantum tower is in ωQVA and D_∞ ≅ [D_∞ → Q(D_∞)] (arxiv.md, §§5, 7)"
       lean: "omegaQVA_quantum_domain_equation_solved"
       module: "Challenge (statement), Solution / QLambda.QuantumDomainEquation (proof)"
-      status: stated
+      status: proved
       note: >-
         Compared by Comparator as a theorem parameterized by a
         QuantumPowerModel. TTContinuation.model and the finite physical
@@ -302,6 +326,26 @@ alignment:
         qProjInfInf; those maps and the inverse identities are proved
         from the spec. The last conjunct is Scott's inverse-limit
         identity on the quantum tower.
+
+    - source: "Covered closed stuck-free programs have presented channel-tree completeness"
+      lean: "QLambda.HardwareChannelSemantics.closed_stuck_free_presented_channelTreeCompleteness"
+      module: "QLambda.HardwareChannel.Coverage"
+      status: proved
+      note: >-
+        Exact boundary is ClosedStuckFreeCoverage: closed NoApp,
+        FunAppFrag, Produces 0, ProductiveClosedCase with MeasureDistinct,
+        and RestrictedExternApplication. The restricted extern route has
+        its own direct proof and does not require MeasureDistinct.
+
+    - source: "Covered closed stuck-free programs satisfy presented TT token adequacy"
+      lean: "QLambda.HardwareChannelSemantics.closed_stuck_free_presented_token_adequacy"
+      module: "QLambda.HardwareChannel.Coverage"
+      status: proved
+      note: >-
+        Presented adequacy quantifies over finitely represented result
+        continuations and realized finite channel trees. It is not
+        unrestricted adequacy for every closed term or arbitrary Scott
+        continuation.
 
     - source: "The quantum inverse limit is an ωQVA object (arxiv.md, §§5–7)"
       lean: "qDInf_isOmegaQVA"

@@ -25,11 +25,12 @@ situations covered by a path transfer lemma.
 Internal choice now has a two-child constructor, matching probability:
 both successors are retained, so the unique-successor identity transfer
 is not used.  A value under a payload function frame remains excluded
-(stuck).  A stuck state has no channel tree, while
-`semanticUnfold (realize c)` is an arbitrary element of the model, so
-the denotation side need not be `⊥`.  The same example
-(`app (prim (ret c)) (prim (ret c'))`) shows that unrestricted
-closed-term channel-tree completeness is false for a general `realize`.
+(stuck).  This file proves that the concrete closed example
+`app (prim (ret c)) (prim (ret c'))` has no channel tree, and proves
+failure of presented completeness whenever an explicit finitely presented
+observation of its denotation is nonbottom.  It does not construct a
+particular domain and `realize` satisfying that semantic hypothesis, so it
+does not claim an unconditional model-specific counterexample.
 -/
 
 set_option maxHeartbeats 800000
@@ -1241,6 +1242,173 @@ theorem stuck_payload_under_function_no_internal_step {C : Type}
   | internalLeft => cases hc
   | internalRight => cases hc
   | «variable» => cases hc
+
+/-- A payload used as a function is not merely unable to take an internal
+step: no branch-complete channel tree can start there.  Terminality is
+excluded by the pending function frame, external stepping by value control,
+and all physical branching constructors require term control. -/
+theorem stuck_payload_under_function_no_channelTree {C : Type}
+    {s : ChannelConfig C} {arg : RuntimeValue C} {value : C}
+    {rest : EvalStack C}
+    (hc : s.control = .value arg)
+    (hs : s.stack = .function (.payload value) :: rest) :
+    ChannelTree C s → False := by
+  intro tree
+  cases tree with
+  | terminal hterminal =>
+      have hne := hs.symm.trans hterminal.stack_eq
+      cases hne
+  | internal hstep _ =>
+      exact stuck_payload_under_function_no_internal_step hc hs hstep
+  | external _ hstep _ =>
+      exact ChannelExternalStep.not_value hstep hc
+  | probability _ _ _ _ => cases hc
+  | probabilityZero _ => cases hc
+  | probabilityOne _ => cases hc
+  | measurement _ _ => cases hc
+
+/-- The concrete closed program `app (ret f) (ret a)` has no branch-complete
+channel tree.  Its unique administrative prefix evaluates both returns and
+ends with payload `a` under a function frame containing payload `f`. -/
+theorem closed_payload_application_no_channelTree {C : Type}
+    (functionValue argumentValue : C) (quantum : NormalizedDensity 2) :
+    ChannelTree C
+      (initialChannelConfig
+        (.app (.prim (.ret functionValue)) (.prim (.ret argumentValue)))
+        quantum) →
+      False := by
+  let s₀ : ChannelConfig C :=
+    initialChannelConfig
+      (.app (.prim (.ret functionValue)) (.prim (.ret argumentValue)))
+      quantum
+  intro tree₀
+  have hc₀ :
+      s₀.control =
+        .term
+          (.app (.prim (.ret functionValue)) (.prim (.ret argumentValue))) :=
+    rfl
+  cases tree₀ with
+  | terminal hterminal =>
+      have := hterminal.control_eq.symm.trans hc₀
+      cases this
+  | @internal _ s₁ h₀ tree₁ =>
+      have hs₁ := ChannelInternalStep.eq_of_application h₀ hc₀
+      subst s₁
+      have hc₁ :
+          ({s₀ with
+            control := .term (.prim (.ret functionValue))
+            stack :=
+              .argument (.prim (.ret argumentValue)) s₀.env :: s₀.stack}).control =
+            .term (.prim (.ret functionValue)) :=
+        rfl
+      cases tree₁ with
+      | terminal hterminal =>
+          have := hterminal.control_eq.symm.trans hc₁
+          cases this
+      | @internal _ s₂ h₁ tree₂ =>
+          have hs₂ := ChannelInternalStep.eq_config_of_return h₁ hc₁
+          subst s₂
+          have hc₂ :
+              ({s₀ with
+                control := .value (.payload functionValue)
+                stack :=
+                  .argument (.prim (.ret argumentValue)) s₀.env ::
+                    s₀.stack}).control =
+                .value (.payload functionValue) :=
+            rfl
+          have hstack₂ :
+              ({s₀ with
+                control := .value (.payload functionValue)
+                stack :=
+                  .argument (.prim (.ret argumentValue)) s₀.env ::
+                    s₀.stack}).stack =
+                .argument (.prim (.ret argumentValue)) s₀.env :: s₀.stack :=
+            rfl
+          cases tree₂ with
+          | terminal hterminal =>
+              have hne := hstack₂.symm.trans hterminal.stack_eq
+              cases hne
+          | @internal _ s₃ h₂ tree₃ =>
+              have hs₃ :=
+                ChannelInternalStep.eq_of_evaluateArgument h₂ hc₂ hstack₂
+              subst s₃
+              have hc₃ :
+                  ({s₀ with
+                    control := .term (.prim (.ret argumentValue))
+                    stack := [.function (.payload functionValue)]}).control =
+                    .term (.prim (.ret argumentValue)) :=
+                rfl
+              cases tree₃ with
+              | terminal hterminal =>
+                  have := hterminal.control_eq.symm.trans hc₃
+                  cases this
+              | @internal _ s₄ h₃ tree₄ =>
+                  have hs₄ :=
+                    ChannelInternalStep.eq_config_of_return h₃ hc₃
+                  subst s₄
+                  exact stuck_payload_under_function_no_channelTree
+                    (s :=
+                      {s₀ with
+                        control := .value (.payload argumentValue)
+                        stack := [.function (.payload functionValue)]})
+                    rfl rfl tree₄
+              | external _ hstep _ =>
+                  exact ChannelExternalStep.not_prim hstep hc₃
+          | external _ hstep _ =>
+              exact ChannelExternalStep.not_value hstep hc₂
+      | external _ hstep _ =>
+          exact ChannelExternalStep.not_prim hstep hc₁
+  | external _ hstep _ =>
+      cases hstep
+
+/-- Concrete semantic boundary for unrestricted closed-term completeness.
+
+If one finitely presented continuation observes the denotation of the closed
+stuck program `app (ret f) (ret a)` as nonbottom, then presented channel-tree
+completeness for that program is contradictory: the preceding theorem shows
+that its operational channel-tree result set is empty.  The nonbottom
+hypothesis is explicit because constructing a particular recursive domain,
+projection, realization, and separating finite instrument is intentionally
+not part of this theorem. -/
+theorem
+    closed_payload_application_not_presented_channelTreeComplete_of_nonbottom
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    (functionValue argumentValue : C)
+    (quantum : NormalizedDensity 2)
+    (semanticEnv : Env (HSemanticValue D₀ j₀))
+    (selectors : List Bool) (i : ℕ)
+    (ξ : HSemanticValue D₀ j₀ → FiniteInstrumentComp 2 PUnit.{1})
+    (k : ScottMap (HSemanticValue D₀ j₀) (TTResult 2))
+    (hk : ∀ d, k d = (ξ d).satisfiedTTTheory resultCode)
+    (hnonbottom :
+      HardwareAdequacy.selectPath selectors
+          (interp (hardwarePrimitive D₀ j₀ realize)
+            (.app (.prim (.ret functionValue)) (.prim (.ret argumentValue)))
+            semanticEnv)
+          i k ≠
+        ⊥) :
+    ¬ PresentedChannelTreeCompleteness D₀ j₀ realize
+      (initialChannelConfig
+        (.app (.prim (.ret functionValue)) (.prim (.ret argumentValue)))
+        quantum)
+      (interp (hardwarePrimitive D₀ j₀ realize)
+        (.app (.prim (.ret functionValue)) (.prim (.ret argumentValue)))
+        semanticEnv) := by
+  intro hcomplete
+  apply hnonbottom
+  rw [hcomplete.selected_result_eq_channelTree_sup_presented
+    selectors i ξ k hk]
+  apply le_antisymm
+  · apply sSup_le
+    rintro result ⟨fuel, tree, realization, hdepth, hresult⟩
+    exact False.elim
+      (closed_payload_application_no_channelTree functionValue argumentValue
+        quantum tree)
+  · exact bot_le
 
 /-- Application-free closed terms are presented-complete with no
 `PathChannelEvaluation` hypothesis: they are already covered by the

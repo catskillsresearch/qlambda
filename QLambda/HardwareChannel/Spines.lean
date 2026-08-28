@@ -3464,6 +3464,50 @@ theorem semanticUnfold_lambdaValue
   rw [qEmbInfInf_qProjInfInf]
   rfl
 
+/-- Unfolding a recursive lambda once exposes its body with both the
+recursive self value and the argument installed. -/
+theorem semanticUnfold_recLambdaValue
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (self x : Name)
+    (body : ScottMap (Env (HSemanticValue D₀ j₀)) (HSemanticComp D₀ j₀))
+    (ρ : Env (HSemanticValue D₀ j₀))
+    (d : HSemanticValue D₀ j₀) :
+    semanticUnfold (Q := TTExternalContinuationPower 2)
+        (D₀ := D₀) (j₀ := j₀)
+        (recLambdaValue (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) self x body ρ) d =
+      body
+        (envUpdate (Q := TTExternalContinuationPower 2)
+          (D₀ := D₀) (j₀ := j₀) x
+          (envUpdate (Q := TTExternalContinuationPower 2)
+            (D₀ := D₀) (j₀ := j₀) self
+            (ρ,
+              recLambdaValue (Q := TTExternalContinuationPower 2)
+                (D₀ := D₀) (j₀ := j₀) self x body ρ),
+            d)) := by
+  rw [recLambdaValue_unfold]
+  change
+      qEmbInfInf (QModel (TTExternalContinuationPower 2)) D₀ j₀
+          (qProjInfInf (QModel (TTExternalContinuationPower 2)) D₀ j₀
+            (scottLambda
+              (body.comp
+                ((envUpdate (Q := TTExternalContinuationPower 2)
+                  (D₀ := D₀) (j₀ := j₀) x).comp
+                  (ScottMap.pairMap
+                    ((envUpdate (Q := TTExternalContinuationPower 2)
+                      (D₀ := D₀) (j₀ := j₀) self).comp
+                      ScottMap.fstMap)
+                    ScottMap.sndMap)))
+              (ρ,
+                recLambdaValue (Q := TTExternalContinuationPower 2)
+                  (D₀ := D₀) (j₀ := j₀) self x body ρ))) d =
+        _
+  rw [qEmbInfInf_qProjInfInf]
+  rw [← recLambdaValue_unfold]
+  rfl
+
 theorem semanticBind_select_of_unfold_constant
     (D₀ : QDomain.{0})
     (j₀ : IsContinuousLatticeProjection D₀.carrier
@@ -3649,6 +3693,78 @@ theorem extern_under_closure_nil_presentedChannelConfigCompleteness {C : Type}
             hadmin
             (envUpdate (Q := TTExternalContinuationPower 2)
               (D₀ := D₀) (j₀ := j₀) x (cloSem, d))
+        simp only [id]
+        exact semanticBind_select_of_unfold_constant D₀ j₀ _ hunfold
+          (interp (hardwarePrimitive D₀ j₀ realize)
+            (.extern left right) semanticEnv)
+          selected
+
+/-- Extern under a single recursive-closure frame whose body is
+administrative NoApp.  This is the recursive analogue of
+`extern_under_closure_nil_presentedChannelConfigCompleteness`; the
+coordinate-constancy side condition is essential. -/
+theorem extern_under_recClosure_nil_presentedChannelConfigCompleteness
+    {C : Type}
+    (D₀ : QDomain.{0})
+    (j₀ : IsContinuousLatticeProjection D₀.carrier
+      (QuantumFunctor (QModel (TTExternalContinuationPower 2)) D₀.carrier))
+    (realize : C → HSemanticValue D₀ j₀)
+    {s : ChannelConfig C} {left right : Term (QubitPrimitive C)}
+    {self x : Name} {body : Term (QubitPrimitive C)}
+    {cloEnv : RuntimeEnv C} {answer : HSemanticComp D₀ j₀}
+    (hc : s.control = .term (.extern left right))
+    (hs : s.stack = [.function (.recClosure self x body cloEnv)])
+    (hadmin : AdminNoApp body)
+    (hrel : ChannelConfigRel D₀ j₀ realize s answer)
+    (hleft :
+      ∀ semanticEnv k,
+        EnvRel D₀ j₀ realize s.env semanticEnv →
+        StackRel D₀ j₀ realize s.stack k →
+        PresentedChannelConfigCompleteness D₀ j₀ realize
+          {s with control := .term left}
+          (k (interp (hardwarePrimitive D₀ j₀ realize) left
+            semanticEnv)))
+    (hright :
+      ∀ semanticEnv k,
+        EnvRel D₀ j₀ realize s.env semanticEnv →
+        StackRel D₀ j₀ realize s.stack k →
+        PresentedChannelConfigCompleteness D₀ j₀ realize
+          {s with control := .term right}
+          (k (interp (hardwarePrimitive D₀ j₀ realize) right
+            semanticEnv))) :
+    PresentedChannelConfigCompleteness D₀ j₀ realize s answer := by
+  refine extern_related_presentedChannelConfigCompleteness
+    D₀ j₀ realize hc hrel ?_ hleft hright
+  · intro semanticEnv k henv hstack selected
+    rw [hs] at hstack
+    cases hstack
+    case function f krest hfn hrest =>
+      cases hrest
+      cases hfn
+      case recClosure recSem _ =>
+        have hunfold :
+            ∀ d, CoordinateConstant
+              (semanticUnfold (Q := TTExternalContinuationPower 2)
+                (D₀ := D₀) (j₀ := j₀)
+                (recLambdaValue (Q := TTExternalContinuationPower 2)
+                  (D₀ := D₀) (j₀ := j₀) self x
+                  (interp (hardwarePrimitive D₀ j₀ realize) body)
+                  recSem)
+                d) := by
+          intro d
+          rw [semanticUnfold_recLambdaValue]
+          exact adminNoApp_interp_coordinateConstant D₀ j₀ realize
+            hadmin
+            (envUpdate (Q := TTExternalContinuationPower 2)
+              (D₀ := D₀) (j₀ := j₀) x
+              (envUpdate (Q := TTExternalContinuationPower 2)
+                (D₀ := D₀) (j₀ := j₀) self
+                (recSem,
+                  recLambdaValue (Q := TTExternalContinuationPower 2)
+                    (D₀ := D₀) (j₀ := j₀) self x
+                    (interp (hardwarePrimitive D₀ j₀ realize) body)
+                    recSem),
+                d))
         simp only [id]
         exact semanticBind_select_of_unfold_constant D₀ j₀ _ hunfold
           (interp (hardwarePrimitive D₀ j₀ realize)

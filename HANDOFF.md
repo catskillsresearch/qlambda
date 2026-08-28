@@ -1,7 +1,11 @@
 # Handoff — qlambda (ωQVA / quantum domain equation)
 
-Palomar statement of record: `omegaQVA_quantum_domain_equation_solved`.
-Narrative: `arxiv.md`. Metadata: `formalization.yaml`, `comparator.json`.
+Palomar compared statement of record:
+`omegaQVA_quantum_domain_equation_solved`.
+Hardware capstones: `closed_stuck_free_presented_channelTreeCompleteness`
+and `closed_stuck_free_presented_token_adequacy`.
+Narrative: `arxiv.md`. Index: `THEOREMS.md`.
+Metadata: `formalization.yaml`, `comparator.json`.
 Vendor: `vendor/scott1972` (frozen SHA in `vendor/FROZEN.txt`).
 CKL 2026 paper in `sources/`.
 
@@ -12,7 +16,7 @@ CKL 2026 paper in `sources/`.
 3. `bash scripts/compare_challenge_solution_types.sh`
 4. Compared names must match between Challenge and Solution (`pp.all`).
 
-## Status (2026-08-24)
+## Status (2026-08-28)
 
 Palomar packaging (Apache-2.0, Zenodo/arXiv scripts, Challenge /
 Solution / comparator / formalization.yaml) is in place. `lake build`
@@ -76,7 +80,7 @@ with positive executable transitions after normalization, and gives exact TT
 token adequacy for every realized finite tree. Scott fixed points are
 finite-iterate suprema.
 
-## Surviving roadmap
+## Current hardware boundary
 
 General closed-term hardware adequacy no longer assumes one finite denotation.
 `ChannelTreeCompleteness` is proved for closed return, Pauli-X, measure-Z,
@@ -87,14 +91,24 @@ identity CEK steps (application, argument evaluation, closure beta, recursive
 beta, lambda, recursive abstraction) transfer completeness, and selector paths
 commute with `semanticBind`, `applyContinuation`, and `semanticUnfold`.
 Recursive denotations are identified with the supremum of finite `iterateBot`
-unfoldings. Every syntactically closed application-free term (lambdas,
-recursive abstractions, internal/external/probabilistic choice, and hardware
-primitives) has unconditional `PresentedChannelTreeCompleteness` at a
-normalized start, and therefore presented token adequacy, by empty-stack
-induction through scaled interior-probability children. Token adequacy also
-follows for every other closed term whose completeness is already known. A
-full induction over arbitrary stacked applications remains the remaining
-fundamental-lemma obligation.
+unfoldings. `ProductiveClosedCase` now includes
+`RestrictedExternApplication`: ordinary and recursive lambda applications
+with an external-choice argument, under the explicit `NoApp`, `AdminNoApp`,
+and `Atomic` hypotheses proved in `HardwareChannel/Productive.lean`.
+
+`ClosedStuckFreeCoverage` consolidates the exact closed-program boundary:
+closed `NoApp`, `FunAppFrag`, `Produces 0`, productive cases with
+`MeasureDistinct`, and restricted extern applications. Its final theorems in
+`HardwareChannel/Coverage.lean` are
+`closed_stuck_free_presented_channelTreeCompleteness` and
+`closed_stuck_free_presented_token_adequacy`. The restricted extern
+constructor uses its direct completeness proof and does not require
+`MeasureDistinct`.
+
+This does not assert completeness for every closed term. Arbitrary stuck
+applications such as payload-under-function states remain excluded, and
+interior probability is complete at finitely presented continuations rather
+than arbitrary Scott continuations.
 
 The rank-one Choi-ray obstruction is formalized in
 `QLambda/ChoiRayObstruction.lean`: for register dimension `2 ≤ n`, mixing
@@ -102,3 +116,8 @@ weights in `(0, 1)` inject into distinct rays, while any countable family of
 `PhysicalBasisApproximant`s covers only countably many generating rays. This
 does not claim that raw `InstrumentPower` lies outside `ωQVA`, and it does
 not apply to the countable `RatCPMatrix` / rounded-token construction.
+
+The formalized theorem is the quantum `ωQVA` result. Chen–Kou–Lyu `ωFVA` and
+Jung–Tix are motivating classical literature, not a full formalization in
+this repository. Qiskit is presentation context only; no compiler or formal
+Qiskit correspondence theorem is claimed.

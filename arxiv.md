@@ -6,7 +6,7 @@
 ### Abstract
 We develop a Lean~4 framework for denotational semantics of an untyped call-by-value $\lambda$-calculus with probabilistic ($\oplus_p$), internal ($\sqcap$), and external ($\Box$) choice, controlled by finite quantum instruments. The intended equation is not the classical Scott equation $D\cong[D\to D]$, nor an effectful collapse $Q\cong[Q\to Q]$. Values inhabit a domain $D_\infty$ and terms denote computations in a quantum-effect layer $Q(D_\infty)$, linked by the call-by-value equation
 $$D_\infty\cong[D_\infty\to Q(D_\infty)].$$
-Here $Q$ is a monad of computations: unit embeds a value as a trivial computation, and bind sequences an effectful computation with a value-to-computation continuation. Inspired by Chen, Kou, and Lyu’s finite-valuation approximable structures, we define $\omega\mathbf{QVA}$ by requiring approximate identities to factor through finite products of sub-normalized density-operator spaces under the Loewner order; finite spectrahedra are approximation factors, not themselves the power $Q(D)$. We prove a parameterized inverse-limit theorem and instantiate it with the fixed-register continuation power $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$. Finite trace-nonincreasing completely positive (CP) instruments embed into this carrier by Scott-continuous token-local aggregation. The embedding preserves deterministic return exactly and agrees with finite map and bind on finitely presented continuations. Every rational token-theory (TT) test has an explicit Scott representation, so embedding order recovers finitary TT refinement; a directed-supremum obstruction rules out a finite-image Scott retract. On the language side, a hardware qubit Control–Environment–Kontinuation (CEK) machine and subnormalized channel-tree semantics yield presented channel-tree completeness for a stacked-application fragment; unconditional closed-term completeness remains open.
+Here $Q$ is a monad of computations: unit embeds a value as a trivial computation, and bind sequences an effectful computation with a value-to-computation continuation. Inspired by Chen, Kou, and Lyu’s finite-valuation approximable structures, we define $\omega\mathbf{QVA}$ by requiring approximate identities to factor through finite products of sub-normalized density-operator spaces under the Loewner order; finite spectrahedra are approximation factors, not themselves the power $Q(D)$. We prove a parameterized inverse-limit theorem and instantiate it with the fixed-register continuation power $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$. Finite trace-nonincreasing completely positive (CP) instruments embed into this carrier by Scott-continuous token-local aggregation. The embedding preserves deterministic return exactly and agrees with finite map and bind on finitely presented continuations. Every rational token-theory (TT) test has an explicit Scott representation, so embedding order recovers finitary TT refinement; a directed-supremum obstruction rules out a finite-image Scott retract. On the language side, a hardware qubit Control–Environment–Kontinuation (CEK) machine and subnormalized channel-tree semantics yield final presented channel-tree completeness and token-adequacy capstones for the explicitly witnessed `ClosedStuckFreeCoverage` fragment. This includes restricted ordinary and recursive lambda applications with an external-choice argument; it is not unconditional completeness for every closed term.
 
 ---
 
@@ -24,7 +24,7 @@ not $D\cong[D\to D]$ and not $Q\cong[Q\to Q]$.
 
 The contrapositives matter. Solving only $D\cong[D\to D]$ while wanting instruments and choice leaves no place for effects. Solving $Q\cong[Q\to Q]$ would treat computations themselves as the untyped $\lambda$-universe (call-by-name / “everything is a thunk”), contradicting a Control–Environment–Kontinuation (CEK) machine that evaluates the function, evaluates the argument, and only then performs $\beta$-reduction, and contradicting how CP instruments act on values rather than on open computations. The claim of this development is the middle path: untyped call-by-value $\lambda$-calculus with choice and a quantum-effect monad $Q$, values solving $D_\infty\cong[D_\infty\to Q(D_\infty)]$, and terms denoting elements of $Q(D_\infty)$.
 
-The ambient domain theory lifts Chen–Kou–Lyu’s programme from classical valuations to quantum spectrahedra ($\omega\mathbf{QVA}$), solves the parameterized equation above for a continuation power $Q=\mathcal Q_n$, and connects the denotation to a qubit CEK machine and channel-tree adequacy fragment. The sections that follow fix the syntax and Qiskit correspondence, state the formal claim and Lean module map, develop the domain theory, and collect proved claims versus open holes in *Claims formalized in Lean 4*.
+The formalized contribution lifts the finite-separation and saturation pattern from classical valuations to quantum spectrahedra ($\omega\mathbf{QVA}$), solves the parameterized equation above for a continuation power $Q=\mathcal Q_n$, and connects the denotation to a qubit CEK machine and channel-tree adequacy fragment. Chen–Kou–Lyu’s classical $\omega\mathbf{FVA}$ theorem and the Jung–Tix history are motivating literature, not a full Lean target of this repository. The Qiskit material below is likewise motivational operational comparison, not a verified compiler or formal equivalence theorem. The later sections state the formal claim and exact Lean boundary.
 
 ---
 
@@ -62,9 +62,9 @@ where $[D \to \dots]$ models higher-order functions, $\mathcal{P}$ models intern
 
 ---
 
-## Back-and-Forth Operational Correspondence with Qiskit
+## Motivational Operational Comparison with Qiskit
 
-The tables in this section ground the denotational semantics by relating two operational presentations. They are not intended as a literal compiler specification. Each row is a commuting correspondence
+The tables in this section motivate the denotational semantics by relating two operational presentations through a proposed shared CP denotation. They are not Lean theorems, a literal compiler specification, or a verified Qiskit correspondence. Each row depicts
 
 $$\text{$q\lambda$ construct}\longrightarrow
   \text{CP channel or instrument}
@@ -207,17 +207,26 @@ flowchart LR
   FunApp["FunApp<br/>fragment inductions<br/>under residual frames"]
   Closed["Closed<br/>closed Produces /<br/>FunAppFrag + tokens"]
   Fundamental["Fundamental<br/>PathChannelEvaluation<br/>closed-term bridge"]
+  Productive["Productive<br/>ProductiveClosedCase<br/>restricted extern arguments"]
+  Coverage["Coverage<br/>ClosedStuckFreeCoverage<br/>final capstones"]
 
-  Config --> Identity --> Spines --> UnderFrame --> FunApp --> Closed --> Fundamental
+  Config --> Identity --> Spines --> UnderFrame --> FunApp --> Closed --> Fundamental --> Productive --> Coverage
 ```
 
 Upstream of `Config`: `HardwareAdequacy` (which rests on `HardwareLogicalRelation`, `HardwareObservation`, `HardwareOperational`, and the TT/adequacy stack above).
 
-Proved claims and open holes are collected in *Claims formalized in Lean 4* below.
+Proved claims and exact boundaries are collected in *Claims formalized in
+Lean 4* below and indexed compactly in `THEOREMS.md`.
 
 ---
 
-## Solving Recursive Domain Equations in $\omega\mathbf{FVA}$
+## Classical Motivation: Recursive Domain Equations in $\omega\mathbf{FVA}$
+
+This section summarizes the Chen–Kou–Lyu construction used as motivation.
+The classical $\omega\mathbf{FVA}$ development and its Jung–Tix theorem are
+not formalized here in full. The Lean contribution begins from independently
+mechanized finite-separation and saturation ingredients and proves the
+quantum $\omega\mathbf{QVA}$ results stated later.
 
 The category $\omega\mathbf{FVA}$ consists of continuous domains $D$ whose identity map is the directed supremum of an increasing sequence of maps factoring through subprobability valuation spaces over finite posets $P_n$:
 $$D \xrightarrow{\;p_n\;} \mathcal{V}_{\le 1}(P_n) \xrightarrow{\;e_n\;} D, \qquad \sup_{n \in \mathbb{N}} (e_n \circ p_n) = \mathrm{id}_D$$
@@ -357,7 +366,7 @@ The development separates the construction of the semantic domain from the seman
    $$\mathcal Q_n(D)=[[D\to R_n]\to R_n]$$
    and prove the functor, local-continuity, $\omega\mathbf{QVA}$-closure, and monad laws required by `IsQuantumPowerModel` and `IsQuantumMonad`.
 3. **Finite physical fragment — complete with explicit boundaries.** Embed finite TNI CP instruments into $\mathcal Q_n(D)$; prove exact return and finitely presented map/bind compatibility; prove the represented-test direction of refinement correspondence; and replace the unsupported finite-retract claim by a directed-supremum obstruction theorem.
-4. **Language semantics — hardware bridge constructed; stacked-application fragment proved.** Terms with closed quantum primitives and recursive abstractions have a compositional Scott-continuous interpretation in $Q(D_\infty)$. A concrete qubit CEK machine carries normalized density states and classical closures and keeps internal, weighted, and external transitions distinct. A separate proof-only subnormalized channel-tree semantics retains all CP branches, including zero-mass branches, and folds them into physical instruments. Runtime logical relations, positive-run correspondence, recursive finite approximants, and token adequacy for each realized channel tree are proved. `ChannelTreeCompleteness` is proved for closed return, Pauli-X, measure-Z, compositional internal and external choice, and probabilistic endpoints; interior probability is complete at presented continuations by physical coin aggregation. Unique-successor identity CEK steps transfer completeness, and recursive denotations are Scott suprema of finite unfoldings. Presented channel-tree completeness and token adequacy are proved for every closed term in the stacked-application fragment `Produces 0` / `FunAppFrag` (body- and argument-nested `app (lam …)`, nested `app (recLam …)`, and leftover FunAppFrag argument frames under mixed ordinary/recursive function spines). Unconditional completeness for every closed term, without a fragment hypothesis, remains open. The rank-one Choi-ray obstruction for `PhysicalBasisApproximant` is formalized for register dimension at least two.
+4. **Language semantics — hardware bridge and covered stuck-free capstone proved.** Terms with closed quantum primitives and recursive abstractions have a compositional Scott-continuous interpretation in $Q(D_\infty)$. A concrete qubit CEK machine carries normalized density states and classical closures and keeps internal, weighted, and external transitions distinct. A separate proof-only subnormalized channel-tree semantics retains all CP branches, including zero-mass branches, and folds them into physical instruments. Runtime logical relations, positive-run correspondence, recursive finite approximants, and token adequacy for each realized channel tree are proved. `ChannelTreeCompleteness` is proved for closed return, Pauli-X, measure-Z, compositional internal and external choice, and probabilistic endpoints; interior probability is complete at presented continuations by physical coin aggregation. Unique-successor identity CEK steps transfer completeness, and recursive denotations are Scott suprema of finite unfoldings. Presented channel-tree completeness and token adequacy are proved for the stacked-application fragments `Produces 0` / `FunAppFrag`, for `ProductiveClosedCase`, and finally for every term carrying `ClosedStuckFreeCoverage`. `RestrictedExternApplication` covers `app (lam …) (extern left right)` and its recursive-lambda analogue under explicit `NoApp`, `AdminNoApp`, and `Atomic` hypotheses. This consolidated boundary is sufficient, not an assertion for every closed term. The rank-one Choi-ray obstruction for `PhysicalBasisApproximant` is formalized for register dimension at least two.
 
 The word “complete” in items 1–3 refers to the stated Lean interfaces and theorems, not to a complete quantum programming language.
 
@@ -420,6 +429,13 @@ The development constructs both the rational coded-test representation and a con
 - `Term Prim` is the untyped source syntax with parameterized closed primitives and recursive function values.
 - `SemanticValue Q D₀ j₀` is the solved domain $D_\infty$, while `SemanticComp Q D₀ j₀` is the single term codomain $Q(D_\infty)$.
 - `interp primitive M` is a Scott map from environments to $Q(D_\infty)$; `HasComputationChoice` supplies the three still-model-dependent choice operations.
+- `RestrictedExternApplication code` records the two proved lambda /
+  recursive-lambda applications with an external-choice argument and their
+  exact syntactic side conditions.
+- `ProductiveClosedCase code` joins the path-productive cases with
+  `RestrictedExternApplication`.
+- `ClosedStuckFreeCoverage realize code` is the final named sufficient
+  coverage boundary for closed presented channel-tree completeness.
 
 ### Principal theorems and proof ideas
 
@@ -442,6 +458,16 @@ The proof extracts finitely many branch-local source tokens and extends their se
 **Retract boundary.** `finiteImage_directedSupClosed_of_retraction` applies preservation of directed suprema by the proposed Scott projection and its fixed-point law. `range_embed_dyadicStage_directed_nonclosed` supplies a concrete non-closure witness, and `no_finiteImageScottRetraction_dyadic` derives the unconditional contradiction.
 
 **Computation-valued interpretation.** `interp_continuous` records that every term clause is Scott-continuous in its environment by construction. `interp_value` proves that ordinary and recursive abstractions are precisely the pure cases lifted through monadic unit. `recLambdaValue_unfold` is Scott’s fixed-point equation for recursive functions. `applyComp_pure_lambda` combines both monad unit laws with the $D_\infty\cong[D_\infty\to Q(D_\infty)]$ inverse equations to prove semantic β-reduction for a pure abstraction and argument.
+
+**Covered stuck-free capstone.**
+`closed_term_presented_channelTreeCompleteness_of_productive_case` handles
+`ProductiveClosedCase`, including the restricted extern-as-argument forms.
+`closed_stuck_free_presented_channelTreeCompleteness` then dispatches every
+constructor of `ClosedStuckFreeCoverage`; only its `productiveCase` route
+requires `MeasureDistinct`, while `restrictedExtern` uses the direct theorem.
+`closed_stuck_free_presented_token_adequacy` composes that result with
+presented channel-tree token adequacy. The theorem remains explicitly about
+represented continuations and realized finite trees.
 
 ### Examples and separating cases
 
@@ -474,7 +500,7 @@ The domain construction supplies the space in which a fixed-register untyped qua
 1. **Computation-valued term interpretation — complete for the stated core.** `interp` is compositional and Scott-continuous; renaming, weakening, capture-avoiding value substitution, β, and recursive β are proved.
 2. **Operational semantics — hardware core complete.** The CEK machine carries a normalized qubit density matrix, closures, environments, and a continuation stack. Kraus transitions satisfy exact Born normalization and trace bounds.
 3. **Probabilistic, internal, and external choice — concrete and separated.** Probability uses physical weighted aggregation, internal choice uses join, and external choice uses explicit branch tags and selectors.
-4. **Adequacy — channel-tree completeness through choice, identity CEK steps, stacked-application fragments, and the path-indexed fundamental theorem.** Normalized hardware runs model executable positive outcomes; subnormalized channel trees retain every CP branch and fold into finite TNI instruments with exact TT token characterizations. A formal basis-state counterexample rules out reconstructing a state-independent channel from one arbitrary normalized run. Scott recursion is the supremum of finite unfoldings. `ChannelTreeCompleteness` is proved for closed return, Pauli-X, measure-Z, compositional internal and external choice, and probabilistic endpoints; interior probability is complete at presented continuations. Application, argument evaluation, and beta steps transfer completeness by unique-successor identity wrapping. The inductive fragments `FunAppFrag` and `Produces n` give presented completeness for nested lambda / recursive-lambda applications under matching leftover argument frames. `HardwareChannel/Fundamental.lean` assembles path transfer lemmas into `PathChannelEvaluation` / `related_pathChannelTreeTokenAdequacy`, yielding closed-term presented completeness for every application-free closed term and for every closed term equipped with a branch-complete evaluation derivation. `HardwareChannel/Productive.lean` constructs that derivation for atomic closed terms and for closed `app (lam / recLam) arg` whose body and argument are atomic (measure-Z and probability arguments included). Stuck `app (ret) _` states are excluded (`stuck_payload_under_function_no_internal_step`). A separate rank-one Choi-ray obstruction shows why finitely generated physical-basis approximants cannot interpolate every ray when the register dimension is at least two.
+4. **Adequacy — proved at the named covered stuck-free boundary.** Normalized hardware runs model executable positive outcomes; subnormalized channel trees retain every CP branch and fold into finite TNI instruments with exact TT token characterizations. A formal basis-state counterexample rules out reconstructing a state-independent channel from one arbitrary normalized run. Scott recursion is the supremum of finite unfoldings. `ChannelTreeCompleteness` is proved for closed return, Pauli-X, measure-Z, compositional internal and external choice, and probabilistic endpoints; interior probability is complete at presented continuations. Application, argument evaluation, and beta steps transfer completeness by unique-successor identity wrapping. The inductive fragments `FunAppFrag` and `Produces n` give presented completeness for nested lambda / recursive-lambda applications under matching leftover argument frames. `HardwareChannel/Fundamental.lean` assembles path transfer lemmas into `PathChannelEvaluation` / `related_pathChannelTreeTokenAdequacy`. `HardwareChannel/Productive.lean` adds `ProductiveClosedCase` and direct completeness for the restricted extern-as-argument forms. `HardwareChannel/Coverage.lean` proves the final `closed_stuck_free_presented_channelTreeCompleteness` and token theorem for `ClosedStuckFreeCoverage`. Stuck `app (ret) _` states remain excluded (`stuck_payload_under_function_no_internal_step`). A separate rank-one Choi-ray obstruction shows why finitely generated physical-basis approximants cannot interpolate every ray when the register dimension is at least two.
 
 ---
 
@@ -482,7 +508,7 @@ The domain construction supplies the space in which a fixed-register untyped qua
 
 The formalization is constructed in Lean 4 on top of the `Scott1972` continuous lattice library (`https://github.com/catskillsresearch/scott1972`). Chen–Kou–Lyu-style finite-separation and saturation lemmas are mechanized in `QLambda/Saturation.lean`, and `omegaQVA_closed_under_functionSpace` proves Cartesian closure by finite-separator step-map sampling. `QLambda/QuantumInstrument.lean` develops finite Kraus instruments and proves residual CP refinement equivalent to Choi order. `QLambda/RefinementCounterexample.lean` proves indicator observations too weak for TT refinement. `QLambda/RationalCP.lean`, `QLambda/TTObservationBasis.lean`, and `QLambda/TTRefinement.lean` replace them by countable physical finitary CP-valued postconditions and prove exact satisfied-theory order correspondence. `QLambda/TTRoundedTheory.lean` forms their saturated continuous completion. `QLambda/RoundedTheoryOmega.lean` proves generically that every encodable rounded basis is an $\omega\mathbf{QVA}$ by explicit one-dimensional density factorizations. `QLambda/TTResultAlgebra.lean`, `QLambda/TTResultApproximation.lean`, and `QLambda/TTResultOperations.lean` establish TNI result normalization, rational local approximation, and Scott-continuous token-local aggregation. `QLambda/TTContinuationMonad.lean` defines $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$, proves every `IsQuantumPowerModel` and `IsQuantumMonad` field, and bundles `TTContinuation.model n`. `QLambda/TTPhysicalEmbedding.lean` embeds finite physical instruments, proves finite monad compatibility on the precisely stated fragment, proves represented-test refinement recovery, and formalizes the directed-supremum obstruction to a finite-image Scott retract.
 
-Language and hardware layers continue from that domain. `QLambda/Interp.lean` and `QLambda/Soundness.lean` give computation-valued interpretation and operational soundness. Choice algebras live in `TTInternalChoice`, `TTProbChoice`, `TTExternalChoice`, and `TTComputationChoice`. The hardware CEK machine and observation/logical-relation stack occupy `HardwareOperational` through `HardwareAdequacy`. Channel-tree completeness is developed in the layered import DAG `QLambda/HardwareChannel/{Config,Identity,Spines,UnderFrame,FunApp,Closed,Fundamental}.lean`, re-exported by `HardwareChannelSemantics.lean`. The capstone domain theorem is:
+Language and hardware layers continue from that domain. `QLambda/Interp.lean` and `QLambda/Soundness.lean` give computation-valued interpretation and operational soundness. Choice algebras live in `TTInternalChoice`, `TTProbChoice`, `TTExternalChoice`, and `TTComputationChoice`. The hardware CEK machine and observation/logical-relation stack occupy `HardwareOperational` through `HardwareAdequacy`. Channel-tree completeness is developed in the layered import DAG `QLambda/HardwareChannel/{Config,Identity,Spines,UnderFrame,FunApp,Closed,Fundamental,Productive,Coverage}.lean`, re-exported by `HardwareChannelSemantics.lean`. The compared capstone domain theorem is:
 
 ```lean
 class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) where
@@ -533,7 +559,7 @@ theorem TTPhysicalEmbedding.embed_unit (d : D) :
 3. **Interpretation.** Compositional Scott-continuous `interp` into $Q(D_\infty)$; ordinary and recursive β; recursive denotations as Scott fixed points / finite-iterate suprema.
 4. **Choice.** Internal join, physical weighted probability (not lattice join), and tagged external selection are separated and registered as lawful effect instances.
 5. **Hardware adequacy infrastructure.** Normalized CEK machine; subnormalized channel trees; logical relations; token adequacy for realized trees; completeness transfer across unique-successor identity steps.
-6. **Stacked-application fragment and path-indexed fundamental theorem.** `FunAppFrag` / `Produces n` under residual frames; closed wrappers `closed_produces_*` / `closed_funAppFrag_*`; `PathChannelEvaluation` / `related_pathChannelTreeTokenAdequacy` / `closed_term_presented_*` in `HardwareChannel/Fundamental.lean` (NoApp closed terms need no evaluation derivation). `HardwareChannel/Productive.lean` constructs the derivation for `Productive 0` (leftover-arity spines, intern-in-body, measure-Z / probability arguments), nested `app` as an argument, and closed `extern` with Atomic children (`closed_term_presented_*_of_productive`).
+6. **Covered stuck-free channel-tree capstone.** `FunAppFrag` / `Produces n` under residual frames; `PathChannelEvaluation` and the closed bridges in `HardwareChannel/Fundamental.lean`; `ProductiveClosedCase` and `RestrictedExternApplication` in `HardwareChannel/Productive.lean`; and the consolidated `ClosedStuckFreeCoverage`, `closed_stuck_free_presented_channelTreeCompleteness`, and `closed_stuck_free_presented_token_adequacy` in `HardwareChannel/Coverage.lean`.
 
 A compact status table and the open-hole list appear in the next section.
 
@@ -557,23 +583,26 @@ A compact status table and the open-hole list appear in the next section.
 | Path-indexed fundamental theorem (`PathChannelEvaluation`) | Done | `HardwareChannel/Fundamental` |
 | Closed-term presented completeness (NoApp; or any closed term with a branch-complete `PathChannelEvaluation`) | Done | `closed_term_presented_*`, `closed_term_presented_*_of_noApp` |
 | Automatic `PathChannelEvaluation` for `Productive 0` (leftover-arity spines, intern-in-body, measure-Z / probability args), nested `app` as an argument, and closed `extern` | Done | `HardwareChannel/Productive`, `closed_term_presented_*_of_productive` |
+| Restricted extern arguments under ordinary / recursive lambda, with explicit syntax hypotheses | Done (fragment) | `RestrictedExternApplication`, `ProductiveClosedCase` |
+| Consolidated presented completeness and token adequacy for covered closed stuck-free programs | Done (exact boundary) | `ClosedStuckFreeCoverage`, `closed_stuck_free_presented_channelTreeCompleteness`, `closed_stuck_free_presented_token_adequacy` |
 | Stuck `app (ret) _` / payload-under-function completeness for arbitrary `realize` | Excluded | `stuck_payload_under_function_no_internal_step` |
 
 ### Currently open holes
 
-The following are **not** claimed as proved. They are the remaining semantic obligations beyond the path-indexed fundamental theorem.
+The following are **not** claimed as proved.
 
-1. **Deriving `PathChannelEvaluation` for `extern` as a leftover argument.** `Productive 0` now includes leftover-arity spines and intern-in-body; nested `app (lam) (app (lam) ·)` is covered; closed `extern` with Atomic children is covered at the empty stack. What remains is external choice *as an argument* under a function frame: `externBranch` changes the active coordinate so later `beta` concludes at the frame's saved coordinate rather than the child's.
+1. **Coverage is sufficient, not exhaustive.** `ClosedStuckFreeCoverage` packages every presently proved closed route, including `RestrictedExternApplication`, but is not a decision procedure or a completeness classification for all non-stuck closed programs.
 
-2. **General related-state completeness without an evaluation derivation.** `related_pathChannelTreeTokenAdequacy` / `related_presentedChannelConfigCompleteness` take a `PathChannelEvaluation` (and empty stack for the presented bridge). A measure-based induction over arbitrary related CEK states is blocked: `configMeasure` need not decrease at `evaluateArgument` or `beta` in general.
+2. **Restricted extern is exact.** The proved direct forms are `app (lam x body) (extern left right)` and `app (recLam self x body) (extern left right)` under their `NoApp`, `AdminNoApp`, and `Atomic` hypotheses. No claim is made for arbitrary placement or nesting of external choice under residual frames.
 
-3. **Stuck applications.** Stuck `app (ret c) M` reaches a value under a payload function frame (`stuck_payload_under_function_no_internal_step`). For a general `realize`, presented completeness need not hold there, so unrestricted “every closed term” completeness is false; those states are excluded from `PathChannelEvaluation`.
+3. **Stuck applications.** Stuck `app (ret c) M` reaches a value under a payload function frame (`stuck_payload_under_function_no_internal_step`). For a general `realize`, presented completeness need not hold there, so unrestricted “every closed term” completeness is false.
 
 4. **Interior probability at arbitrary continuations.** For $0<p<1$, completeness is at **finitely presented** continuations (`PresentedChannelTreeCompleteness`). Full `ChannelTreeCompleteness` at arbitrary Scott continuations would need Scott density of presented continuations (or an equivalent approximation argument).
 
 5. **Stronger physical / domain claims not pursued.** A finite-image Scott retract onto embedded instruments is **refuted**, not missing. Raw `InstrumentPower` as an $\omega\mathbf{QVA}$ carrier is not claimed; the Choi-ray obstruction rules out a particular physical-basis approximant scheme for $n\ge 2$, not the continuation-power construction in use.
 
-6. **Documentation lag.** `HANDOFF.md` may still describe an earlier cut; this file (*Claimed domain equation*, *Formal Verification*, and *Claims formalized in Lean 4*) is the narrative status of record.
+`arxiv.md` is the narrative status of record; `THEOREMS.md` is the compact
+name/file/boundary index.
 
 ---
 

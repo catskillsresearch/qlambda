@@ -17,6 +17,12 @@ General closed-term adequacy is stated only under an explicit finite-
 denotation hypothesis.  Rational coded-test separation is unconditional, but
 the finite physical image is not claimed to contain every denotation:
 higher-order recursion may leave it.
+
+This module does not claim adequacy or channel-tree completeness for every
+untyped closed term and every semantic realization.  In particular, applying
+a returned classical payload as though it were a function is operationally
+stuck; a nonbottom denotation for such an ill-shaped application must be
+excluded by a semantic hypothesis or by a stuck-free syntactic fragment.
 -/
 
 namespace QLambda

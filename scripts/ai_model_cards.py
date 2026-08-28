@@ -117,11 +117,15 @@ def inject_model_cards(text: str) -> str:
     tool_block = f"{TOOL_BULLETS_BEGIN}\n{render_tool_bullets()}\n{TOOL_BULLETS_END}"
     ref_block = f"{REFERENCES_BEGIN}\n{render_model_references()}\n{REFERENCES_END}"
 
-    if TOOL_BULLETS_BEGIN not in text:
+    has_tools = TOOL_BULLETS_BEGIN in text
+    has_references = REFERENCES_BEGIN in text
+    if not has_tools and not has_references:
+        return text
+    if not has_tools:
         raise RuntimeError(
             f"missing {TOOL_BULLETS_BEGIN} in narrative; add markers to arxiv.md Acknowledgments"
         )
-    if REFERENCES_BEGIN not in text:
+    if not has_references:
         raise RuntimeError(
             f"missing {REFERENCES_BEGIN} in narrative; add markers to arxiv.md References"
         )

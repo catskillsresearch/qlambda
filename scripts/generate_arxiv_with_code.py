@@ -8,34 +8,33 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# Library files in dependency order (matches Scott1972.lean import order).
-FILES = [
-    "Scott1972.lean",
-    "Scott1972/ContinuousLattice/Injective.lean",
-    "Scott1972/ContinuousLattice/WayBelow.lean",
-    "Scott1972/ContinuousLattice/Specialization.lean",
-    "Scott1972/ContinuousLattice/ScottMaps.lean",
-    "Scott1972/ContinuousLattice/MilnerCorrection.lean",
-    "Scott1972/ContinuousLattice/Constructions.lean",
-    "Scott1972/ContinuousLattice/FunctionSpaces.lean",
-    "Scott1972/ContinuousLattice/Theorem212.lean",
-    "Scott1972/ContinuousLattice/InverseLimits.lean",
-    "Scott1972/ContinuousLattice/FunctionSpaceTower.lean",
-]
+def lean_sources() -> list[str]:
+    """Return the complete checked source surface, excluding build caches."""
+    vendor = sorted(
+        path.relative_to(ROOT).as_posix()
+        for path in (ROOT / "vendor" / "scott1972").rglob("*.lean")
+        if ".lake" not in path.parts
+    )
+    qlambda = sorted(
+        path.relative_to(ROOT).as_posix()
+        for path in (ROOT / "QLambda").rglob("*.lean")
+    )
+    return vendor + ["QLambda.lean"] + qlambda + ["Challenge.lean", "Solution.lean"]
 
-FILE_ROLES: dict[str, str] = {
-    "Scott1972.lean": "Root import graph",
-    "Scott1972/ContinuousLattice/Injective.lean": "Scott §1",
-    "Scott1972/ContinuousLattice/WayBelow.lean": "Scott §2",
-    "Scott1972/ContinuousLattice/Specialization.lean": "Scott §2",
-    "Scott1972/ContinuousLattice/ScottMaps.lean": "Scott §2",
-    "Scott1972/ContinuousLattice/MilnerCorrection.lean": "March 1972 correction",
-    "Scott1972/ContinuousLattice/Constructions.lean": "Scott §2.8–2.12",
-    "Scott1972/ContinuousLattice/FunctionSpaces.lean": "Scott §3",
-    "Scott1972/ContinuousLattice/Theorem212.lean": "Theorem 2.12",
-    "Scott1972/ContinuousLattice/InverseLimits.lean": "Scott §4",
-    "Scott1972/ContinuousLattice/FunctionSpaceTower.lean": "Theorem 4.4",
-}
+
+FILES = lean_sources()
+
+
+def file_role(path: str) -> str:
+    if path.startswith("vendor/scott1972/"):
+        return "Vendored Scott 1972 foundation"
+    if path == "QLambda.lean":
+        return "QLambda root import graph"
+    if path == "Challenge.lean":
+        return "Palomar challenge statements"
+    if path == "Solution.lean":
+        return "Palomar compared solutions"
+    return "QLambda development"
 
 
 def paper_title(arxiv_text: str) -> str:
@@ -74,8 +73,8 @@ def main() -> None:
         "This file is stale whenever it is older than `arxiv.md` or any listed `.lean` file.\n\n"
     )
     parts.append(
-        f"*Generated {date.today().isoformat()} from `arxiv.md` and all library "
-        "`.lean` files in dependency order (`Scott1972.lean`).*\n\n"
+        f"*Generated {date.today().isoformat()} from `arxiv.md` and all checked "
+        "project and vendored `.lean` source files.*\n\n"
     )
     parts.append(
         "**Review copy.** The narrative body matches [`arxiv.md`](arxiv.md) "
@@ -106,14 +105,14 @@ def main() -> None:
     parts.append("| Role | File |\n")
     parts.append("| --- | --- |\n")
     for f in FILES:
-        parts.append(f"| {FILE_ROLES[f]} | `{f}` |\n")
+        parts.append(f"| {file_role(f)} | `{f}` |\n")
     parts.append(
         "\nPrimary source (OCR plain text): [`sources/ScottContinLatt1972.md`]"
         "(sources/ScottContinLatt1972.md) — transcription of **[Sco72]** for use in the "
         "Lean development (see §2).\n\n"
     )
     parts.append(
-        "Files appear in `Scott1972.lean` import order. "
+        "Files appear in a stable vendor/root/project order. "
         "Each block is a verbatim copy of the repository file at generation time.\n\n"
     )
 
