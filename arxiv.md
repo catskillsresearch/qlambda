@@ -24,7 +24,7 @@ not $D\cong[D\to D]$ and not $Q\cong[Q\to Q]$.
 
 The contrapositives matter. Solving only $D\cong[D\to D]$ while wanting instruments and choice leaves no place for effects. Solving $Q\cong[Q\to Q]$ would treat computations themselves as the untyped $\lambda$-universe (call-by-name / “everything is a thunk”), contradicting a Control–Environment–Kontinuation (CEK) machine that evaluates the function, evaluates the argument, and only then performs $\beta$-reduction, and contradicting how CP instruments act on values rather than on open computations. The claim of this development is the middle path: untyped call-by-value $\lambda$-calculus with choice and a quantum-effect monad $Q$, values solving $D_\infty\cong[D_\infty\to Q(D_\infty)]$, and terms denoting elements of $Q(D_\infty)$.
 
-The ambient domain theory lifts Chen–Kou–Lyu’s programme from classical valuations to quantum spectrahedra ($\omega\mathbf{QVA}$), solves the parameterized equation above for a continuation power $Q=\mathcal Q_n$, and connects the denotation to a qubit CEK machine and channel-tree adequacy fragment. The sections that follow fix the syntax and Qiskit correspondence, then state the formal claim, Lean status, and remaining holes.
+The ambient domain theory lifts Chen–Kou–Lyu’s programme from classical valuations to quantum spectrahedra ($\omega\mathbf{QVA}$), solves the parameterized equation above for a continuation power $Q=\mathcal Q_n$, and connects the denotation to a qubit CEK machine and channel-tree adequacy fragment. The sections that follow fix the syntax and Qiskit correspondence, state the formal claim and Lean module map, develop the domain theory, and collect proved claims versus open holes in *Claims formalized in Lean 4*.
 
 ---
 
@@ -212,22 +212,7 @@ flowchart LR
 
 Upstream of `Config`: `HardwareAdequacy` (which rests on `HardwareLogicalRelation`, `HardwareObservation`, `HardwareOperational`, and the TT/adequacy stack above).
 
-### What is proved in Lean (summary)
-
-| Layer | Status | Principal Lean anchors |
-| :--- | :--- | :--- |
-| $\omega\mathbf{QVA}$, Cartesian closure, saturation | Done | `OmegaQVA`, `Saturation` |
-| Parameterized equation $D_\infty\cong[D_\infty\to Q(D_\infty)]$ | Done | `omegaQVA_quantum_domain_equation_solved` |
-| Concrete $Q_n$, monad laws | Done | `TTContinuation.model`, `IsQuantumMonad` |
-| Finite TNI embedding, presented map/bind, retract obstruction | Done | `TTPhysicalEmbedding`, `FiniteImageNonclosure` |
-| Untyped syntax, `interp` in $Q(D_\infty)$, β / rec-β | Done | `Interp`, `Soundness` |
-| Prob / intern / extern choice algebras | Done | `TTProbChoice`, `TTInternalChoice`, `TTExternalChoice` |
-| Hardware CEK + channel trees + token adequacy infrastructure | Done | `HardwareOperational` … `HardwareAdequacy` |
-| Channel-tree completeness: ret, Pauli-X, measure-Z, choice, identity CEK steps | Done | `HardwareChannel/Config`, `Identity` |
-| Presented completeness for `Produces` / `FunAppFrag` (incl. `app_lam`, `app_recLam`, FunAppFrag leftover args) | Done (fragment) | `Spines`, `FunApp`, `Closed` |
-| Unconditional closed-term presented completeness | **Open** | — |
-
-A detailed open-hole list is in the section *Currently open holes* below.
+Proved claims and open holes are collected in *Claims formalized in Lean 4* below.
 
 ---
 
@@ -549,9 +534,28 @@ theorem TTPhysicalEmbedding.embed_unit (d : D) :
 5. **Hardware adequacy infrastructure.** Normalized CEK machine; subnormalized channel trees; logical relations; token adequacy for realized trees; completeness transfer across unique-successor identity steps.
 6. **Stacked-application fragment.** `FunAppFrag` (admin NoApp, `app_lam`, `app_recLam`) and `Produces n` (arity under leftover FunAppFrag argument frames), with completeness under mixed ordinary/recursive `FunFrame` spines; closed wrappers `closed_produces_*` and `closed_funAppFrag_*`.
 
+A compact status table and the open-hole list appear in the next section.
+
 ---
 
-## Currently open holes
+## Claims formalized in Lean 4
+
+### What is proved in Lean (summary)
+
+| Layer | Status | Principal Lean anchors |
+| :--- | :--- | :--- |
+| $\omega\mathbf{QVA}$, Cartesian closure, saturation | Done | `OmegaQVA`, `Saturation` |
+| Parameterized equation $D_\infty\cong[D_\infty\to Q(D_\infty)]$ | Done | `omegaQVA_quantum_domain_equation_solved` |
+| Concrete $Q_n$, monad laws | Done | `TTContinuation.model`, `IsQuantumMonad` |
+| Finite TNI embedding, presented map/bind, retract obstruction | Done | `TTPhysicalEmbedding`, `FiniteImageNonclosure` |
+| Untyped syntax, `interp` in $Q(D_\infty)$, β / rec-β | Done | `Interp`, `Soundness` |
+| Prob / intern / extern choice algebras | Done | `TTProbChoice`, `TTInternalChoice`, `TTExternalChoice` |
+| Hardware CEK + channel trees + token adequacy infrastructure | Done | `HardwareOperational` … `HardwareAdequacy` |
+| Channel-tree completeness: ret, Pauli-X, measure-Z, choice, identity CEK steps | Done | `HardwareChannel/Config`, `Identity` |
+| Presented completeness for `Produces` / `FunAppFrag` (incl. `app_lam`, `app_recLam`, FunAppFrag leftover args) | Done (fragment) | `Spines`, `FunApp`, `Closed` |
+| Unconditional closed-term presented completeness | **Open** | — |
+
+### Currently open holes
 
 The following are **not** claimed as proved. They are the remaining semantic obligations toward a closed-term theorem and stronger completeness statements.
 
@@ -565,7 +569,7 @@ The following are **not** claimed as proved. They are the remaining semantic obl
 
 5. **Stronger physical / domain claims not pursued.** A finite-image Scott retract onto embedded instruments is **refuted**, not missing. Raw `InstrumentPower` as an $\omega\mathbf{QVA}$ carrier is not claimed; the Choi-ray obstruction rules out a particular physical-basis approximant scheme for $n\ge 2$, not the continuation-power construction in use.
 
-6. **Documentation lag.** `HANDOFF.md` may still describe an earlier “application-free only / full stacked lemma remains” cut; this file (the front status section, *Formal Verification*, and *Currently open holes*) is the narrative status of record for the domain equation and the stacked-application fragment.
+6. **Documentation lag.** `HANDOFF.md` may still describe an earlier “application-free only / full stacked lemma remains” cut; this file (*Claimed domain equation*, *Formal Verification*, and *Claims formalized in Lean 4*) is the narrative status of record for the domain equation and the stacked-application fragment.
 
 ---
 
