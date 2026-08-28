@@ -10,6 +10,7 @@ import QLambda.HardwareChannel.UnderFrame
 import QLambda.HardwareChannel.FunApp
 import QLambda.HardwareChannel.Closed
 import QLambda.HardwareChannel.Fundamental
+import QLambda.HardwareChannel.Productive
 
 /-!
 # Proof-only channel semantics for the hardware CEK machine
@@ -33,6 +34,8 @@ The development is layered under `QLambda/HardwareChannel/`:
 * `Closed` — closed `Produces` / `FunAppFrag` theorems and token adequacy
 * `Fundamental` — path-indexed fundamental theorem and closed-term
   completeness under branch-complete evaluation derivations
+* `Productive` — automatic `PathChannelEvaluation` for `Productive 0`
+  closed applications (measure-Z / probability arguments included)
 
 All layers contribute to the shared namespace
 `QLambda.HardwareChannelSemantics`.
