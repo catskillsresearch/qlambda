@@ -4,15 +4,104 @@
 ---
 
 ### Abstract
-We develop a Lean 4 framework toward denotational semantics for an untyped $\lambda$-calculus with probabilistic, internal, and external choice, controlled by finite quantum instruments. Inspired by Chen, Kou, and Lyu’s finite-valuation approximable structures, we define $\omega\mathbf{QVA}$ by requiring its approximate identity to factor through finite products of sub-normalized density-operator spaces with the Loewner order. The finite spectrahedra are approximation factors; they are not themselves a quantum powerdomain $\mathcal Q(D)$. We prove a parameterized inverse-limit theorem and instantiate its hypotheses with the fixed-register continuation power $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$. Finite trace-nonincreasing CP instruments embed into this carrier through Scott-continuous token-local aggregation. The embedding preserves deterministic return exactly and agrees with finite map and bind on finitely presented continuations. Every rational TT test has an explicit Scott representation, so embedding order unconditionally recovers finitary TT refinement. We also isolate the obstruction to a finite-image Scott retract: any such retract would force the finite image to be closed under nonempty directed suprema. On the language side, a hardware qubit CEK machine and subnormalized channel-tree semantics support presented channel-tree completeness for a stacked-application fragment (`Produces` / `FunAppFrag`); unconditional closed-term completeness remains open.
+We develop a Lean~4 framework for denotational semantics of an untyped call-by-value $\lambda$-calculus with probabilistic ($\oplus_p$), internal ($\sqcap$), and external ($\Box$) choice, controlled by finite quantum instruments. The intended equation is not the classical Scott equation $D\cong[D\to D]$, nor an effectful collapse $Q\cong[Q\to Q]$. Values inhabit a domain $D_\infty$ and terms denote computations in a quantum-effect layer $Q(D_\infty)$, linked by the call-by-value equation
+$$D_\infty\cong[D_\infty\to Q(D_\infty)].$$
+Here $Q$ is a monad of computations: unit embeds a value as a trivial computation, and bind sequences an effectful computation with a value-to-computation continuation. Inspired by Chen, Kou, and Lyu’s finite-valuation approximable structures, we define $\omega\mathbf{QVA}$ by requiring approximate identities to factor through finite products of sub-normalized density-operator spaces under the Loewner order; finite spectrahedra are approximation factors, not themselves the power $Q(D)$. We prove a parameterized inverse-limit theorem and instantiate it with the fixed-register continuation power $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$. Finite trace-nonincreasing completely positive (CP) instruments embed into this carrier by Scott-continuous token-local aggregation. The embedding preserves deterministic return exactly and agrees with finite map and bind on finitely presented continuations. Every rational token-theory (TT) test has an explicit Scott representation, so embedding order recovers finitary TT refinement; a directed-supremum obstruction rules out a finite-image Scott retract. On the language side, a hardware qubit Control–Environment–Kontinuation (CEK) machine and subnormalized channel-tree semantics yield presented channel-tree completeness for a stacked-application fragment; unconditional closed-term completeness remains open.
 
 ---
 
-## 0. Claimed domain equation, Lean dependency map, and status
+## Introduction and Background
+
+The Scott–Strachey programme interprets untyped $\lambda$-calculus by solving a reflexive domain equation. Classically one solves $D\cong[D\to D]$: every value is a continuous function from values to values. That equation describes a pure, effect-free universe. Concurrent and nondeterministic computation needs more. Powerdomains (Plotkin, Smyth, Hoare) model internal nondeterminism ($\sqcap$) and external interactive choice ($\Box$). Probabilistic CSP (pCSP) and higher-order probabilistic programming quantify randomized branching by the subprobability valuation powerdomain $\mathcal{V}_{\le 1}$, leading to equations of the form
+$$D \cong [D \to \mathcal{P}(\mathcal{V}_{\le 1}(D))].$$
+Such equations require a category that is simultaneously Cartesian closed (for $[D\to\dots]$) and closed under $\mathcal{V}_{\le 1}$. In 1998, Jung and Tix identified a persistent obstruction: standard Cartesian closed categories of continuous domains (bifinite, RB, FS) were not known to be preserved by $\mathcal{V}_{\le 1}$. In August 2026, Chen, Kou, and Lyu resolved the Jung–Tix problem by introducing $\omega\mathbf{FVA}$ (finite-valuation approximable domains), the first full Cartesian closed subcategory of continuous domains closed under $\mathcal{V}_{\le 1}$ and $\mathcal{V}_1$.
+
+This paper takes the next step: from classical CSP/pCSP interpretations of $\oplus_p$, $\sqcap$, and $\Box$ on ordinary process or $\lambda$-terms, to a call-by-value interpretation of those same operators as higher-order classical control over a quantum computer. The three choice effects remain distinct classical control operations. They are realized, together with finite completely positive instruments, inside a quantum-effect domain $Q(D_\infty)$. Unitary evolution and measurement are not substitutes for $\oplus_p$, $\sqcap$, or $\Box$.
+
+Call-by-value with effects forces a **value / computation** split. A **monad** $Q$ packages that split: unit $D\to Q(D)$ wraps a value as a trivial computation, and bind $Q(D)\times(D\to Q(E))\to Q(E)$ sequences a computation with a value-to-computation continuation. Untyped call-by-value abstraction then denotes a *value* of function space type $[D\to Q(D)]$—given a value, return a computation—while every *term* denotes an element of $Q(D)$. The matching reflexive equation is therefore
+$$D_\infty\cong[D_\infty\to Q(D_\infty)],$$
+not $D\cong[D\to D]$ and not $Q\cong[Q\to Q]$.
+
+The contrapositives matter. Solving only $D\cong[D\to D]$ while wanting instruments and choice leaves no place for effects. Solving $Q\cong[Q\to Q]$ would treat computations themselves as the untyped $\lambda$-universe (call-by-name / “everything is a thunk”), contradicting a Control–Environment–Kontinuation (CEK) machine that evaluates the function, evaluates the argument, and only then performs $\beta$-reduction, and contradicting how CP instruments act on values rather than on open computations. The claim of this development is the middle path: untyped call-by-value $\lambda$-calculus with choice and a quantum-effect monad $Q$, values solving $D_\infty\cong[D_\infty\to Q(D_\infty)]$, and terms denoting elements of $Q(D_\infty)$.
+
+The ambient domain theory lifts Chen–Kou–Lyu’s programme from classical valuations to quantum spectrahedra ($\omega\mathbf{QVA}$), solves the parameterized equation above for a continuation power $Q=\mathcal Q_n$, and connects the denotation to a qubit CEK machine and channel-tree adequacy fragment. The sections that follow fix the syntax and Qiskit correspondence, then state the formal claim, Lean status, and remaining holes.
+
+---
+
+## Syntactic Extension: Untyped $\lambda$-Calculus with Choice Operators
+
+We extend the untyped $\lambda$-calculus with the three canonical choice operators from concurrent and probabilistic process calculi:
+
+$$M, N ::= x \mid \lambda x. M \mid M \, N \mid M \oplus_p N \mid M \sqcap N \mid M \mathbin{\Box} N$$
+
+```mermaid
+graph TD
+    A["Computational Divergence & Choice"] --> B["Probabilistic Choice (M ⊕_p N)"]
+    A --> C["Internal Choice (M ⊓ N)"]
+    A --> D["External Choice (M □ N)"]
+    B --> B1["Resolved by coin of weight p ∈ [0,1]"]
+    C --> C1["Resolved by internal demonic scheduler"]
+    D --> D1["Resolved by environment / communication trigger"]
+```
+
+### The Three Choice Operators
+1. **Probabilistic Choice ($M \oplus_p N$):**
+   * **Behavior:** A coin weighted by $p \in [0, 1]$ is flipped at reduction time; the term reduces to $M$ with probability $p$ and to $N$ with probability $1 - p$.
+   * **Found in:** Probabilistic $\lambda$-calculus, Probabilistic PCF (Plotkin 1989, Jones 1990, Dal Lago, Ehrhard et al.).
+2. **Internal Nondeterministic Choice ($M \sqcap N$ or $M \oplus N$):**
+   * **Behavior:** Unpredictable, unobservable scheduling or arbitrary choice between two functions/expressions.
+   * **Found in:** De’Liguoro–Piperno’s non-deterministic $\lambda$-calculus, Boudol’s concurrent $\lambda$-calculus.
+3. **External / Interactive Choice ($M \mathbin{\Box} N$ or Guarded Selection):**
+   * **Behavior:** Waiting for the environment (e.g., awaiting a message on a communication channel or waiting for an argument/input event).
+   * **Canonical functional equivalent:** The `select` construct in Concurrent ML (CML) or guarded alternative evaluation:
+     $$\text{sync}(\text{receive}(c_1) \Rightarrow \lambda x. M \;\mathbin{\Box}\; \text{receive}(c_2) \Rightarrow \lambda y. N)$$
+
+Classically, giving this calculus a denotational semantics (without quantum effects) means solving something like
+$$D \cong [D \to \mathcal{P}(\mathcal{V}_{\le 1}(D))],$$
+where $[D \to \dots]$ models higher-order functions, $\mathcal{P}$ models internal choice ($\sqcap$), and $\mathcal{V}_{\le 1}$ models probabilistic choice ($\oplus_p$). In this paper the ambient category is quantum ($\omega\mathbf{QVA}$), application is call-by-value, and effects live in a monad $Q$. The equation we solve is therefore the call-by-value form $D_\infty\cong[D_\infty\to Q(D_\infty)]$ of the previous section, with $\oplus_p$, $\sqcap$, and $\Box$ interpreted as operations on $Q(D_\infty)$ alongside finite CP instruments—not by collapsing them into a pure domain equation $D\cong[D\to D]$ or into $Q\cong[Q\to Q]$.
+
+---
+
+## Back-and-Forth Operational Correspondence with Qiskit
+
+The tables in this section ground the denotational semantics by relating two operational presentations. They are not intended as a literal compiler specification. Each row is a commuting correspondence
+
+$$\text{$q\lambda$ construct}\longrightarrow
+  \text{CP channel or instrument}
+  \longleftarrow\text{Qiskit execution pattern}.$$
+
+For a fixed initial quantum state, the desired equivalence is observational: both sides have the same classical outcome probabilities and, conditioned on an outcome, the same post-measurement quantum state. The quantum forms below are intended primitives extending the classical control syntax of *Syntactic Extension*; they are not Church encodings. Church booleans remain useful classical data, but they are duplicable and therefore cannot stand for qubits. In particular, classical probabilistic choice $M\oplus_p N$ remains a control effect in $Q$, distinct from coherent superposition and from measurement instruments.
+
+### Table 1: Quantum primitives with a shared denotation
+| Concept | Intended $q\lambda$ operational form | Qiskit execution pattern | Shared CP denotation |
+| :--- | :--- | :--- | :--- |
+| **Prepare $\vert0\rangle$** | $\operatorname{new0}(q);\,M$ | `qc.reset(q)` (or a fresh circuit qubit) | Preparation channel with output $\vert0\rangle\langle0\vert$ |
+| **Pauli-$X$** | $X(q);\,M$ | `qc.x(q)` | $\rho\mapsto X\rho X^\dagger$ |
+| **Prepare $\vert1\rangle$** | $\operatorname{new0}(q);\,X(q);\,M$ | fresh/reset `q`; `qc.x(q)` | Preparation channel with output $\vert1\rangle\langle1\vert$ |
+| **Hadamard** | $H(q);\,M$ | `qc.h(q)` | $\rho\mapsto H\rho H^\dagger$; on $\vert0\rangle$ the output is coherent $\vert+\rangle$, not a probabilistic mixture |
+| **CNOT** | $\operatorname{CX}(q,r);\,M$ | `qc.cx(q, r)` | $\rho\mapsto \operatorname{CX}\rho\operatorname{CX}^\dagger$ |
+| **Measurement** | $\operatorname{measure}\ q\ \operatorname{with}\ 0\Rightarrow M\mid1\Rightarrow N$ | `qc.measure(q, c)` followed by `if_test` branches | Instrument $\Phi_i(\rho)=P_i\rho P_i$; probability $\operatorname{Tr}(\Phi_i(\rho))$ |
+| **Classical probabilistic choice** | $M\oplus_p N$ | host RNG, or an ancilla rotation followed by measurement and `if_test` | Branches $p\,\mathrm{id}$ and $(1-p)\,\mathrm{id}$ followed by the denotations of $M,N$ |
+
+### Table 2: Higher-order control and choice
+| Concept | $q\lambda$ operational role | Qiskit / host-language counterpart | Denotational correspondence |
+| :--- | :--- | :--- | :--- |
+| **Variable** | $x$ is classical data or an opaque register handle | Python parameter, classical value, or register index | Environment lookup; a quantum register is threaded by the instrument semantics rather than copied as a Church value |
+| **Abstraction** | $\lambda x.M$ packages higher-order classical control | circuit factory, closure, or parameterized subroutine | A value in $[D_\infty\to Q(D_\infty)]$: given a value, return a computation; not necessarily a unitary |
+| **Application** | $M\,N$ invokes higher-order control (call-by-value) | call a factory/subroutine and compose its result | Evaluate function and argument as computations, then bind into the body (Kleisli/instrument composition) |
+| **Probabilistic choice** | $M\oplus_p N$ resolves by a classical coin | host RNG or measured ancilla controlling dynamic branches | Convex combination of the two computation denotations in $Q(D_\infty)$ |
+| **Internal choice** | $M\sqcap N$ is selected by an unobservable scheduler | host/runtime scheduler chooses a branch | Nondeterministic join on computations; no fixed 50/50 probability is implied |
+| **External choice** | $M\mathbin{\Box}N$ waits for an environment-selected guard/event | runtime input, callback, or guarded `if_test` | Environment-indexed family of computations; not inherently a controlled unitary |
+
+Thus the “back-and-forth” is between operational realizations at matching semantic layers. Quantum gates and measurements meet as channels and instruments. Untyped $\lambda$ abstraction and application meet Qiskit through the surrounding classical host language as circuit-producing higher-order control. Some terms require dynamic circuits or runtime interaction rather than one static circuit, but the common denotation still supplies the mental bijection used to guide the formal semantics.
+
+---
+
+## Claimed domain equation, Lean dependency map, and status
 
 ### Claimed and implemented domain equation
 
-The classical Scott equation $D\cong[D\to D]$ is **not** the equation solved here. Computations live in a quantum effect $Q(D)$, and values inhabit the solved domain $D_\infty$. The equation claimed, parameterized, and mechanized is
+The equation claimed, parameterized, and mechanized is the call-by-value quantum-effect equation of the introduction:
 
 $$
 \boxed{\;D_\infty\;\in\;\omega\mathbf{QVA}
@@ -20,17 +109,29 @@ $$
 D_\infty\;\cong\;[D_\infty\to Q(D_\infty)].\;}
 $$
 
-Here $Q$ is any locally continuous $\omega\mathbf{QVA}$-closed quantum power model (`IsQuantumPowerModel`). The concrete instance used throughout the language and hardware layers is the fixed-register continuation power
+#### What $Q$ is
 
+$Q$ is the quantum computation / effect layer on values—not the value domain itself.
+
+| Role | Object | Meaning |
+| :--- | :--- | :--- |
+| Values | $D_\infty$ | Closures, payloads, what gets substituted |
+| Computations | $Q(D_\infty)$ | What a term denotes (effects, choice, instruments) |
+| Function space | $[D_\infty\to Q(D_\infty)]$ | A value that, given a value, returns a computation |
+
+A monad on values is specified by unit $D\to Q(D)$ (trivial computation) and bind $Q(D)\times(D\to Q(E))\to Q(E)$ (sequence). Abstractly, $Q$ is any locally continuous, $\omega\mathbf{QVA}$-closed endofunctor of complete lattices equipped with that monadic structure (Lean: `IsQuantumPowerModel` / `IsQuantumMonad`).
+
+**Concrete instance.** The fixed-register continuation power
 $$
 Q(D)\;=\;\mathcal Q_n(D)\;=\;[[D\to R_n]\to R_n],
-\qquad
-R_n=\mathtt{TTResult}\,n,
 $$
+where $R_n$ is the continuous lattice of finitary observation results for an $n$-dimensional register (Lean: `TTResult n` / `TTContinuation.model n`). Qubit hardware takes $n=2$. Lean’s existence theorem is `omegaQVA_quantum_domain_equation_solved` in `QLambda/QuantumDomainEquation.lean`. In this presentation $Q$ packages finite quantum instruments together with classical control effects as Scott-continuous maps on result continuations.
 
-with qubit hardware taking $n=2$. Lean’s palomar theorem is `omegaQVA_quantum_domain_equation_solved` in `QLambda/QuantumDomainEquation.lean`, instantiated by `TTContinuation.model n`.
+#### Contrapositives (what is not claimed)
 
-**Not claimed.** We do **not** solve $Q\cong[Q\to Q]$. That would collapse the value/computation split required by CBV application and monadic bind. Abstractions denote elements of $D_\infty$ (lifted by monadic `unit` into $Q(D_\infty)$); applications denote elements of $Q(D_\infty)$ directly.
+* **Not** $D\cong[D\to D]$. That is the pure Scott equation; it has no computation monad and no place for instruments or choice as effects.
+* **Not** $Q\cong[Q\to Q]$. That would make computations the untyped $\lambda$-universe (call-by-name / thunks), erase the unit/bind layer, and fight both CEK call-by-value evaluation and the fact that CP instruments act on values. Kleisli arrows for $Q$ are maps $[D\to Q(D)]$, not $[Q(D)\to Q(D)]$.
+* Abstractions denote elements of $D_\infty$ (lifted by unit into $Q(D_\infty)$); applications denote elements of $Q(D_\infty)$ directly.
 
 ### Main Lean module dependencies
 
@@ -126,57 +227,11 @@ Upstream of `Config`: `HardwareAdequacy` (which rests on `HardwareLogicalRelatio
 | Presented completeness for `Produces` / `FunAppFrag` (incl. `app_lam`, `app_recLam`, FunAppFrag leftover args) | Done (fragment) | `Spines`, `FunApp`, `Closed` |
 | Unconditional closed-term presented completeness | **Open** | — |
 
-A detailed open-hole list is §8.
+A detailed open-hole list is in the section *Currently open holes* below.
 
 ---
 
-## 1. Introduction and Background
-
-The Scott–Strachey programme for denotational semantics models computation in untyped $\lambda$-calculus by solving reflexive domain equations of the form $D \cong [D \to D]$. In concurrent and non-deterministic computation, powerdomains (Plotkin, Smyth, Hoare) model internal non-determinism ($\sqcap$) and external interactive choice ($\Box$). In probabilistic extensions (pCSP) and higher-order probabilistic programming, randomized branching is quantified via the subprobability valuation powerdomain $\mathcal{V}_{\le 1}$.
-
-Giving a rigorous denotational semantics to untyped higher-order languages with probabilistic choice requires solving recursive domain equations of the form:
-$$D \cong [D \to \mathcal{P}(\mathcal{V}_{\le 1}(D))]$$
-This requires a category that is simultaneously **Cartesian closed** (to interpret function spaces $[D \to \dots]$) and **closed under $\mathcal{V}_{\le 1}$**. In 1998, Achim Jung and Regina Tix identified a persistent obstruction: standard Cartesian closed categories of continuous domains (such as bifinite domains, RB-domains, and FS-domains) were not known to be preserved by $\mathcal{V}_{\le 1}$.
-
-In August 2026, Chen, Kou, and Lyu resolved the Jung–Tix problem by introducing the category $\omega\mathbf{FVA}$ (Finite-Valuation Approximable domains), establishing the first full Cartesian closed subcategory of continuous domains closed under $\mathcal{V}_{\le 1}$ and $\mathcal{V}_1$.
-
----
-
-## 2. Syntactic Extension: Untyped $\lambda$-Calculus with Choice Operators
-
-We extend the untyped $\lambda$-calculus with the three canonical choice operators from concurrent and probabilistic process calculi:
-
-$$M, N ::= x \mid \lambda x. M \mid M \, N \mid M \oplus_p N \mid M \sqcap N \mid M \mathbin{\Box} N$$
-
-```mermaid
-graph TD
-    A["Computational Divergence & Choice"] --> B["Probabilistic Choice (M ⊕_p N)"]
-    A --> C["Internal Choice (M ⊓ N)"]
-    A --> D["External Choice (M □ N)"]
-    B --> B1["Resolved by coin of weight p ∈ [0,1]"]
-    C --> C1["Resolved by internal demonic scheduler"]
-    D --> D1["Resolved by environment / communication trigger"]
-```
-
-### The Three Choice Operators
-1. **Probabilistic Choice ($M \oplus_p N$):**
-   * **Behavior:** A coin weighted by $p \in [0, 1]$ is flipped at reduction time; the term reduces to $M$ with probability $p$ and to $N$ with probability $1 - p$.
-   * **Found in:** Probabilistic $\lambda$-calculus, Probabilistic PCF (Plotkin 1989, Jones 1990, Dal Lago, Ehrhard et al.).
-2. **Internal Nondeterministic Choice ($M \sqcap N$ or $M \oplus N$):**
-   * **Behavior:** Unpredictable, unobservable scheduling or arbitrary choice between two functions/expressions.
-   * **Found in:** De’Liguoro–Piperno’s non-deterministic $\lambda$-calculus, Boudol’s concurrent $\lambda$-calculus.
-3. **External / Interactive Choice ($M \mathbin{\Box} N$ or Guarded Selection):**
-   * **Behavior:** Waiting for the environment (e.g., awaiting a message on a communication channel or waiting for an argument/input event).
-   * **Canonical functional equivalent:** The `select` construct in Concurrent ML (CML) or guarded alternative evaluation:
-     $$\text{sync}(\text{receive}(c_1) \Rightarrow \lambda x. M \;\mathbin{\Box}\; \text{receive}(c_2) \Rightarrow \lambda y. N)$$
-
-To give this calculus a denotational semantics, one must solve:
-$$D \cong [D \to \mathcal{P}(\mathcal{V}_{\le 1}(D))]$$
-where $[D \to \dots]$ models higher-order functions, $\mathcal{P}$ models internal choice ($\sqcap$), and $\mathcal{V}_{\le 1}$ models probabilistic choice ($\oplus_p$).
-
----
-
-## 3. Solving Recursive Domain Equations in $\omega\mathbf{FVA}$
+## Solving Recursive Domain Equations in $\omega\mathbf{FVA}$
 
 The category $\omega\mathbf{FVA}$ consists of continuous domains $D$ whose identity map is the directed supremum of an increasing sequence of maps factoring through subprobability valuation spaces over finite posets $P_n$:
 $$D \xrightarrow{\;p_n\;} \mathcal{V}_{\le 1}(P_n) \xrightarrow{\;e_n\;} D, \qquad \sup_{n \in \mathbb{N}} (e_n \circ p_n) = \mathrm{id}_D$$
@@ -231,7 +286,7 @@ Thus, $D_\infty \cong [D_\infty \to \mathcal{V}_{\le 1}(D_\infty)]$ in $\omega\m
 
 ---
 
-## 4. Comparison: $\omega\mathbf{FVA}$ vs. Equilogical Spaces ($\mathbf{Equ}$)
+## Comparison: $\omega\mathbf{FVA}$ vs. Equilogical Spaces ($\mathbf{Equ}$)
 
 In the late 1990s, semanticists recognized that continuous domains ($\mathbf{CONT}$) failed Cartesian closure and that standard CCC subclasses were not closed under probabilistic valuations. This led to two historical pathways:
 
@@ -262,7 +317,7 @@ graph TD
 
 ---
 
-## 5. The Quantum Extension: From Classical Probability to $\omega\mathbf{QVA}$
+## The Quantum Extension: From Classical Probability to $\omega\mathbf{QVA}$
 
 In quantum mechanics, unitary evolution creates coherent superposition, while measurement turns that coherence into a classical distribution of outcomes. For a computational-basis measurement,
 
@@ -437,42 +492,7 @@ The domain construction supplies the space in which a fixed-register untyped qua
 
 ---
 
-## 6. Back-and-Forth Operational Correspondence with Qiskit
-
-The tables in this section ground the denotational semantics by relating two operational presentations. They are not intended as a literal compiler specification. Each row is a commuting correspondence
-
-$$\text{$q\lambda$ construct}\longrightarrow
-  \text{CP channel or instrument}
-  \longleftarrow\text{Qiskit execution pattern}.$$
-
-For a fixed initial quantum state, the desired equivalence is observational: both sides have the same classical outcome probabilities and, conditioned on an outcome, the same post-measurement quantum state. The quantum forms below are intended primitives extending the classical control syntax of §2; they are not Church encodings. Church booleans remain useful classical data, but they are duplicable and therefore cannot stand for qubits.
-
-### Table 1: Quantum primitives with a shared denotation
-| Concept | Intended $q\lambda$ operational form | Qiskit execution pattern | Shared CP denotation |
-| :--- | :--- | :--- | :--- |
-| **Prepare $\vert0\rangle$** | $\operatorname{new0}(q);\,M$ | `qc.reset(q)` (or a fresh circuit qubit) | Preparation channel with output $\vert0\rangle\langle0\vert$ |
-| **Pauli-$X$** | $X(q);\,M$ | `qc.x(q)` | $\rho\mapsto X\rho X^\dagger$ |
-| **Prepare $\vert1\rangle$** | $\operatorname{new0}(q);\,X(q);\,M$ | fresh/reset `q`; `qc.x(q)` | Preparation channel with output $\vert1\rangle\langle1\vert$ |
-| **Hadamard** | $H(q);\,M$ | `qc.h(q)` | $\rho\mapsto H\rho H^\dagger$; on $\vert0\rangle$ the output is coherent $\vert+\rangle$, not a probabilistic mixture |
-| **CNOT** | $\operatorname{CX}(q,r);\,M$ | `qc.cx(q, r)` | $\rho\mapsto \operatorname{CX}\rho\operatorname{CX}^\dagger$ |
-| **Measurement** | $\operatorname{measure}\ q\ \operatorname{with}\ 0\Rightarrow M\mid1\Rightarrow N$ | `qc.measure(q, c)` followed by `if_test` branches | Instrument $\Phi_i(\rho)=P_i\rho P_i$; probability $\operatorname{Tr}(\Phi_i(\rho))$ |
-| **Classical probabilistic choice** | $M\oplus_p N$ | host RNG, or an ancilla rotation followed by measurement and `if_test` | Branches $p\,\mathrm{id}$ and $(1-p)\,\mathrm{id}$ followed by the denotations of $M,N$ |
-
-### Table 2: Higher-order control and choice
-| Concept | $q\lambda$ operational role | Qiskit / host-language counterpart | Denotational correspondence |
-| :--- | :--- | :--- | :--- |
-| **Variable** | $x$ is classical data or an opaque register handle | Python parameter, classical value, or register index | Environment lookup; a quantum register is threaded by the instrument semantics rather than copied as a Church value |
-| **Abstraction** | $\lambda x.M$ packages higher-order classical control | circuit factory, closure, or parameterized subroutine | Scott-continuous function producing a computation; not necessarily a unitary |
-| **Application** | $M\,N$ invokes higher-order control | call a factory/subroutine and compose its result | Evaluation followed by Kleisli/instrument composition |
-| **Probabilistic choice** | $M\oplus_p N$ resolves by a classical coin | host RNG or measured ancilla controlling dynamic branches | Convex combination of the two computation denotations |
-| **Internal choice** | $M\sqcap N$ is selected by an unobservable scheduler | host/runtime scheduler chooses a branch | Nondeterministic powerdomain layer; no fixed 50/50 probability is implied |
-| **External choice** | $M\mathbin{\Box}N$ waits for an environment-selected guard/event | runtime input, callback, or guarded `if_test` | Environment-indexed family of computations; not inherently a controlled unitary |
-
-Thus the “back-and-forth” is between operational realizations at matching semantic layers. Quantum gates and measurements meet as channels and instruments. Untyped $\lambda$ abstraction and application meet Qiskit through the surrounding classical host language as circuit-producing higher-order control. Some terms require dynamic circuits or runtime interaction rather than one static circuit, but the common denotation still supplies the mental bijection used to guide the formal semantics.
-
----
-
-## 7. Formal Verification in Lean 4 & Capstone Theorem
+## Formal Verification in Lean 4 & Capstone Theorem
 
 The formalization is constructed in Lean 4 on top of the `Scott1972` continuous lattice library (`https://github.com/catskillsresearch/scott1972`). Chen–Kou–Lyu-style finite-separation and saturation lemmas are mechanized in `QLambda/Saturation.lean`, and `omegaQVA_closed_under_functionSpace` proves Cartesian closure by finite-separator step-map sampling. `QLambda/QuantumInstrument.lean` develops finite Kraus instruments and proves residual CP refinement equivalent to Choi order. `QLambda/RefinementCounterexample.lean` proves indicator observations too weak for TT refinement. `QLambda/RationalCP.lean`, `QLambda/TTObservationBasis.lean`, and `QLambda/TTRefinement.lean` replace them by countable physical finitary CP-valued postconditions and prove exact satisfied-theory order correspondence. `QLambda/TTRoundedTheory.lean` forms their saturated continuous completion. `QLambda/RoundedTheoryOmega.lean` proves generically that every encodable rounded basis is an $\omega\mathbf{QVA}$ by explicit one-dimensional density factorizations. `QLambda/TTResultAlgebra.lean`, `QLambda/TTResultApproximation.lean`, and `QLambda/TTResultOperations.lean` establish TNI result normalization, rational local approximation, and Scott-continuous token-local aggregation. `QLambda/TTContinuationMonad.lean` defines $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$, proves every `IsQuantumPowerModel` and `IsQuantumMonad` field, and bundles `TTContinuation.model n`. `QLambda/TTPhysicalEmbedding.lean` embeds finite physical instruments, proves finite monad compatibility on the precisely stated fragment, proves represented-test refinement recovery, and formalizes the directed-supremum obstruction to a finite-image Scott retract.
 
@@ -531,7 +551,7 @@ theorem TTPhysicalEmbedding.embed_unit (d : D) :
 
 ---
 
-## 8. Currently open holes
+## Currently open holes
 
 The following are **not** claimed as proved. They are the remaining semantic obligations toward a closed-term theorem and stronger completeness statements.
 
@@ -545,11 +565,11 @@ The following are **not** claimed as proved. They are the remaining semantic obl
 
 5. **Stronger physical / domain claims not pursued.** A finite-image Scott retract onto embedded instruments is **refuted**, not missing. Raw `InstrumentPower` as an $\omega\mathbf{QVA}$ carrier is not claimed; the Choi-ray obstruction rules out a particular physical-basis approximant scheme for $n\ge 2$, not the continuation-power construction in use.
 
-6. **Documentation lag.** `HANDOFF.md` may still describe an earlier “application-free only / full stacked lemma remains” cut; this file (§0, §7–§8) is the narrative status of record for the domain equation and the stacked-application fragment.
+6. **Documentation lag.** `HANDOFF.md` may still describe an earlier “application-free only / full stacked lemma remains” cut; this file (the front status section, *Formal Verification*, and *Currently open holes*) is the narrative status of record for the domain equation and the stacked-application fragment.
 
 ---
 
-## 9. Acknowledgments & Provenance
+## Acknowledgments & Provenance
 
 * **Software & AI Tooling:** The formalization was mechanized using **Lean 4** and **Mathlib**. The author utilized the **Cursor** development environment, **Grok 4.6 High Fast**, **Gemini 3.7 Flash**, and **GPT-5.6 Sol Medium** as assistive tools for code scaffolding, proof exploration, semantic review, redesign planning, and document drafting.
 * **Integrity Statement:** All formal definitions, proofs, and synthesized results were verified under the Lean 4 compiler. Authors retain full and exclusive responsibility for the mathematical correctness of the mechanized proofs and the contents of this manuscript.
