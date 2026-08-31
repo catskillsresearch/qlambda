@@ -13,6 +13,15 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 
+IMPLEMENTATION_SOURCES = (
+    "vendor/scott1972/Scott1972/ContinuousLattice/FunctionSpaces.lean",
+    "vendor/scott1972/Scott1972/ContinuousLattice/InverseLimits.lean",
+    "QLambda/OmegaQVA.lean",
+    "QLambda/QDomain.lean",
+    "QLambda/QuantumDomainEquation.lean",
+    "QLambda/TTContinuationDomainEquation.lean",
+)
+
 # Palomar production editorial content uses gpt-5.6-sol; lighter passes use composer-2.5.
 PRIMARY_MODEL = "gpt-5.6-sol"
 ECONOMY_MODEL = "composer-2.5"
@@ -180,10 +189,12 @@ def has_proof_account(*texts: str) -> bool:
 
 
 def assemble_evidence(step_id: str, cfg: dict, policy_dir: Path, mechanical: dict, prior: list[dict]) -> dict:
-    repo_commit = mechanical.get("repository", {}).get("commit") or "unknown"
+    repository = mechanical.get("repository", {})
+    repo_commit = repository.get("commit")
+    source_bundle = repository.get("immutable_source_bundle_sha256")
     evidence: dict[str, Any] = {
         "step": step_id,
-        "repository_commit": repo_commit,
+        "repository_commit": repo_commit or f"uncommitted-source-bundle:{source_bundle}",
         "comparator": cfg,
         "mechanical_report": mechanical,
         "previous_findings": [
@@ -203,6 +214,13 @@ def assemble_evidence(step_id: str, cfg: dict, policy_dir: Path, mechanical: dic
     for key, path in files.items():
         if path.is_file():
             evidence[key] = read_text(path, limit=120_000 if key == "challenge_source" else 80_000)
+    evidence["implementation_source_bundle"] = {
+        relative: {
+            "sha256": mechanical.get("artifact_hashes", {}).get(relative),
+            "content": read_text(ROOT / relative, limit=120_000),
+        }
+        for relative in IMPLEMENTATION_SOURCES
+    }
     if (policy_dir / "taxonomies/classification-guide.md").is_file():
         evidence["classification_guide"] = read_text(policy_dir / "taxonomies/classification-guide.md", 40_000)
     evidence["declarations_checked_order"] = expected_declarations(cfg)

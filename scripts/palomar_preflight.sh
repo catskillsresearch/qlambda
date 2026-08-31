@@ -135,6 +135,10 @@ if lines >= 1000:
     raise SystemExit(f"Challenge.lean too long: {lines} lines (limit 1000)")
 if size >= 100 * 1024:
     raise SystemExit(f"Challenge.lean too large: {size} bytes (limit 100 KiB)")
+if lines >= 300:
+    print(f"WARNING: Challenge.lean is {lines} lines (Palomar auditability target: <300)")
+if size >= 32 * 1024:
+    print(f"WARNING: Challenge.lean is {size} bytes (Palomar auditability target: <32 KiB)")
 print(f"OK: Challenge.lean is {lines} lines, {size} bytes.")
 PY
 
@@ -187,17 +191,33 @@ PY
 step "Build Lean project"
 lake build 2>&1 | grep -vE 'LEAN_PATH|trace:' | tail -20
 
-step "Compare Challenge/Solution types and definition values"
+step "Compare Challenge/Solution theorem and definition-hole types"
 PALOMAR_QUIET=1 bash scripts/compare_challenge_solution_types.sh
 
 step "Reject proof holes in Solution sources"
-if rg -n --glob '*.lean' \
-    '(^|:=|by)[[:space:]]+sorry([[:space:];]|$)|^[[:space:]]*sorry([[:space:];]|$)' \
-    QLambda Solution.lean; then
-  echo "FAIL: Solution proof sources contain sorry."
-  exit 1
-fi
-echo "OK: Solution proof sources contain no sorry."
+python3 - <<'PY'
+import re
+from pathlib import Path
+
+pattern = re.compile(
+    r"^[ \t]*(?:sorry|admit)\b|:=[ \t]*(?:by[ \t]+)?(?:sorry|admit)\b",
+    re.MULTILINE,
+)
+paths = sorted(Path("QLambda").rglob("*.lean")) + [Path("Solution.lean")]
+hits = []
+for path in paths:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise SystemExit(f"FAIL: could not scan {path}: {exc}")
+    for match in pattern.finditer(text):
+        line = text.count("\n", 0, match.start()) + 1
+        hits.append(f"{path}:{line}:{match.group(0).strip()}")
+if hits:
+    print("\n".join(hits))
+    raise SystemExit("FAIL: Solution proof sources contain sorry/admit.")
+print(f"OK: scanned {len(paths)} Solution proof files; no sorry/admit.")
+PY
 
 step "Check permitted theorem axioms"
 tmp="$(mktemp -d)"
@@ -247,6 +267,9 @@ PY
 step "Check patch formatting"
 git diff --check
 
+step "Palomar deterministic editorial pre-checks"
+python3 scripts/palomar_editorial_checks.py
+
 if [[ "$MECHANICAL_ONLY" -eq 1 ]]; then
   echo ""
   echo "OK: mechanical preflight passed (--mechanical-only; editorial audit skipped)."
@@ -261,9 +284,6 @@ fi
 
 step "Sync PalomarPolicy to upstream latest"
 python3 scripts/palomar_policy_sync.py "${SYNC_ARGS[@]}"
-
-step "Palomar editorial pre-checks"
-python3 scripts/palomar_editorial_checks.py
 
 step "Build local mechanical report"
 mkdir -p .cache/palomar-editorial

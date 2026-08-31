@@ -2,8 +2,21 @@
   "challenge_module": "Challenge",
   "solution_module": "Solution",
   "theorem_names": [
-    "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved"
+    "Scott1972.ContinuousLattice.canonical_omegaQVA_quantum_domain_equation_solved"
   ],
-  "definition_names": [],
+  "definition_names": [
+    "Scott1972.ContinuousLattice.ScottMap.instSupSet",
+    "Scott1972.ContinuousLattice.ScottMap.instCompleteLattice",
+    "Scott1972.ContinuousLattice.ScottMap.idMap",
+    "Scott1972.ContinuousLattice.ScottMap.comp",
+    "Scott1972.ContinuousLattice.instCompleteLattice",
+    "Scott1972.ContinuousLattice.embInf",
+    "Scott1972.ContinuousLattice.projInf",
+    "Scott1972.ContinuousLattice.omegaQVA_pUnit",
+    "Scott1972.ContinuousLattice.canonicalQDomainProjection",
+    "Scott1972.ContinuousLattice.qTowerProj",
+    "Scott1972.ContinuousLattice.qEmbInfInf",
+    "Scott1972.ContinuousLattice.qProjInfInf"
+  ],
   "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]
 }

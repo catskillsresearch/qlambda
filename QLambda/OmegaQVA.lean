@@ -23,6 +23,8 @@ namespace Scott1972.ContinuousLattice
 
 open SubNormalizedDensity
 
+universe u
+
 variable {D E : Type*} [CompleteLattice D] [CompleteLattice E]
 
 /-- Finite product of Loewner spectrahedra, one block per matrix size. -/
@@ -192,6 +194,41 @@ class IsOmegaQVA (D : Type*) [CompleteLattice D] where
   separated : ∀ n, FinitelySeparated (approx n)
   monotone_approx : Monotone approx
   iSup_approx : (⨆ n, approx n) = ScottMap.idMap
+
+/-- The canonical `ωQVA` witness for the one-point lattice.
+
+Every approximant is the identity. It factors through the empty density
+vector `DensityVec [] = PUnit`, and the unique point is a finite separator. -/
+@[reducible] noncomputable def omegaQVA_pUnit : IsOmegaQVA PUnit.{u + 1} where
+  isContinuousLattice := proposition_2_8
+  approx := fun _ => ScottMap.idMap
+  qfactorable := fun _ =>
+    { dims := []
+      enc := fun _ : PUnit.{u + 1} => (⟨⟩ : DensityVec [])
+      recon := fun _ : DensityVec [] => (⟨⟩ : PUnit.{u + 1})
+      enc_mono := by
+        intro x y _
+        cases x
+        cases y
+        exact le_rfl
+      recon_mono := by
+        intro x y _
+        cases x
+        cases y
+        exact @le_refl PUnit.{u + 1}
+          (inferInstance : CompleteLattice PUnit.{u + 1}).toPartialOrder.toPreorder _
+      factor := by
+        intro x
+        cases x
+        rfl }
+  separated := fun _ => by
+    classical
+    refine ⟨({⟨⟩} : Finset PUnit.{u + 1}), fun x => ?_⟩
+    cases x
+    exact ⟨⟨⟩, by simp, by simp, by simp⟩
+  monotone_approx := fun _ _ _ => le_rfl
+  iSup_approx := by
+    simp
 
 /-- Binary products of continuous lattices are continuous (Prop. 2.9, two factors). -/
 theorem continuousLattice_prod (hD : IsContinuousLattice D) (hE : IsContinuousLattice E) :

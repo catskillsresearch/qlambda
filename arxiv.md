@@ -140,7 +140,7 @@ A monad on values is specified by unit $D\to Q(D)$ (trivial computation) and bin
 $$
 Q(D)\;=\;\mathcal Q_n(D)\;=\;[[D\to R_n]\to R_n],
 $$
-where $R_n$ is the continuous lattice of finitary observation results for an $n$-dimensional register (Lean: `TTResult n` / `TTContinuation.model n`). Qubit hardware takes $n=2$. Lean’s existence theorem is `omegaQVA_quantum_domain_equation_solved` in `QLambda/QuantumDomainEquation.lean`. In this presentation $Q$ packages finite quantum instruments together with classical control effects as Scott-continuous maps on result continuations.
+where $R_n$ is the continuous lattice of finitary observation results for an $n$-dimensional register (Lean: `TTResult n` / `TTContinuation.model n`). Qubit hardware takes $n=2$. Lean’s Palomar theorem of record is `canonical_omegaQVA_quantum_domain_equation_solved` in `QLambda/QuantumDomainEquation.lean`; it constructs the one-point initial domain and bonding pair for every quantum power model. The more general `omegaQVA_quantum_domain_equation_solved` retains arbitrary supplied initial data. In this presentation $Q$ packages finite quantum instruments together with classical control effects as Scott-continuous maps on result continuations.
 
 #### Contrapositives (what is not claimed)
 
@@ -458,8 +458,9 @@ The development constructs both the rational coded-test representation and a con
 
 **Rounded completion and $\omega\mathbf{QVA}$.** `ttTokenTheory_isContinuousLattice` follows from rounded ideal completion. `RoundedTheory.isOmegaQVA` uses finite-prefix membership gates, each factoring through finite products of one-dimensional sub-normalized density spaces, to approximate the identity.
 
-**Concrete continuation model.** `TTContinuation.model n` satisfies `IsQuantumPowerModel`; the same carrier satisfies `IsQuantumMonad`. Evaluation and precomposition are Scott-continuous, and pointwise directed suprema prove local continuity. Therefore the parameterized theorem `omegaQVA_quantum_domain_equation_solved` applies and yields
+**Concrete continuation model.** `TTContinuation.model n` satisfies `IsQuantumPowerModel`; the same carrier satisfies `IsQuantumMonad`. Evaluation and precomposition are Scott-continuous, and pointwise directed suprema prove local continuity. The canonical-base theorem therefore applies without additional initial-domain data and yields
 $$D_\infty\cong[D_\infty\to\mathcal Q_n(D_\infty)].$$
+This specialization is named `QLambda.TTContinuation.canonical_omegaQVA_quantum_domain_equation_solved`.
 
 **Physical embedding.** `bindResultScott_satisfied` proves that on a continuation represented by finite result instruments,
 $$\operatorname{embed}(\mu)(k)
@@ -502,10 +503,11 @@ The finite spectrahedron $\mathcal{S}_{\le 1}(A)$ is an approximation factor in 
 3. $Q$ is order-enriched and locally continuous on monotone $\mathbb N$-families;
 4. $D\in\omega\mathbf{QVA}$ implies $Q(D)\in\omega\mathbf{QVA}$.
 
-Let $D_0\in\omega\mathbf{QVA}$ and let $j_0:[D_0\to Q(D_0)]\to D_0$ be a continuous-lattice projection. For the inverse limit of $D_{m+1}=[D_m\to Q(D_m)]$, `omegaQVA_quantum_domain_equation_solved` proves
+The general theorem accepts $D_0\in\omega\mathbf{QVA}$ together with an embedding–retraction pair whose inclusion maps $D_0\to[D_0\to Q(D_0)]$ and whose bonding retraction maps $j_0^{\mathrm{retr}}:[D_0\to Q(D_0)]\twoheadrightarrow D_0$. For the inverse limit of $D_{m+1}=[D_m\to Q(D_m)]$, `omegaQVA_quantum_domain_equation_solved` proves
 $$D_\infty\in\omega\mathbf{QVA}
 \qquad\text{and}\qquad
 D_\infty\cong[D_\infty\to Q(D_\infty)].$$
+The selected theorem `canonical_omegaQVA_quantum_domain_equation_solved` constructs this initial pair on the one-point domain for every `QuantumPowerModel`.
 The mixed tower maps and inverse identities are proved from the specification and instantiate with `TTContinuation.model n`.
 
 ### Roadmap from the domain to a complete language semantics
@@ -535,12 +537,14 @@ class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) 
   map_iSup : ...
   closed : ∀ {D} [CompleteLattice D], IsOmegaQVA D → IsOmegaQVA (Q D)
 
-theorem omegaQVA_quantum_domain_equation_solved
-    (M : QuantumPowerModel) (D₀ : QDomain.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :
-    Nonempty (IsOmegaQVA (QDInf M D₀ j₀)) ∧
+theorem canonical_omegaQVA_quantum_domain_equation_solved
+    (M : QuantumPowerModel) :
+    let D₀ := canonicalQDomain
+    let j₀ := canonicalQDomainProjection M
+    let Dinf := QDInf M D₀ j₀
+    Nonempty (IsOmegaQVA Dinf) ∧
     ... ∧
-    Nonempty (QDInf M D₀ j₀ ≃o ScottMap (QDInf M D₀ j₀) (QuantumPower M (QDInf M D₀ j₀)))
+    Nonempty (Dinf ≃o ScottMap Dinf (QuantumPower M Dinf))
 
 structure QuantumOperation (n m : ℕ) where
   kraus : List (Matrix (Fin m) (Fin n) ℂ)
@@ -569,7 +573,7 @@ theorem TTPhysicalEmbedding.embed_unit (d : D) :
 
 ### What the Lean development currently proves (checklist)
 
-1. **Domain.** $D_\infty\in\omega\mathbf{QVA}$ and $D_\infty\cong[D_\infty\to Q(D_\infty)]$ for every quantum power model $Q$, instantiated at $\mathcal Q_n$.
+1. **Domain.** For every quantum power model $Q$, the canonical one-point tower has $D_\infty\in\omega\mathbf{QVA}$ and $D_\infty\cong[D_\infty\to Q(D_\infty)]$; this is instantiated at $\mathcal Q_n$. A separate theorem permits arbitrary supplied $D_0$ and projection pair.
 2. **Physical fragment.** Exact `embed_unit`; map/bind agreement on finitely presented continuations; every rational TT test has a Scott representation; embedding order recovers `FinitaryTTRefines`; no Scott retract onto the finite embedded image.
 3. **Interpretation.** Compositional Scott-continuous `interp` into $Q(D_\infty)$; ordinary and recursive β; recursive denotations as Scott fixed points / finite-iterate suprema.
 4. **Choice.** Internal join, physical weighted probability (not lattice join), and tagged external selection are separated and registered as lawful effect instances.
@@ -587,7 +591,7 @@ A compact status table and the open-hole list appear in the next section.
 | Layer | Status | Principal Lean anchors |
 | :--- | :--- | :--- |
 | $\omega\mathbf{QVA}$, Cartesian closure, saturation | Done | `OmegaQVA`, `Saturation` |
-| Parameterized equation $D_\infty\cong[D_\infty\to Q(D_\infty)]$ | Done | `omegaQVA_quantum_domain_equation_solved` |
+| Canonical and parameterized equations $D_\infty\cong[D_\infty\to Q(D_\infty)]$ | Done | `canonical_omegaQVA_quantum_domain_equation_solved`, `omegaQVA_quantum_domain_equation_solved` |
 | Concrete $Q_n$, monad laws | Done | `TTContinuation.model`, `IsQuantumMonad` |
 | Finite TNI embedding, presented map/bind, retract obstruction | Done | `TTPhysicalEmbedding`, `FiniteImageNonclosure` |
 | Untyped syntax, `interp` in $Q(D_\infty)$, β / rec-β | Done | `Interp`, `Soundness` |

@@ -1,9 +1,12 @@
 # Palomar Challenge/Comparator style
 
 Palomar compares elaborated Lean constants, not merely mathematical
-equivalence or pretty-printed declaration types. For a definition it compares
-the elaborated value too, including universe names and typeclass-instance paths
-inside the body. Run this before every submission:
+equivalence or ordinary pretty-printed declarations. A `definition_names`
+entry is intentionally a definition hole: Challenge may give it a `sorry`
+body, while Solution supplies the implementation. Comparator checks the
+declaration name and kind, universe/safety level, type, allowed axiom closure,
+and kernel acceptance. It does not require the Challenge `sorryAx` value to
+equal the Solution implementation. Run this before every submission:
 
 ```bash
 scripts/palomar_preflight.sh
@@ -11,49 +14,40 @@ scripts/palomar_preflight.sh
 
 ## Compared declarations
 
-- Pin universe names (`Type u`, `Type v`). Comparator compares `levelParams`,
-  including their names.
+- Pin explicit universe arity (`Type u`, `Type v`) and inspect the exported
+  levels; pretty-printer-generated `u_1`/`u_3` labels are presentation noise.
 - Keep instance paths explicit where elaboration could choose different
   equivalent instances.
 - A `theorem_names` entry must be a theorem; a `definition_names` entry must be
-  a definition, not a structure or instance.
-- Keep concrete Challenge and Solution definition bodies structurally
-  identical. Do not rely on proof irrelevance to make values compare.
-- Audit every `definition_names` body and every concrete definition reached
-  transitively from a compared theorem or instance. A matching parent body is
-  insufficient when it refers to a named child definition whose value differs.
+  a definition-valued constant (an ordinary definition or named instance),
+  not a structure declaration or theorem.
+- List every material opaque Challenge definition reachable from the selected
+  statement. Give each hole a precise docstring describing the intended
+  construction; the Solution implementation is what Comparator kernel-checks.
+- Keep concrete (non-hole) definitions used by the statement identical between
+  Challenge and Solution.
 - Write order operations with explicit `@LE.le` instance paths when Challenge
   and Solution import graphs can elaborate `≤` through different parent
   structures. This repository is exposed to that failure mode wherever a
   Boolean-algebra or linear-order instance can be reached by two routes.
 
-## Concrete structures
+## Definition-hole boundary
 
-Never put an inline proof in a structure value that is definition-locked:
-
-```lean
--- Avoid: creates `instPartialOrder._proof_N`.
-instance : PartialOrder A where
-  le_refl x := ...
-
--- Use: the structure body refers to a stable theorem name.
-theorem order_refl (x : A) : rel x x := by ...
-instance : PartialOrder A where
-  le_refl := order_refl
-```
-
-Put each named proof boundary in `comparator.json` under `theorem_names`.
-Challenge may use `sorry`; Solution supplies the proof. This fixes the concrete
-data while allowing proof terms to differ.
+Prefer a compact, semantically strong type. For example, the type of
+`canonicalQDomainProjection` fixes both directions and both projection laws;
+its Challenge body may be `sorry`, and the name belongs in
+`definition_names`. Do not compare a `#print`ed Challenge body against the
+Solution body: that would compare `sorryAx` with real code and always reject a
+valid definition-hole submission.
 
 ## Submission checklist
 
 The preflight must confirm:
 
 1. the full project builds;
-2. compared names, universe parameters, types, all `definition_names` values,
-   and transitively locked bodies match;
-3. locked bodies contain no generated `._proof_N` dependencies;
+2. compared theorem and definition-hole names, kinds, universe structures, and
+   types match;
+3. every material Challenge hole is listed in `definition_names`;
 4. Solution sources contain no `sorry`;
 5. Solution theorem axioms are permitted by `comparator.json`; and
 6. the patch has no whitespace errors.

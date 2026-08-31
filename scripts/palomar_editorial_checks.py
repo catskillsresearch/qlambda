@@ -31,11 +31,6 @@ ALLOWED_SOURCE_TYPES = {"paper", "book", "web discussion", "folklore", "original
 ORIGINAL_RELATIONSHIPS = {"background", "other"}
 SUBSTANTIVE_RELATIONSHIPS = {"formalizes", "adapts", "independently-proves"}
 
-SORRY_DEF = re.compile(
-    r"^(?:noncomputable\s+)?def\s+(\w+)\b[\s\S]*?:=\s*sorry",
-    re.MULTILINE,
-)
-
 THEOREM_BODY = re.compile(
     r"(?:/--[\s\S]*?-/\s*\n\s*)?"
     r"theorem\s+{name}\b([\s\S]*?):=\s*by\s+sorry",
@@ -43,6 +38,36 @@ THEOREM_BODY = re.compile(
 )
 
 THEOREM_SOURCE_HINTS: dict[str, tuple[str, ...]] = {}
+
+EXPECTED_CAPSTONE = (
+    "Scott1972.ContinuousLattice."
+    "canonical_omegaQVA_quantum_domain_equation_solved"
+)
+
+REQUIRED_DEFINITION_HOLES = {
+    "Scott1972.ContinuousLattice.ScottMap.instSupSet",
+    "Scott1972.ContinuousLattice.ScottMap.instCompleteLattice",
+    "Scott1972.ContinuousLattice.ScottMap.idMap",
+    "Scott1972.ContinuousLattice.ScottMap.comp",
+    "Scott1972.ContinuousLattice.instCompleteLattice",
+    "Scott1972.ContinuousLattice.embInf",
+    "Scott1972.ContinuousLattice.projInf",
+    "Scott1972.ContinuousLattice.omegaQVA_pUnit",
+    "Scott1972.ContinuousLattice.canonicalQDomainProjection",
+    "Scott1972.ContinuousLattice.qTowerProj",
+    "Scott1972.ContinuousLattice.qEmbInfInf",
+    "Scott1972.ContinuousLattice.qProjInfInf",
+}
+
+PROJECTION_DOCS = (
+    "Challenge.lean",
+    "README.md",
+    "formalization.yaml",
+    "arxiv.md",
+    "THEOREMS.md",
+    "HANDOFF.md",
+    "PROVENANCE.md",
+)
 
 
 def check_sources(formalization: dict) -> list[str]:
@@ -221,19 +246,42 @@ def check_alignment(formalization: dict, challenge_text: str, cfg: dict) -> list
     return errors
 
 
-def sorry_qualified_defs(challenge_text: str) -> set[str]:
-    """Fully qualified names of Challenge definitions whose body is `sorry`."""
-    result: set[str] = set()
-    for ns_match in re.finditer(r"^namespace\s+(\S+)\s*$", challenge_text, re.MULTILINE):
-        ns = ns_match.group(1)
-        start = ns_match.end()
-        end_match = re.search(rf"^end\s+{re.escape(ns)}\s*$", challenge_text[start:], re.MULTILINE)
-        if not end_match:
-            continue
-        block = challenge_text[start : start + end_match.start()]
-        for dm in SORRY_DEF.finditer(block):
-            result.add(f"{ns}.{dm.group(1)}")
-    return result
+def challenge_declarations(challenge_text: str) -> dict[str, tuple[str, str]]:
+    """Return qualified Challenge declarations as name -> (kind, source block)."""
+    lines = challenge_text.splitlines(keepends=True)
+    scopes: list[tuple[str, str | None]] = []
+    found: list[tuple[str, str, int]] = []
+    offset = 0
+    decl_re = re.compile(
+        r"^\s*(?:@\[[^\]]+\]\s*)?(?:noncomputable\s+)?"
+        r"(theorem|def|instance)\s+([A-Za-z_][A-Za-z0-9_']*)\b"
+    )
+    for line in lines:
+        stripped = line.strip()
+        namespace = re.fullmatch(r"namespace\s+(\S+)", stripped)
+        section = re.fullmatch(r"section(?:\s+\S+)?", stripped)
+        end = re.fullmatch(r"end(?:\s+\S+)?", stripped)
+        if namespace:
+            scopes.append(("namespace", namespace.group(1)))
+        elif section:
+            scopes.append(("section", None))
+        elif end and scopes:
+            scopes.pop()
+        else:
+            decl = decl_re.match(line)
+            if decl:
+                prefix = ".".join(
+                    name for kind, name in scopes if kind == "namespace" and name
+                )
+                full = f"{prefix}.{decl.group(2)}" if prefix else decl.group(2)
+                found.append((full, decl.group(1), offset))
+        offset += len(line)
+
+    declarations: dict[str, tuple[str, str]] = {}
+    for idx, (name, kind, start) in enumerate(found):
+        end = found[idx + 1][2] if idx + 1 < len(found) else len(challenge_text)
+        declarations[name] = (kind, challenge_text[start:end])
+    return declarations
 
 
 def theorem_statement(challenge_text: str, name: str) -> str | None:
@@ -247,25 +295,39 @@ def compared_definition_names(cfg: dict) -> set[str]:
 
 
 def check_sorry_definition_pinning(cfg: dict, challenge_text: str) -> list[str]:
-    """Every sorry'd Challenge def referenced by a compared theorem must be compared."""
+    """Comparator definition holes must be real, explicit Challenge holes."""
     errors: list[str] = []
-    sorry_defs = sorry_qualified_defs(challenge_text)
+    declarations = challenge_declarations(challenge_text)
     pinned = compared_definition_names(cfg)
-    for full_name in cfg.get("theorem_names", []):
-        short = short_name(full_name)
-        statement = theorem_statement(challenge_text, short)
-        if statement is None:
-            errors.append(
-                f"compared theorem {full_name!r} not found as `sorry` theorem in Challenge.lean"
-            )
+    missing_required = sorted(REQUIRED_DEFINITION_HOLES - pinned)
+    extra_required = sorted(pinned - REQUIRED_DEFINITION_HOLES)
+    if missing_required:
+        errors.append("missing material definition holes: " + ", ".join(missing_required))
+    if extra_required:
+        errors.append(
+            "unexpected definition holes; audit and update REQUIRED_DEFINITION_HOLES: "
+            + ", ".join(extra_required)
+        )
+    for name in sorted(pinned):
+        declaration = declarations.get(name)
+        if declaration is None:
+            errors.append(f"definition hole {name!r} not found in Challenge.lean")
             continue
-        referenced = set(QUALIFIED_NAME.findall(statement))
-        opaque = sorted(q for q in referenced if q in sorry_defs and q not in pinned)
-        if opaque:
-            errors.append(
-                f"{full_name} references opaque Challenge definitions not listed in "
-                f"comparator.json definition_names: {', '.join(opaque)}"
-            )
+        kind, block = declaration
+        if kind not in {"def", "instance"}:
+            errors.append(f"definition_names entry {name!r} has Challenge kind {kind!r}")
+        if not re.search(r"\b(?:sorry|admit)\b", block):
+            errors.append(f"definition_names entry {name!r} is not a Challenge proof hole")
+    for name in cfg.get("theorem_names", []):
+        declaration = declarations.get(name)
+        if declaration is None:
+            errors.append(f"compared theorem {name!r} not found in Challenge.lean")
+            continue
+        kind, block = declaration
+        if kind != "theorem":
+            errors.append(f"theorem_names entry {name!r} has Challenge kind {kind!r}")
+        if not re.search(r"\b(?:sorry|admit)\b", block):
+            errors.append(f"compared theorem {name!r} is not a Challenge proof hole")
     return errors
 
 
@@ -299,6 +361,54 @@ def check_scope_comparator_sync(formalization: dict, cfg: dict) -> list[str]:
     limitations = " ".join(str(x) for x in formalization.get("limitations", []) or [])
     if "Solution.lean imports" in limitations and "QLambda" not in limitations:
         errors.append("limitations should mention Solution.lean imports QLambda proofs")
+    return errors
+
+
+def check_canonical_capstone(formalization: dict, cfg: dict, challenge_text: str) -> list[str]:
+    errors: list[str] = []
+    if cfg.get("theorem_names") != [EXPECTED_CAPSTONE]:
+        errors.append(
+            "Palomar headline must be the sole canonical-base theorem "
+            f"{EXPECTED_CAPSTONE!r}"
+        )
+    declaration = challenge_declarations(challenge_text).get(EXPECTED_CAPSTONE)
+    if declaration is not None:
+        _, block = declaration
+        header = block.split(":=", 1)[0]
+        if "(M : QuantumPowerModel)" not in header:
+            errors.append("canonical capstone must quantify over M : QuantumPowerModel")
+        if "(D₀ :" in header or "(j₀ :" in header:
+            errors.append("canonical capstone must not require supplied D₀ or j₀ parameters")
+    metadata = json.dumps(formalization, ensure_ascii=False)
+    for token in (
+        "canonical_omegaQVA_quantum_domain_equation_solved",
+        "canonical one-point",
+        "qEmbInfInf",
+        "qProjInfInf",
+    ):
+        if token not in metadata:
+            errors.append(f"formalization.yaml canonical metadata is missing {token!r}")
+    return errors
+
+
+def check_projection_direction() -> list[str]:
+    errors: list[str] = []
+    reversed_patterns = (
+        re.compile(r"j[₀0]\s*:\s*D[₀0]\s*(?:↠|\\twoheadrightarrow)"),
+        re.compile(r"projection\s+j[₀0]\s*:\s*D[₀0]\s*(?:↠|\\twoheadrightarrow)", re.I),
+    )
+    for relative in PROJECTION_DOCS:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        for pattern in reversed_patterns:
+            if pattern.search(text):
+                errors.append(
+                    f"{relative} reverses j₀: bonding retr must map "
+                    "[D₀ → Q(D₀)] to D₀"
+                )
+                break
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    if "retr : [D₀ → Q(D₀)] ↠ D₀" not in readme:
+        errors.append("README.md must state the general bonding retraction direction")
     return errors
 
 
@@ -345,6 +455,8 @@ def main() -> int:
     errors.extend(check_alignment(formalization, challenge_text, cfg))
     errors.extend(check_sorry_definition_pinning(cfg, challenge_text))
     errors.extend(check_scope_comparator_sync(formalization, cfg))
+    errors.extend(check_canonical_capstone(formalization, cfg, challenge_text))
+    errors.extend(check_projection_direction())
     errors.extend(check_compared_sources(formalization, cfg))
 
     if errors:

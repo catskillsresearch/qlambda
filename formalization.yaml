@@ -6,13 +6,15 @@ project:
   description: >-
     Lean 4 formalization of ωQVA (quantum-valuation approximable domains) and
     the parameterized quantum domain equation. The Palomar Comparator selects
-    one compared theorem: omegaQVA_quantum_domain_equation_solved. For any
-    bundled quantum power model M, initial ωQVA domain D₀, and bonding
-    projection j₀ : D₀ ↠ [D₀ → Q(D₀)], the inverse limit D_∞ of the tower
-    D_{n+1} = [D_n → Q(D_n)] lies in ωQVA, the embedding and projection
-    between D_∞ and [D_∞ → Q(D_∞)] are mutual inverses, D_∞ is
-    order-isomorphic to its function space, and Scott's inverse-limit identity
-    holds on the quantum tower. The wider repository also constructs a
+    one theorem: canonical_omegaQVA_quantum_domain_equation_solved. For every
+    bundled quantum power model M, the tower starts from the canonical
+    one-point ωQVA domain. Its stage-zero pair embeds the point as the bottom
+    function and has bonding retraction [PUnit → Q(PUnit)] ↠ PUnit. The
+    inverse limit D_∞ lies in ωQVA; its constructed limit embedding and
+    projection are mutual inverses; D_∞ is order-isomorphic to
+    [D_∞ → Q(D_∞)]; and Scott's inverse-limit identity holds. The wider
+    repository retains the general theorem conditional on a supplied
+    embedding–retraction pair j₀, and also constructs a
     fixed-register continuation instance, embeds finite CP instruments, and
     proves bounded hardware channel-tree adequacy; those results are documented
     in THEOREMS.md and arxiv.md but are not selected by comparator.json.
@@ -32,13 +34,18 @@ classification:
 status:
   scope: >-
     Palomar Comparator selects 1 compared theorem:
-    omegaQVA_quantum_domain_equation_solved. The claim is parameterized by a
-    QuantumPowerModel (a Q satisfying IsQuantumPowerModel), an initial QDomain
-    D₀, and a supplied continuous-lattice projection j₀ bonding the first
-    tower stage. The five conjuncts prove ωQVA membership of the inverse
-    limit, mutual inverse identities for qEmbInfInf and qProjInfInf, an order
-    isomorphism D_∞ ≃o [D_∞ → Q(D_∞)], and Scott's bilimit identity on the
-    quantum tower. A concrete fixed-register Scott-continuation instance is
+    canonical_omegaQVA_quantum_domain_equation_solved. For every
+    QuantumPowerModel (a Q satisfying IsQuantumPowerModel), it chooses the
+    canonical one-point QDomain and the uniquely determined stage-zero
+    embedding–retraction pair. The pair has inclusion
+    PUnit → [PUnit → Q(PUnit)] and bonding retraction in the reverse direction.
+    The five conjuncts prove (1) ωQVA membership of the inverse limit,
+    (2) qProjInfInf after qEmbInfInf is identity, (3) qEmbInfInf after
+    qProjInfInf is identity, (4) an order isomorphism
+    D_∞ ≃o [D_∞ → Q(D_∞)], and (5) Scott's bilimit identity on the quantum
+    tower. The proof specializes the retained general theorem, which accepts
+    arbitrary D₀ and a supplied projection pair j₀. A concrete fixed-register
+    Scott-continuation instance is
     bundled as TTContinuation.model; it also has a lawful IsQuantumMonad
     instance. The tower is D_{n+1} = [D_n → Q(D_n)]; qTowerProj, qEmbInfInf,
     qProjInfInf, and the parameterized order isomorphism are defined. Finite
@@ -124,11 +131,21 @@ status:
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
   main_results:
-    - declaration: "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved"
+    - declaration: "Scott1972.ContinuousLattice.canonical_omegaQVA_quantum_domain_equation_solved"
       file: "Solution.lean"
       sorry_count: 0
       axioms: ["propext", "Quot.sound", "Classical.choice"]
       comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved"
+      file: "QLambda/QuantumDomainEquation.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      literature_dependencies: []
+    - declaration: "QLambda.TTContinuation.canonical_omegaQVA_quantum_domain_equation_solved"
+      file: "QLambda/TTContinuationDomainEquation.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
       literature_dependencies: []
     - declaration: "Scott1972.ContinuousLattice.finitelySeparated_wayBelow"
       file: "Solution.lean"
@@ -166,18 +183,18 @@ fidelity:
     no third-party Lean dependency.
 
 sources:
-  - title: "Parameterized ωQVA quantum domain equation"
+  - title: "Canonical-base ωQVA quantum domain equation"
     authors: ["Lars Warren Ericson"]
     type: "original-proof"
     relationship: other
     author_endorsement: participated
     note: >-
       First formal presentation of the compared capstone
-      omegaQVA_quantum_domain_equation_solved: for bundled quantum power M,
-      initial ωQVA domain D₀, and bonding projection j₀, the inverse limit
-      D_∞ of the tower D_{n+1} = [D_n → Q(D_n)] lies in ωQVA, satisfies
-      mutual inverse identities and an order isomorphism with its function
-      space, and satisfies Scott's bilimit identity on the quantum tower.
+      canonical_omegaQVA_quantum_domain_equation_solved. For every bundled
+      quantum power M, it constructs the one-point base and stage-zero
+      projection pair; the tower inverse limit lies in ωQVA, satisfies mutual
+      inverse identities and an order isomorphism with its function space,
+      and satisfies Scott's bilimit identity.
 
   - title: "Finite-Valuation Approximable Structures, Quantum λ-Calculus, and the Jung–Tix Problem"
     authors: ["Lars Warren Ericson"]
@@ -334,7 +351,7 @@ known_gaps:
 limitations:
   - >-
     The Palomar Comparator selects one theorem:
-    omegaQVA_quantum_domain_equation_solved. Challenge.lean states the
+    canonical_omegaQVA_quantum_domain_equation_solved. Challenge.lean states the
     family but does not prove it (Comparator convention). Solution.lean
     imports the QLambda/ proofs.
   - >-
@@ -367,15 +384,15 @@ alignment:
   namespace: "Scott1972.ContinuousLattice"
   statements:
     - source: "D_∞ of the quantum tower is in ωQVA and D_∞ ≅ [D_∞ → Q(D_∞)] (arxiv.md, §§5, 7)"
-      lean: "omegaQVA_quantum_domain_equation_solved"
+      lean: "canonical_omegaQVA_quantum_domain_equation_solved"
       module: "Challenge (statement), Solution / QLambda.QuantumDomainEquation (proof)"
       status: proved
       note: >-
-        Compared by Comparator as a theorem parameterized by a
-        QuantumPowerModel. TTContinuation.model and the finite physical
-        embedding are available, but the comparator still checks the
-        parameterized capstone rather than these additional concrete
-        theorems.
+        Compared by Comparator as a theorem parameterized only by a
+        QuantumPowerModel, using the canonical one-point base and projection
+        pair. TTContinuation.model and the finite physical embedding are
+        available, but the comparator checks the model-generic canonical
+        capstone rather than the concrete continuation specialization.
         The iso is constructed from qEmbInfInf /
         qProjInfInf; those maps and the inverse identities are proved
         from the spec. The last conjunct is Scott's inverse-limit

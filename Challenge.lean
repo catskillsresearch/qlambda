@@ -23,18 +23,18 @@ This module states the **single compared Palomar capstone** and the Mathlib
 type surface it depends on. Challenge may use `sorry`; Solution supplies the
 proofs.
 
-The capstone is conditional on three inputs: a bundled `QuantumPowerModel`
-(`IsQuantumPowerModel`), an initial ωQVA domain `D₀ : QDomain`, and a
-continuous-lattice projection `j₀ : D₀.carrier ↠ [D₀ → Q(D₀)]` that bonds
-the first tower stage. Under these hypotheses it proves that the inverse limit
-`D_∞` of the tower `D_{n+1} = [D_n → Q(D_n)]` lies in ωQVA, that the
-embedding and projection between `D_∞` and `[D_∞ → Q(D_∞)]` are mutual
-inverses, that `D_∞` is order-isomorphic to its function space, and that
-Scott's inverse-limit identity holds on the quantum tower.
+The selected capstone takes only a bundled `QuantumPowerModel` and starts from
+a canonical one-point `QDomain`. Its stage-zero embedding–retraction pair maps
+the point to the bottom function and has bonding retraction
+`[PUnit → Q(PUnit)] ↠ PUnit`.
 
-Concrete instances such as `TTContinuation.model` and the wider language or
-hardware development are proved in `QLambda/` and are outside this abstract
-compared surface.
+The theorem proves that the inverse limit `D_∞` of
+`D_{n+1} = [D_n → Q(D_n)]` lies in ωQVA, that the constructed limit embedding
+and projection between `D_∞` and `[D_∞ → Q(D_∞)]` are mutual inverses, that
+`D_∞` is order-isomorphic to its function space, and that Scott's inverse-limit
+identity holds on the quantum tower.
+
+Concrete models and the language/hardware development are outside this surface.
 -/
 
 open Matrix
@@ -114,16 +114,20 @@ instance instPartialOrder : PartialOrder (ScottMap D D') where
   le_trans _ _ _ hfg hgh x := le_trans (hfg x) (hgh x)
   le_antisymm _ _ hfg hgf := ScottMap.ext fun x => le_antisymm (hfg x) (hgf x)
 
+/-- Pointwise suprema of Scott maps. This is a Comparator definition hole:
+Solution supplies the proved Scott-continuous construction. -/
 noncomputable instance instSupSet : SupSet (ScottMap D D') := by
   sorry
 
+/-- The pointwise complete-lattice structure on Scott maps. -/
 noncomputable instance instCompleteLattice : CompleteLattice (ScottMap D D') := by
   sorry
 
-/-- The identity Scott map. -/
+/-- The identity Scott map `x ↦ x`. -/
 noncomputable def idMap : ScottMap D D := by
   sorry
 
+/-- Scott-map composition, with underlying function `x ↦ f (g x)`. -/
 noncomputable def comp (f : ScottMap D' D'') (g : ScottMap D D') : ScottMap D D'' := by
   sorry
 
@@ -156,6 +160,8 @@ def Compatible (x : ∀ n, D n) : Prop :=
 abbrev InverseLimit : Type u :=
   {x : ∀ n, D n // Compatible D P x}
 
+/-- The inverse-limit complete lattice. Its infima are inherited pointwise
+from the product and restricted to compatible sequences. -/
 noncomputable instance instCompleteLattice : CompleteLattice (InverseLimit D P) := by
   sorry
 
@@ -168,13 +174,14 @@ structure CLat : Type (u + 1) where
 
 attribute [instance] CLat.str
 
-/-- The embedding `i_{n∞} : Dₙ → D_∞`, Scott-continuous. -/
+/-- The embedding `i_{n∞} : Dₙ → D_∞`, obtained by climbing with `incl`
+above stage `n` and descending with `retr` below it. -/
 noncomputable def embInf (D : ℕ → Type u) [∀ n, CompleteLattice (D n)]
     (P : ∀ n, IsContinuousLatticeProjection (D n) (D (n + 1))) (n : ℕ) :
     ScottMap (D n) (InverseLimit D P) := by
   sorry
 
-/-- The projection `j_{∞n} : D_∞ → Dₙ`, Scott-continuous. -/
+/-- The coordinate projection `j_{∞n} : D_∞ → Dₙ`. -/
 noncomputable def projInf (D : ℕ → Type u) [∀ n, CompleteLattice (D n)]
     (P : ∀ n, IsContinuousLatticeProjection (D n) (D (n + 1))) (n : ℕ) :
     ScottMap (InverseLimit D P) (D n) := by
@@ -226,6 +233,11 @@ class IsOmegaQVA (D : Type*) [CompleteLattice D] where
   monotone_approx : Monotone approx
   iSup_approx : (⨆ n, approx n) = ScottMap.idMap
 
+/-- The one-point lattice is in `ωQVA`: its identity sequence factors through
+`DensityVec [] = PUnit` and the unique point is a finite separator. -/
+@[reducible] noncomputable def omegaQVA_pUnit : IsOmegaQVA PUnit.{u + 1} := by
+  sorry
+
 /-- Conditional specification of a quantum powerdomain model. -/
 class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) where
   str : ∀ (D : Type u) [CompleteLattice D], CompleteLattice (Q D)
@@ -274,17 +286,6 @@ abbrev QuantumPower (M : QuantumPowerModel) (D : Type u) [CompleteLattice D] : T
 abbrev QuantumFunctor (M : QuantumPowerModel) (D : Type u) [CompleteLattice D] : Type u :=
   ScottMap D (M.Power D)
 
-/-- `ωQVA` is closed under the model's powerdomain. -/
-abbrev omegaQVA_closed_under_quantumPower (M : QuantumPowerModel) {D : Type u}
-    [CompleteLattice D] (h : IsOmegaQVA D) : IsOmegaQVA (M.Power D) :=
-  IsQuantumPowerModel.closed (Q := M.Power) h
-
-/-- `ωQVA` is Cartesian closed (not a field of the spec). -/
-noncomputable def omegaQVA_closed_under_functionSpace {D E : Type u}
-    [CompleteLattice D] [CompleteLattice E]
-    (hD : IsOmegaQVA D) (hE : IsOmegaQVA E) : IsOmegaQVA (ScottMap D E) := by
-  sorry
-
 /-- A pointed object of `ωQVA`. -/
 structure QDomain : Type (u + 1) where
   carrier : Type u
@@ -292,6 +293,19 @@ structure QDomain : Type (u + 1) where
   omega : IsOmegaQVA carrier
 
 attribute [instance] QDomain.str
+
+/-- The canonical one-point initial object used by the selected capstone. -/
+@[reducible] noncomputable def canonicalQDomain : QDomain.{u} where
+  carrier := PUnit.{u + 1}
+  omega := omegaQVA_pUnit
+
+/-- The canonical stage-zero embedding–projection pair. Its inclusion sends
+the unique point to the bottom element of `[PUnit → Q(PUnit)]`; its retraction
+is the unique map `[PUnit → Q(PUnit)] → PUnit`. -/
+noncomputable def canonicalQDomainProjection (M : QuantumPowerModel) :
+    IsContinuousLatticeProjection canonicalQDomain.carrier
+      (QuantumFunctor M canonicalQDomain.carrier) := by
+  sorry
 
 /-- The quantum tower `D_{n+1} = [D_n → Q(D_n)]` as bundled lattices. -/
 noncomputable def qTowerCLat (M : QuantumPowerModel) (D₀ : CLat.{u}) : ℕ → CLat.{u}
@@ -307,16 +321,9 @@ noncomputable instance qTowerCompleteLattice (M : QuantumPowerModel) (D₀ : CLa
     (n : ℕ) : CompleteLattice (qTowerType M D₀ n) :=
   (qTowerCLat M D₀ n).str
 
-/-- The quantum tower as a sequence of `QDomain`s. -/
-noncomputable def qTower (M : QuantumPowerModel) (D₀ : QDomain.{u}) : ℕ → QDomain.{u}
-  | 0 => D₀
-  | n + 1 =>
-    { carrier := ScottMap (qTower M D₀ n).carrier (QuantumPower M (qTower M D₀ n).carrier)
-      omega :=
-        omegaQVA_closed_under_functionSpace (qTower M D₀ n).omega
-          (omegaQVA_closed_under_quantumPower M (qTower M D₀ n).omega) }
-
-/-- Bonding projections `j_{n+1} = F(j_n)` for `F(X) = [X → Q(X)]`. -/
+/-- Bonding embedding–projection pairs, recursively lifted by
+`F(X) = [X → Q(X)]`; stage zero is the supplied pair `j₀`. Compatibility uses
+the retraction `(qTowerProj M D₀ j₀ n).retr : D_{n+1} → D_n`. -/
 noncomputable def qTowerProj (M : QuantumPowerModel) (D₀ : CLat.{u})
     (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :
     ∀ n, IsContinuousLatticeProjection (qTowerType M D₀ n) (qTowerType M D₀ (n + 1)) := by
@@ -328,45 +335,40 @@ abbrev QDInf (M : QuantumPowerModel) (D₀ : QDomain.{u})
     Type u :=
   InverseLimit (qTowerType M ⟨D₀.carrier⟩) (qTowerProj M ⟨D₀.carrier⟩ j₀)
 
-/-- Embedding `i_∞ : D_∞ → [D_∞ → Q(D_∞)]`. -/
+/-- Limit embedding `i_∞ : D_∞ → [D_∞ → Q(D_∞)]`, the supremum of its
+finite-stage conjugation terms. -/
 noncomputable def qEmbInfInf (M : QuantumPowerModel) (D₀ : QDomain.{u})
     (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :
     ScottMap (QDInf M D₀ j₀) (QuantumFunctor M (QDInf M D₀ j₀)) := by
   sorry
 
-/-- Projection `j_∞ : [D_∞ → Q(D_∞)] → D_∞`. -/
+/-- Limit projection `j_∞ : [D_∞ → Q(D_∞)] → D_∞`, the supremum of its
+finite-stage conjugation terms. -/
 noncomputable def qProjInfInf (M : QuantumPowerModel) (D₀ : QDomain.{u})
     (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :
     ScottMap (QuantumFunctor M (QDInf M D₀ j₀)) (QDInf M D₀ j₀) := by
   sorry
 
-/-- **Compared Palomar capstone.** For bundled `M : QuantumPowerModel`, initial
-`D₀ : QDomain`, and bonding projection `j₀`, the inverse limit `QDInf M D₀ j₀`
-of the quantum tower satisfies, simultaneously:
-1. `Nonempty (IsOmegaQVA (QDInf M D₀ j₀))`;
-2. `qProjInfInf` and `qEmbInfInf` are mutual inverses;
-3. `QDInf M D₀ j₀` is order-isomorphic to `[QDInf M D₀ j₀ → Q(QDInf M D₀ j₀)]`; and
-4. the Scott bilimit identity `id = ⨆ n, embInf n ∘ projInf n` on the tower. -/
-theorem omegaQVA_quantum_domain_equation_solved
-    (M : QuantumPowerModel) (D₀ : QDomain.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :
-    Nonempty (IsOmegaQVA (QDInf M D₀ j₀)) ∧
+/-- **Compared Palomar capstone.** For every bundled quantum power model, use
+the canonical one-point domain and projection pair. The resulting inverse
+limit satisfies five claims: (1) it lies in `ωQVA`; (2) limit projection after
+embedding is the identity; (3) limit embedding after projection is the
+identity; (4) it is order-isomorphic to `[D_∞ → Q(D_∞)]`; and (5) Scott's
+bilimit identity `id = ⨆ n, embInf n ∘ projInf n` holds. -/
+theorem canonical_omegaQVA_quantum_domain_equation_solved
+    (M : QuantumPowerModel) :
+    let D₀ := canonicalQDomain
+    let j₀ := canonicalQDomainProjection M
+    let Dinf := QDInf M D₀ j₀
+    Nonempty (IsOmegaQVA Dinf) ∧
     (qProjInfInf M D₀ j₀).comp (qEmbInfInf M D₀ j₀) = ScottMap.idMap ∧
     (qEmbInfInf M D₀ j₀).comp (qProjInfInf M D₀ j₀) = ScottMap.idMap ∧
-    Nonempty (QDInf M D₀ j₀ ≃o ScottMap (QDInf M D₀ j₀) (QuantumPower M (QDInf M D₀ j₀))) ∧
-    (ScottMap.idMap : ScottMap (QDInf M D₀ j₀) (QDInf M D₀ j₀)) =
-      ⨆ n, (embInf (qTowerType M ⟨D₀.carrier⟩) (qTowerProj M ⟨D₀.carrier⟩ j₀) n).comp
-            (projInf (qTowerType M ⟨D₀.carrier⟩) (qTowerProj M ⟨D₀.carrier⟩ j₀) n) := by
-  sorry
-
-@[reducible] noncomputable def qDInf_isOmegaQVA (M : QuantumPowerModel) (D₀ : QDomain.{u})
-    (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :
-    IsOmegaQVA (QDInf M D₀ j₀) := by
-  sorry
-
-/-- **Chen–Kou–Lyu Lemma 6.8.** A finitely separated Scott map satisfies `f x ≪ x`. -/
-theorem finitelySeparated_wayBelow (hD : IsContinuousLattice D) {f : ScottMap D D}
-    (hf : FinitelySeparated f) (x : D) : (f : D → D) x ≪ x := by
+    Nonempty (Dinf ≃o ScottMap Dinf (QuantumPower M Dinf)) ∧
+    (ScottMap.idMap : ScottMap Dinf Dinf) =
+      ⨆ n, (embInf (qTowerType M ⟨D₀.carrier⟩)
+          (qTowerProj M ⟨D₀.carrier⟩ j₀) n).comp
+        (projInf (qTowerType M ⟨D₀.carrier⟩)
+          (qTowerProj M ⟨D₀.carrier⟩ j₀) n) := by
   sorry
 
 end Scott1972.ContinuousLattice

@@ -8,22 +8,26 @@ finite CP instruments. The library builds on top
 of a vendored [`scott1972`](https://github.com/catskillsresearch/scott1972)
 formalization of Dana Scott, *Continuous Lattices* (LNM 274).
 
-The **Palomar compared statement of record** is the single domain capstone
+The **Palomar compared statement of record** is the canonical-base domain capstone
 
-`omegaQVA_quantum_domain_equation_solved` :
+`canonical_omegaQVA_quantum_domain_equation_solved`:
 
-for any bundled `QuantumPowerModel` `M`, initial ωQVA domain `D₀`, and bonding
-projection `j₀ : D₀ ↠ [D₀ → Q(D₀)]`, the inverse limit `D_∞` of the tower
-`D_{n+1} = [D_n → Q(D_n)]` is an object of ωQVA, the embedding and projection
-between `D_∞` and `[D_∞ → Q(D_∞)]` are mutual inverses, `D_∞` is
-order-isomorphic to its function space, and Scott's inverse-limit identity
-holds on the quantum tower.
+for every bundled `QuantumPowerModel` `M`, start from the canonical one-point
+ωQVA domain. The canonical stage-zero pair embeds the point as the bottom
+function and has bonding retraction `[PUnit → Q(PUnit)] ↠ PUnit`. The inverse
+limit `D_∞` of `D_{n+1} = [D_n → Q(D_n)]` lies in ωQVA; the constructed maps
+`qEmbInfInf : D_∞ → [D_∞ → Q(D_∞)]` and
+`qProjInfInf : [D_∞ → Q(D_∞)] → D_∞` are mutual inverses; `D_∞` is
+order-isomorphic to that function space; and Scott's inverse-limit identity
+holds on the tower.
 
-The wider repository also proves supporting lemmas (including
-`finitelySeparated_wayBelow` and `qDInf_isOmegaQVA`), a concrete
-`TTContinuation.model` instance, and bounded hardware adequacy capstones;
-those results are indexed in `THEOREMS.md` but are **not** selected by
-`comparator.json` for this Palomar entry.
+The wider repository retains the conditional theorem
+`omegaQVA_quantum_domain_equation_solved M D₀ j₀`, where `j₀` is a supplied
+embedding–retraction pair with `incl : D₀ → [D₀ → Q(D₀)]` and bonding
+`retr : [D₀ → Q(D₀)] ↠ D₀`. It also proves supporting lemmas, the concrete
+`QLambda.TTContinuation.canonical_omegaQVA_quantum_domain_equation_solved n`,
+and bounded hardware adequacy capstones. These are indexed in `THEOREMS.md`
+but are not selected by `comparator.json` for this Palomar entry.
 
 A concrete fixed-register instance is now constructed as
 `TTContinuation.model n`, with carrier

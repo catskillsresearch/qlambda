@@ -6,11 +6,19 @@ about the motivating literature or a Qiskit compiler.
 
 ## Quantum domain
 
+- `Scott1972.ContinuousLattice.canonical_omegaQVA_quantum_domain_equation_solved`
+  — `QLambda/QuantumDomainEquation.lean`; the Palomar theorem of record. For
+  every bundled `QuantumPowerModel`, the canonical one-point tower has an
+  `omegaQVA` inverse limit, exact mutually inverse limit maps, an order
+  isomorphism with `[D_infinity -> Q(D_infinity)]`, and Scott's bilimit
+  identity.
 - `Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved`
-  — `QLambda/QuantumDomainEquation.lean`. For any bundled
-  `QuantumPowerModel` and initial projection, the inverse limit is an
-  `omegaQVA` and is order-isomorphic to
-  `[D_infinity -> Q(D_infinity)]`.
+  — `QLambda/QuantumDomainEquation.lean`. The more general theorem takes an
+  initial `QDomain D₀` and a supplied embedding–retraction pair `j₀`; its
+  bonding retraction has direction `[D₀ -> Q(D₀)] ↠ D₀`.
+- `QLambda.TTContinuation.canonical_omegaQVA_quantum_domain_equation_solved`
+  — `QLambda/TTContinuationDomainEquation.lean`. The canonical result
+  specialized to the concrete fixed-register continuation model.
 - `Scott1972.ContinuousLattice.qDInf_isOmegaQVA`
   — `QLambda/QuantumDomainEquation.lean`. The inverse limit is an
   `omegaQVA`, by the retract-of-countable-product construction.

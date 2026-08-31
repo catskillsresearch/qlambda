@@ -31,6 +31,39 @@ structure QDomain : Type (u + 1) where
 
 attribute [instance] QDomain.str
 
+/-- The canonical one-point quantum domain, used as the base of the
+quantum-domain tower when no additional base data is needed. -/
+@[reducible] noncomputable def canonicalQDomain : QDomain.{u} where
+  carrier := PUnit.{u + 1}
+  omega := omegaQVA_pUnit
+
+/-- The canonical initial projection from the one-point base into
+`[PUnit → Q(PUnit)]`.
+
+The inclusion `incl` sends the unique base point to the bottom Scott map.
+The retraction `retr` goes in the important reverse direction—from the
+quantum function space back to the one-point base—and is necessarily the
+unique constant map. -/
+noncomputable def canonicalQDomainProjection (M : QuantumPowerModel) :
+    IsContinuousLatticeProjection canonicalQDomain.carrier
+      (QuantumFunctor M canonicalQDomain.carrier) where
+  incl :=
+    (⊥ : ScottMap canonicalQDomain.carrier
+      (QuantumFunctor M canonicalQDomain.carrier))
+  retr :=
+    ScottMap.const (D := QuantumFunctor M canonicalQDomain.carrier)
+      (⟨⟩ : canonicalQDomain.carrier)
+  retr_incl := by
+    intro d
+    cases d
+    rfl
+  incl_retr_le := by
+    intro f
+    rw [ScottMap.le_def]
+    intro x
+    rw [ScottMap.bot_apply, ScottMap.bot_apply]
+    exact bot_le
+
 /-- The quantum tower `D_{n+1} = [D_n → Q(D_n)]` as bundled lattices. -/
 noncomputable def qTowerCLat (M : QuantumPowerModel) (D₀ : CLat.{u}) : ℕ → CLat.{u}
   | 0 => D₀

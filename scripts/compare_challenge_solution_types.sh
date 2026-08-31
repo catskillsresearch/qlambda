@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
-# Diff Challenge vs Solution types for every comparator.json name.
+# Diff Challenge vs Solution declaration types for every comparator.json name.
 # Palomar Comparator looks up those names in two lean4export environments
-# and compares ConstantVal (name, levelParams, type, and definition value)
-# with pp.all-level fidelity. Instance names in types and values are part of
-# the comparison. A green `lake build` does not imply a match.
+# and compares theorem constants directly. Entries in `definition_names` are
+# deliberate definition holes: Challenge leaves their values as `sorry`, while
+# Solution supplies checked implementations. Comparator matches their names,
+# kinds, universe/safety levels, and types and checks their axiom closure; it
+# does not require the Challenge's `sorryAx` body to equal the Solution body.
+# A green `lake build` alone does not imply a match.
 #
 # Gotchas this script is meant to catch:
 # - instance-path mismatch (e.g. ConditionallyCompletePartialOrder.toSupSet
@@ -11,11 +14,8 @@
 # - pretty-printer hiding a module prefix (`Challenge.Foo` vs `Foo`)
 # - a `def` listed under theorem_names (Comparator then throws
 #   "constant kind don't match")
-# - a structure listed under definition_names (Comparator then throws
-#   "Challenge constant is not a definition")
-# - universe parameter names (`IsContinuousLattice.{u_3}` vs `.{u_2}`):
-#   Comparator BEqs ConstantVal.levelParams, so auto-generated `u_n`
-#   names must agree. Pin compared decls to `Type u` / `Type v`.
+# - a non-definition listed under definition_names
+# - universe arity/type mismatches hidden by ordinary pretty printing.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -23,6 +23,14 @@ mapfile -t NAMES < <(python3 - <<'PY'
 import json
 cfg = json.load(open("comparator.json"))
 for n in cfg["theorem_names"] + cfg.get("definition_names", []):
+    print(n)
+PY
+)
+
+mapfile -t THEOREM_NAMES < <(python3 - <<'PY'
+import json
+cfg = json.load(open("comparator.json"))
+for n in cfg["theorem_names"]:
     print(n)
 PY
 )
@@ -56,19 +64,65 @@ write_lean() {
 write_lean Challenge "${tmp}/ChallengeTypes.lean"
 write_lean Solution "${tmp}/SolutionTypes.lean"
 
+write_kind_lean() {
+  local module="$1" out="$2"
+  {
+    echo "import ${module}"
+    cat <<'LEAN'
+open Lean Elab Command
+elab "#assert_theorem " n:ident : command => do
+  match (← getEnv).find? n.getId with
+  | some (.thmInfo _) => pure ()
+  | some _ => throwError "{n.getId} is not a theorem"
+  | none => throwError "unknown declaration {n.getId}"
+elab "#assert_definition " n:ident : command => do
+  match (← getEnv).find? n.getId with
+  | some (.defnInfo _) => pure ()
+  | some _ => throwError "{n.getId} is not a definition"
+  | none => throwError "unknown declaration {n.getId}"
+LEAN
+    for n in "${THEOREM_NAMES[@]}"; do
+      echo "#assert_theorem ${n}"
+    done
+    for n in "${DEFINITION_NAMES[@]}"; do
+      echo "#assert_definition ${n}"
+    done
+  } >"${out}"
+}
+
+write_kind_lean Challenge "${tmp}/ChallengeKinds.lean"
+write_kind_lean Solution "${tmp}/SolutionKinds.lean"
+for module in Challenge Solution; do
+  if ! lake env lean "${tmp}/${module}Kinds.lean" >"${tmp}/${module}-kinds.raw" 2>&1; then
+    echo "FAIL: Comparator declaration-kind check failed in ${module}."
+    cat "${tmp}/${module}-kinds.raw"
+    exit 1
+  fi
+done
+echo "OK: theorem_names and definition_names have the required declaration kinds."
+
 # grep exits 1 on empty output, which is the normal state while comparator.json
 # still lists no names. Do not let that abort the run.
-lake env lean "${tmp}/ChallengeTypes.lean" 2>/dev/null \
-  | { grep -vE 'LEAN_PATH|trace:|warning:|declaration uses' || true; } \
-  >"${tmp}/challenge.txt"
-lake env lean "${tmp}/SolutionTypes.lean" 2>/dev/null \
-  | { grep -vE 'LEAN_PATH|trace:|warning:|declaration uses' || true; } \
-  >"${tmp}/solution.txt"
+if ! lake env lean "${tmp}/ChallengeTypes.lean" >"${tmp}/challenge.raw" 2>&1; then
+  echo "FAIL: could not inspect Challenge declarations."
+  cat "${tmp}/challenge.raw"
+  exit 1
+fi
+if ! lake env lean "${tmp}/SolutionTypes.lean" >"${tmp}/solution.raw" 2>&1; then
+  echo "FAIL: could not inspect Solution declarations."
+  cat "${tmp}/solution.raw"
+  exit 1
+fi
+grep -vE 'LEAN_PATH|trace:|warning:|declaration uses' \
+  <"${tmp}/challenge.raw" >"${tmp}/challenge.txt" || true
+grep -vE 'LEAN_PATH|trace:|warning:|declaration uses' \
+  <"${tmp}/solution.raw" >"${tmp}/solution.txt" || true
 
-# Palomar Comparator BEqs ConstantVal.levelParams, so `.{u_3}` vs `.{u_2}`
-# is a rejection. Do not strip universe names. A secondary stripped view is
-# printed only to make instance-path mismatches easier to read.
-normalize_instances() {
+# Lean's pretty printer renumbers imported anonymous universe names according
+# to each module environment (`u_1` versus `u_3`). Comparator compares the
+# exported level structure modulo those presentation names. Normalize only
+# that printer noise; named universes and the full type structure remain.
+normalize_pp_universes() {
   sed -E 's/\.\{u_[0-9]+(,[ ]*u_[0-9]+)*\}//g; s/u_[0-9]+/u/g'
 }
 
@@ -80,77 +134,14 @@ if [[ "${PALOMAR_QUIET:-0}" != 1 ]]; then
   cat "${tmp}/solution.txt"
   echo
 fi
-if diff -u "${tmp}/challenge.txt" "${tmp}/solution.txt"; then
-  echo "OK: Challenge and Solution names, universes, and types match."
+normalize_pp_universes <"${tmp}/challenge.txt" >"${tmp}/challenge.norm"
+normalize_pp_universes <"${tmp}/solution.txt" >"${tmp}/solution.norm"
+
+if diff -u "${tmp}/challenge.norm" "${tmp}/solution.norm"; then
+  echo "OK: Challenge and Solution theorem/definition-hole names, universes, and types match."
 else
   echo "FAIL: type/universe/instance/name mismatch — Palomar Comparator will reject this."
   echo
-  echo "== Universe-stripped hint (instance paths only) =="
-  normalize_instances <"${tmp}/challenge.txt" >"${tmp}/challenge.norm"
-  normalize_instances <"${tmp}/solution.txt" >"${tmp}/solution.norm"
   diff -u "${tmp}/challenge.norm" "${tmp}/solution.norm" || true
-  exit 1
-fi
-
-# Transitively locked definition bodies whose values Comparator will compare
-# through parent theorems/instances. Extend this list as the paper development
-# grows (see docs/PALOMAR_STYLE.md).
-LOCKED_DEFINITIONS=(
-  # e.g. Scott1964.MeasurementStructures.someConcreteDef
-)
-
-# Every `definition_names` value is compared by Palomar. `LOCKED_DEFINITIONS`
-# adds concrete definitions reached transitively through theorem types and
-# instances. Deduplicate while preserving order.
-mapfile -t BODY_NAMES < <(
-  printf '%s\n' "${DEFINITION_NAMES[@]}" "${LOCKED_DEFINITIONS[@]}" |
-    awk 'NF && !seen[$0]++'
-)
-
-if [[ ${#BODY_NAMES[@]} -eq 0 ]]; then
-  echo "OK: no definition bodies to compare yet."
-  exit 0
-fi
-
-write_definition_dump() {
-  local module="$1" out="$2"
-  {
-    echo "import ${module}"
-    echo "set_option pp.all true"
-    echo "set_option pp.explicit true"
-    echo "set_option pp.universes true"
-    echo "set_option pp.fullNames true"
-    echo "set_option pp.funBinderTypes true"
-    for n in "${BODY_NAMES[@]}"; do
-      echo "#print ${n}"
-    done
-  } >"${out}"
-}
-
-write_definition_dump Challenge "${tmp}/ChallengeDefinitions.lean"
-write_definition_dump Solution "${tmp}/SolutionDefinitions.lean"
-lake env lean "${tmp}/ChallengeDefinitions.lean" 2>/dev/null \
-  | { grep -vE 'LEAN_PATH|trace:|warning:|declaration uses' || true; } \
-  >"${tmp}/challenge-definitions.txt"
-lake env lean "${tmp}/SolutionDefinitions.lean" 2>/dev/null \
-  | { grep -vE 'LEAN_PATH|trace:|warning:|declaration uses' || true; } \
-  >"${tmp}/solution-definitions.txt"
-
-# Inline structure proofs elaborate to private constants such as
-# `instPartialOrder._proof_4`. Their generated values can differ between the
-# modules even when the source proposition is identical. Require every proof
-# boundary in a locked value to be a stable, named theorem target instead.
-if grep -nE '\._proof_[0-9]+' \
-    "${tmp}/challenge-definitions.txt" "${tmp}/solution-definitions.txt"; then
-  echo "FAIL: a locked definition depends on an anonymous generated proof."
-  echo "Move the field proof to a named theorem and add it to theorem_names."
-  exit 1
-fi
-
-if diff -u "${tmp}/challenge-definitions.txt" "${tmp}/solution-definitions.txt"; then
-  echo "OK: compared and transitively locked definition values match."
-else
-  echo "FAIL: a compared or transitively locked definition value differs."
-  echo "Palomar Comparator will reject the mismatching constant."
   exit 1
 fi

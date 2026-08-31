@@ -1,10 +1,12 @@
 # Handoff — qlambda (ωQVA / quantum domain equation)
 
 Palomar compared statement of record (1 theorem in `comparator.json`):
-`omegaQVA_quantum_domain_equation_solved`.
+`canonical_omegaQVA_quantum_domain_equation_solved`.
 
 Other principal results (not selected by Comparator for this entry):
-`finitelySeparated_wayBelow`, `qDInf_isOmegaQVA`, hardware capstones
+the general `(M, D₀, j₀)` theorem `omegaQVA_quantum_domain_equation_solved`,
+the concrete `QLambda.TTContinuation` canonical specialization,
+`finitelySeparated_wayBelow`, `qDInf_isOmegaQVA`, and hardware capstones
 `closed_stuck_free_presented_channelTreeCompleteness` and
 `closed_stuck_free_presented_token_adequacy`.
 
@@ -46,6 +48,12 @@ The domain construction now includes the concrete fixed-register
 finitely presented map/bind compatibility, represented-test refinement
 recovery, and the directed-supremum obstruction to a finite-image Scott
 retract are proved.
+
+The selected domain-equation theorem now starts from the canonical one-point
+`QDomain`; for every `QuantumPowerModel`, the stage-zero inclusion is the
+bottom function and the bonding retraction maps
+`[PUnit → Q(PUnit)] ↠ PUnit`. The original general theorem remains available
+for any supplied embedding–retraction pair `j₀`.
 
 The computation-valued core is also implemented. `Term Prim` and the
 operational relations support closed primitives and recursive abstractions.

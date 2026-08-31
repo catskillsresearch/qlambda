@@ -13,7 +13,8 @@ bash scripts/palomar_preflight.sh
 
 Full preflight runs:
 
-1. Mechanical Comparator checks (build, type/value match, sorry scan, axioms, …)
+1. Mechanical Comparator checks (build, theorem/definition-hole type and kind
+   checks, fail-closed Solution sorry scan, axioms, …)
 2. **Policy sync** — compares `vendor/PALOMAR_POLICY_PIN` to upstream `main` and
    refreshes the vendored tree when newer
 3. Deterministic editorial pre-checks (`scripts/palomar_editorial_checks.py`)
@@ -27,6 +28,10 @@ Full preflight runs:
 Output: `.cache/palomar-editorial/review-draft.json` (gitignored).
 
 Preflight is green only when synthesis outcome is **`neutral`**.
+When the working tree is not yet committed, the local mechanical report binds
+the complete material implementation-source bundle by SHA-256 and supplies
+those source contents inline to the reviewer. A submission still requires the
+final public 40-character commit SHA.
 
 ## Mechanical-only (CI / day-to-day development)
 
@@ -49,9 +54,11 @@ Before running full preflight on a submission candidate, confirm:
 1. **Research interest** — compared theorems are Scott 1964 headline results
    (plus any separately labelled reconstructions), not incidental lemmas.
 2. **Definition pinning** — every material symbol in each compared theorem type
-   is either primitive, defined without `sorry` in Challenge.lean, or listed in
-   `comparator.json` → `definition_names` with its defining or semantic law also
-   compared. Opaque `sorry` stubs make the theorem unauditable.
+   is either primitive, defined concretely in Challenge.lean, or listed in
+   `comparator.json` → `definition_names` with a precise semantic type and
+   docstring. Such listed `sorry` bodies are intentional definition holes:
+   Comparator checks the Solution implementation rather than requiring body
+   equality with Challenge's `sorryAx`.
 3. **Metadata sync** — `formalization.yaml` `status.scope`, `main_results`,
    `limitations`, and `alignment` match `comparator.json` and Challenge/Solution.
 4. **Sources** — `formalization.yaml` `sources:` records the primary paper and
@@ -60,10 +67,11 @@ Before running full preflight on a submission candidate, confirm:
    passes, then `bash scripts/compare_challenge_solution_types.sh`.
 
 Deterministic packaging checks live in `scripts/palomar_editorial_checks.py`
-(main_results coverage, sorry-definition pinning, scope sync). They run during
-**full** preflight and fail fast before the LLM audit.
+(main-results coverage, canonical capstone metadata, material definition-hole
+pinning, projection direction, and scope sync). They run in both
+`--mechanical-only` and full preflight, before any LLM audit.
 
-Comparator elaboration rules (inline proofs, instance paths, universe names):
+Comparator elaboration rules (definition holes, instance paths, universe structure):
 `docs/PALOMAR_STYLE.md`.
 
 ## Policy sync and revert

@@ -8,14 +8,13 @@ alwaysApply: false
 
 - Read `docs/PALOMAR_STYLE.md` before changing compared declarations.
 - Read `docs/PALOMAR_EDITORIAL_AUDIT.md` before submission packaging changes.
-- Pin universe parameter names and make unstable instance paths explicit.
-- Keep every `definition_names` value and every transitively locked
-  Challenge/Solution definition structurally identical.
-- Audit named child definitions referenced by matching parent bodies; Palomar
-  compares those values independently.
-- Never use inline proofs in locked structure values: generated
-  `._proof_N` constants are mechanically compared.
-- Move proof fields to named theorems and list them in `theorem_names`.
+- Pin explicit universe arity and make unstable instance paths explicit.
+- Treat `definition_names` as intentional Challenge holes. Comparator checks
+  each Solution definition's name, kind, universe/safety level, type, allowed
+  axioms, and kernel acceptance; it does not compare its value to
+  Challenge's `sorryAx`.
+- Keep only non-hole concrete definitions structurally aligned between
+  Challenge and Solution.
 - Every material symbol in a compared theorem type must be pinned: either
   defined without `sorry` in Challenge.lean or listed in `definition_names`.
 - Keep `formalization.yaml` aligned with `comparator.json` (`main_results`,

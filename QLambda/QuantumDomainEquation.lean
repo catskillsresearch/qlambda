@@ -595,4 +595,24 @@ theorem omegaQVA_quantum_domain_equation_solved
     ⟨qDInf_orderIso M D₀ j₀⟩,
     idInf_eq_iSup (qTowerType M ⟨D₀.carrier⟩) (qTowerProj M ⟨D₀.carrier⟩ j₀)⟩
 
+/-- **Canonical-base capstone.** For every quantum power model, the tower
+started from the canonical one-point `QDomain` and its canonical projection
+has an `ωQVA` inverse limit solving the recursive quantum domain equation. -/
+theorem canonical_omegaQVA_quantum_domain_equation_solved
+    (M : QuantumPowerModel) :
+    let D₀ := canonicalQDomain
+    let j₀ := canonicalQDomainProjection M
+    let Dinf := QDInf M D₀ j₀
+    Nonempty (IsOmegaQVA Dinf) ∧
+    (qProjInfInf M D₀ j₀).comp (qEmbInfInf M D₀ j₀) = ScottMap.idMap ∧
+    (qEmbInfInf M D₀ j₀).comp (qProjInfInf M D₀ j₀) = ScottMap.idMap ∧
+    Nonempty (Dinf ≃o ScottMap Dinf (QuantumPower M Dinf)) ∧
+    (ScottMap.idMap : ScottMap Dinf Dinf) =
+      ⨆ n, (embInf (qTowerType M ⟨D₀.carrier⟩)
+          (qTowerProj M ⟨D₀.carrier⟩ j₀) n).comp
+        (projInf (qTowerType M ⟨D₀.carrier⟩)
+          (qTowerProj M ⟨D₀.carrier⟩ j₀) n) :=
+  omegaQVA_quantum_domain_equation_solved
+    M canonicalQDomain (canonicalQDomainProjection M)
+
 end Scott1972.ContinuousLattice

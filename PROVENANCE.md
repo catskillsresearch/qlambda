@@ -11,11 +11,14 @@ complete development. The remote remains the 1972 home.
 
 The Comparator configuration `comparator.json` selects one theorem:
 
-`Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved`
+`Scott1972.ContinuousLattice.canonical_omegaQVA_quantum_domain_equation_solved`
 
 Challenge.lean states the capstone and its Mathlib type surface; Solution.lean
 imports the sorry-free proof from `QLambda/QuantumDomainEquation.lean`.
-Supporting project results and hardware capstones are documented in
+The selected theorem constructs the canonical one-point base and stage-zero
+projection pair for every `QuantumPowerModel`. The original general theorem
+with supplied `(D₀, j₀)`, the concrete `TTContinuation.model` specialization,
+supporting project results, and hardware capstones are documented in
 `formalization.yaml`, `THEOREMS.md`, and `arxiv.md` but are outside this
 Comparator selection.
 
@@ -37,7 +40,7 @@ Packaging pattern reference: [`scott_models`](https://github.com/catskillsresear
 
 The ω**QVA** type surface, Loewner state space, saturation flattening
 used for the quantum bilimit, and the capstone
-`omegaQVA_quantum_domain_equation_solved` are original Lean of
+`canonical_omegaQVA_quantum_domain_equation_solved` are original Lean of
 Lars Warren Ericson (Catskills Research Company, 2026). They extend
 Scott 1972 inverse limits (`embInf`, `projInf`, Theorem 4.4) from
 `D_∞ ≅ [D_∞ → D_∞]` to the quantum functor `[D → Q(D)]`.
