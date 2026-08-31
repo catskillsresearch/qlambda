@@ -8,15 +8,22 @@ finite CP instruments. The library builds on top
 of a vendored [`scott1972`](https://github.com/catskillsresearch/scott1972)
 formalization of Dana Scott, *Continuous Lattices* (LNM 274).
 
-The **Palomar compared statement of record** is the domain capstone
+The **Palomar compared statement of record** is the single domain capstone
 
 `omegaQVA_quantum_domain_equation_solved` :
 
-for any bundled `Q` satisfying `IsQuantumPowerModel`, the inverse limit
-`D_∞` of the tower `D_{n+1} = [D_n → Q(D_n)]` is an object of ωQVA and
-is order-isomorphic to its own function space
-(`D_∞ ≅ [D_∞ → Q(D_∞)]`), together with the supporting surface
-`qDInf_isOmegaQVA` and `finitelySeparated_wayBelow`.
+for any bundled `QuantumPowerModel` `M`, initial ωQVA domain `D₀`, and bonding
+projection `j₀ : D₀ ↠ [D₀ → Q(D₀)]`, the inverse limit `D_∞` of the tower
+`D_{n+1} = [D_n → Q(D_n)]` is an object of ωQVA, the embedding and projection
+between `D_∞` and `[D_∞ → Q(D_∞)]` are mutual inverses, `D_∞` is
+order-isomorphic to its function space, and Scott's inverse-limit identity
+holds on the quantum tower.
+
+The wider repository also proves supporting lemmas (including
+`finitelySeparated_wayBelow` and `qDInf_isOmegaQVA`), a concrete
+`TTContinuation.model` instance, and bounded hardware adequacy capstones;
+those results are indexed in `THEOREMS.md` but are **not** selected by
+`comparator.json` for this Palomar entry.
 
 A concrete fixed-register instance is now constructed as
 `TTContinuation.model n`, with carrier
@@ -67,9 +74,30 @@ classical literature and is not re-formalized here in full. The Qiskit
 material in `arxiv.md` is an operational comparison through shared CP
 denotations, not a compiler or verified Qiskit equivalence.
 
-Narrative: `arxiv.md`. Theorem index: `THEOREMS.md`. Palomar metadata: `comparator.json`,
-`formalization.yaml`. Vendor / attribution: `PROVENANCE.md`,
-`vendor/FROZEN.txt`.
+Narrative: `arxiv.md`. Theorem index: `THEOREMS.md`. Palomar metadata:
+`comparator.json`, `formalization.yaml`, `docs/PALOMAR_STYLE.md`.
+Vendor / attribution: `PROVENANCE.md`, `vendor/FROZEN.txt`.
+
+## Palomar packaging
+
+Local mechanical readiness (CI runs this on every push):
+
+```bash
+bash scripts/palomar_preflight.sh --mechanical-only
+```
+
+Before registry submission, run the full gate (mechanical checks plus
+vendored-policy sync and Cursor editorial audit):
+
+```bash
+bash scripts/palomar_preflight.sh
+```
+
+Mechanical green means Challenge and Solution types match under Comparator
+rules and Solution sources contain no `sorry`. It does **not** assign a
+Palomar registry ID. Actual registration requires a public GitHub repository,
+a full 40-character commit SHA, the root project path, and explicit selection
+of `comparator.json` at [submit.palomar-registry.org](https://submit.palomar-registry.org/).
 
 ## Build
 
@@ -84,6 +112,12 @@ sorry-free compared proofs; unfinished semantics modules are outside
 that compared surface.
 
 Palomar type check (green `lake build` is not enough):
+
+```bash
+bash scripts/palomar_preflight.sh --mechanical-only
+```
+
+Or the underlying Comparator diff alone:
 
 ```bash
 bash scripts/compare_challenge_solution_types.sh

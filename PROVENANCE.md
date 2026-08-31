@@ -7,6 +7,32 @@ The 1972 library is copied into `vendor/scott1972` at the frozen SHA in
 `vendor/FROZEN.txt` so a preservation fork of `qlambda` contains the
 complete development. The remote remains the 1972 home.
 
+## Palomar entry
+
+The Comparator configuration `comparator.json` selects one theorem:
+
+`Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved`
+
+Challenge.lean states the capstone and its Mathlib type surface; Solution.lean
+imports the sorry-free proof from `QLambda/QuantumDomainEquation.lean`.
+Supporting project results and hardware capstones are documented in
+`formalization.yaml`, `THEOREMS.md`, and `arxiv.md` but are outside this
+Comparator selection.
+
+Local readiness:
+
+```bash
+bash scripts/palomar_preflight.sh --mechanical-only   # CI
+bash scripts/palomar_preflight.sh                       # before submission
+```
+
+Registry submission is a separate step at
+[submit.palomar-registry.org](https://submit.palomar-registry.org/) and
+requires a pinned GitHub commit plus explicit consent after Palomar's
+mechanical and editorial checks.
+
+Packaging pattern reference: [`scott_models`](https://github.com/catskillsresearch/scott_models).
+
 ## Author work
 
 The ω**QVA** type surface, Loewner state space, saturation flattening
@@ -28,5 +54,5 @@ mechanized in `QLambda/Saturation.lean`.
 | Remote | Role |
 | --- | --- |
 | [`scott1972`](https://github.com/catskillsresearch/scott1972) | Continuous lattices; Theorem 4.4 (vendored) |
-| [`scott_models`](https://github.com/catskillsresearch/scott_models) | Presentation bridges (1972 / 1980 / 1982) |
+| [`scott_models`](https://github.com/catskillsresearch/scott_models) | Palomar packaging pattern; presentation bridges |
 | arXiv:2608.03073 | Chen–Kou–Lyu ω**FVA** / Jung–Tix (`sources/`) |

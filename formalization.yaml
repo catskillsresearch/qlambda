@@ -4,18 +4,18 @@ version: "v0.4"
 project:
   name: "Quantum-valuation approximable domains and the untyped quantum λ-calculus"
   description: >-
-    Lean 4 development of the category ωQVA of quantum-valuation
-    approximable domains, extending Scott 1972 continuous lattices and
-    the Chen–Kou–Lyu saturation pattern to the non-commutative setting.
-    The compared statement is the capstone
-    omegaQVA_quantum_domain_equation_solved: the inverse limit of the
-    quantum tower D_{n+1} = [D_n → Q(D_n)] lies in ωQVA and is
-    order-isomorphic to its own function space. The wider development
-    instantiates Q by a fixed-register continuation model and embeds finite
-    physical instruments into it. Its final hardware capstones prove
-    presented channel-tree completeness and token adequacy for the exact
-    ClosedStuckFreeCoverage boundary. Account: arxiv.md; theorem index:
-    THEOREMS.md.
+    Lean 4 formalization of ωQVA (quantum-valuation approximable domains) and
+    the parameterized quantum domain equation. The Palomar Comparator selects
+    one compared theorem: omegaQVA_quantum_domain_equation_solved. For any
+    bundled quantum power model M, initial ωQVA domain D₀, and bonding
+    projection j₀ : D₀ ↠ [D₀ → Q(D₀)], the inverse limit D_∞ of the tower
+    D_{n+1} = [D_n → Q(D_n)] lies in ωQVA, the embedding and projection
+    between D_∞ and [D_∞ → Q(D_∞)] are mutual inverses, D_∞ is
+    order-isomorphic to its function space, and Scott's inverse-limit identity
+    holds on the quantum tower. The wider repository also constructs a
+    fixed-register continuation instance, embeds finite CP instruments, and
+    proves bounded hardware channel-tree adequacy; those results are documented
+    in THEOREMS.md and arxiv.md but are not selected by comparator.json.
   authors:
     - "Lars Warren Ericson"
   license: "Apache-2.0"
@@ -31,95 +31,95 @@ classification:
 
 status:
   scope: >-
-    Compared claim is the capstone parameterized by a QuantumPowerModel
-    (a Q satisfying IsQuantumPowerModel). A concrete fixed-register
-    Scott-continuation instance is now bundled as TTContinuation.model;
-    it also has a lawful IsQuantumMonad instance. The tower is
-    D_{n+1} = [D_n → Q(D_n)]; qTowerProj, qEmbInfInf, qProjInfInf, and
-    the parameterized order isomorphism are defined. Finite Kraus
-    families, TNI operations, instruments, and the Type-level monad
-    FiniteInstrumentComp are defined and proved. Its semantic preorder
-    is now weakest-precondition/TT refinement over monotone Kraus-valued
+    Palomar Comparator selects 1 compared theorem:
+    omegaQVA_quantum_domain_equation_solved. The claim is parameterized by a
+    QuantumPowerModel (a Q satisfying IsQuantumPowerModel), an initial QDomain
+    D₀, and a supplied continuous-lattice projection j₀ bonding the first
+    tower stage. The five conjuncts prove ωQVA membership of the inverse
+    limit, mutual inverse identities for qEmbInfInf and qProjInfInf, an order
+    isomorphism D_∞ ≃o [D_∞ → Q(D_∞)], and Scott's bilimit identity on the
+    quantum tower. A concrete fixed-register Scott-continuation instance is
+    bundled as TTContinuation.model; it also has a lawful IsQuantumMonad
+    instance. The tower is D_{n+1} = [D_n → Q(D_n)]; qTowerProj, qEmbInfInf,
+    qProjInfInf, and the parameterized order isomorphism are defined. Finite
+    Kraus families, TNI operations, instruments, and the Type-level monad
+    FiniteInstrumentComp are defined and proved. Its semantic preorder is now
+    weakest-precondition/TT refinement over monotone Kraus-valued
     postconditions; finite unit, pushforward, and bind congruence are
-    proved using residual CP refinement. InstrumentPower now
-    antisymmetrizes this basis and takes its Scott-closed lower
-    completion. The generic Scott closure operator, complete lattice,
-    principal embedding, and conditional direct-image functor laws are
-    proved in QLambda/ScottLowerSet.lean. The current exact-CP basis is
-    still insufficient: monotone TT observations need not preserve
-    directed outcome limits, and for register dimension at least two
-    uncountably many rank-one Choi rays obstruct any countable sequence
-    of finite separators. Gaussian-rational Choi vectors, strict
+    proved using residual CP refinement. InstrumentPower now antisymmetrizes
+    this basis and takes its Scott-closed lower completion. The generic Scott
+    closure operator, complete lattice, principal embedding, and conditional
+    direct-image functor laws are proved in QLambda/ScottLowerSet.lean. The
+    current exact-CP basis is still insufficient: monotone TT observations
+    need not preserve directed outcome limits, and for register dimension at
+    least two uncountably many rank-one Choi rays obstruct any countable
+    sequence of finite separators. Gaussian-rational Choi vectors, strict
     rational quadratic tests, universal Scott-open output observations,
-    countably coded output families, finite-token entailment, physical
-    Choi monotonicity, Gaussian-rational quadratic separation of
-    Hermitian Choi matrices, and the construction of a cofinal countable
-    output basis from every IsOmegaQVA witness are now proved in
-    QLambda/RationalComplex.lean and QLambda/ObservationBasis.lean.
-    The output code is closed under finite unions, with a proved finite
-    covering lemma for finitely many points in one Scott open.
-    QLambda/RoundedTheory.lean constructs the semantic-entailment
-    saturated rounded completion of the coded strict tokens and proves
-    it is a continuous lattice. QLambda/PhysicalTheory.lean maps finite
-    instruments to their satisfied rounded theories and proves that
-    theory inclusion is equivalent to pointwise Choi observational
+    countably coded output families, finite-token entailment, physical Choi
+    monotonicity, Gaussian-rational quadratic separation of Hermitian Choi
+    matrices, and the construction of a cofinal countable output basis from
+    every IsOmegaQVA witness are now proved in QLambda/RationalComplex.lean
+    and QLambda/ObservationBasis.lean. The output code is closed under finite
+    unions, with a proved finite covering lemma for finitely many points in
+    one Scott open. QLambda/RoundedTheory.lean constructs the
+    semantic-entailment saturated rounded completion of the coded strict
+    tokens and proves it is a continuous lattice. QLambda/PhysicalTheory.lean
+    maps finite instruments to their satisfied rounded theories and proves
+    that theory inclusion is equivalent to pointwise Choi observational
     refinement, using Gaussian-rational density and finite-union branch
-    selection. TT refinement is proved to imply this Choi/token order
-    using Scott-open indicator postconditions and intrinsic Choi
-    reconstruction from CP-map action. A rational qubit counterexample
-    over the Bool × Bool diamond proves that the converse fails: every
-    Scott-open cumulative Choi difference is positive semidefinite, but
-    one monotone Kraus-valued postcondition violates TT refinement.
-    Rational CP-valued finite-step postconditions now induce the
-    Scott-continuous FinitaryTTRefines order, exactly characterized by
-    inclusion of satisfied TT token theories. The saturated completion
-    is a continuous lattice and an omegaQVA: finite-prefix membership
-    gates are explicitly QFactorable through one-dimensional density
-    blocks and finitely separated. Rounded extension is Scott-continuous.
-    The concrete power is the continuation carrier [[D → R_n] → R_n]
-    over the fixed TT result theory R_n; functoriality, local continuity,
-    omegaQVA closure, and monad laws are proved. Rational postcondition
-    codes are restricted to TNI CP maps. Result semantics is normalized
-    by total TNI Kraus maps, and rational local approximation supports
-    Scott-continuous token-local precomposition and finite-instrument
-    aggregation. TTPhysicalEmbedding.embed maps finite instruments into
-    the continuation carrier. Deterministic return is preserved exactly;
-    map and bind agree on finitely presented result continuations.
-    Every rational coded TT test has an explicit Scott representation, so
-    embedding order unconditionally implies FinitaryTTRefines. A concrete
-    directed dyadic-prefix family of finite embeddings has a supremum outside
-    the finite image, ruling out a Scott retraction onto that image. The
-    computation-valued core now
-    parameterizes syntax by closed primitives, adds recursive abstractions,
-    and interprets every term by a Scott map into Q(D_infinity). Pure values
-    use monadic unit, call-by-value application uses Scott-continuous bind,
-    and recursion uses Scott fix. Environment continuity, constructor
-    equations, value purity, recursive unfolding, and the pure semantic beta
-    equation are proved, together with renaming, weakening, capture-avoiding
-    value substitution, and operational soundness. A hardware-faithful qubit
-    CEK machine carries normalized density states and models executable
-    positive branches. A separate subnormalized channel-tree semantics retains
-    every CP branch, including zero states, and folds finite trees into
-    physical instruments. Runtime logical relations, positive-run
-    correspondence, recursive finite approximants, and TT token adequacy for
-    every realized finite channel tree are proved. ChannelTreeCompleteness is
-    proved for the closed return, Pauli-X, and measure-Z primitives, for
-    compositional internal and external choice, and for probabilistic
-    endpoints; interior probability is complete at presented continuations
-    by physical aggregation. Unique-successor identity CEK steps transfer
-    completeness, and recursive denotations are Scott suprema of finite
-    unfoldings. Closed application-free terms have unconditional presented
-    channel-tree completeness and token adequacy at a normalized start.
-    RestrictedExternApplication adds ordinary and recursive lambda
-    applications with an external-choice argument under explicit NoApp,
-    AdminNoApp, and Atomic hypotheses. ClosedStuckFreeCoverage consolidates
-    these routes with NoApp, FunAppFrag, Produces 0, and productive closed
-    cases; closed_stuck_free_presented_channelTreeCompleteness and
-    closed_stuck_free_presented_token_adequacy are proved at that exact
+    selection. TT refinement is proved to imply this Choi/token order using
+    Scott-open indicator postconditions and intrinsic Choi reconstruction
+    from CP-map action. A rational qubit counterexample over the Bool × Bool
+    diamond proves that the converse fails: every Scott-open cumulative Choi
+    difference is positive semidefinite, but one monotone Kraus-valued
+    postcondition violates TT refinement. Rational CP-valued finite-step
+    postconditions now induce the Scott-continuous FinitaryTTRefines order,
+    exactly characterized by inclusion of satisfied TT token theories. The
+    saturated completion is a continuous lattice and an omegaQVA: finite-prefix
+    membership gates are explicitly QFactorable through one-dimensional density
+    blocks and finitely separated. Rounded extension is Scott-continuous. The
+    concrete power is the continuation carrier [[D → R_n] → R_n] over the fixed
+    TT result theory R_n; functoriality, local continuity, omegaQVA closure,
+    and monad laws are proved. Rational postcondition codes are restricted to
+    TNI CP maps. Result semantics is normalized by total TNI Kraus maps, and
+    rational local approximation supports Scott-continuous token-local
+    precomposition and finite-instrument aggregation. TTPhysicalEmbedding.embed
+    maps finite instruments into the continuation carrier. Deterministic return
+    is preserved exactly; map and bind agree on finitely presented result
+    continuations. Every rational coded TT test has an explicit Scott
+    representation, so embedding order unconditionally implies
+    FinitaryTTRefines. A concrete directed dyadic-prefix family of finite
+    embeddings has a supremum outside the finite image, ruling out a Scott
+    retraction onto that image. The computation-valued core now parameterizes
+    syntax by closed primitives, adds recursive abstractions, and interprets
+    every term by a Scott map into Q(D_infinity). Pure values use monadic
+    unit, call-by-value application uses Scott-continuous bind, and recursion
+    uses Scott fix. Environment continuity, constructor equations, value purity,
+    recursive unfolding, and the pure semantic beta equation are proved,
+    together with renaming, weakening, capture-avoiding value substitution,
+    and operational soundness. A hardware-faithful qubit CEK machine carries
+    normalized density states and models executable positive branches. A
+    separate subnormalized channel-tree semantics retains every CP branch,
+    including zero states, and folds finite trees into physical instruments.
+    Runtime logical relations, positive-run correspondence, recursive finite
+    approximants, and TT token adequacy for every realized finite channel tree
+    are proved. ChannelTreeCompleteness is proved for the closed return,
+    Pauli-X, and measure-Z primitives, for compositional internal and
+    external choice, and for probabilistic endpoints; interior probability is
+    complete at presented continuations by physical aggregation.
+    Unique-successor identity CEK steps transfer completeness, and recursive
+    denotations are Scott suprema of finite unfoldings. Closed application-free
+    terms have unconditional presented channel-tree completeness and token
+    adequacy at a normalized start. RestrictedExternApplication adds ordinary
+    and recursive lambda applications with an external-choice argument under
+    explicit NoApp, AdminNoApp, and Atomic hypotheses. ClosedStuckFreeCoverage
+    consolidates these routes with NoApp, FunAppFrag, Produces 0, and
+    productive closed cases; closed_stuck_free_presented_channelTreeCompleteness
+    and closed_stuck_free_presented_token_adequacy are proved at that exact
     boundary. This is not unrestricted adequacy for every closed term. The
     rank-one Choi-ray obstruction for PhysicalBasisApproximant is formalized
-    for register dimension at least two. Nothing in the compared
-    statements is imported from a prior Palomar entry.
+    for register dimension at least two. Nothing in the compared statement is
+    imported from a prior Palomar entry.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -130,17 +130,10 @@ status:
       axioms: ["propext", "Quot.sound", "Classical.choice"]
       comparator_config: "comparator.json"
       literature_dependencies: []
-    - declaration: "Scott1972.ContinuousLattice.qDInf_isOmegaQVA"
-      file: "Solution.lean"
-      sorry_count: 0
-      axioms: ["propext", "Quot.sound", "Classical.choice"]
-      comparator_config: "comparator.json"
-      literature_dependencies: []
     - declaration: "Scott1972.ContinuousLattice.finitelySeparated_wayBelow"
       file: "Solution.lean"
       sorry_count: 0
       axioms: ["propext", "Quot.sound", "Classical.choice"]
-      comparator_config: "comparator.json"
       literature_dependencies: []
     - declaration: "QLambda.HardwareChannelSemantics.closed_stuck_free_presented_channelTreeCompleteness"
       file: "QLambda/HardwareChannel/Coverage.lean"
@@ -152,7 +145,6 @@ status:
       sorry_count: 0
       axioms: ["propext", "Quot.sound", "Classical.choice"]
       literature_dependencies: []
-
 fidelity:
   divergences: >-
     QuantumFunctor is the Scott function space [D → Q(D)].
@@ -174,20 +166,32 @@ fidelity:
     no third-party Lean dependency.
 
 sources:
+  - title: "Parameterized ωQVA quantum domain equation"
+    authors: ["Lars Warren Ericson"]
+    type: "original-proof"
+    relationship: other
+    author_endorsement: participated
+    note: >-
+      First formal presentation of the compared capstone
+      omegaQVA_quantum_domain_equation_solved: for bundled quantum power M,
+      initial ωQVA domain D₀, and bonding projection j₀, the inverse limit
+      D_∞ of the tower D_{n+1} = [D_n → Q(D_n)] lies in ωQVA, satisfies
+      mutual inverse identities and an order isomorphism with its function
+      space, and satisfies Scott's bilimit identity on the quantum tower.
+
   - title: "Finite-Valuation Approximable Structures, Quantum λ-Calculus, and the Jung–Tix Problem"
     authors: ["Lars Warren Ericson"]
-    type: "notes"
+    type: other
     id: "https://github.com/catskillsresearch/qlambda/blob/main/arxiv.md"
     relationship: other
     author_endorsement: participated
     note: >-
-      Write-up of this formalization (arxiv.md). Challenge.lean is
-      checked against the named capstone, not against a transcription
-      of Chen–Kou–Lyu or Scott 1972 in full.
+      Informal write-up of the wider repository (arxiv.md). The Palomar
+      Comparator checks Challenge.lean against the named capstone only.
 
   - title: "Continuous Lattices"
     authors: ["Dana Scott"]
-    type: "article"
+    type: paper
     location: "In F. W. Lawvere (ed.), Toposes, Algebraic Geometry and Logic, LNM 274, Springer, 1972"
     relationship: background
     note: >-
@@ -197,27 +201,76 @@ sources:
 
   - title: "Finite-valuation approximable structures: a solution to the Jung–Tix problem of probabilistic powerdomains"
     authors: ["Yuxu Chen", "Hui Kou", "Zhenchao Lyu"]
-    type: "article"
+    type: paper
     id: "https://arxiv.org/abs/2608.03073"
-    relationship: independently-proves
+    relationship: background
     note: >-
-      Source of finite separation (Def. 2.1), Lemma 6.8 (f(x) ≪ x),
-      and the 2-level flattening / saturation lemmas (6.3 / 6.9 / 6.10).
-      This package independently mechanizes those lemmas in the Scott1972
-      continuous-lattice setting and lifts them to ωQVA. The classical
-      ωFVA development is not re-formalized in full.
+      Source of the classical finite-separation and saturation pattern used
+      in QLambda/Saturation.lean. The compared Palomar theorem is the
+      parameterized ωQVA inverse-limit equation, not a formalization of this
+      paper in full.
 
   - title: "The troublesome probabilistic powerdomain"
     authors: ["Achim Jung", "Regina Tix"]
-    type: "article"
+    type: paper
     location: "ENTCS 13:70–91, 1998"
     relationship: background
 
   - title: "A linear-non-linear model for a quantum lambda calculus"
     authors: ["Peter Selinger", "Benoît Valiron"]
-    type: "article"
+    type: paper
     location: "Information and Computation 207(5):603–629, 2009"
     relationship: background
+
+  - title: "Quantum domain theory—definitions and applications"
+    authors: ["Elham Kashefi"]
+    type: paper
+    location: "Computability and Complexity in Analysis (CCA 2003), 2003"
+    relationship: background
+    note: >-
+      Prior quantum domain theory for computability of quantum states and
+      operators. The present ωQVA construction instead uses spectrahedral
+      finite-separation witnesses and proves a parameterized inverse-limit
+      equation in Lean.
+
+  - title: "Applying quantitative semantics to higher-order quantum computing"
+    authors: ["Michele Pagani", "Peter Selinger", "Benoît Valiron"]
+    type: paper
+    id: "https://doi.org/10.1145/2535838.2535879"
+    relationship: background
+    note: >-
+      Quantitative higher-order quantum semantics. It supplies a different
+      linear-semantic architecture; no equivalence with ωQVA is claimed.
+
+  - title: "Quantum CPOs"
+    authors: ["Andre Kornell", "Bert Lindenhovius", "Michael Mislove"]
+    type: paper
+    id: "https://doi.org/10.4204/EPTCS.340.9"
+    relationship: background
+    note: >-
+      The qCPO model supports recursion and recursive types for LNL-FPC and
+      Proto-Quipper-M. The compared result here is instead the specific
+      spectrahedral ωQVA inverse-limit equation.
+
+  - title: "Enriched presheaf model of Quantum FPC"
+    authors: ["Takeshi Tsukada", "Kazuyuki Asada"]
+    type: paper
+    id: "https://doi.org/10.1145/3632855"
+    relationship: background
+    note: >-
+      A fully abstract model of Quantum FPC with arbitrary recursive types.
+      This repository does not claim full abstraction; it contributes a
+      Lean-checked ωQVA domain equation and bounded hardware adequacy results.
+
+  - title: "The category-theoretic solution of recursive domain equations"
+    authors: ["Michael B. Smyth", "Gordon D. Plotkin"]
+    type: paper
+    location: "SIAM Journal on Computing 11(4):761–783, 1982"
+    relationship: background
+    note: >-
+      Classical categorical context for solving recursive domain equations
+      by inverse-limit constructions. The compared theorem specializes that
+      architecture to the parameterized quantum ωQVA tower.
 
 related_formalizations:
   - id: "https://github.com/catskillsresearch/scott1972/tree/36bf01f99f00fcb78b999052212372ba026521ba"
@@ -280,12 +333,13 @@ known_gaps:
 
 limitations:
   - >-
-    The compared claim is the named capstone and supporting surface,
-    not a formalization of Chen–Kou–Lyu 2026 in full, not a Qiskit
-    compiler, and not a Mathlib ingest.
+    The Palomar Comparator selects one theorem:
+    omegaQVA_quantum_domain_equation_solved. Challenge.lean states the
+    family but does not prove it (Comparator convention). Solution.lean
+    imports the QLambda/ proofs.
   - >-
-    Challenge.lean states the family but does not prove it (Comparator
-    convention). Solution.lean re-exports the QLambda/ proofs.
+    The entry is not a formalization of Chen–Kou–Lyu 2026 in full, not a
+    Qiskit compiler, and not a Mathlib ingest.
   - >-
     Classical.choice is permitted (1972 topological ≪). There is no
     project-defined axiom and no native_decide in the compared proofs.
@@ -356,3 +410,6 @@ alignment:
       lean: "finitelySeparated_wayBelow"
       module: "Challenge (statement), Solution / QLambda.Saturation (proof)"
       status: proved
+      note: >-
+        Proved in the repository but not selected by comparator.json for
+        this Palomar entry.

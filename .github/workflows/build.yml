@@ -22,8 +22,5 @@ jobs:
       - name: Configure Lake cache
         run: lake exe cache get || true
 
-      - name: Build project
-        run: lake build
-
-      - name: Compare challenge and solution types
-        run: bash scripts/compare_challenge_solution_types.sh
+      - name: Run mechanical Palomar preflight
+        run: bash scripts/palomar_preflight.sh --mechanical-only

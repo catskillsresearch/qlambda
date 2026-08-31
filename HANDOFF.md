@@ -1,10 +1,15 @@
 # Handoff — qlambda (ωQVA / quantum domain equation)
 
-Palomar compared statement of record:
+Palomar compared statement of record (1 theorem in `comparator.json`):
 `omegaQVA_quantum_domain_equation_solved`.
-Hardware capstones: `closed_stuck_free_presented_channelTreeCompleteness`
-and `closed_stuck_free_presented_token_adequacy`.
+
+Other principal results (not selected by Comparator for this entry):
+`finitelySeparated_wayBelow`, `qDInf_isOmegaQVA`, hardware capstones
+`closed_stuck_free_presented_channelTreeCompleteness` and
+`closed_stuck_free_presented_token_adequacy`.
+
 Narrative: `arxiv.md`. Index: `THEOREMS.md`.
+Palomar style: `docs/PALOMAR_STYLE.md`, `docs/PALOMAR_EDITORIAL_AUDIT.md`.
 Metadata: `formalization.yaml`, `comparator.json`.
 Vendor: `vendor/scott1972` (frozen SHA in `vendor/FROZEN.txt`).
 CKL 2026 paper in `sources/`.
@@ -13,17 +18,27 @@ CKL 2026 paper in `sources/`.
 
 1. Read this file and `PROVENANCE.md`.
 2. `lake build QLambda Challenge Solution`
-3. `bash scripts/compare_challenge_solution_types.sh`
+3. `bash scripts/palomar_preflight.sh --mechanical-only`
 4. Compared names must match between Challenge and Solution (`pp.all`).
 
-## Status (2026-08-28)
+Before a Palomar registry submission:
+
+5. `bash scripts/palomar_preflight.sh` (full mechanical + editorial audit).
+6. Submit the pinned commit with Comparator path `comparator.json` at
+   [submit.palomar-registry.org](https://submit.palomar-registry.org/).
+
+Local preflight green is necessary but not sufficient for registration.
+Palomar additionally runs Comparator, Lean/NanoDa replay, and automated
+editorial review before the author chooses whether to register.
+
+## Status (2026-08-31)
 
 Palomar packaging (Apache-2.0, Zenodo/arXiv scripts, Challenge /
-Solution / comparator / formalization.yaml) is in place. `lake build`
-typechecks `QLambda`, `Challenge`, and `Solution` under
+Solution / comparator / formalization.yaml, preflight scripts) is in place.
+`lake build` typechecks `QLambda`, `Challenge`, and `Solution` under
 `leanprover/lean4:v4.33.0`. Proof modules in `QLambda/` are
 sorry-free where previously discharged. `Challenge.lean` may `sorry`.
-`bash scripts/compare_challenge_solution_types.sh` reports a type match.
+`bash scripts/palomar_preflight.sh --mechanical-only` is the CI gate.
 
 The domain construction now includes the concrete fixed-register
 `TTContinuation.model`, its lawful continuation monad, and

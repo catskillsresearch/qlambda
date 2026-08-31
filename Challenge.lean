@@ -19,12 +19,22 @@ import Mathlib.Topology.Order.ScottTopology
 /-!
 # Palomar statement of record (ωQVA quantum domain equation)
 
-This module states the compared capstone and its type surface. It imports
-only Mathlib. Challenge is allowed `sorry`. `IsQuantumPowerModel` is the
-conditional specification of a quantum powerdomain. The capstone is
-parameterized by a bundled `QuantumPowerModel`. The concrete
-`TTContinuation.model` instance and its finite physical-instrument embedding
-are proved in `QLambda/`, outside this deliberately abstract compared surface.
+This module states the **single compared Palomar capstone** and the Mathlib
+type surface it depends on. Challenge may use `sorry`; Solution supplies the
+proofs.
+
+The capstone is conditional on three inputs: a bundled `QuantumPowerModel`
+(`IsQuantumPowerModel`), an initial ωQVA domain `D₀ : QDomain`, and a
+continuous-lattice projection `j₀ : D₀.carrier ↠ [D₀ → Q(D₀)]` that bonds
+the first tower stage. Under these hypotheses it proves that the inverse limit
+`D_∞` of the tower `D_{n+1} = [D_n → Q(D_n)]` lies in ωQVA, that the
+embedding and projection between `D_∞` and `[D_∞ → Q(D_∞)]` are mutual
+inverses, that `D_∞` is order-isomorphic to its function space, and that
+Scott's inverse-limit identity holds on the quantum tower.
+
+Concrete instances such as `TTContinuation.model` and the wider language or
+hardware development are proved in `QLambda/` and are outside this abstract
+compared surface.
 -/
 
 open Matrix
@@ -330,7 +340,13 @@ noncomputable def qProjInfInf (M : QuantumPowerModel) (D₀ : QDomain.{u})
     ScottMap (QuantumFunctor M (QDInf M D₀ j₀)) (QDInf M D₀ j₀) := by
   sorry
 
-/-- Compared capstone, parameterized by a quantum powerdomain model. -/
+/-- **Compared Palomar capstone.** For bundled `M : QuantumPowerModel`, initial
+`D₀ : QDomain`, and bonding projection `j₀`, the inverse limit `QDInf M D₀ j₀`
+of the quantum tower satisfies, simultaneously:
+1. `Nonempty (IsOmegaQVA (QDInf M D₀ j₀))`;
+2. `qProjInfInf` and `qEmbInfInf` are mutual inverses;
+3. `QDInf M D₀ j₀` is order-isomorphic to `[QDInf M D₀ j₀ → Q(QDInf M D₀ j₀)]`; and
+4. the Scott bilimit identity `id = ⨆ n, embInf n ∘ projInf n` on the tower. -/
 theorem omegaQVA_quantum_domain_equation_solved
     (M : QuantumPowerModel) (D₀ : QDomain.{u})
     (j₀ : IsContinuousLatticeProjection D₀.carrier (QuantumFunctor M D₀.carrier)) :

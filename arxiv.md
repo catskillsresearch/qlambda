@@ -26,6 +26,21 @@ The contrapositives matter. Solving only $D\cong[D\to D]$ while wanting instrume
 
 The formalized contribution lifts the finite-separation and saturation pattern from classical valuations to quantum spectrahedra ($\omega\mathbf{QVA}$), solves the parameterized equation above for a continuation power $Q=\mathcal Q_n$, and connects the denotation to a qubit CEK machine and channel-tree adequacy fragment. Chen–Kou–Lyu’s classical $\omega\mathbf{FVA}$ theorem and the Jung–Tix history are motivating literature, not a full Lean target of this repository. The Qiskit material below is likewise motivational operational comparison, not a verified compiler or formal equivalence theorem. The later sections state the formal claim and exact Lean boundary.
 
+Several established approaches also combine domain structure, higher-order
+quantum computation, and recursion. Kashefi's quantum domain theory orders
+quantum states and operators to study computability. Pagani, Selinger, and
+Valiron give quantitative semantics for higher-order quantum programs.
+Kornell, Lindenhovius, and Mislove's qCPO model supports term and recursive
+types for LNL-FPC and Proto-Quipper-M, while Tsukada and Asada's enriched
+presheaf model is fully abstract for Quantum FPC with arbitrary recursive
+types. Those works provide richer linear typing, categorical, adequacy, or
+full-abstraction results than are claimed here. The distinct contribution
+formalized here is a Lean-checked, parameterized Scott inverse-limit equation
+inside the spectrahedral finite-separation class $\omega\mathbf{QVA}$,
+together with the specific fixed-register continuation instance and the
+separately bounded channel-tree adequacy results. No equivalence with qCPO,
+Quantum FPC, or Kashefi's quantum domains is claimed.
+
 ---
 
 ## Syntactic Extension: Untyped $\lambda$-Calculus with Choice Operators
@@ -625,3 +640,7 @@ name/file/boundary index.
 8. P. Selinger and B. Valiron. *A linear-non-linear model for a quantum lambda calculus*. *Information and Computation*, 207(5):603–629, 2009.
 9. M. B. Smyth and G. D. Plotkin. *The category-theoretic solution of recursive domain equations*. *SIAM Journal on Computing*, 11(4):761–783, 1982.
 10. M. Ying. *Foundations of Quantum Programming*. Morgan Kaufmann / Elsevier, 2016.
+11. E. Kashefi. *Quantum domain theory—definitions and applications*. In *Computability and Complexity in Analysis (CCA 2003)*, 2003.
+12. M. Pagani, P. Selinger, and B. Valiron. *Applying quantitative semantics to higher-order quantum computing*. In *POPL 2014*, pages 647–658. ACM, 2014. doi:10.1145/2535838.2535879.
+13. A. Kornell, B. Lindenhovius, and M. Mislove. *Quantum CPOs*. *Electronic Proceedings in Theoretical Computer Science* 340:174–187, 2021. doi:10.4204/EPTCS.340.9.
+14. T. Tsukada and K. Asada. *Enriched presheaf model of Quantum FPC*. *Proceedings of the ACM on Programming Languages* 8(POPL), 2024. doi:10.1145/3632855.
