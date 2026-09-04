@@ -1,6 +1,6 @@
 ---
 description: Prevent Palomar Comparator mismatches in Challenge/Solution declarations
-globs: "{Challenge.lean,Solution.lean,comparator.json,QLambda/**/*.lean,scripts/*palomar*,scripts/compare_challenge_solution_types.sh,formalization.yaml,docs/PALOMAR*.md}"
+globs: "{Challenge.lean,Solution.lean,comparator.json,QLambda/**/*.lean,scripts/*palomar*,vendor/palomar-preflight/**,formalization.yaml,docs/PALOMAR*.md}"
 alwaysApply: false
 ---
 

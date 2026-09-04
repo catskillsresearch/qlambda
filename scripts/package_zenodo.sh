@@ -54,7 +54,7 @@ Repository: https://github.com/catskillsresearch/qlambda
 ```bash
 lake exe cache get
 lake build
-bash scripts/compare_challenge_solution_types.sh
+bash vendor/palomar-preflight/compare_challenge_solution_types.sh
 ```
 
 ## Rebuild the PDF and this deposit
