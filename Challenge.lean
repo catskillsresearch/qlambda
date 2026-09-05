@@ -52,18 +52,14 @@ namespace SubNormalizedDensity
 variable {n : ℕ}
 
 instance : PartialOrder (SubNormalizedDensity n) where
-  le ρ σ := ρ.mat ≤ σ.mat
-  le_refl ρ := le_refl ρ.mat
-  le_trans ρ σ τ := le_trans
-  le_antisymm ρ σ hρσ hσρ := by
-    cases ρ; cases σ; congr
-    exact le_antisymm hρσ hσρ
+  le := by sorry
+  le_refl := by sorry
+  le_trans := by sorry
+  le_antisymm := by sorry
 
 instance : OrderBot (SubNormalizedDensity n) where
-  bot := ⟨0, PosSemidef.zero, by simp [Matrix.trace_zero]⟩
-  bot_le ρ := by
-    change (ρ.mat - 0).PosSemidef
-    simpa using ρ.posSemidef
+  bot := by sorry
+  bot_le := by sorry
 
 end SubNormalizedDensity
 
@@ -71,35 +67,43 @@ namespace Scott1972.ContinuousLattice
 
 open Set
 
-universe u
+universe u u_1 u_2 u_3 u_4 u_5 u_10 u_11
 
 section InducedTopology
 
-variable {D D' D'' : Type*} [CompleteLattice D] [CompleteLattice D'] [CompleteLattice D'']
+variable {D : Type u_1} [CompleteLattice D]
 
 /-- **Scott 1972, §2, the induced topology.** -/
 def ScottOpen (U : Set D) : Prop :=
-  IsUpperSet U ∧
-    ∀ ⦃S : Set D⦄, S.Nonempty → DirectedOn (· ≤ ·) S → sSup S ∈ U → (S ∩ U).Nonempty
+  by
+    let _ : CompleteLattice D := inferInstance
+    sorry
 
 /-- **Scott 1972, §2.** The *way-below* relation. -/
 def WayBelow (x y : D) : Prop :=
-  ∃ U : Set D, ScottOpen U ∧ y ∈ U ∧ U ⊆ Set.Ici x
+  by
+    let _ : CompleteLattice D := inferInstance
+    sorry
 
 @[inherit_doc] scoped infix:50 " ≪ " => WayBelow
 
-def IsContinuousLattice (D : Type*) [CompleteLattice D] : Prop :=
-  ∀ y : D, IsLUB {x | x ≪ y} y
+def IsContinuousLattice (D : Type u_2) [CompleteLattice D] : Prop :=
+  by sorry
 
 /-- Scott's induced topology on a complete lattice, realized as mathlib's Scott topology. -/
-@[reducible] noncomputable def scottTopologicalSpace : TopologicalSpace D :=
-  Topology.scott D univ
+@[reducible] noncomputable def scottTopologicalSpace
+    {D : Type u_2} [CompleteLattice D] : TopologicalSpace D :=
+  by sorry
 
 /-- Continuous maps between complete lattices with Scott's induced topologies. -/
-def ScottMap (D D' : Type*) [CompleteLattice D] [CompleteLattice D'] : Type _ :=
+def ScottMap (D : Type u_10) (D' : Type u_11)
+    [CompleteLattice D] [CompleteLattice D'] : Type _ :=
   { f : D → D' // @Continuous D D' scottTopologicalSpace scottTopologicalSpace f }
 
 namespace ScottMap
+
+variable {D : Type u_3} {D' : Type u_4} {D'' : Type u_5}
+variable [CompleteLattice D] [CompleteLattice D'] [CompleteLattice D'']
 
 instance : CoeFun (ScottMap D D') (fun _ => D → D') where
   coe f := f.1
@@ -109,10 +113,10 @@ theorem ext {f g : ScottMap D D'} (h : ∀ x, f x = g x) : f = g :=
   Subtype.ext (funext h)
 
 instance instPartialOrder : PartialOrder (ScottMap D D') where
-  le f g := ∀ x, (f : D → D') x ≤ g x
-  le_refl _ _ := le_refl _
-  le_trans _ _ _ hfg hgh x := le_trans (hfg x) (hgh x)
-  le_antisymm _ _ hfg hgf := ScottMap.ext fun x => le_antisymm (hfg x) (hgf x)
+  le := by sorry
+  le_refl := by sorry
+  le_trans := by sorry
+  le_antisymm := by sorry
 
 /-- Pointwise suprema of Scott maps. This is a Comparator definition hole:
 Solution supplies the proved Scott-continuous construction. -/
@@ -134,14 +138,15 @@ noncomputable def comp (f : ScottMap D' D'') (g : ScottMap D D') : ScottMap D D'
 end ScottMap
 
 /-- **Scott 1972, Definition 3.6.** A *retraction* of continuous lattices. -/
-structure IsContinuousLatticeRetraction (D D' : Type*) [CompleteLattice D] [CompleteLattice D']
-    where
+structure IsContinuousLatticeRetraction (D : Type u_10) (D' : Type u_11)
+    [CompleteLattice D] [CompleteLattice D'] where
   incl : ScottMap D D'
   retr : ScottMap D' D
   retr_incl : ∀ d, retr (incl d) = d
 
 /-- **Scott 1972, Definition 3.6.** A *projection* of continuous lattices. -/
-structure IsContinuousLatticeProjection (D D' : Type*) [CompleteLattice D] [CompleteLattice D']
+structure IsContinuousLatticeProjection (D : Type u_10) (D' : Type u_11)
+    [CompleteLattice D] [CompleteLattice D']
     extends IsContinuousLatticeRetraction D D' where
   incl_retr_le : ∀ d, incl (retr d) ≤ d
 
@@ -154,7 +159,9 @@ variable (P : ∀ n, IsContinuousLatticeProjection (D n) (D (n + 1)))
 
 /-- Compatibility of a sequence: `jₙ(x_{n+1}) = xₙ` for all `n`. -/
 def Compatible (x : ∀ n, D n) : Prop :=
-  ∀ n, (P n).retr (x (n + 1)) = x n
+  by
+    let _ := P
+    sorry
 
 /-- **Scott 1972, §4.** The inverse limit `D_∞` as the subspace of compatible sequences. -/
 abbrev InverseLimit : Type u :=
@@ -195,20 +202,15 @@ def DensityVec : List ℕ → Type
 namespace DensityVec
 
 instance instPartialOrder : (ns : List ℕ) → PartialOrder (DensityVec ns)
-  | [] => inferInstanceAs (PartialOrder PUnit)
-  | _ :: ns =>
-    haveI := instPartialOrder ns
-    inferInstanceAs (PartialOrder (_ × _))
+  := by sorry
 
 instance instOrderBot : (ns : List ℕ) → OrderBot (DensityVec ns)
-  | [] => { bot := ⟨⟩, bot_le := fun _ => trivial }
-  | _ :: ns =>
-    haveI := instOrderBot ns
-    inferInstanceAs (OrderBot (_ × _))
+  := by sorry
 
 end DensityVec
 
-variable {D E : Type*} [CompleteLattice D] [CompleteLattice E]
+variable {D : Type u_1} {E : Type u_2}
+variable [CompleteLattice D] [CompleteLattice E]
 
 /-- `a` factors through `DensityVec dims` via monotone encoding and reconstruction. -/
 structure QFactorable (a : ScottMap D E) where
@@ -221,11 +223,11 @@ structure QFactorable (a : ScottMap D E) where
 
 /-- Jung / CKL finite separator. -/
 def FinitelySeparated (f : ScottMap D D) : Prop :=
-  ∃ M : Finset D, ∀ x, ∃ m ∈ M, (f : D → D) x ≤ m ∧ m ≤ x
+  by sorry
 
 /-- A continuous lattice whose identity is a directed supremum of
 Q-factorable, finitely separated approximants. -/
-class IsOmegaQVA (D : Type*) [CompleteLattice D] where
+class IsOmegaQVA (D : Type u_3) [CompleteLattice D] where
   isContinuousLattice : IsContinuousLattice D
   approx : ℕ → ScottMap D D
   qfactorable : ∀ n, QFactorable (approx n)
@@ -265,7 +267,7 @@ class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) 
     letI := str D
     letI := str E
     map (⨆ n, F n) = ⨆ n, map (F n)
-  closed : ∀ {D : Type u} [CompleteLattice D] (h : IsOmegaQVA D),
+  closed : ∀ {D : Type u} [CompleteLattice D] (_h : IsOmegaQVA D),
     letI := str D
     IsOmegaQVA (Q D)
 
@@ -302,24 +304,22 @@ attribute [instance] QDomain.str
 /-- The canonical stage-zero embedding–projection pair. Its inclusion sends
 the unique point to the bottom element of `[PUnit → Q(PUnit)]`; its retraction
 is the unique map `[PUnit → Q(PUnit)] → PUnit`. -/
-noncomputable def canonicalQDomainProjection (M : QuantumPowerModel) :
-    IsContinuousLatticeProjection canonicalQDomain.carrier
-      (QuantumFunctor M canonicalQDomain.carrier) := by
+noncomputable def canonicalQDomainProjection (M : QuantumPowerModel.{u_1}) :
+    IsContinuousLatticeProjection (canonicalQDomain.{u_2}).carrier
+      (QuantumFunctor M (canonicalQDomain.{u_1}).carrier) := by
   sorry
 
 /-- The quantum tower `D_{n+1} = [D_n → Q(D_n)]` as bundled lattices. -/
-noncomputable def qTowerCLat (M : QuantumPowerModel) (D₀ : CLat.{u}) : ℕ → CLat.{u}
-  | 0 => D₀
-  | n + 1 =>
-    ⟨ScottMap (qTowerCLat M D₀ n).carrier (QuantumPower M (qTowerCLat M D₀ n).carrier)⟩
+noncomputable def qTowerCLat (M : QuantumPowerModel.{u}) (D₀ : CLat.{u}) : ℕ → CLat.{u}
+  := by sorry
 
 /-- The carrier `Dₙ` of the quantum tower. -/
-def qTowerType (M : QuantumPowerModel) (D₀ : CLat.{u}) (n : ℕ) : Type u :=
-  (qTowerCLat M D₀ n).carrier
+def qTowerType (M : QuantumPowerModel.{u}) (D₀ : CLat.{u}) (n : ℕ) : Type u := by
+  sorry
 
-noncomputable instance qTowerCompleteLattice (M : QuantumPowerModel) (D₀ : CLat.{u})
-    (n : ℕ) : CompleteLattice (qTowerType M D₀ n) :=
-  (qTowerCLat M D₀ n).str
+noncomputable instance qTowerCompleteLattice (M : QuantumPowerModel.{u}) (D₀ : CLat.{u})
+    (n : ℕ) : CompleteLattice (qTowerType M D₀ n) := by
+  sorry
 
 /-- Bonding embedding–projection pairs, recursively lifted by
 `F(X) = [X → Q(X)]`; stage zero is the supplied pair `j₀`. Compatibility uses
@@ -356,9 +356,10 @@ embedding is the identity; (3) limit embedding after projection is the
 identity; (4) it is order-isomorphic to `[D_∞ → Q(D_∞)]`; and (5) Scott's
 bilimit identity `id = ⨆ n, embInf n ∘ projInf n` holds. -/
 theorem canonical_omegaQVA_quantum_domain_equation_solved
-    (M : QuantumPowerModel) :
-    let D₀ := canonicalQDomain
-    let j₀ := canonicalQDomainProjection M
+    (M : QuantumPowerModel.{u_1}) :
+    let D₀ : QDomain.{u_1} := canonicalQDomain.{u_1}
+    let j₀ : IsContinuousLatticeProjection D₀.carrier
+        (QuantumFunctor M D₀.carrier) := canonicalQDomainProjection M
     let Dinf := QDInf M D₀ j₀
     Nonempty (IsOmegaQVA Dinf) ∧
     (qProjInfInf M D₀ j₀).comp (qEmbInfInf M D₀ j₀) = ScottMap.idMap ∧

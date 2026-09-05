@@ -18,7 +18,7 @@ limit are formed for `F(X) = [X → Q(X)]` relative to a bundled
 
 namespace Scott1972.ContinuousLattice
 
-universe u
+universe u u_1 u_2
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -44,15 +44,15 @@ The inclusion `incl` sends the unique base point to the bottom Scott map.
 The retraction `retr` goes in the important reverse direction—from the
 quantum function space back to the one-point base—and is necessarily the
 unique constant map. -/
-noncomputable def canonicalQDomainProjection (M : QuantumPowerModel) :
-    IsContinuousLatticeProjection canonicalQDomain.carrier
-      (QuantumFunctor M canonicalQDomain.carrier) where
+noncomputable def canonicalQDomainProjection (M : QuantumPowerModel.{u_1}) :
+    IsContinuousLatticeProjection (canonicalQDomain.{u_2}).carrier
+      (QuantumFunctor M (canonicalQDomain.{u_1}).carrier) where
   incl :=
-    (⊥ : ScottMap canonicalQDomain.carrier
-      (QuantumFunctor M canonicalQDomain.carrier))
+    (⊥ : ScottMap (canonicalQDomain.{u_2}).carrier
+      (QuantumFunctor M (canonicalQDomain.{u_1}).carrier))
   retr :=
-    ScottMap.const (D := QuantumFunctor M canonicalQDomain.carrier)
-      (⟨⟩ : canonicalQDomain.carrier)
+    ScottMap.const (D := QuantumFunctor M (canonicalQDomain.{u_1}).carrier)
+      (⟨⟩ : (canonicalQDomain.{u_2}).carrier)
   retr_incl := by
     intro d
     cases d

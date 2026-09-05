@@ -19,7 +19,7 @@ claimed until the Scott-complete carrier is constructed.
 
 namespace Scott1972.ContinuousLattice
 
-universe u
+universe u u_1
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -599,9 +599,10 @@ theorem omegaQVA_quantum_domain_equation_solved
 started from the canonical one-point `QDomain` and its canonical projection
 has an `ωQVA` inverse limit solving the recursive quantum domain equation. -/
 theorem canonical_omegaQVA_quantum_domain_equation_solved
-    (M : QuantumPowerModel) :
-    let D₀ := canonicalQDomain
-    let j₀ := canonicalQDomainProjection M
+    (M : QuantumPowerModel.{u_1}) :
+    let D₀ : QDomain.{u_1} := canonicalQDomain.{u_1}
+    let j₀ : IsContinuousLatticeProjection D₀.carrier
+        (QuantumFunctor M D₀.carrier) := canonicalQDomainProjection M
     let Dinf := QDInf M D₀ j₀
     Nonempty (IsOmegaQVA Dinf) ∧
     (qProjInfInf M D₀ j₀).comp (qEmbInfInf M D₀ j₀) = ScottMap.idMap ∧
