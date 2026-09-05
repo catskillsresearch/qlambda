@@ -58,7 +58,7 @@ For registry submission, also run the full editorial audit
 ```bash
 bash scripts/palomar_preflight.sh              # mechanical + LLM audit
 bash scripts/palomar_preflight.sh --mechanical-only   # CI / routine edits
-python3 vendor/palomar-preflight/palomar_editorial_checks.py      # packaging pre-checks only
+python3 ../palomar-preflight/palomar_editorial_checks.py      # packaging pre-checks only
 ```
 
 Treat a green `lake build` alone as insufficient.

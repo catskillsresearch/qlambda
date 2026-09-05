@@ -124,7 +124,7 @@ bash scripts/palomar_preflight.sh --mechanical-only
 Or the underlying Comparator diff alone:
 
 ```bash
-bash vendor/palomar-preflight/compare_challenge_solution_types.sh
+bash scripts/palomar_preflight.sh --mechanical-only
 ```
 
 ArXiv / Zenodo: `bash scripts/build_arxiv_pdf.sh` and

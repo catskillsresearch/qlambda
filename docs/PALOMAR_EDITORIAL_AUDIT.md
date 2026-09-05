@@ -64,7 +64,7 @@ Before running full preflight on a submission candidate, confirm:
 4. **Sources** — `formalization.yaml` `sources:` records the primary paper and
    any extra literature for separately labelled compared results.
 5. **Mechanical green** — `bash scripts/palomar_preflight.sh --mechanical-only`
-   passes, then `bash vendor/palomar-preflight/compare_challenge_solution_types.sh`.
+   passes, then `PALOMAR_PROJECT_ROOT=$PWD bash ../palomar-preflight/compare_challenge_solution_types.sh`.
 
 Deterministic packaging checks live in `scripts/palomar_editorial_checks.py`
 (main-results coverage, canonical capstone metadata, material definition-hole
@@ -110,6 +110,5 @@ First run creates `.venv-editorial/` with `cursor-sdk` and `pyyaml`, or reuses
 |------|------|
 | `vendor/palomar-policy/` | Vendored prompts, rubric, CONTRIBUTING, schemas |
 | `vendor/PALOMAR_POLICY_PIN` | Upstream PalomarPolicy commit SHA |
-| `vendor/palomar-preflight/` | Vendored local preflight toolkit (not a submodule) |
-| `vendor/PALOMAR_PREFLIGHT_PIN` | palomar-preflight commit SHA |
+| `vendor/PALOMAR_PREFLIGHT_PIN` | palomar-preflight commit SHA (CI checkout) |
 | `scripts/palomar_preflight.sh` | Project wrapper: mechanical + editorial gate |
