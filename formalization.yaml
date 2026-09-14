@@ -29,7 +29,7 @@ repository:
 
 classification:
   arxiv: [cs.LO, math.LO, quant-ph]
-  msc2020: ["06B35", "68Q55", "81P68"]
+  msc2020: ["06B35", "68Q55", "81P68", "68V20"]
 
 status:
   scope: >-
@@ -136,31 +136,6 @@ status:
       sorry_count: 0
       axioms: ["propext", "Quot.sound", "Classical.choice"]
       comparator_config: "comparator.json"
-      literature_dependencies: []
-    - declaration: "Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved"
-      file: "QLambda/QuantumDomainEquation.lean"
-      sorry_count: 0
-      axioms: ["propext", "Quot.sound", "Classical.choice"]
-      literature_dependencies: []
-    - declaration: "QLambda.TTContinuation.canonical_omegaQVA_quantum_domain_equation_solved"
-      file: "QLambda/TTContinuationDomainEquation.lean"
-      sorry_count: 0
-      axioms: ["propext", "Quot.sound", "Classical.choice"]
-      literature_dependencies: []
-    - declaration: "Scott1972.ContinuousLattice.finitelySeparated_wayBelow"
-      file: "Solution.lean"
-      sorry_count: 0
-      axioms: ["propext", "Quot.sound", "Classical.choice"]
-      literature_dependencies: []
-    - declaration: "QLambda.HardwareChannelSemantics.closed_stuck_free_presented_channelTreeCompleteness"
-      file: "QLambda/HardwareChannel/Coverage.lean"
-      sorry_count: 0
-      axioms: ["propext", "Quot.sound", "Classical.choice"]
-      literature_dependencies: []
-    - declaration: "QLambda.HardwareChannelSemantics.closed_stuck_free_presented_token_adequacy"
-      file: "QLambda/HardwareChannel/Coverage.lean"
-      sorry_count: 0
-      axioms: ["propext", "Quot.sound", "Classical.choice"]
       literature_dependencies: []
 fidelity:
   divergences: >-

@@ -3,10 +3,25 @@
 
 ---
 
-### Abstract
-We develop a Lean~4 framework for denotational semantics of an untyped call-by-value $\lambda$-calculus with probabilistic ($\oplus_p$), internal ($\sqcap$), and external ($\Box$) choice, controlled by finite quantum instruments. The intended equation is not the classical Scott equation $D\cong[D\to D]$, nor an effectful collapse $Q\cong[Q\to Q]$. Values inhabit a domain $D_\infty$ and terms denote computations in a quantum-effect layer $Q(D_\infty)$, linked by the call-by-value equation
-$$D_\infty\cong[D_\infty\to Q(D_\infty)].$$
-Here $Q$ is a monad of computations: unit embeds a value as a trivial computation, and bind sequences an effectful computation with a value-to-computation continuation. Inspired by Chen, Kou, and Lyu’s finite-valuation approximable structures, we define $\omega\mathbf{QVA}$ by requiring approximate identities to factor through finite products of sub-normalized density-operator spaces under the Loewner order; finite spectrahedra are approximation factors, not themselves the power $Q(D)$. We prove a parameterized inverse-limit theorem and instantiate it with the fixed-register continuation power $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$. Finite trace-nonincreasing completely positive (CP) instruments embed into this carrier by Scott-continuous token-local aggregation. The embedding preserves deterministic return exactly and agrees with finite map and bind on finitely presented continuations. Every rational token-theory (TT) test has an explicit Scott representation, so embedding order recovers finitary TT refinement; a directed-supremum obstruction rules out a finite-image Scott retract. On the language side, a hardware qubit Control–Environment–Kontinuation (CEK) machine and subnormalized channel-tree semantics yield final presented channel-tree completeness and token-adequacy capstones for the explicitly witnessed `ClosedStuckFreeCoverage` fragment. This includes restricted ordinary and recursive lambda applications with an external-choice argument; it is not unconditional completeness for every closed term.
+## Abstract
+
+This note records a Lean 4 formalization of untyped call-by-value $\lambda$-calculus
+with probabilistic ($\oplus_p$), internal ($\sqcap$), and external ($\Box$) choice
+and finite quantum instruments. Values live in $D_\infty$; terms denote computations
+in a quantum-effect monad $Q(D_\infty)$ with call-by-value reflexivity
+$D_\infty\cong[D_\infty\to Q(D_\infty)]$, not pure $D\cong[D\to D]$ or
+$Q\cong[Q\to Q]$. We mechanize $\omega\mathbf{QVA}$ (quantum-valuation approximable
+domains), a parameterized inverse-limit solution for every `QuantumPowerModel`, and
+the fixed-register continuation instance $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$.
+Finite CP instruments embed with exact unit, presented map/bind agreement, TT
+refinement recovery, and a no-finite-image-Scott-retract obstruction. A qubit CEK
+machine and channel-tree semantics yield presented completeness and token adequacy
+for the explicit `ClosedStuckFreeCoverage` fragment (not all closed terms). The
+Palomar capstone is `canonical_omegaQVA_quantum_domain_equation_solved` in
+`Challenge.lean`. Vendored Scott 1972 continuous lattices support the domain layer.
+Lean was written by AI agents under the author's direction and review; proofs are
+kernel-checked. Short Lean fragments appear in the narrative; full sources are indexed
+at https://github.com/catskillsresearch/qlambda.
 
 ---
 
@@ -58,6 +73,8 @@ graph TD
     C --> C1["Resolved by internal demonic scheduler"]
     D --> D1["Resolved by environment / communication trigger"]
 ```
+
+**Figure.** The three classical choice operators and how each is resolved: probabilistic $\oplus_p$, internal $\sqcap$, and external $\Box$.
 
 ### The Three Choice Operators
 1. **Probabilistic Choice ($M \oplus_p N$):**
@@ -209,6 +226,8 @@ flowchart TB
   Had --> Hch
 ```
 
+**Figure.** Dependency map of the main Lean modules, from vendored Scott lattices through the domain equation, language semantics, and hardware channel-tree layer.
+
 ### Hardware channel submodule dependencies
 
 `QLambda/HardwareChannelSemantics.lean` is a barrel re-export. The proof DAG is linear:
@@ -227,6 +246,8 @@ flowchart LR
 
   Config --> Identity --> Spines --> UnderFrame --> FunApp --> Closed --> Fundamental --> Productive --> Coverage
 ```
+
+**Figure.** Linear proof DAG of the `HardwareChannelSemantics` submodules, from `Config` through `Coverage`.
 
 Upstream of `Config`: `HardwareAdequacy` (which rests on `HardwareLogicalRelation`, `HardwareObservation`, `HardwareOperational`, and the TT/adequacy stack above).
 
@@ -260,6 +281,8 @@ sequenceDiagram
     Dinf-->>Dinf: Proves D_∞ ∈ ωFVA
     Dinf->>Funct: Isomorphism D_∞ ≅ F(D_∞)
 ```
+
+**Figure.** Smyth--Plotkin embedding-projection construction of the bilimit $D_\infty$ in $\omega\mathbf{FVA}$.
 
 ### Step 1: Establish the Ambient Cartesian Closed Category ($\omega\mathbf{FVA}$)
 By Theorem 10.4 of Chen–Kou–Lyu (2026):
@@ -310,6 +333,8 @@ graph TD
     C1 --> C2["Finite-valuation factorizations within continuous dcpos"]
 ```
 
+**Figure.** Two historical strategies for combining higher-order functions with probability: equilogical spaces versus $\omega\mathbf{FVA}$.
+
 1. **Strategy A — Equilogical Spaces ($\mathbf{Equ}$):** Formed by pairs $(X, \sim)$ of $T_0$ spaces with equivalence relations. $\mathbf{Equ}$ is a quasitopos (locally Cartesian closed, handles quotients and sheaves). The trade-off is losing concrete order-theoretic approximations and working with realizers.
 2. **Strategy B — $\omega\mathbf{FVA}$:** Retains pure continuous dcpos with Scott topologies and the way-below relation ($\ll$). It resolves the obstruction by replacing finite-image deflations with finite-valuation factorizations ($D \to \mathcal{V}_{\le 1}(P_n) \to D$).
 3. **Categorical Embedding:** Every countably based domain in $\omega\mathbf{FVA}$ embeds fully and faithfully into $\mathbf{Equ}$ as $(D, =_D)$:
@@ -354,6 +379,8 @@ graph LR
     CC -->|Monad Q| QD
 ```
 
+**Figure.** Linear-nonlinear architecture: higher-order classical control in $\omega\mathbf{QVA}$ and the quantum computation monad $Q$.
+
 ### Generalizing to $\omega\mathbf{QVA}$
 We generalize the Chen–Kou–Lyu construction from commutative probability simplices to non-commutative density operator spaces:
 
@@ -366,6 +393,8 @@ graph LR
     A4["Convex Polytopes"] --> B4["Convex Spectrahedra"]
     A5["Frontier Erosion Φt"] --> B5["Spectral Projection Depletion Φt"]
 ```
+
+**Figure.** Generalization of Chen--Kou--Lyu $\omega\mathbf{FVA}$ ingredients to spectrahedral $\omega\mathbf{QVA}$.
 
 1. **Finite State Spaces:** Let $A = \bigoplus_{k=1}^m M_{d_k}(\mathbb{C})$. Its sub-normalized density operator space is $\mathcal{S}_{\le 1}(A) = \{ \rho \in A^*_+ \mid \operatorname{Tr}(\rho) \le 1 \}$ equipped with the Loewner partial order $\rho \le_L \sigma \iff \sigma - \rho \ge 0$.
 2. **Spectral Depletion Semigroup:** For $\rho = \sum \lambda_i E_i$, $\Phi_t(\rho)$ scales down maximal eigenspace projections, preserving the Loewner order ($\rho \le_L \sigma \implies \Phi_t(\rho) \le_L \Phi_t(\sigma)$) and establishing that $\mathcal{S}_{\le 1}(A)$ is an FS-domain.
@@ -411,7 +440,8 @@ Exact pullback of a rational Choi test through an arbitrary Kraus family need no
 4. lift atomwise approximation to finite tokens;
 5. use token derivations to extend finite physical operations Scott-continuously to all rounded result theories.
 
-This is implemented across `QLambda/TTResultAlgebra.lean`, `QLambda/TTResultApproximation.lean`, and `QLambda/TTResultOperations.lean`.
+This is implemented in `TTResultAlgebra`, `TTResultApproximation`, and
+`TTResultOperations` (under `QLambda/`).
 
 #### From a failed compactness shortcut to token-local aggregation
 
@@ -434,11 +464,11 @@ The development constructs both the rational coded-test representation and a con
 
 - `RatTNICPMatrix n` is a Gaussian-rational Choi matrix with positivity and trace-nonincreasing certificates.
 - `FiniteInstrumentComp n D` is a finite family of TNI CP branches returning values in `D`.
-- `FinitaryTTRefines C μ ν` quantifies weakest-precondition refinement over rational finite-step postconditions.
+- `FinitaryTTRefines C` (for instruments $\mu,\nu$) quantifies weakest-precondition refinement over rational finite-step postconditions.
 - `TTTokenTheory n C` is the saturated rounded completion of finite strict TT tokens.
 - `TTResult n` is the fixed result theory at output type `PUnit`.
 - `TTContinuationPower n D` is `ScottMap (ScottMap D (TTResult n)) (TTResult n)`.
-- `TTPhysicalEmbedding.embed μ` is the Scott-continuous aggregation transformer induced by the finite instrument `μ`.
+- `TTPhysicalEmbedding.embed` applied to a finite instrument $\mu$ is the Scott-continuous aggregation transformer for $\mu$.
 - `CodedTestRepresentation C c` packages the Scott representation needed to recover a source test `c` from a result continuation.
 - `FiniteImageScottRetraction n D` states precisely what a Scott-continuous projection onto the finite embedded image would require.
 - `Term Prim` is the untyped source syntax with parameterized closed primitives and recursive function values.
@@ -488,10 +518,10 @@ represented continuations and realized finite trees.
 ### Examples and separating cases
 
 1. **Deterministic return.** A one-outcome identity instrument returning `d` embeds exactly as continuation evaluation at `d`: `embed (unit d) = TTContinuation.unit d`.
-2. **Finite sequential composition.** When `k e` is the satisfied result theory of a finite continuation at each returned value, evaluating `embed μ` at `k` equals the satisfied theory of physical instrument bind. The map and bind compatibility theorems are obtained by weakest-precondition semantic equivalence.
-3. **Why indicator observations are insufficient.** The Boolean-diamond qubit example proves `ObservationRefines μ ν` while `Refines μ ν` fails. Rational CP-valued step postconditions retain the missing value-dependent quantum information.
+2. **Finite sequential composition.** When `k e` is the satisfied result theory of a finite continuation at each returned value, evaluating `embed` at $\mu$ and $k$ equals the satisfied theory of physical instrument bind. The map and bind compatibility theorems are obtained by weakest-precondition semantic equivalence.
+3. **Why indicator observations are insufficient.** The Boolean-diamond qubit example proves `ObservationRefines` for $(\mu,\nu)$ while `Refines` fails. Rational CP-valued step postconditions retain the missing value-dependent quantum information.
 4. **Why finite presentations are not assumed compact.** Increasing rational thresholds can approximate a boundary observation indefinitely; token-local witnesses, not a single compact satisfied theory, establish Scott continuity.
-5. **One codomain for terms.** A variable does not denote a bare element of $D_\infty$ while an application denotes a computation. Both denote elements of $Q(D_\infty)$; the variable is the special case `unit (ρ x)`. Likewise, an abstraction is folded into $D_\infty$ and then lifted by `unit`.
+5. **One codomain for terms.** A variable does not denote a bare element of $D_\infty$ while an application denotes a computation. Both denote elements of $Q(D_\infty)$; the variable is the special case `unit` applied to $\rho(x)$. Likewise, an abstraction is folded into $D_\infty$ and then lifted by `unit`.
 6. **Recursive function.** The denotation of `recLam self arg body` is the least fixed point of the Scott-continuous self-functional obtained by updating the environment first at `self`, then at `arg`, interpreting `body`, and folding the resulting function back into $D_\infty$. `recLambdaValue_unfold` proves that this value equals one unfolding of that functional.
 
 ### Abstract specification and solved domain equation
@@ -525,7 +555,14 @@ The domain construction supplies the space in which a fixed-register untyped qua
 
 The formalization is constructed in Lean 4 on top of the `Scott1972` continuous lattice library (`https://github.com/catskillsresearch/scott1972`). Chen–Kou–Lyu-style finite-separation and saturation lemmas are mechanized in `QLambda/Saturation.lean`, and `omegaQVA_closed_under_functionSpace` proves Cartesian closure by finite-separator step-map sampling. `QLambda/QuantumInstrument.lean` develops finite Kraus instruments and proves residual CP refinement equivalent to Choi order. `QLambda/RefinementCounterexample.lean` proves indicator observations too weak for TT refinement. `QLambda/RationalCP.lean`, `QLambda/TTObservationBasis.lean`, and `QLambda/TTRefinement.lean` replace them by countable physical finitary CP-valued postconditions and prove exact satisfied-theory order correspondence. `QLambda/TTRoundedTheory.lean` forms their saturated continuous completion. `QLambda/RoundedTheoryOmega.lean` proves generically that every encodable rounded basis is an $\omega\mathbf{QVA}$ by explicit one-dimensional density factorizations. `QLambda/TTResultAlgebra.lean`, `QLambda/TTResultApproximation.lean`, and `QLambda/TTResultOperations.lean` establish TNI result normalization, rational local approximation, and Scott-continuous token-local aggregation. `QLambda/TTContinuationMonad.lean` defines $\mathcal Q_n(D)=[[D\to R_n]\to R_n]$, proves every `IsQuantumPowerModel` and `IsQuantumMonad` field, and bundles `TTContinuation.model n`. `QLambda/TTPhysicalEmbedding.lean` embeds finite physical instruments, proves finite monad compatibility on the precisely stated fragment, proves represented-test refinement recovery, and formalizes the directed-supremum obstruction to a finite-image Scott retract.
 
-Language and hardware layers continue from that domain. `QLambda/Interp.lean` and `QLambda/Soundness.lean` give computation-valued interpretation and operational soundness. Choice algebras live in `TTInternalChoice`, `TTProbChoice`, `TTExternalChoice`, and `TTComputationChoice`. The hardware CEK machine and observation/logical-relation stack occupy `HardwareOperational` through `HardwareAdequacy`. Channel-tree completeness is developed in the layered import DAG `QLambda/HardwareChannel/{Config,Identity,Spines,UnderFrame,FunApp,Closed,Fundamental,Productive,Coverage}.lean`, re-exported by `HardwareChannelSemantics.lean`. The compared capstone domain theorem is:
+Language and hardware layers continue from that domain. `Interp.lean` and
+`Soundness.lean` give computation-valued interpretation and operational
+soundness. Choice algebras live in `TTInternalChoice`, `TTProbChoice`,
+`TTExternalChoice`, and `TTComputationChoice`. The hardware CEK machine and
+observation/logical-relation stack occupy `HardwareOperational` through
+`HardwareAdequacy`. Channel-tree completeness is developed in the layered
+`HardwareChannel/*` modules (`Config` through `Coverage`), re-exported by
+`HardwareChannelSemantics.lean`. The compared capstone domain theorem is:
 
 ```lean
 class IsQuantumPowerModel (Q : (D : Type u) → [CompleteLattice D] → Type u) where
@@ -621,7 +658,8 @@ The following are **not** claimed as proved.
 5. **Stronger physical / domain claims not pursued.** A finite-image Scott retract onto embedded instruments is **refuted**, not missing. Raw `InstrumentPower` as an $\omega\mathbf{QVA}$ carrier is not claimed; the Choi-ray obstruction rules out a particular physical-basis approximant scheme for $n\ge 2$, not the continuation-power construction in use.
 
 `arxiv.md` is the narrative status of record; `THEOREMS.md` is the compact
-name/file/boundary index.
+name/file/boundary index. Regenerate the PDF and arXiv zip with
+`bash scripts/build_arxiv_pdf.sh` (Appendix A links every indexed module on GitHub).
 
 ---
 
@@ -645,6 +683,9 @@ name/file/boundary index.
 9. M. B. Smyth and G. D. Plotkin. *The category-theoretic solution of recursive domain equations*. *SIAM Journal on Computing*, 11(4):761–783, 1982.
 10. M. Ying. *Foundations of Quantum Programming*. Morgan Kaufmann / Elsevier, 2016.
 11. E. Kashefi. *Quantum domain theory—definitions and applications*. In *Computability and Complexity in Analysis (CCA 2003)*, 2003.
-12. M. Pagani, P. Selinger, and B. Valiron. *Applying quantitative semantics to higher-order quantum computing*. In *POPL 2014*, pages 647–658. ACM, 2014. doi:10.1145/2535838.2535879.
-13. A. Kornell, B. Lindenhovius, and M. Mislove. *Quantum CPOs*. *Electronic Proceedings in Theoretical Computer Science* 340:174–187, 2021. doi:10.4204/EPTCS.340.9.
-14. T. Tsukada and K. Asada. *Enriched presheaf model of Quantum FPC*. *Proceedings of the ACM on Programming Languages* 8(POPL), 2024. doi:10.1145/3632855.
+12. M. Pagani, P. Selinger, and B. Valiron. *Applying quantitative semantics to
+    higher-order quantum computing*. In *POPL 2014*, pages 647–658. ACM, 2014.
+13. A. Kornell, B. Lindenhovius, and M. Mislove. *Quantum CPOs*. *EPTCS*
+    340:174–187, 2021.
+14. T. Tsukada and K. Asada. *Enriched presheaf model of Quantum FPC*.
+    *Proc. ACM Program. Lang.* 8(POPL), 2024.
