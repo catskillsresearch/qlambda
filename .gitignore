@@ -29,4 +29,6 @@ dist/
 *.fls
 *.fdb_latexmk
 *.toc
+*.lof
 texput.log
+view.pdf
