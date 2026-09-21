@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Untyped λ-calculus with choice — syntax</title>
+  <style>
+    :root {
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.55;
+      color: #1a1a1a;
+      max-width: 44rem;
+      margin: 2rem auto;
+      padding: 0 1.25rem;
+    }
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+    }
+    .grammar {
+      font-family: "Cambria Math", "Latin Modern Math", "Consolas", monospace;
+      font-size: 1.1rem;
+      line-height: 1.75;
+      padding: 1.25rem 1.5rem;
+      background: #f8f8f8;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    var { font-style: normal; }
+    sub { font-size: 0.72em; }
+    .bar { padding: 0 0.35em; color: #444; }
+    .dot { padding: 0 0.15em; }
+  </style>
+</head>
+<body>
+
+  <h1>Untyped λ-calculus with choice operators</h1>
+
+  <p class="grammar">
+    <var>M</var>, <var>N</var> ::=
+    <var>x</var>
+    <span class="bar">|</span>
+    λ<var>x</var><span class="dot">.</span> <var>M</var>
+    <span class="bar">|</span>
+    <var>M</var>&nbsp;<var>N</var>
+    <span class="bar">|</span>
+    <var>M</var>&nbsp;<sub><var>p</var></sub>⊕&nbsp;<var>N</var>
+    <span class="bar">|</span>
+    <var>M</var>&nbsp;⊓&nbsp;<var>N</var>
+    <span class="bar">|</span>
+    <var>M</var>&nbsp;□&nbsp;<var>N</var>
+  </p>
+
+</body>
+</html>

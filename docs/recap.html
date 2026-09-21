@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>qλ language recap (Composer target)</title>
+  <style>
+    :root {
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.5;
+      color: #1a1a1a;
+      max-width: 46rem;
+      margin: 2rem auto;
+      padding: 0 1.25rem;
+    }
+    h1 { font-size: 1.35rem; font-weight: 600; margin-bottom: 0.5rem; }
+    h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-top: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+    p { margin: 0.65rem 0; }
+    ul { margin: 0.5rem 0 0.75rem; padding-left: 1.35rem; }
+    li { margin: 0.35rem 0; }
+    pre, code {
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: 0.84rem;
+    }
+    pre {
+      background: #f6f6f6;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      margin: 0.75rem 0;
+    }
+    .note {
+      font-size: 0.92rem;
+      color: #444;
+      border-left: 3px solid #ccc;
+      padding-left: 0.75rem;
+      margin: 1rem 0;
+    }
+    .one-liner {
+      font-style: italic;
+      margin-top: 1.5rem;
+      padding: 0.75rem 1rem;
+      background: #fafafa;
+      border: 1px solid #e8e8e8;
+    }
+    sub { font-size: 0.72em; }
+  </style>
+</head>
+<body>
+
+  <h1>qλ language recap</h1>
+  <p class="note">
+    Small call-by-value λ-calculus with three choices, plus
+    <code>emit</code> for IBM Quantum Composer circuit instructions.
+  </p>
+
+  <h2>Goal</h2>
+  <ul>
+    <li>Keep the three choice operators (⊕<sub>p</sub>, ⊓, □).</li>
+    <li>Build exactly <strong>one</strong> Composer circuit per well-formed program.</li>
+    <li>Embed every instruction in a frozen Composer AST.</li>
+    <li>Clean denotational semantics (CP channels / instruments).</li>
+    <li>qλ ↔ Composer translations with preservation on a defined fragment.</li>
+  </ul>
+
+  <h2>1. Core qλ syntax</h2>
+  <pre>M, N ::= x
+       | λx. M
+       | M N
+       | M ⊕<sub>p</sub> N
+       | M ⊓ N
+       | M □ N
+       | emit I</pre>
+  <p>
+    First six forms = original Section&nbsp;2 calculus. The quantum extension is
+    <code>emit I</code>, appending one Composer instruction to the circuit under construction.
+  </p>
+
+  <h2>2. Readable surface syntax</h2>
+  <pre>let x ← M in N</pre>
+  <p>Same as <code>(λx. N) M</code>. Ignored results: <code>M ; N ≡ let _ ← M in N</code>.</p>
+  <pre>H q[0];
+CX q[0] q[1];
+measure q[0] -> c[0]</pre>
+  <p>Sugar for nested <code>emit</code> of gate and measure instructions.</p>
+
+  <h2>3. Circuit program wrapper</h2>
+  <pre>circuit q[2], c[2] in
+  M</pre>
+  <ul>
+    <li><code>q[i]</code> — opaque qubit handle (wire).</li>
+    <li><code>c[i]</code> — classical bit handle.</li>
+    <li>State in a <strong>separate store</strong>; copying a handle aliases a wire, does not clone.</li>
+    <li>Well-formedness is a separate judgment (arity, scope, operands).</li>
+  </ul>
+
+  <h2>4. Composer instructions (type I)</h2>
+  <pre>I ::= Gate(g, parameters, qubits)
+    | Measure(qubit, classical-bit)
+    | Reset(qubit)
+    | Store(classical-location, expression)
+    | Barrier(qubits)
+    | Delay(duration, qubits)
+    | If(expression, circuit, circuit)
+    | Switch(expression, cases)
+    | For(range, circuit)
+    | While(expression, circuit)
+    | Box(label, circuit)
+    | Modified(modifier, instruction)</pre>
+  <p>Modifiers: <code>ctrl</code>, <code>inv</code>, <code>pow</code>.</p>
+
+  <h2>5. Functional circuit construction</h2>
+  <pre>let bell =
+  λa. λb.
+    H a;
+    CX a b
+in
+
+circuit q[2], c[2] in
+  bell q[0] q[1];
+  measure q[0] -> c[0];
+  measure q[1] -> c[1]</pre>
+  <p>CBV evaluation applies <code>bell</code> while accumulating emits; the Composer output has no λ.</p>
+
+  <h2>6. Three choices (distinct compilation)</h2>
+  <p><strong>⊕<sub>p</sub></strong> — ancilla coin: RY, measure, conditional branches (not H on terms).</p>
+  <p><strong>⊓</strong> — compiler scheduler picks one branch → one circuit.</p>
+  <p><strong>□</strong> — external classical selector chooses the branch.</p>
+
+  <h2>7. Denotational semantics (sketch)</h2>
+  <ul>
+    <li>Gate → unitary channel (ρ ↦ U ρ U†)</li>
+    <li>Measure → instrument + classical update</li>
+    <li>Reset → CPTP reset</li>
+    <li>⟦emit I⟧ = ⟦I⟧ on the Composer side</li>
+    <li>λ/application → recursive value domain; sequencing → bind</li>
+    <li>ωFVA (Chen–Kou–Lyu) for classical higher-order probability only; quantum = CP layer</li>
+  </ul>
+
+  <h2>8. Both directions</h2>
+  <p><strong>Composer → qλ:</strong></p>
+  <pre>emit I₁;
+emit I₂;
+emit I₃</pre>
+  <p><strong>qλ → Composer:</strong> evaluate closed circuit-building term; collect emits → one circuit.</p>
+
+  <h2>9. Target theorems (fragment)</h2>
+  <ul>
+    <li>compile preserves denotation: ⟦compile(M)⟧<sub>Composer</sub> = ⟦M⟧<sub>qλ</sub></li>
+    <li>embed then compile ≈ identity on circuits (modulo normalization)</li>
+  </ul>
+
+  <p class="one-liner">
+    qλ is the small call-by-value λ-calculus with three choices plus
+    <code>emit</code>; Composer instructions are rich data with CP semantics;
+    evaluation builds exactly one Composer circuit.
+  </p>
+
+</body>
+</html>

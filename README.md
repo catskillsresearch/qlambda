@@ -8,6 +8,20 @@ finite CP instruments. The library builds on top
 of a vendored [`scott1972`](https://github.com/catskillsresearch/scott1972)
 formalization of Dana Scott, *Continuous Lattices* (LNM 274).
 
+The three semantic objects are explicit:
+
+- **ωQVA** is the full subcategory of continuous lattices carrying
+  `IsOmegaQVA`: identity is an increasing supremum of finitely separated
+  approximants factoring through finite products of density spectrahedra;
+- **D∞** is `QDInf`, the inverse limit of
+  `D_(n+1) = [D_n → Q(D_n)]`;
+- **Q** is an `IsQuantumPowerModel`, and an `IsQuantumMonad` for term
+  interpretation. The concrete instance is
+  `TTContinuationPower n D = [[D → TTResult n] → TTResult n]`.
+
+See **“The Three Semantic Objects: ωQVA, D∞, and Q”** in `arxiv.md` for the
+definitions and the paper-symbol-to-Lean crosswalk.
+
 The **Palomar compared statement of record** is the canonical-base domain capstone
 
 `canonical_omegaQVA_quantum_domain_equation_solved`:
@@ -74,9 +88,22 @@ examples, and narrative status.
 
 The formalized result is the quantum `ωQVA` domain theorem and its language
 and hardware interfaces. Chen–Kou–Lyu `ωFVA` / Jung–Tix is motivating
-classical literature and is not re-formalized here in full. The Qiskit
-material in `arxiv.md` is an operational comparison through shared CP
-denotations, not a compiler or verified Qiskit equivalence.
+classical literature and is not re-formalized here in full.
+
+The revised circuit layer now includes:
+
+- a frozen versioned Composer/OpenQASM AST and well-formedness judgment;
+- a register-indexed classical–quantum instrument denotation;
+- an untyped CBV `emit` source plus finite residual command language;
+- total Composer→qλ embedding and scheduler-parameterized qλ→Composer
+  compilation;
+- `compile_correct`, `compile_embed`, `denote_embed`, and
+  `embed_compile_correct`.
+
+Probabilistic compilation is intentionally parameterized by
+`LawfulProbLowering`: a concrete ancilla RY/measurement implementation must
+prove the exact CQ equation. OpenQASM export is not a claim about arbitrary
+Qiskit Python or noisy IBM backend behavior.
 
 Narrative: `arxiv.md`. Theorem index: `THEOREMS.md`. Palomar metadata:
 `comparator.json`, `formalization.yaml`, `docs/PALOMAR_STYLE.md`.

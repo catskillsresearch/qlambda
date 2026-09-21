@@ -17,6 +17,11 @@ Finite CP instruments embed with exact unit, presented map/bind agreement, TT
 refinement recovery, and a no-finite-image-Scott-retract obstruction. A qubit CEK
 machine and channel-tree semantics yield presented completeness and token adequacy
 for the explicit `ClosedStuckFreeCoverage` fragment (not all closed terms). The
+revised circuit layer defines a versioned Composer/OpenQASM AST, an ideal
+classical--quantum instrument denotation, a total Composer-to-`emit`
+embedding, and a source compiler whose denotation-preservation theorem is
+parameterized by the exact `LawfulProbLowering` obligation for an ancilla
+implementation. The
 Palomar capstone is `canonical_omegaQVA_quantum_domain_equation_solved` in
 `Challenge.lean`. Vendored Scott 1972 continuous lattices support the domain layer.
 Lean was written by AI agents under the author's direction and review; proofs are
@@ -39,7 +44,7 @@ not $D\cong[D\to D]$ and not $Q\cong[Q\to Q]$.
 
 The contrapositives matter. Solving only $D\cong[D\to D]$ while wanting instruments and choice leaves no place for effects. Solving $Q\cong[Q\to Q]$ would treat computations themselves as the untyped $\lambda$-universe (call-by-name / “everything is a thunk”), contradicting a Control–Environment–Kontinuation (CEK) machine that evaluates the function, evaluates the argument, and only then performs $\beta$-reduction, and contradicting how CP instruments act on values rather than on open computations. The claim of this development is the middle path: untyped call-by-value $\lambda$-calculus with choice and a quantum-effect monad $Q$, values solving $D_\infty\cong[D_\infty\to Q(D_\infty)]$, and terms denoting elements of $Q(D_\infty)$.
 
-The formalized contribution lifts the finite-separation and saturation pattern from classical valuations to quantum spectrahedra ($\omega\mathbf{QVA}$), solves the parameterized equation above for a continuation power $Q=\mathcal Q_n$, and connects the denotation to a qubit CEK machine and channel-tree adequacy fragment. Chen–Kou–Lyu’s classical $\omega\mathbf{FVA}$ theorem and the Jung–Tix history are motivating literature, not a full Lean target of this repository. The Qiskit material below is likewise motivational operational comparison, not a verified compiler or formal equivalence theorem. The later sections state the formal claim and exact Lean boundary.
+The formalized contribution lifts the finite-separation and saturation pattern from classical valuations to quantum spectrahedra ($\omega\mathbf{QVA}$), solves the parameterized equation above for a continuation power $Q=\mathcal Q_n$, and connects the denotation to a qubit CEK machine and channel-tree adequacy fragment. Chen–Kou–Lyu’s classical $\omega\mathbf{FVA}$ theorem and the Jung–Tix history are motivating literature, not a full Lean target of this repository. The revised circuit layer verifies a frozen IBM Composer/OpenQASM target through shared ideal CQ semantics; it is not a theorem about the Python Qiskit API or noisy backend behavior. The later sections state the exact Lean boundary.
 
 Several established approaches also combine domain structure, higher-order
 quantum computation, and recursion. Kashefi's quantum domain theory orders
@@ -58,11 +63,116 @@ Quantum FPC, or Kashefi's quantum domains is claimed.
 
 ---
 
-## Syntactic Extension: Untyped $\lambda$-Calculus with Choice Operators
+## The Three Semantic Objects: $\omega\mathbf{QVA}$, $D_\infty$, and $Q$
 
-We extend the untyped $\lambda$-calculus with the three canonical choice operators from concurrent and probabilistic process calculi:
+The domain equation uses three objects that must be distinguished before the
+language and circuit layers are introduced.
 
-$$M, N ::= x \mid \lambda x. M \mid M \, N \mid M \oplus_p N \mid M \sqcap N \mid M \mathbin{\Box} N$$
+### The category $\omega\mathbf{QVA}$
+
+An object of $\omega\mathbf{QVA}$ is a complete lattice $D$ carrying an
+`IsOmegaQVA D` witness. Concretely, $D$ is a continuous lattice and there is a
+monotone sequence of Scott-continuous endomaps $a_n:D\to D$ such that
+$\bigsqcup_n a_n=\mathrm{id}_D$. Every $a_n$ is finitely separated and
+factors through a finite product
+$$
+\prod_k \mathcal S_{\leq 1}(M_{d_k}),
+$$
+where $\mathcal S_{\leq 1}(M_d)$ is the Loewner-ordered spectrahedron of
+sub-normalized $d$-dimensional density matrices. Morphisms are
+Scott-continuous maps. Thus $\omega\mathbf{QVA}$ is the full subcategory of
+continuous lattices selected by this approximation property; it is not an
+undefined ambient category. Lean records the factors as `DensityVec`, the
+factorization as `QFactorable`, and the object property as `IsOmegaQVA` in
+`QLambda/OmegaQVA.lean`.
+
+### The value object $D_\infty$
+
+Fix a quantum power model $Q$, a pointed object $D_0\in\omega\mathbf{QVA}$,
+and a projection pair
+$$
+j_0:D_0\mathrel{\triangleleft}[D_0\to Q(D_0)].
+$$
+Form the tower $D_{n+1}=[D_n\to Q(D_n)]$. The object $D_\infty$ is the
+inverse limit `QDInf M D₀ j₀` of this tower: its elements are compatible
+tuples of finite-stage approximations. The constructed Scott maps
+`qEmbInfInf` and `qProjInfInf` are mutual inverses and give
+$$
+D_\infty\cong[D_\infty\to Q(D_\infty)].
+$$
+The canonical theorem takes $D_0$ to be the one-point lattice `PUnit` and
+constructs $j_0$ automatically. The tower and limit live in
+`QLambda/QDomain.lean` and `QLambda/QuantumDomainEquation.lean`.
+
+### The computation functor and monad $Q$
+
+The parameter $Q$ is not the value object and is not a circuit graph.
+`IsQuantumPowerModel Q` requires that $Q(D)$ be a complete lattice, that $Q$
+act functorially and order-enrichedly on Scott maps, that it preserve
+suprema of monotone countable families of maps, and that it preserve
+$\omega\mathbf{QVA}$. `IsQuantumMonad Q` additionally supplies
+Scott-continuous unit and bind satisfying the monad laws. Values inhabit
+$D_\infty$; computations inhabit $Q(D_\infty)$; call-by-value functions
+inhabit $[D_\infty\to Q(D_\infty)]$ before being folded through the displayed
+isomorphism.
+
+The concrete fixed-register instance used by the interpreter is
+$$
+\mathcal Q_n(D)=[[D\to R_n]\to R_n],
+$$
+where $R_n$ is the rounded TT result domain. In Lean this is
+`TTContinuationPower n D`, with power-model and monad instances in
+`QLambda/TTContinuationMonad.lean`. Finite Kraus instruments are physical
+presentations embedded into this continuation model; they are not themselves
+identified with $D_\infty$.
+
+### Symbol-to-Lean crosswalk
+
+| Paper object | Lean declaration | Primary module |
+| :--- | :--- | :--- |
+| $\omega\mathbf{QVA}$ object | `IsOmegaQVA`, `QFactorable`, `DensityVec` | `QLambda/OmegaQVA.lean` |
+| $\mathcal S_{\leq1}(M_d)$ | `SubNormalizedDensity d` | `QLambda/QuantumStateSpace.lean` |
+| abstract quantum power $Q$ | `IsQuantumPowerModel`, `QuantumPowerModel` | `QLambda/QuantumPower.lean` |
+| monad structure on $Q$ | `IsQuantumMonad` | `QLambda/Monad.lean` |
+| tower and $D_\infty$ | `qTower`, `QDInf` | `QLambda/QDomain.lean` |
+| limit isomorphism | `qEmbInfInf`, `qProjInfInf` | `QLambda/QuantumDomainEquation.lean` |
+| canonical capstone | `canonical_omegaQVA_quantum_domain_equation_solved` | proof: `QLambda/QuantumDomainEquation.lean`; Palomar statement: `Challenge.lean` |
+| semantic values/computations | `SemanticValue`, `SemanticComp` | `QLambda/Interp.lean` |
+| concrete $\mathcal Q_n$ | `TTContinuationPower`, `TTContinuation.model` | `QLambda/TTContinuationMonad.lean` |
+
+The classical $\omega\mathbf{FVA}$ construction discussed later is motivating
+literature with valuation power $\mathcal V_{\leq1}$; its $D_\infty$ should
+not be confused with the quantum tower `QDInf` defined here.
+
+---
+
+## Source Language: Call-by-Value $q\lambda$ with `emit`
+
+The revised source language keeps the untyped call-by-value
+$\lambda$-calculus small. Composer instructions are data at one explicit
+quantum boundary rather than one new $\lambda$ constructor per gate:
+
+$$
+M,N ::= x\mid\lambda x.M\mid M\,N\mid()
+      \mid\operatorname{emit} I\mid M;N
+      \mid M\oplus_p N\mid M\sqcap_k N\mid M\mathbin{\Box_e}N.
+$$
+
+Here $I$ belongs to the versioned Composer instruction AST, $k$ names a
+compile-time scheduler decision, and $e$ is an expression over the fixed
+classical register. Qubit occurrences in $I$ are opaque `Fin q` handles;
+copying a handle aliases a circuit wire and never copies its quantum state.
+The context-free grammar is separated from `Command.WellFormed`, which checks
+the gate manifest, arities, distinct operands, register scope, and structured
+control.
+
+Untyped terms do not all terminate. The staging relation `Source.Elaborates`
+therefore records when a closed CBV term produces the finite residual
+$$
+C ::= \operatorname{skip}\mid\operatorname{emit}I\mid C;C
+  \mid C\oplus_p C\mid C\sqcap_k C\mid C\mathbin{\Box_e}C,
+$$
+which is the exact input type of the total Composer compiler.
 
 ```mermaid
 graph TD
@@ -94,38 +204,77 @@ where $[D \to \dots]$ models higher-order functions, $\mathcal{P}$ models intern
 
 ---
 
-## Motivational Operational Comparison with Qiskit
+## Verified Composer Target and Circuit Denotation
 
-The tables in this section motivate the denotational semantics by relating two operational presentations through a proposed shared CP denotation. They are not Lean theorems, a literal compiler specification, or a verified Qiskit correspondence. Each row depicts
+The target is one versioned IBM Quantum Composer / OpenQASM 3 circuit, not
+the Python Qiskit API. `Composer.Program v q c` contains fixed finite quantum
+and classical registers and a recursive instruction AST for generic gates,
+measurement, reset, store, barrier, delay, `if`, `switch`, bounded `for` and
+`while`, boxes, and structured `break`/`continue`. `Fin` indices enforce
+register bounds. `Program.toOpenQASM` is an export presentation; it does not
+define circuit meaning.
 
-$$\text{$q\lambda$ construct}\longrightarrow
-  \text{CP channel or instrument}
-  \longleftarrow\text{Qiskit execution pattern}.$$
+### The semantic product
 
-For a fixed initial quantum state, the desired equivalence is observational: both sides have the same classical outcome probabilities and, conditioned on an outcome, the same post-measurement quantum state. The quantum forms below are intended primitives extending the classical control syntax of *Syntactic Extension*; they are not Church encodings. Church booleans remain useful classical data, but they are duplicable and therefore cannot stand for qubits. In particular, classical probabilistic choice $M\oplus_p N$ remains a control effect in $Q$, distinct from coherent superposition and from measurement instruments.
+For $q$ qubits and $c$ classical bits define
+$$
+\mathcal D_{\mathrm{CQ}}(q,c)
+ =(\operatorname{Fin}(c)\to\mathbf2)
+   \longrightarrow
+   \operatorname{FiniteInstrumentComp}
+     (2^q,\operatorname{Fin}(c)\to\mathbf2).
+$$
+Thus a circuit consumes a classical store and denotes a finite CP instrument
+whose classical outcomes are final stores. Gates are interpreted by unitary
+or more general trace-nonincreasing operations supplied by
+`Composer.Model`; measurement is an instrument updating a classical bit;
+reset is a quantum operation; sequencing is instrument bind; bounded control
+is interpreted structurally. Barrier and delay are identities in the ideal
+semantics while remaining present in syntax.
 
-### Table 1: Quantum primitives with a shared denotation
-| Concept | Intended $q\lambda$ operational form | Qiskit execution pattern | Shared CP denotation |
-| :--- | :--- | :--- | :--- |
-| **Prepare $\vert0\rangle$** | $\operatorname{new0}(q);\,M$ | `qc.reset(q)` (or a fresh circuit qubit) | Preparation channel with output $\vert0\rangle\langle0\vert$ |
-| **Pauli-$X$** | $X(q);\,M$ | `qc.x(q)` | $\rho\mapsto X\rho X^\dagger$ |
-| **Prepare $\vert1\rangle$** | $\operatorname{new0}(q);\,X(q);\,M$ | fresh/reset `q`; `qc.x(q)` | Preparation channel with output $\vert1\rangle\langle1\vert$ |
-| **Hadamard** | $H(q);\,M$ | `qc.h(q)` | $\rho\mapsto H\rho H^\dagger$; on $\vert0\rangle$ the output is coherent $\vert+\rangle$, not a probabilistic mixture |
-| **CNOT** | $\operatorname{CX}(q,r);\,M$ | `qc.cx(q, r)` | $\rho\mapsto \operatorname{CX}\rho\operatorname{CX}^\dagger$ |
-| **Measurement** | $\operatorname{measure}\ q\ \operatorname{with}\ 0\Rightarrow M\mid1\Rightarrow N$ | `qc.measure(q, c)` followed by `if_test` branches | Instrument $\Phi_i(\rho)=P_i\rho P_i$; probability $\operatorname{Tr}(\Phi_i(\rho))$ |
-| **Classical probabilistic choice** | $M\oplus_p N$ | host RNG, or an ancilla rotation followed by measurement and `if_test` | Branches $p\,\mathrm{id}$ and $(1-p)\,\mathrm{id}$ followed by the denotations of $M,N$ |
+Circuit denotations are compared by `CQ.Eq`: for every initial store and
+every Kraus-valued postcondition, their weakest-precondition Kraus families
+represent the same CP map. This avoids equating accidental Kraus-list or
+existential outcome presentations.
 
-### Table 2: Higher-order control and choice
-| Concept | $q\lambda$ operational role | Qiskit / host-language counterpart | Denotational correspondence |
-| :--- | :--- | :--- | :--- |
-| **Variable** | $x$ is classical data or an opaque register handle | Python parameter, classical value, or register index | Environment lookup; a quantum register is threaded by the instrument semantics rather than copied as a Church value |
-| **Abstraction** | $\lambda x.M$ packages higher-order classical control | circuit factory, closure, or parameterized subroutine | A value in $[D_\infty\to Q(D_\infty)]$: given a value, return a computation; not necessarily a unitary |
-| **Application** | $M\,N$ invokes higher-order control (call-by-value) | call a factory/subroutine and compose its result | Evaluate function and argument as computations, then bind into the body (Kleisli/instrument composition) |
-| **Probabilistic choice** | $M\oplus_p N$ resolves by a classical coin | host RNG or measured ancilla controlling dynamic branches | Convex combination of the two computation denotations in $Q(D_\infty)$ |
-| **Internal choice** | $M\sqcap N$ is selected by an unobservable scheduler | host/runtime scheduler chooses a branch | Nondeterministic join on computations; no fixed 50/50 probability is implied |
-| **External choice** | $M\mathbin{\Box}N$ waits for an environment-selected guard/event | runtime input, callback, or guarded `if_test` | Environment-indexed family of computations; not inherently a controlled unitary |
+### Two translations
 
-Thus the “back-and-forth” is between operational realizations at matching semantic layers. Quantum gates and measurements meet as channels and instruments. Untyped $\lambda$ abstraction and application meet Qiskit through the surrounding classical host language as circuit-producing higher-order control. Some terms require dynamic circuits or runtime interaction rather than one static circuit, but the common denotation still supplies the mental bijection used to guide the formal semantics.
+`Compiler.compile` maps a finite residual to one Composer block:
+
+| Source residual | Composer target | Resolution |
+| :--- | :--- | :--- |
+| `emit I` | instruction `I` | shared denotation definitionally |
+| `A ; B` | block concatenation | instrument bind |
+| $A\sqcap_k B$ | one selected branch | supplied scheduler at key $k$ |
+| $A\mathbin{\Box_e}B$ | Composer `if (e)` | external classical store |
+| $A\oplus_p B$ | `ancillaLowering`: reset, RY, measure, conditional | must prove `LawfulProbLowering` |
+
+The last row is intentionally proof-carrying. `ancillaLowering` emits the
+concrete reset--RY--measurement--conditional pattern from explicit
+`AncillaResources`. Its correctness depends on a fresh wire, reset policy,
+parameter encoding, and the selected gate model. `LawfulProbLowering.sound`
+is the exact obligation that its circuit denotation equal the weighted CP
+instrument. The generic theorem does not call an unverified syntactic pattern
+physical correctness.
+
+In the other direction, `Compiler.embed` maps every Composer block totally
+to a right-associated sequence of `emit` commands. It does not guess
+high-level choices from gate patterns.
+
+### Machine-checked preservation
+
+`Compiler.compile_correct` proves, for every lawful probability lowering,
+$$
+\llbracket\operatorname{compile}(C)\rrbracket_{\mathrm{Composer}}
+\;\simeq_{\mathrm{CQ}}\;
+\llbracket C\rrbracket_{q\lambda}.
+$$
+`compile_embed` proves exact target-AST round trip
+`compile (embed K) = K`. `denote_embed` proves that embedding preserves CQ
+meaning, and `embed_compile_correct` gives the source round trip up to CQ
+denotation. These theorems are in `QLambda/Compiler/Correctness.lean`.
+They concern the frozen ideal circuit model, not backend transpilation,
+calibration, noise, or arbitrary Python programs.
 
 ---
 
@@ -616,6 +765,7 @@ theorem TTPhysicalEmbedding.embed_unit (d : D) :
 4. **Choice.** Internal join, physical weighted probability (not lattice join), and tagged external selection are separated and registered as lawful effect instances.
 5. **Hardware adequacy infrastructure.** Normalized CEK machine; subnormalized channel trees; logical relations; token adequacy for realized trees; completeness transfer across unique-successor identity steps.
 6. **Covered stuck-free channel-tree capstone.** `FunAppFrag` / `Produces n` under residual frames; `PathChannelEvaluation` and the closed bridges in `HardwareChannel/Fundamental.lean`; `ProductiveClosedCase` and `RestrictedExternApplication` in `HardwareChannel/Productive.lean`; and the consolidated `ClosedStuckFreeCoverage`, `closed_stuck_free_presented_channelTreeCompleteness`, and `closed_stuck_free_presented_token_adequacy` in `HardwareChannel/Coverage.lean`.
+7. **Composer circuit layer.** Versioned AST and OpenQASM exporter; register-indexed CQ denotation; emit-kernel staging boundary; total Composer embedding; scheduler-parameterized compiler; exact target round trip and CQ preservation under `LawfulProbLowering`.
 
 A compact status table and the open-hole list appear in the next section.
 
@@ -633,6 +783,10 @@ A compact status table and the open-hole list appear in the next section.
 | Finite TNI embedding, presented map/bind, retract obstruction | Done | `TTPhysicalEmbedding`, `FiniteImageNonclosure` |
 | Untyped syntax, `interp` in $Q(D_\infty)$, β / rec-β | Done | `Interp`, `Soundness` |
 | Prob / intern / extern choice algebras | Done | `TTProbChoice`, `TTInternalChoice`, `TTExternalChoice` |
+| Frozen Composer AST, well-formedness, OpenQASM export | Done | `Composer.Syntax`, `Composer.WellFormed`, `Composer.OpenQASM`, `Composer.Fixtures` |
+| Ideal register-indexed circuit denotation | Done | `CQ.Domain`, `Composer.Denotation` |
+| Emit-kernel source and finite residual | Done | `Source.Syntax`, `Source.Denotation`, `Elaborates` |
+| Compile/embed preservation and target round trip | Done, conditional only on explicit probability-lowering law | `Compiler.compile_correct`, `compile_embed`, `denote_embed`, `embed_compile_correct`, `LawfulProbLowering` |
 | Hardware CEK + channel trees + token adequacy infrastructure | Done | `HardwareOperational` … `HardwareAdequacy` |
 | Channel-tree completeness: ret, Pauli-X, measure-Z, choice, identity CEK steps | Done | `HardwareChannel/Config`, `Identity` |
 | Presented completeness for `Produces` / `FunAppFrag` (incl. `app_lam`, `app_recLam`, FunAppFrag leftover args) | Done (fragment) | `Spines`, `FunApp`, `Closed` |
@@ -656,6 +810,16 @@ The following are **not** claimed as proved.
 4. **Interior probability at arbitrary continuations.** For $0<p<1$, completeness is at **finitely presented** continuations (`PresentedChannelTreeCompleteness`). Full `ChannelTreeCompleteness` at arbitrary Scott continuations would need Scott density of presented continuations (or an equivalent approximation argument).
 
 5. **Stronger physical / domain claims not pursued.** A finite-image Scott retract onto embedded instruments is **refuted**, not missing. Raw `InstrumentPower` as an $\omega\mathbf{QVA}$ carrier is not claimed; the Choi-ray obstruction rules out a particular physical-basis approximant scheme for $n\ge 2$, not the continuation-power construction in use.
+
+6. **Concrete ancilla discharge.** The generic compiler theorem requires
+`LawfulProbLowering`. A specific RY--measurement--conditional implementation
+still needs a chosen fresh ancilla, tensor placement of local gates on
+$2^q$ dimensions, parameter encoding, and a proof of that law. The
+formalization does not hide this physics obligation behind the compiler.
+
+7. **Backend behavior.** The OpenQASM text is an export of the frozen AST.
+No theorem identifies ideal CQ denotation with IBM transpilation, calibration,
+or noisy execution.
 
 `arxiv.md` is the narrative status of record; `THEOREMS.md` is the compact
 name/file/boundary index. Regenerate the PDF and arXiv zip with

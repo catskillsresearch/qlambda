@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Probabilistic choice in PCSP</title>
+  <style>
+    :root {
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.55;
+      color: #1a1a1a;
+      max-width: 42rem;
+      margin: 2rem auto;
+      padding: 0 1.25rem;
+    }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+    }
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-top: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+    p { margin: 0.85rem 0; }
+    ul.defs {
+      margin: 1rem 0 1.25rem;
+      padding-left: 1.35rem;
+    }
+    ul.defs li { margin: 0.65rem 0; }
+    ul.defs strong { font-weight: 600; }
+    .equation {
+      display: block;
+      text-align: center;
+      margin: 1.25rem 0;
+      font-family: "Cambria Math", "Latin Modern Math", Georgia, serif;
+      font-size: 1.05rem;
+    }
+    var { font-style: normal; }
+    sub { font-size: 0.75em; }
+  </style>
+</head>
+<body>
+
+  <h1>Probabilistic choice in PCSP</h1>
+
+  <ul class="defs">
+    <li>
+      <strong>Internal choice (CSP):</strong>
+      <var>P</var>&nbsp;⊓&nbsp;<var>Q</var> —
+      the system may take either branch, and the choice is made inside the process
+      in a way the outside world cannot observe or control—like a hidden scheduler
+      picking one of two options.
+    </li>
+    <li>
+      <strong>External choice (CSP):</strong>
+      <var>P</var>&nbsp;□&nbsp;<var>Q</var> —
+      the process offers several alternatives and waits until the environment
+      (another process, a user, or an input event) selects which branch to take—
+      for example, which communication guard or input becomes ready first.
+    </li>
+    <li>
+      <strong>Probabilistic choice (pCSP):</strong>
+      <var>P</var>&nbsp;<sub><var>p</var></sub>⊕&nbsp;<var>Q</var> —
+      when the choice is resolved, process <var>P</var> is taken with probability
+      <var>p</var> and process <var>Q</var> with probability 1&nbsp;−&nbsp;<var>p</var>, as if
+      a weighted coin were flipped at that moment.
+    </li>
+  </ul>
+
+  <p>
+    In PCSP, explicit probability is introduced to model randomized algorithms or
+    unpredictable environments. This adds a third distinct choice operator:
+  </p>
+
+  <p>
+    <strong>Probabilistic choice</strong>
+    (<var>P</var>&nbsp;<sub><var>p</var></sub>⊕&nbsp;<var>Q</var>, or
+    <var>P</var>&nbsp;<var>p</var>(+)&nbsp;<var>Q</var>):
+    this operator resolves branching by selecting process <var>P</var> with
+    probability <var>p</var> and process <var>Q</var> with probability
+    1&nbsp;−&nbsp;<var>p</var>, where <var>p</var>&nbsp;∈&nbsp;[0,&nbsp;1].
+  </p>
+
+  <h2>Semantic and algebraic properties</h2>
+
+  <h2>Coexistence with nondeterminism</h2>
+  <p>
+    A core challenge in PCSP is the interaction between internal choice
+    (<var>P</var>&nbsp;⊓&nbsp;<var>Q</var>) and probabilistic choice
+    (<var>P</var>&nbsp;<sub><var>p</var></sub>⊕&nbsp;<var>Q</var>).
+    Internal choice represents total uncertainty; probabilistic choice
+    represents quantifiable risk.
+  </p>
+
+  <h2>Distributivity</h2>
+  <p>
+    In refinement-oriented models of PCSP, the probabilistic choice operator
+    distributes through standard CSP operators, including nondeterministic
+    choice. For example:
+  </p>
+  <p class="equation">
+    <var>P</var>&nbsp;<sub><var>p</var></sub>⊕&nbsp;(<var>Q</var>&nbsp;⊓&nbsp;<var>R</var>)
+    ≡ (<var>P</var>&nbsp;<sub><var>p</var></sub>⊕&nbsp;<var>Q</var>)&nbsp;⊓&nbsp;(<var>P</var>&nbsp;<sub><var>p</var></sub>⊕&nbsp;<var>R</var>)
+  </p>
+
+  <h2>Testing preorders</h2>
+  <p>
+    In PCSP verification (for example in tools such as the PAT toolkit),
+    semantic models use probabilistic testing preorders (may- and must-testing).
+    Refinement checking asks whether an implementation matches a specification
+    up to a calculated probability threshold.
+  </p>
+
+</body>
+</html>

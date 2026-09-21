@@ -4,6 +4,44 @@ This is a compact index of the proved Lean surface. `arxiv.md` is the
 narrative status of record. Names below are Lean declarations, not claims
 about the motivating literature or a Qiskit compiler.
 
+## Definition crosswalk
+
+- `IsOmegaQVA`, `QFactorable`, `DensityVec` — `QLambda/OmegaQVA.lean`;
+  spectrahedrally approximable continuous-lattice objects.
+- `QDInf`, `qEmbInfInf`, `qProjInfInf` — `QLambda/QDomain.lean` and
+  `QLambda/QuantumDomainEquation.lean`; the inverse-limit value domain and
+  its reflexive isomorphism.
+- `IsQuantumPowerModel`, `IsQuantumMonad`, `TTContinuationPower` —
+  `QLambda/QuantumPower.lean`, `QLambda/Monad.lean`, and
+  `QLambda/TTContinuationMonad.lean`; abstract Q and its concrete
+  fixed-register continuation instance.
+
+## Composer circuit semantics and compiler
+
+- `QLambda.CQ.Sem`, `QLambda.CQ.CompEq`, `QLambda.CQ.Eq` —
+  `QLambda/CQ/Domain.lean`; register-indexed classical–quantum instrument
+  meanings and presentation-independent observational equality.
+- `QLambda.Composer.denoteInstr`, `QLambda.Composer.denoteBlock` —
+  `QLambda/Composer/Denotation.lean`; compositional circuit semantics.
+- `QLambda.Compiler.denoteBlock_append` —
+  `QLambda/Compiler/Correctness.lean`; circuit concatenation is CQ
+  sequencing.
+- `QLambda.Compiler.compile_correct` — source-to-Composer preservation,
+  parameterized by `LawfulProbLowering`, the exact physical ancilla-lowering
+  obligation.
+- `QLambda.Compiler.compile_embed` — total Composer embedding recompiles to
+  the identical AST.
+- `QLambda.Compiler.denote_embed` and
+  `QLambda.Compiler.embed_compile_correct` — both translation directions
+  preserve CQ denotation; the source round trip is semantic rather than
+  syntactic.
+
+Boundary: the target is the frozen versioned AST in
+`QLambda/Composer/Syntax.lean`, not arbitrary Qiskit Python. A concrete RY /
+ancilla syntax pattern is `ancillaLowering`; its selected resources and
+parameter encoding must instantiate and prove `LawfulProbLowering`. The
+generic theorem does not assume that physical equation silently.
+
 ## Quantum domain
 
 - `Scott1972.ContinuousLattice.canonical_omegaQVA_quantum_domain_equation_solved`

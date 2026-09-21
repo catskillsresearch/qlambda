@@ -331,7 +331,10 @@ limitations:
     imports the QLambda/ proofs.
   - >-
     The entry is not a formalization of Chen–Kou–Lyu 2026 in full, not a
-    Qiskit compiler, and not a Mathlib ingest.
+    compiler for arbitrary Qiskit Python, and not a Mathlib ingest. It does
+    contain a verified compiler for the frozen Composer/OpenQASM AST;
+    probabilistic lowering is parameterized by the explicit
+    LawfulProbLowering proof obligation.
   - >-
     Classical.choice is permitted (1972 topological ≪). There is no
     project-defined axiom and no native_decide in the compared proofs.

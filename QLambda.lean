@@ -5,6 +5,12 @@ Authors: Lars Warren Ericson.
 -/
 import QLambda.Adequacy
 import QLambda.ChoiRayObstruction
+import QLambda.CQ.Domain
+import QLambda.Compiler.Correctness
+import QLambda.Composer.Denotation
+import QLambda.Composer.Fixtures
+import QLambda.Composer.OpenQASM
+import QLambda.Composer.WellFormed
 import QLambda.Effects
 import QLambda.FiniteImageNonclosure
 import QLambda.HardwareAdequacy
@@ -31,6 +37,8 @@ import QLambda.RoundedTheoryOmega
 import QLambda.Saturation
 import QLambda.ScottLowerSet
 import QLambda.Soundness
+import QLambda.Source.Denotation
+import QLambda.Source.Syntax
 import QLambda.Syntax
 import QLambda.TTObservationBasis
 import QLambda.TTComputationChoice
