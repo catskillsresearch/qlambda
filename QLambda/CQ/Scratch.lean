@@ -71,6 +71,17 @@ theorem hideStore_update_data_any {c : ℕ} (s : CStore (c + 1))
     rw [Function.update_apply, if_neg hij, Function.update_apply, if_neg hj]
     rfl
 
+theorem hideStore_update_scratch {c : ℕ} (s : CStore (c + 1)) (b : Bool) :
+    hideStore (Function.update s (scratchBit c) b) = hideStore s := by
+  funext i
+  have hne : (i.castSucc : Fin (c + 1)) ≠ scratchBit c := by
+    simp [scratchBit]
+  simp [hideStore, Function.update, hne]
+
+theorem hideStore_update_init_scratch {c : ℕ} (s : CStore c) (b : Bool) :
+    hideStore (Function.update (initStore s) (scratchBit c) b) = s := by
+  rw [hideStore_update_scratch, hideStore_initStore]
+
 theorem hideStore_update_data {c : ℕ} (s : CStore c) (i : Fin c) (b : Bool) :
     hideStore (Function.update (initStore s) (dataBit i) b) =
       Function.update s i b := by
@@ -616,5 +627,130 @@ theorem hideScratch_seq_of_insensitive {q c : ℕ}
       (μ.value o)
       (KrausFamily.applyMat (μ.branch o)
         (KrausFamily.applyMat (initializeScratch q).kraus ρ))).symm
+
+/-- A physical computation whose logical postconditions factor through
+scratch initialization and discard. -/
+def FactorsScratch {q c : ℕ} (G : Sem (q + 1) (c + 1)) : Prop :=
+  ∀ (s : CStore (c + 1)) (P : CStore c → KrausFamily (QDim q) (QDim q))
+    (ρ : Matrix (Fin (QDim (q + 1))) (Fin (QDim (q + 1))) ℂ),
+    KrausFamily.applyMat ((G s).wpKraus (hidePost (P ∘ hideStore))) ρ =
+      KrausFamily.applyMat
+        (hidePost (fun t => (hideScratch G t).wpKraus P) (hideStore s)) ρ
+
+theorem applyMat_hidePost_point {q : ℕ} {D : Type*}
+    (d : D) {P Q : D → KrausFamily (QDim q) (QDim q)}
+    (h : KrausFamily.SemEq (P d) (Q d))
+    (ρ : Matrix (Fin (QDim (q + 1))) (Fin (QDim (q + 1))) ℂ) :
+    KrausFamily.applyMat (hidePost P d) ρ =
+      KrausFamily.applyMat (hidePost Q d) ρ := by
+  simp only [hidePost, KrausFamily.applyMat_comp]
+  exact congrArg (KrausFamily.applyMat (initializeScratch q).kraus)
+    (h (KrausFamily.applyMat (discardScratch q).kraus ρ))
+
+theorem applyMat_hidePost_congr {q : ℕ} {D : Type*}
+    {P Q : D → KrausFamily (QDim q) (QDim q)}
+    (h : ∀ d, KrausFamily.SemEq (P d) (Q d)) (d : D)
+    (ρ : Matrix (Fin (QDim (q + 1))) (Fin (QDim (q + 1))) ℂ) :
+    KrausFamily.applyMat (hidePost P d) ρ =
+      KrausFamily.applyMat (hidePost Q d) ρ :=
+  applyMat_hidePost_point d (h d) ρ
+
+theorem scratchInsensitive_of_factorsScratch {q c : ℕ}
+    {G : Sem (q + 1) (c + 1)} (hG : FactorsScratch G) :
+    ScratchInsensitive G := by
+  intro s P ρ
+  refine (congrArg (KrausFamily.applyMat (discardScratch q).kraus)
+    (hG s P ρ)).trans ?_
+  exact applyMat_discard_hidePost
+    (fun t => (hideScratch G t).wpKraus P) (hideStore s) ρ
+
+theorem factorsScratch_congr {q c : ℕ} {F G : Sem (q + 1) (c + 1)}
+    (hFG : Eq F G) (hF : FactorsScratch F) : FactorsScratch G := by
+  intro s P ρ
+  have hleft :=
+    ((hFG s) (hidePost (P ∘ hideStore)) ρ).symm
+  refine hleft.trans ((hF s P ρ).trans ?_)
+  refine applyMat_hidePost_congr ?_ (hideStore s) ρ
+  intro t
+  exact hideScratch_congr hFG t P
+
+theorem factorsScratch_skip {q c : ℕ} :
+    FactorsScratch (skip : Sem (q + 1) (c + 1)) := by
+  intro s P ρ
+  have hL :=
+    FiniteInstrumentComp.wpKraus_unit_semEq (n := QDim (q + 1)) s
+      (hidePost (P ∘ hideStore)) ρ
+  refine hL.trans ?_
+  refine (applyMat_hidePost_congr ?_ (hideStore s) ρ).symm
+  intro t
+  exact KrausFamily.applySemEq_trans (hideScratch_skip t P)
+    (FiniteInstrumentComp.wpKraus_unit_semEq (n := QDim q) t P)
+
+theorem factorsScratch_select {q c : ℕ}
+    (g : CStore (c + 1) → Bool) (F G : Sem (q + 1) (c + 1))
+    (hg : ∀ s, g s = g (initStore (hideStore s)))
+    (hF : FactorsScratch F) (hG : FactorsScratch G) :
+    FactorsScratch (select g F G) := by
+  intro s P ρ
+  have hsel :=
+    hideScratch_select g F G (fun t => g (initStore t)) (fun _ => rfl)
+  by_cases hgval : g s
+  · have hginit : g (initStore (hideStore s)) = true :=
+      (hg s).symm.trans (by simp [hgval])
+    have hbranch :
+        hideScratch (select g F G) (hideStore s) =
+          hideScratch G (hideStore s) := by
+      rw [hsel]
+      simp [select, hginit]
+    simp only [select, hgval]
+    refine (hG s P ρ).trans ?_
+    refine applyMat_hidePost_point (hideStore s) ?_ ρ
+    rw [hbranch]
+    exact KrausFamily.applySemEq_refl _
+  · have hginit : g (initStore (hideStore s)) = false :=
+      (hg s).symm.trans (by simp [hgval])
+    have hbranch :
+        hideScratch (select g F G) (hideStore s) =
+          hideScratch F (hideStore s) := by
+      rw [hsel]
+      simp [select, hginit]
+    simp only [select, hgval]
+    refine (hF s P ρ).trans ?_
+    refine applyMat_hidePost_point (hideStore s) ?_ ρ
+    rw [hbranch]
+    exact KrausFamily.applySemEq_refl _
+
+set_option maxHeartbeats 800000 in
+theorem factorsScratch_seq {q c : ℕ}
+    (F G : Sem (q + 1) (c + 1))
+    (hF : FactorsScratch F) (hG : FactorsScratch G) :
+    FactorsScratch (seq F G) := by
+  intro s P ρ
+  let Q : CStore c → KrausFamily (QDim q) (QDim q) :=
+    fun t => (hideScratch G t).wpKraus P
+  have hGsem :
+      ∀ d, KrausFamily.SemEq
+        ((G d).wpKraus (hidePost (P ∘ hideStore)))
+        (hidePost (Q ∘ hideStore) d) := by
+    intro d σ
+    simpa [Q, hidePost, Function.comp_apply] using hG d P σ
+  have hbind :=
+    FiniteInstrumentComp.wpKraus_bind_semEq (F s) G
+      (hidePost (P ∘ hideStore)) ρ
+  have hpred :=
+    FiniteInstrumentComp.wpKraus_semEq_pred (F s) hGsem ρ
+  have hfac := hF s Q ρ
+  have hseq :=
+    hideScratch_seq_of_insensitive F G (scratchInsensitive_of_factorsScratch hG)
+  refine hbind.trans ?_
+  refine hpred.trans ?_
+  refine hfac.trans ?_
+  refine applyMat_hidePost_congr ?_ (hideStore s) ρ
+  intro t
+  exact KrausFamily.applySemEq_trans
+    (KrausFamily.applySemEq_symm
+      (FiniteInstrumentComp.wpKraus_bind_semEq
+        (hideScratch F t) (hideScratch G) P))
+    (KrausFamily.applySemEq_symm (hseq t P))
 
 end QLambda.CQ

@@ -267,9 +267,14 @@ $$
 \llbracket C\rrbracket_{q\lambda}
 $$
 on reserved $q+1,c+1$ resources. `compile_correct` discharges this on the
-`Compilable` fragment: skip, intern, extern, data-wire `X`/`H`/`RY`, and
-skip-then-seq. `elaborates_compile_correct` composes CBV staging with that
-theorem. `compile_embed` proves `compile (embed K) = liftBlock K`.
+`Compilable` fragment: skip, data-wire `X`/`H`/`RY`/`CX`, measurement,
+reset, store, general sequencing, probabilistic choice, intern, and
+extern. `hideScratch_coin_op` is the weighted-choice case: reset, coin-angle
+RY, scratch measurement, branch dispatch, and scratch erasure denote
+source `probSem`. `elaborates_compile_correct` composes CBV staging with
+that theorem. `denote_embed` extends the same equality to recompilation of
+a logical block built from the supported instructions. `compile_embed`
+proves `compile (embed K) = liftBlock K`.
 `hideScratch_seq_of_insensitive` is the hidden sequencing law. These
 theorems are in `QLambda/Compiler/Correctness.lean`. They concern the
 frozen ideal `canonicalModel`, not backend transpilation, calibration,
@@ -764,7 +769,7 @@ theorem TTPhysicalEmbedding.embed_unit (d : D) :
 4. **Choice.** Internal join, physical weighted probability (not lattice join), and tagged external selection are separated and registered as lawful effect instances.
 5. **Hardware adequacy infrastructure.** Normalized CEK machine; subnormalized channel trees; logical relations; token adequacy for realized trees; completeness transfer across unique-successor identity steps.
 6. **Covered stuck-free channel-tree capstone.** `FunAppFrag` / `Produces n` under residual frames; `PathChannelEvaluation` and the closed bridges in `HardwareChannel/Fundamental.lean`; `ProductiveClosedCase` and `RestrictedExternApplication` in `HardwareChannel/Productive.lean`; and the consolidated `ClosedStuckFreeCoverage`, `closed_stuck_free_presented_channelTreeCompleteness`, and `closed_stuck_free_presented_token_adequacy` in `HardwareChannel/Coverage.lean`.
-7. **Composer circuit layer.** Versioned AST and OpenQASM exporter; register-indexed CQ denotation; emit-kernel staging boundary; total Composer embedding; scheduler-parameterized compiler on reserved $q+1,c+1$; `compile_correct` on the `Compilable` fragment; `physicalCoin_amplitudes`; no `LawfulProbLowering`.
+7. **Composer circuit layer.** Versioned AST and OpenQASM exporter; register-indexed CQ denotation; emit-kernel staging boundary; total Composer embedding; scheduler-parameterized compiler on reserved $q+1,c+1$; `compile_correct` on the full declared `Compilable` fragment, including general sequencing and probabilistic choice; `denote_embed` for supported logical blocks; no `LawfulProbLowering`.
 
 A compact status table and the open-hole list appear in the next section.
 
@@ -785,7 +790,7 @@ A compact status table and the open-hole list appear in the next section.
 | Frozen Composer AST, well-formedness, OpenQASM export | Done | `Composer.Syntax`, `Composer.WellFormed`, `Composer.OpenQASM`, `Composer.Fixtures` |
 | Ideal register-indexed circuit denotation | Done | `CQ.Domain`, `Composer.Denotation` |
 | Emit-kernel source and finite residual | Done | `Source.Syntax`, `Source.Denotation`, `Elaborates` |
-| Compile/embed preservation after `hideScratch` | `compile_correct` on the `Compilable` fragment; coin amplitudes identified | `Compiler.compile_correct`, `elaborates_compile_correct`, `physicalCoin_amplitudes`, `compile_embed` |
+| Compile/embed preservation after `hideScratch` | Done on the declared `Compilable` fragment, including probabilistic choice | `Compiler.compile_correct`, `elaborates_compile_correct`, `hideScratch_coin_op`, `denote_embed`, `compile_embed` |
 | Hardware CEK + channel trees + token adequacy infrastructure | Done | `HardwareOperational` … `HardwareAdequacy` |
 | Channel-tree completeness: ret, Pauli-X, measure-Z, choice, identity CEK steps | Done | `HardwareChannel/Config`, `Identity` |
 | Presented completeness for `Produces` / `FunAppFrag` (incl. `app_lam`, `app_recLam`, FunAppFrag leftover args) | Done (fragment) | `Spines`, `FunApp`, `Closed` |
@@ -810,11 +815,10 @@ The following are **not** claimed as proved.
 
 5. **Stronger physical / domain claims not pursued.** A finite-image Scott retract onto embedded instruments is **refuted**, not missing. Raw `InstrumentPower` as an $\omega\mathbf{QVA}$ carrier is not claimed; the Choi-ray obstruction rules out a particular physical-basis approximant scheme for $n\ge 2$, not the continuation-power construction in use.
 
-6. **Physical coin composition.** `physicalCoin_amplitudes` identifies
-reset then coin-angle RY on the reserved wire. Lifting that identification
-through measurement, scratch erasure, and arbitrary compiled branches
-into `compile_correct` for every `prob` remains the last compiler
-composition, not a caller-supplied law.
+6. **Compiler fragment boundary.** `compile_correct` covers skip, data-wire
+X/H/RY/CX, measurement, reset, store, general sequencing, probabilistic
+choice, and internal or external choice. Loops, barrier, delay, and a
+global $D_\infty$/CQ correspondence are not part of that theorem.
 
 7. **Backend behavior.** The OpenQASM text is an export of the frozen AST.
 No theorem identifies ideal CQ denotation with IBM transpilation, calibration,

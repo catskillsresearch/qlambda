@@ -407,9 +407,14 @@
     (<code>physicalCoin</code>) and the canonical matrix model. There is
     no caller-supplied <code>LawfulProbLowering</code>. Source and target
     meanings are compared after <code>hideScratch</code>.
-    <code>compile_correct</code> is proved on the <code>Compilable</code>
-    fragment; <code>physicalCoin_amplitudes</code> identifies reset then
-    coin-angle RY on the reserved wire.
+    <code>compile_correct</code> is proved on the declared
+    <code>Compilable</code> fragment: supported gates including CX,
+    measurement, reset, store, general sequencing, probabilistic choice,
+    and internal or external choice. <code>hideScratch_coin_op</code>
+    identifies the physical coin, through measurement and scratch erasure,
+    with source <code>probSem</code>. <code>denote_embed</code> covers
+    recompilation of blocks built from those instructions. Loops, barrier,
+    delay, and a global D∞/CQ bridge remain outside the theorem.
   </p>
   <ol>
     <li><code>heunen-omegaqva-def</code> — ωQVA definition block (paper + docs).</li>

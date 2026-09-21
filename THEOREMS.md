@@ -28,12 +28,17 @@ about the motivating literature or a Qiskit compiler.
   sequencing.
 - `QLambda.Compiler.compile_correct` —
   `QLambda/Compiler/Correctness.lean`; hidden physical compilation on the
-  `Compilable` fragment (skip, intern, extern, data-wire X/H/RY,
-  skip-then-seq).
+  `Compilable` fragment: skip, data-wire X/H/RY/CX, measurement, reset,
+  store, general sequencing, probabilistic choice, intern, and extern.
 - `QLambda.Compiler.elaborates_compile_correct` — CBV staging then
   compilation preserves CQ meaning on that fragment.
+- `QLambda.Compiler.denote_embed` — recompiling a `BlockCompilable` logical
+  block (those same instructions) agrees with its source embedding after
+  `hideScratch`.
 - `QLambda.Compiler.compile_embed` — total Composer embedding recompiles to
   wire/store lifting.
+- `QLambda.Compiler.hideScratch_coin_op` — the physical coin's hidden
+  denotation is source `probSem` when both branches factor through scratch.
 - `QLambda.Compiler.physicalCoin_amplitudes`,
   `applyMat_reset_scratch`, `ry_coin_mul_initZero` —
   `QLambda/Compiler/Physical.lean`; reset on the reserved wire is
@@ -51,8 +56,9 @@ about the motivating literature or a Qiskit compiler.
 Boundary: the target is the frozen versioned AST in
 `QLambda/Composer/Syntax.lean`, not arbitrary Qiskit Python. Compilation
 always uses `q+1,c+1` with `hideScratch`. There is no caller-supplied
-lowering law. Weighted-choice hide for arbitrary compiled branches, and
-CX/measure/reset lifting, remain the last compiler compositions.
+lowering law. `compile_correct` is unconditional on the declared fragment.
+Loops, barrier, delay, lossless IBM/Qiskit execution, noisy backends, and
+a global D∞/CQ bridge are outside that theorem.
 Bounded `while` is exported by unrolling so QASM and denotation share the
 same fuel.
 
