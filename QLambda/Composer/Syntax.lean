@@ -3,7 +3,8 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import Mathlib.Data.Fin.Basic
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Inverse
+import Mathlib.Data.Rat.Defs
 
 /-!
 # Frozen IBM Composer / OpenQASM circuit syntax
@@ -12,10 +13,9 @@ This is the versioned, first-order target syntax used by the verified
 translation.  It models one circuit with fixed quantum and classical
 registers.  It is not the Qiskit Python API.
 
-The initial version intentionally uses a generic gate record: the versioned
-operation manifest, rather than the inductive datatype, decides which gate
-names and arities are accepted.  Control loops carry a static iteration bound,
-matching the compiler's finite-circuit requirement.
+This is a verified normalized core, not a stringly representation of arbitrary
+OpenQASM. Gate names and parameters are typed. Control loops carry a static
+iteration bound, matching the compiler's finite-circuit requirement.
 -/
 
 namespace QLambda
@@ -50,29 +50,69 @@ def eval {c : ℕ} : CExpr c → (Fin c → Bool) → Bool
 
 end CExpr
 
-/-- OpenQASM gate modifiers supported by the frozen target. -/
-inductive Modifier where
-  | ctrl : Nat → Modifier
-  | inv
-  | pow : Int → Modifier
-  deriving DecidableEq, Repr
+/-- Exactly serializable probability used by the physical compiler. -/
+structure Probability where
+  val : ℚ
+  nonneg : 0 ≤ val
+  le_one : val ≤ 1
 
-/-- A gate occurrence. Parameters are retained as normalized OpenQASM text.
-Their numerical interpretation is supplied by a `Composer.Model`. -/
-structure GateApp (q : ℕ) where
-  name : String
-  params : List String := []
-  qubits : List (Fin q)
-  modifiers : List Modifier := []
-  deriving DecidableEq, Repr
+namespace Probability
+
+/-- Real denotation of a rational source probability. -/
+noncomputable def real (p : Probability) : ℝ :=
+  p.val
+
+theorem real_nonneg (p : Probability) : 0 ≤ p.real := by
+  change (0 : ℝ) ≤ (p.val : ℝ)
+  exact_mod_cast p.nonneg
+
+theorem real_le_one (p : Probability) : p.real ≤ 1 := by
+  change (p.val : ℝ) ≤ (1 : ℝ)
+  exact_mod_cast p.le_one
+
+end Probability
+
+/-- Typed angle expressions admitted by the normalized target. -/
+inductive AngleExpr where
+  | rational : ℚ → AngleExpr
+  /-- `2 * acos (sqrt p)`, so RY followed by Z measurement returns zero
+  with probability `p`. -/
+  | coin : Probability → AngleExpr
+
+namespace AngleExpr
+
+/-- Real-valued ideal interpretation of an angle expression. -/
+noncomputable def eval : AngleExpr → ℝ
+  | .rational r => r
+  | .coin p => 2 * Real.arccos (Real.sqrt p.real)
+
+end AngleExpr
+
+/-- Typed gates in the verified normalized Composer core. -/
+inductive Gate (q : ℕ) where
+  | x : Fin q → Gate q
+  | h : Fin q → Gate q
+  | ry : AngleExpr → Fin q → Gate q
+  | cx : Fin q → Fin q → Gate q
+
+namespace Gate
+
+/-- Rename wires while preserving gate structure. -/
+def mapWires {q q' : ℕ} (f : Fin q → Fin q') : Gate q → Gate q'
+  | .x w => .x (f w)
+  | .h w => .h (f w)
+  | .ry θ w => .ry θ (f w)
+  | .cx control target => .cx (f control) (f target)
+
+end Gate
 
 /-- Instructions accepted by the versioned circuit container.
 
 `whileLoop fuel` is the statically bounded Composer fragment. `break` and
-`continue` are represented explicitly and are interpreted by the block
-semantics only inside a loop. -/
+`continue` remain representable for imported syntax but are rejected by the
+normalized-core well-formedness judgment. -/
 inductive Instr (q c : ℕ) where
-  | gate : GateApp q → Instr q c
+  | gate : Gate q → Instr q c
   | measure : Fin q → Fin c → Instr q c
   | reset : Fin q → Instr q c
   | store : Fin c → CExpr c → Instr q c
@@ -85,28 +125,11 @@ inductive Instr (q c : ℕ) where
   | box : String → List (Instr q c) → Instr q c
   | break
   | continue
+  deriving Nonempty
 
 /-- One complete fixed-register circuit. -/
 structure Program (v : Version) (q c : ℕ) where
   body : List (Instr q c)
-
-/-- Manifest entry used to validate generic gates. -/
-structure GateSpec where
-  name : String
-  qubits : Nat
-  params : Nat
-  deriving DecidableEq, Repr
-
-/-- Frozen built-in gate manifest for the first Composer target. -/
-def builtinManifest : List GateSpec :=
-  [ ⟨"id", 1, 0⟩, ⟨"x", 1, 0⟩, ⟨"y", 1, 0⟩, ⟨"z", 1, 0⟩,
-    ⟨"h", 1, 0⟩, ⟨"s", 1, 0⟩, ⟨"sdg", 1, 0⟩,
-    ⟨"t", 1, 0⟩, ⟨"tdg", 1, 0⟩,
-    ⟨"rx", 1, 1⟩, ⟨"ry", 1, 1⟩, ⟨"rz", 1, 1⟩,
-    ⟨"p", 1, 1⟩, ⟨"u", 1, 3⟩,
-    ⟨"cx", 2, 0⟩, ⟨"cy", 2, 0⟩, ⟨"cz", 2, 0⟩,
-    ⟨"ch", 2, 0⟩, ⟨"swap", 2, 0⟩, ⟨"ecr", 2, 0⟩,
-    ⟨"ccx", 3, 0⟩, ⟨"cswap", 3, 0⟩ ]
 
 end Composer
 

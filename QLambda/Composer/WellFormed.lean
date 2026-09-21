@@ -8,20 +8,17 @@ import QLambda.Composer.Syntax
 /-!
 # Static well-formedness of frozen Composer circuits
 
-`Fin` indices enforce register bounds intrinsically.  This judgment adds gate
-manifest/arity checks, distinct wire operands, structured control legality,
-and the rule that `break`/`continue` occur only under a loop.
+`Fin` indices enforce register bounds intrinsically. This judgment adds
+distinct CX operands and structured control checks. `break` and `continue`
+have no constructors here: the verified normalized core rejects them.
 -/
 
 namespace QLambda.Composer
 
-/-- A gate is admitted by the frozen manifest and has the declared arities. -/
-def GateApp.WellFormed {q : ℕ} (g : GateApp q) : Prop :=
-  g.qubits.Nodup ∧
-    ∃ spec ∈ builtinManifest,
-      spec.name = g.name ∧
-      spec.qubits = g.qubits.length ∧
-      spec.params = g.params.length
+/-- Static gate side conditions not enforced by `Fin` indices. -/
+def Gate.WellFormed {q : ℕ} : Gate q → Prop
+  | .cx control target => control ≠ target
+  | _ => True
 
 mutual
 
@@ -60,13 +57,6 @@ mutual
         label ≠ "" →
         Block.WellFormedAt depth body →
         Instr.WellFormedAt depth (.box label body)
-    | break {depth} :
-        0 < depth →
-        Instr.WellFormedAt depth .break
-    | continue {depth} :
-        0 < depth →
-        Instr.WellFormedAt depth .continue
-
   /-- Every instruction of a block is well formed at the same loop depth. -/
   inductive Block.WellFormedAt {q c : ℕ} : Nat → List (Instr q c) → Prop
     | nil {depth} : Block.WellFormedAt depth []

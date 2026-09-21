@@ -3,7 +3,7 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Composer.Syntax
+import QLambda.Composer.WellFormed
 
 /-!
 # OpenQASM 3 presentation
@@ -35,15 +35,15 @@ def CExpr.toOpenQASM {c : ℕ} : CExpr c → String
   | .or e₁ e₂ => "(" ++ e₁.toOpenQASM ++ " || " ++ e₂.toOpenQASM ++ ")"
   | .xor e₁ e₂ => "(" ++ e₁.toOpenQASM ++ " != " ++ e₂.toOpenQASM ++ ")"
 
-def Modifier.toOpenQASM : Modifier → String
-  | .ctrl n => "ctrl(" ++ toString n ++ ") @ "
-  | .inv => "inv @ "
-  | .pow n => "pow(" ++ toString n ++ ") @ "
+def AngleExpr.toOpenQASM : AngleExpr → String
+  | .rational r => toString r
+  | .coin p => "2*acos(sqrt(" ++ toString p.val ++ "))"
 
-def GateApp.toOpenQASM {q : ℕ} (g : GateApp q) : String :=
-  String.join (g.modifiers.map Modifier.toOpenQASM) ++ g.name ++
-    (if g.params.isEmpty then "" else "(" ++ comma g.params ++ ")") ++
-    " " ++ comma (g.qubits.map qref) ++ ";"
+def Gate.toOpenQASM {q : ℕ} : Gate q → String
+  | .x w => "x " ++ qref w ++ ";"
+  | .h w => "h " ++ qref w ++ ";"
+  | .ry θ w => "ry(" ++ θ.toOpenQASM ++ ") " ++ qref w ++ ";"
+  | .cx control target => "cx " ++ qref control ++ ", " ++ qref target ++ ";"
 
 mutual
 
@@ -74,18 +74,27 @@ mutual
         "for uint _i in [0:" ++ toString count ++ "] {\n" ++
           lines (blockToOpenQASM body) ++ "\n}"
     | .whileLoop fuel guard body =>
-        "// statically bounded to " ++ toString fuel ++ " iterations\n" ++
-        "while (" ++ guard.toOpenQASM ++ ") {\n" ++
-          lines (blockToOpenQASM body) ++ "\n}"
+        boundedWhileToOpenQASM fuel guard body
     | .box label body =>
         "box { // " ++ label ++ "\n" ++ lines (blockToOpenQASM body) ++ "\n}"
     | .break => "break;"
     | .continue => "continue;"
 
+  /-- Bounded while is exported by finite unrolling, so QASM execution and
+  denotation have the same iteration cap. -/
+  private partial def boundedWhileToOpenQASM {q c : ℕ} :
+      Nat → CExpr c → List (Instr q c) → String
+    | 0, _, _ => "// bounded while exhausted"
+    | fuel + 1, guard, body =>
+        "if (" ++ guard.toOpenQASM ++ ") {\n" ++
+          lines (blockToOpenQASM body) ++ "\n" ++
+          boundedWhileToOpenQASM fuel guard body ++ "\n}"
+
 end
 
-/-- Export one fixed-register program as OpenQASM 3 text. -/
-def Program.toOpenQASM {v q c} (P : Program v q c) : String :=
+/-- Export a well-formed normalized program as OpenQASM 3 text. -/
+def Program.toOpenQASM {v q c} (P : Program v q c)
+    (_hP : P.WellFormed) : String :=
   lines
     [ "OPENQASM 3.0;",
       "include \"stdgates.inc\";",

@@ -26,21 +26,35 @@ about the motivating literature or a Qiskit compiler.
 - `QLambda.Compiler.denoteBlock_append` —
   `QLambda/Compiler/Correctness.lean`; circuit concatenation is CQ
   sequencing.
-- `QLambda.Compiler.compile_correct` — source-to-Composer preservation,
-  parameterized by `LawfulProbLowering`, the exact physical ancilla-lowering
-  obligation.
+- `QLambda.Compiler.compile_correct` —
+  `QLambda/Compiler/Correctness.lean`; hidden physical compilation on the
+  `Compilable` fragment (skip, intern, extern, data-wire X/H/RY,
+  skip-then-seq).
+- `QLambda.Compiler.elaborates_compile_correct` — CBV staging then
+  compilation preserves CQ meaning on that fragment.
 - `QLambda.Compiler.compile_embed` — total Composer embedding recompiles to
-  the identical AST.
-- `QLambda.Compiler.denote_embed` and
-  `QLambda.Compiler.embed_compile_correct` — both translation directions
-  preserve CQ denotation; the source round trip is semantic rather than
-  syntactic.
+  wire/store lifting.
+- `QLambda.Compiler.physicalCoin_amplitudes`,
+  `applyMat_reset_scratch`, `ry_coin_mul_initZero` —
+  `QLambda/Compiler/Physical.lean`; reset on the reserved wire is
+  initialize-after-discard, and coin-angle RY prepares
+  `√p|0⟩ + √(1-p)|1⟩`.
+- `QLambda.CQ.hideScratch_seq_of_insensitive` —
+  `QLambda/CQ/Scratch.lean`; hidden sequencing is compositional when the
+  continuation ignores leftover scratch.
+- `QLambda.Composer.canonicalModel`, `ry₂_coin_zero` —
+  `QLambda/Composer/MatrixSemantics.lean`; the compiler capstone uses this
+  model, not an unconstrained `Composer.Model`.
+- `QLambda.Source.Elaborates.deterministic`, `quote_elaborates` —
+  CBV staging of the compilable fragment is deterministic.
 
 Boundary: the target is the frozen versioned AST in
-`QLambda/Composer/Syntax.lean`, not arbitrary Qiskit Python. A concrete RY /
-ancilla syntax pattern is `ancillaLowering`; its selected resources and
-parameter encoding must instantiate and prove `LawfulProbLowering`. The
-generic theorem does not assume that physical equation silently.
+`QLambda/Composer/Syntax.lean`, not arbitrary Qiskit Python. Compilation
+always uses `q+1,c+1` with `hideScratch`. There is no caller-supplied
+lowering law. Weighted-choice hide for arbitrary compiled branches, and
+CX/measure/reset lifting, remain the last compiler compositions.
+Bounded `while` is exported by unrolling so QASM and denotation share the
+same fuel.
 
 ## Quantum domain
 

@@ -19,7 +19,7 @@ namespace QLambda.Composer
 
 /-- Ideal primitive model for one fixed-register Composer circuit. -/
 structure Model (q c : ℕ) where
-  gate : GateApp q → QuantumOperation (CQ.QDim q) (CQ.QDim q)
+  gate : Gate q → QuantumOperation (CQ.QDim q) (CQ.QDim q)
   measure : Fin q → QuantumInstrument (CQ.QDim q) (CQ.QDim q) 2
   reset : Fin q → QuantumOperation (CQ.QDim q) (CQ.QDim q)
 

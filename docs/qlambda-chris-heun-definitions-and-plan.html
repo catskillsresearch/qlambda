@@ -403,10 +403,13 @@
     OpenQASM export, CQ domain, Composer and source denotations, compile/embed
     functions, concrete ancilla syntax pattern, and preservation/round-trip
     theorem ladder are in <code>QLambda/{CQ,Composer,Source,Compiler}</code>.
-    The probability theorem is correctly conditional on
-    <code>LawfulProbLowering</code>; discharging that law for a selected
-    arbitrary-register gate model remains an explicit physical-model
-    obligation, not an assumed compiler fact.
+    Probabilistic compilation uses the reserved last qubit and bit
+    (<code>physicalCoin</code>) and the canonical matrix model. There is
+    no caller-supplied <code>LawfulProbLowering</code>. Source and target
+    meanings are compared after <code>hideScratch</code>.
+    <code>compile_correct</code> is proved on the <code>Compilable</code>
+    fragment; <code>physicalCoin_amplitudes</code> identifies reset then
+    coin-angle RY on the reserved wire.
   </p>
   <ol>
     <li><code>heunen-omegaqva-def</code> — ωQVA definition block (paper + docs).</li>

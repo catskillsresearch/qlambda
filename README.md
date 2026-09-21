@@ -97,12 +97,16 @@ The revised circuit layer now includes:
 - an untyped CBV `emit` source plus finite residual command language;
 - total Composer→qλ embedding and scheduler-parameterized qλ→Composer
   compilation;
-- `compile_correct`, `compile_embed`, `denote_embed`, and
-  `embed_compile_correct`.
+- `compile_correct` on the `Compilable` fragment, `elaborates_compile_correct`,
+  `compile_embed`, `physicalCoin_amplitudes`, and `hideScratch_seq_of_insensitive`.
 
-Probabilistic compilation is intentionally parameterized by
-`LawfulProbLowering`: a concrete ancilla RY/measurement implementation must
-prove the exact CQ equation. OpenQASM export is not a claim about arbitrary
+Compilation always targets `q+1` qubits and `c+1` bits. Source and
+Composer meanings agree after `hideScratch` initializes and discards the
+reserved resources. There is no caller-supplied `LawfulProbLowering` and
+no unconstrained `Composer.Model` in the capstone. The physical coin is
+`physicalCoin` (reset, `RY(2·acos(√p))`, measure, conditional) on the
+reserved last wire/bit; `physicalCoin_amplitudes` identifies the prepared
+scratch superposition. OpenQASM export is not a claim about arbitrary
 Qiskit Python or noisy IBM backend behavior.
 
 Narrative: `arxiv.md`. Theorem index: `THEOREMS.md`. Palomar metadata:

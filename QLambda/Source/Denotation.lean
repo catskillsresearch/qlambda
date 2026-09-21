@@ -31,7 +31,7 @@ noncomputable def probSem {q c : ℕ} (p : Probability)
     (A B : Sem q c) : Sem q c :=
   fun s =>
     (FiniteInstrumentComp.weightedCoin
-      (n := QDim q) p.val p.nonneg p.le_one).bind fun right =>
+      (n := QDim q) p.real p.real_nonneg p.real_le_one).bind fun right =>
         if right then B s else A s
 
 /-- Physical probabilistic aggregation respects branch denotations. -/
@@ -41,7 +41,7 @@ theorem probSem_congr {q c : ℕ} (p : Probability)
   intro s P
   let coin :=
     FiniteInstrumentComp.weightedCoin
-      (n := QDim q) p.val p.nonneg p.le_one
+      (n := QDim q) p.real p.real_nonneg p.real_le_one
   let left : Bool → FiniteInstrumentComp (QDim q) (CStore c) :=
     fun right => if right then B s else A s
   let right : Bool → FiniteInstrumentComp (QDim q) (CStore c) :=

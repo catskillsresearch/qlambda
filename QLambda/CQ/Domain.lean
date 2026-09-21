@@ -47,6 +47,26 @@ def CompEq {n : ℕ} {D : Type*} [Preorder D]
   ∀ P : D → KrausFamily n n,
     KrausFamily.SemEq (μ.wpKraus P) (ν.wpKraus P)
 
+theorem CompEq.refl {n : ℕ} {D : Type*} [Preorder D]
+    (μ : FiniteInstrumentComp n D) : CompEq μ μ :=
+  fun _ => KrausFamily.applySemEq_refl _
+
+theorem CompEq.symm {n : ℕ} {D : Type*} [Preorder D]
+    {μ ν : FiniteInstrumentComp n D} (h : CompEq μ ν) : CompEq ν μ :=
+  fun P => KrausFamily.applySemEq_symm (h P)
+
+theorem CompEq.trans {n : ℕ} {D : Type*} [Preorder D]
+    {μ ν ξ : FiniteInstrumentComp n D}
+    (hμν : CompEq μ ν) (hνξ : CompEq ν ξ) : CompEq μ ξ :=
+  fun P => KrausFamily.applySemEq_trans (hμν P) (hνξ P)
+
+theorem CompEq.map {n : ℕ} {D E : Type*} [Preorder D] [Preorder E]
+    (f : D → E) {μ ν : FiniteInstrumentComp n D} (h : CompEq μ ν) :
+    CompEq (μ.map f) (ν.map f) := by
+  intro P
+  rw [FiniteInstrumentComp.wpKraus_map, FiniteInstrumentComp.wpKraus_map]
+  exact h (P ∘ f)
+
 /-- Pointwise strong observational equality of CQ meanings. -/
 def Eq {q c : ℕ} (F G : Sem q c) : Prop :=
   ∀ s, CompEq (F s) (G s)

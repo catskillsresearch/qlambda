@@ -20,11 +20,8 @@ namespace QLambda.Source
 
 abbrev ChoiceId := Nat
 
-/-- A probability together with the bounds needed by the physical coin. -/
-structure Probability where
-  val : QLambda.Prob
-  nonneg : 0 ≤ val
-  le_one : val ≤ 1
+/-- Exactly serializable probability used by source and target. -/
+abbrev Probability := Composer.Probability
 
 /-- Untyped call-by-value source terms. -/
 inductive Term (q c : ℕ) where
@@ -59,13 +56,21 @@ def free {q c : ℕ} : Term q c → List Name
 def Closed {q c : ℕ} (M : Term q c) : Prop :=
   free M = []
 
+/-- All variable names occurring in a term, including binders. -/
+def names {q c : ℕ} : Term q c → List Name
+  | .var x => [x]
+  | .lam x M => x :: names M
+  | .app M N => names M ++ names N
+  | .unit | .emit _ => []
+  | .seq M N | .prob _ M N | .intern _ M N | .extern _ M N => names M ++ names N
+
 /-- Capture-avoiding substitution is only needed by the staging relation.
 The binder is renamed when its name occurs free in the replacement. -/
 def rename {q c : ℕ} (M : Term q c) (old fresh : Name) : Term q c :=
   match M with
   | .var x => if x = old then .var fresh else .var x
   | .lam x body =>
-      if x = old then .lam fresh (rename body old fresh)
+      if x = old then .lam x body
       else .lam x (rename body old fresh)
   | .app F A => .app (rename F old fresh) (rename A old fresh)
   | .unit => .unit
@@ -77,9 +82,43 @@ def rename {q c : ℕ} (M : Term q c) (old fresh : Name) : Term q c :=
 
 /-- A deterministic fresh name for substitution. -/
 def fresh {q c : ℕ} (M N : Term q c) (x : Name) : Name :=
-  x ++ "#" ++ toString (M.free.length + N.free.length)
+  QLambda.fresh (x :: M.names ++ N.names)
 
-partial def subst {q c : ℕ} (M : Term q c) (x : Name) (V : Term q c) : Term q c :=
+@[simp] theorem fresh_not_mem_left {q c : ℕ}
+    (M N : Term q c) (x : Name) : fresh M N x ∉ M.names := by
+  simpa [fresh] using QLambda.fresh_not_mem_of_subset
+    (avoid := x :: M.names ++ N.names) (xs := M.names)
+    (by intro y hy; simp [hy])
+
+@[simp] theorem fresh_not_mem_right {q c : ℕ}
+    (M N : Term q c) (x : Name) : fresh M N x ∉ N.names := by
+  simpa [fresh] using QLambda.fresh_not_mem_of_subset
+    (avoid := x :: M.names ++ N.names) (xs := N.names)
+    (by intro y hy; simp [hy])
+
+/-- Constructor count, used to justify recursion through alpha-renaming. -/
+def termSize {q c : ℕ} : Term q c → ℕ
+  | .var _ | .unit | .emit _ => 1
+  | .lam _ M => termSize M + 1
+  | .app M N | .seq M N | .prob _ M N | .intern _ M N | .extern _ M N =>
+      termSize M + termSize N + 1
+
+@[simp] theorem rename_termSize {q c : ℕ} (old fresh : Name) :
+    ∀ M : Term q c, termSize (rename M old fresh) = termSize M
+  | .var y => by simp [rename, termSize]; split <;> simp [termSize]
+  | .lam y M => by
+      simp [rename, termSize]
+      split <;> simp [termSize, rename_termSize]
+  | .app M N => by simp [rename, termSize, rename_termSize]
+  | .unit => by simp [rename, termSize]
+  | .emit i => by simp [rename, termSize]
+  | .seq M N => by simp [rename, termSize, rename_termSize]
+  | .prob p M N => by simp [rename, termSize, rename_termSize]
+  | .intern id M N => by simp [rename, termSize, rename_termSize]
+  | .extern e M N => by simp [rename, termSize, rename_termSize]
+
+/-- Deterministic capture-avoiding substitution. -/
+def subst {q c : ℕ} (M : Term q c) (x : Name) (V : Term q c) : Term q c :=
   match M with
   | .var y => if y = x then V else .var y
   | .lam y body =>
@@ -95,9 +134,44 @@ partial def subst {q c : ℕ} (M : Term q c) (x : Name) (V : Term q c) : Term q 
   | .prob p A B => .prob p (subst A x V) (subst B x V)
   | .intern id A B => .intern id (subst A x V) (subst B x V)
   | .extern e A B => .extern e (subst A x V) (subst B x V)
+termination_by termSize M
+decreasing_by
+  all_goals simp [termSize, rename_termSize]
+
 inductive Value {q c : ℕ} : Term q c → Prop
   | unit : Value .unit
   | lam {x body} : Value (.lam x body)
+
+/-- Terminating, pure call-by-value evaluation to a source value. -/
+inductive Evaluates {q c : ℕ} : Term q c → Term q c → Prop
+  | value {V} : Value V → Evaluates V V
+  | app {F X x body V W} :
+      Evaluates F (.lam x body) →
+      Evaluates X V →
+      Evaluates (subst body x V) W →
+      Evaluates (.app F X) W
+
+namespace Evaluates
+
+/-- Pure CBV evaluation has a unique resulting value. -/
+theorem deterministic {q c : ℕ} {M A B : Term q c}
+    (hA : Evaluates M A) (hB : Evaluates M B) : A = B := by
+  induction hA generalizing B with
+  | value hV =>
+      cases hB with
+      | value => rfl
+      | app => cases hV
+  | app hF hX hbody ihF ihX ihbody =>
+      cases hB with
+      | value hV => cases hV
+      | app hF' hX' hbody' =>
+          have hfun := ihF hF'
+          cases hfun
+          have harg := ihX hX'
+          cases harg
+          exact ihbody hbody'
+
+end Evaluates
 
 end Term
 
@@ -144,9 +218,59 @@ inductive Elaborates {q c : ℕ} : Term q c → Command q c → Prop
   | extern {e M N A B} :
       Elaborates M A → Elaborates N B →
       Elaborates (.extern e M N) (.extern e A B)
-  | beta {x body V C} :
-      Term.Value V →
+  | app {F X x body V C} :
+      Term.Evaluates F (.lam x body) →
+      Term.Evaluates X V →
       Elaborates (Term.subst body x V) C →
-      Elaborates (.app (.lam x body) V) C
+      Elaborates (.app F X) C
+
+namespace Elaborates
+
+/-- The original direct beta rule is the immediate case of general CBV
+application staging. -/
+theorem beta {q c : ℕ} {x : Name} {body V : Term q c} {C : Command q c} :
+    Term.Value V →
+    Elaborates (Term.subst body x V) C →
+    Elaborates (.app (.lam x body) V) C := by
+  intro hV hbody
+  exact .app (.value .lam) (.value hV) hbody
+
+/-- Quoted residuals elaborate back to themselves. -/
+theorem quote_elaborates {q c : ℕ} : ∀ C : Command q c, Elaborates C.quote C
+  | .skip => .skip
+  | .emit i => .emit
+  | .seq A B => .seq (quote_elaborates A) (quote_elaborates B)
+  | .prob p A B => .prob (quote_elaborates A) (quote_elaborates B)
+  | .intern id A B => .intern (quote_elaborates A) (quote_elaborates B)
+  | .extern e A B => .extern (quote_elaborates A) (quote_elaborates B)
+
+/-- Staging a compilable CBV term produces a unique finite command. -/
+theorem deterministic {q c : ℕ} {M : Term q c} {A B : Command q c}
+    (hA : Elaborates M A) (hB : Elaborates M B) : A = B := by
+  induction hA generalizing B with
+  | skip => cases hB; rfl
+  | emit => cases hB; rfl
+  | seq _ _ ihM ihN =>
+      cases hB with
+      | seq hM hN => simp [ihM hM, ihN hN]
+  | prob _ _ ihM ihN =>
+      cases hB with
+      | prob hM hN => simp [ihM hM, ihN hN]
+  | intern _ _ ihM ihN =>
+      cases hB with
+      | intern hM hN => simp [ihM hM, ihN hN]
+  | extern _ _ ihM ihN =>
+      cases hB with
+      | extern hM hN => simp [ihM hM, ihN hN]
+  | app hF hX hbody ih =>
+      cases hB with
+      | app hF' hX' hbody' =>
+          have hfun := Term.Evaluates.deterministic hF hF'
+          cases hfun
+          have harg := Term.Evaluates.deterministic hX hX'
+          cases harg
+          exact ih hbody'
+
+end Elaborates
 
 end QLambda.Source

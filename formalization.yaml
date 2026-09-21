@@ -332,9 +332,9 @@ limitations:
   - >-
     The entry is not a formalization of Chen–Kou–Lyu 2026 in full, not a
     compiler for arbitrary Qiskit Python, and not a Mathlib ingest. It does
-    contain a verified compiler for the frozen Composer/OpenQASM AST;
-    probabilistic lowering is parameterized by the explicit
-    LawfulProbLowering proof obligation.
+    contain a verified compiler for the frozen Composer/OpenQASM AST
+    on reserved `q+1,c+1` resources; source and target meanings agree
+    after `hideScratch`, with no caller-supplied LawfulProbLowering.
   - >-
     Classical.choice is permitted (1972 topological ≪). There is no
     project-defined axiom and no native_decide in the compared proofs.

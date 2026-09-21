@@ -19,8 +19,8 @@ open QLambda.Composer
 
 def bell : Program .openQASM3_0_ibmComposer_2026_09 2 2 where
   body :=
-    [ .gate ⟨"h", [], [0], []⟩,
-      .gate ⟨"cx", [], [0, 1], []⟩,
+    [ .gate (.h 0),
+      .gate (.cx 0 1),
       .measure 0 0,
       .measure 1 1 ]
 
@@ -28,23 +28,17 @@ def dynamicX : Program .openQASM3_0_ibmComposer_2026_09 1 1 where
   body :=
     [ .measure 0 0,
       .ite (.bit 0)
-        [.gate ⟨"x", [], [0], []⟩]
+        [.gate (.x 0)]
         [.barrier [0]] ]
 
-example : bell.WellFormed := by
+theorem bell_wellFormed : bell.WellFormed := by
   unfold Program.WellFormed bell
   apply Block.WellFormedAt.cons
   · apply Instr.WellFormedAt.gate
-    constructor
-    · simp
-    · refine ⟨⟨"h", 1, 0⟩, ?_, rfl, rfl, rfl⟩
-      simp [builtinManifest]
+    trivial
   apply Block.WellFormedAt.cons
   · apply Instr.WellFormedAt.gate
-    constructor
-    · simp
-    · refine ⟨⟨"cx", 2, 0⟩, ?_, rfl, rfl, rfl⟩
-      simp [builtinManifest]
+    simp [Gate.WellFormed]
   apply Block.WellFormedAt.cons
   · apply Instr.WellFormedAt.measure
   apply Block.WellFormedAt.cons
@@ -52,7 +46,7 @@ example : bell.WellFormed := by
   exact Block.WellFormedAt.nil
 
 example :
-    bell.toOpenQASM =
+    bell.toOpenQASM bell_wellFormed =
       "OPENQASM 3.0;\ninclude \"stdgates.inc\";\nqubit[2] q;\nbit[2] c;\n" ++
       "h q[0];\ncx q[0], q[1];\nc[0] = measure q[0];\nc[1] = measure q[1];" := by
   native_decide
