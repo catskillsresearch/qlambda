@@ -63,7 +63,8 @@
   <h2>Goal</h2>
   <ul>
     <li>Keep the three choice operators (⊕<sub>p</sub>, ⊓, □).</li>
-    <li>Build exactly <strong>one</strong> Composer circuit per well-formed program.</li>
+    <li>Build exactly <strong>one</strong> Composer circuit from each finite command
+        produced by terminating CBV elaboration.</li>
     <li>Embed every instruction in a frozen Composer AST.</li>
     <li>Clean denotational semantics (CP channels / instruments).</li>
     <li>qλ ↔ Composer translations with preservation on a defined fragment.</li>
@@ -112,8 +113,13 @@ measure q[0] -> c[0]</pre>
     | For(range, circuit)
     | While(expression, circuit)
     | Box(label, circuit)
-    | Modified(modifier, instruction)</pre>
-  <p>Modifiers: <code>ctrl</code>, <code>inv</code>, <code>pow</code>.</p>
+    | Break
+    | Continue</pre>
+  <p>
+    This is the frozen AST in <code>QLambda/Composer/Syntax.lean</code>.
+    Top-level well-formedness rejects unhandled <code>break</code> and
+    <code>continue</code>. Gate modifiers are not constructors of this frozen version.
+  </p>
 
   <h2>5. Functional circuit construction</h2>
   <pre>let bell =
@@ -126,7 +132,11 @@ circuit q[2], c[2] in
   bell q[0] q[1];
   measure q[0] -> c[0];
   measure q[1] -> c[1]</pre>
-  <p>CBV evaluation applies <code>bell</code> while accumulating emits; the Composer output has no λ.</p>
+  <p>
+    A terminating CBV elaboration applies <code>bell</code> while producing a
+    finite residual command; compilation of that command yields one Composer
+    block with no λ syntax.
+  </p>
 
   <h2>6. Three choices (distinct compilation)</h2>
   <p><strong>⊕<sub>p</sub></strong> — ancilla coin: RY, measure, conditional branches (not H on terms).</p>
@@ -140,7 +150,8 @@ circuit q[2], c[2] in
     <li>Reset → CPTP reset</li>
     <li>⟦emit I⟧ = ⟦I⟧ on the Composer side</li>
     <li>λ/application → recursive value domain; sequencing → bind</li>
-    <li>ωFVA (Chen–Kou–Lyu) for classical higher-order probability only; quantum = CP layer</li>
+    <li>Chen–Kou–Lyu ωFVA is motivating classical literature, not re-formalized here in full</li>
+    <li>the mechanized higher-order quantum carrier is the continuation model Q(D∞)</li>
   </ul>
 
   <h2>8. Both directions</h2>
@@ -148,18 +159,37 @@ circuit q[2], c[2] in
   <pre>emit I₁;
 emit I₂;
 emit I₃</pre>
-  <p><strong>qλ → Composer:</strong> evaluate closed circuit-building term; collect emits → one circuit.</p>
+  <p>
+    <strong>qλ → Composer:</strong> a terminating elaboration produces a finite
+    command; the scheduler-parameterized compiler emits one circuit on reserved
+    <code>q+1,c+1</code> resources.
+  </p>
 
-  <h2>9. Target theorems (fragment)</h2>
+  <h2>9. Proved theorems (declared fragment)</h2>
   <ul>
-    <li>compile preserves denotation: ⟦compile(M)⟧<sub>Composer</sub> = ⟦M⟧<sub>qλ</sub></li>
-    <li>embed then compile ≈ identity on circuits (modulo normalization)</li>
+    <li>
+      <code>compile_correct</code>:
+      hideScratch(⟦compile(C)⟧<sub>Composer</sub>) ≃
+      ⟦C⟧<sub>qλ</sub> for <code>Compilable</code> commands.
+    </li>
+    <li>
+      The fragment contains skip, X/H/RY/CX, measurement, reset, store,
+      general sequencing, probabilistic choice, and internal or external choice.
+    </li>
+    <li>
+      <code>denote_embed</code>: recompiling a supported logical block preserves
+      its meaning after <code>hideScratch</code>.
+    </li>
   </ul>
+  <p>
+    Loops, barrier, delay, a global D∞/CQ bridge, arbitrary Qiskit Python,
+    transpilation, calibration, and noisy execution are outside these theorems.
+  </p>
 
   <p class="one-liner">
     qλ is the small call-by-value λ-calculus with three choices plus
     <code>emit</code>; Composer instructions are rich data with CP semantics;
-    evaluation builds exactly one Composer circuit.
+    each terminating elaboration compiles to exactly one Composer circuit.
   </p>
 
 </body>

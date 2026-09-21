@@ -103,6 +103,8 @@ The revised circuit layer now includes:
   `denote_embed` for blocks of those instructions, `compile_embed`, and
   `hideScratch_coin_op`.
 
+Untyped source terms may diverge. `Source.Elaborates` records terminating CBV
+staging to a finite command; that command is the total compiler's input.
 Compilation always targets `q+1` qubits and `c+1` bits. Source and
 Composer meanings agree after `hideScratch` initializes and discards the
 reserved resources. There is no caller-supplied `LawfulProbLowering` and

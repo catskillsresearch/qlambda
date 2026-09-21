@@ -316,7 +316,7 @@
     </tbody>
   </table>
   <p>
-    <code>paper-repair</code> depends on all four plus Composer proofs.
+    The completed <code>paper-repair</code> used all four plus the Composer proofs.
     D<sub>CQ</sub> (fourth “character” for the revision) stays under
     <code>cq-domain</code> / <code>composer-denotation</code>, documented
     <em>after</em> ωQVA, D∞, Q so Q is not confused with a circuit graph.
@@ -365,13 +365,15 @@
     <li>
       <strong>Theorem ladder.</strong>
       Compositionality of circuit ⟦·⟧; choice compilation lemmas;
-      ⟦compile(M)⟧ = ⟦M⟧; embed ∘ compile ≈ id on the fragment; round-trip modulo
-      normalization.
+      hideScratch(⟦compile(C)⟧) ≃ ⟦C⟧ for the declared
+      <code>Compilable</code> fragment; and preservation when supported logical
+      blocks are embedded and recompiled.
     </li>
     <li>
-      <strong>Paper repair (after proofs).</strong>
-      Section 2 and tables: lead with definitions of ωQVA, D∞, Q, then D<sub>CQ</sub>
-      and Composer correspondence; separate ideal semantics from backend noise.
+      <strong>Paper repair (completed after proofs).</strong>
+      The paper and status documents lead with definitions of ωQVA, D∞, Q,
+      then D<sub>CQ</sub> and the Composer correspondence, and separate ideal
+      semantics from backend noise.
     </li>
   </ol>
 
@@ -382,8 +384,9 @@
         for concrete Q<sub>n</sub>.</li>
     <li><strong>Supersede:</strong> one-qubit inline <code>HardwareOperational</code>
         story and adequacy capstones tied to 2×2 density-in-value primitives.</li>
-    <li><strong>Freeze initially:</strong> Palomar challenge metadata until new
-        Composer theorems replace the registered capstone narrative.</li>
+    <li><strong>Palomar boundary:</strong> keep the canonical ωQVA domain equation
+        as the single compared theorem; present Composer correctness as an
+        additional proved result rather than changing the Comparator target.</li>
   </ul>
 
   <h3>Feasibility</h3>
@@ -427,8 +430,8 @@
     <li><code>freeze-composer</code> — AST + fixtures.</li>
     <li><code>source-language</code> — grammar + well-formedness.</li>
     <li><code>translations</code> — compile / embed.</li>
-    <li><code>correctness</code> — theorem ladder.</li>
-    <li><code>paper-repair</code> — narrative after proofs.</li>
+    <li><code>correctness</code> — theorem ladder (complete).</li>
+    <li><code>paper-repair</code> — narrative aligned after proofs (complete).</li>
   </ol>
 
 </body>
