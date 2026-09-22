@@ -42,6 +42,13 @@ theorem ωSup_unique (c : ℕ → D) (hc : Monotone c) {x : D}
   · exact OmegaComplete.ωSup_le c hc x hupper
   · exact hleast _ (OmegaComplete.le_ωSup c hc)
 
+theorem ωSup_mono {c d : ℕ → D} (hc : Monotone c) (hd : Monotone d)
+    (hcd : ∀ n, c n ≤ d n) :
+    OmegaComplete.ωSup c hc ≤ OmegaComplete.ωSup d hd := by
+  apply OmegaComplete.ωSup_le
+  intro n
+  exact (hcd n).trans (OmegaComplete.le_ωSup d hd n)
+
 end OmegaComplete
 
 /-- Products of pointed ωCPOs carry the pointwise ωCPO structure. -/
@@ -82,10 +89,11 @@ structure OmegaMap
 namespace OmegaMap
 
 variable
-  {D : Type u} {E : Type v} {F : Type w}
+  {D : Type u} {E : Type v} {F : Type w} {G : Type u}
   [PartialOrder D] [OrderBot D] [OmegaComplete D]
   [PartialOrder E] [OrderBot E] [OmegaComplete E]
   [PartialOrder F] [OrderBot F] [OmegaComplete F]
+  [PartialOrder G] [OrderBot G] [OmegaComplete G]
 
 instance : CoeFun (OmegaMap D E) (fun _ => D → E) :=
   ⟨OmegaMap.toFun⟩
@@ -141,7 +149,7 @@ def comp (f : OmegaMap E F) (g : OmegaMap D E) : OmegaMap D F where
   ext
   rfl
 
-theorem comp_assoc (h : OmegaMap F D) (g : OmegaMap E F) (f : OmegaMap D E) :
+theorem comp_assoc (h : OmegaMap F G) (g : OmegaMap E F) (f : OmegaMap D E) :
     (h.comp g).comp f = h.comp (g.comp f) := by
   ext
   rfl
@@ -206,6 +214,84 @@ theorem paramFix_mono
     Monotone (paramFix f) := by
   intro p q hpq
   exact fix_mono (hf hpq)
+
+end OmegaMap
+
+namespace OmegaMap
+
+section FunctionSpace
+
+variable {D : Type u} {E : Type v}
+  [PartialOrder D] [OrderBot D] [OmegaComplete D]
+  [PartialOrder E] [OrderBot E] [OmegaComplete E]
+
+/-- Continuous maps form a pointed ωCPO under the pointwise order. -/
+noncomputable instance instOmegaCompleteFunctionSpace :
+    OmegaComplete (OmegaMap D E) where
+  ωSup c hc :=
+    { toFun := fun x =>
+        OmegaComplete.ωSup (fun n => c n x)
+          (fun _ _ h => hc h x)
+      monotone := by
+        intro x y hxy
+        exact OmegaComplete.ωSup_mono _ _
+          (fun n => (c n).monotone hxy)
+      map_ωSup := by
+        intro x hx
+        apply le_antisymm
+        · apply OmegaComplete.ωSup_le
+          intro n
+          rw [(c n).map_ωSup x hx]
+          apply OmegaComplete.ωSup_le
+          intro m
+          let k := max n m
+          have hnk : n ≤ k := Nat.le_max_left _ _
+          have hmk : m ≤ k := Nat.le_max_right _ _
+          calc
+            c n (x m) ≤ c k (x m) := hc hnk _
+            _ ≤ c k (x k) := (c k).monotone (hx hmk)
+            _ ≤ OmegaComplete.ωSup (fun j => c j (x k))
+                (fun _ _ h => hc h _) :=
+              OmegaComplete.le_ωSup (fun j => c j (x k))
+                (fun _ _ h => hc h _) k
+            _ ≤ OmegaComplete.ωSup
+                (fun r => OmegaComplete.ωSup (fun j => c j (x r))
+                  (fun _ _ h => hc h _))
+                (fun a b hab =>
+                  OmegaComplete.ωSup_mono _ _
+                    (fun j => (c j).monotone (hx hab))) :=
+              OmegaComplete.le_ωSup
+                (fun r => OmegaComplete.ωSup (fun j => c j (x r))
+                  (fun _ _ h => hc h _))
+                (fun a b hab =>
+                  OmegaComplete.ωSup_mono _ _
+                    (fun j => (c j).monotone (hx hab))) k
+        · apply OmegaComplete.ωSup_le
+          intro m
+          apply OmegaComplete.ωSup_le
+          intro n
+          let k := max n m
+          have hnk : n ≤ k := Nat.le_max_left _ _
+          have hmk : m ≤ k := Nat.le_max_right _ _
+          calc
+            c n (x m) ≤ c k (x m) := hc hnk _
+            _ ≤ c k (x k) := (c k).monotone (hx hmk)
+            _ ≤ c k (OmegaComplete.ωSup x hx) :=
+              (c k).monotone (OmegaComplete.le_ωSup x hx k)
+            _ ≤ OmegaComplete.ωSup
+                (fun j => c j (OmegaComplete.ωSup x hx))
+                (fun _ _ h => hc h _) :=
+              OmegaComplete.le_ωSup
+                (fun j => c j (OmegaComplete.ωSup x hx))
+                (fun _ _ h => hc h _) k }
+  le_ωSup c hc n x :=
+    OmegaComplete.le_ωSup (fun k => c k x)
+      (fun _ _ h => hc h x) n
+  ωSup_le c hc f hf x :=
+    OmegaComplete.ωSup_le (fun n => c n x)
+      (fun _ _ h => hc h x) (f x) (fun n => hf n x)
+
+end FunctionSpace
 
 end OmegaMap
 

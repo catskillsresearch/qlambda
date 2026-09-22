@@ -15,7 +15,9 @@ that composition preserves them in each argument.
 
 namespace QLambda.Domain
 
-universe u
+universe u v
+
+set_option linter.checkUnivs false
 
 /-- A bundled pointed ω-complete partial order. -/
 structure OmegaObject where
@@ -38,7 +40,7 @@ end OmegaObject
 ω-continuous in each argument. -/
 structure OmegaCategory where
   Obj : Type u
-  hom : Obj → Obj → OmegaObject.{u}
+  hom : Obj → Obj → OmegaObject.{v}
   id : {A : Obj} → hom A A
   comp : {A B C : Obj} → hom B C → hom A B → hom A C
   comp_mono_left :
@@ -63,7 +65,7 @@ structure OmegaCategory where
 
 namespace OmegaCategory
 
-abbrev Hom (C : OmegaCategory) (A B : C.Obj) : Type u :=
+abbrev Hom (C : OmegaCategory) (A B : C.Obj) : Type v :=
   C.hom A B
 
 infixr:10 " ⟶ω " => Hom
@@ -90,5 +92,35 @@ structure Functor (C D : OmegaCategory) where
       map (C.comp g f) = D.comp (map g) (map f)
 
 end OmegaCategory
+
+/-- The canonical ωCPO-enriched category of pointed ωCPOs and
+ω-continuous maps. -/
+noncomputable def omegaMapCategory : OmegaCategory.{u + 1, u} where
+  Obj := OmegaObject.{u}
+  hom A B :=
+    { Carrier := OmegaMap A B
+      partialOrder := inferInstance
+      orderBot := inferInstance
+      omegaComplete := OmegaMap.instOmegaCompleteFunctionSpace }
+  id := OmegaMap.id
+  comp := OmegaMap.comp
+  comp_mono_left g := by
+    intro f₁ f₂ h x
+    exact h (g x)
+  comp_mono_right f := by
+    intro g₁ g₂ h x
+    exact f.monotone (h x)
+  comp_ωSup_left c hc g := by
+    apply OmegaMap.ext
+    intro x
+    rfl
+  comp_ωSup_right f c hc := by
+    apply OmegaMap.ext
+    intro x
+    exact f.map_ωSup (fun n => c n x)
+      (fun _ _ h => hc h x)
+  id_comp := OmegaMap.id_comp
+  comp_id := OmegaMap.comp_id
+  assoc := OmegaMap.comp_assoc
 
 end QLambda.Domain
