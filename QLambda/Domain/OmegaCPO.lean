@@ -44,6 +44,30 @@ theorem ωSup_unique (c : ℕ → D) (hc : Monotone c) {x : D}
 
 end OmegaComplete
 
+/-- Products of pointed ωCPOs carry the pointwise ωCPO structure. -/
+noncomputable instance instOmegaCompleteProd
+    {D : Type u} {E : Type v}
+    [PartialOrder D] [OrderBot D] [OmegaComplete D]
+    [PartialOrder E] [OrderBot E] [OmegaComplete E] :
+    OmegaComplete (D × E) where
+  ωSup c hc :=
+    (OmegaComplete.ωSup (fun n => (c n).1)
+      (fun _ _ h => (hc h).1),
+    OmegaComplete.ωSup (fun n => (c n).2)
+      (fun _ _ h => (hc h).2))
+  le_ωSup c hc n :=
+    ⟨OmegaComplete.le_ωSup (fun k => (c k).1)
+        (fun _ _ h => (hc h).1) n,
+      OmegaComplete.le_ωSup (fun k => (c k).2)
+        (fun _ _ h => (hc h).2) n⟩
+  ωSup_le c hc x hx :=
+    ⟨OmegaComplete.ωSup_le (fun k => (c k).1)
+        (fun _ _ h => (hc h).1) x.1
+        (fun n => (hx n).1),
+      OmegaComplete.ωSup_le (fun k => (c k).2)
+        (fun _ _ h => (hc h).2) x.2
+        (fun n => (hx n).2)⟩
+
 /-- Scott/ω-continuous maps between pointed ωCPOs. -/
 structure OmegaMap
     (D : Type u) (E : Type v)
@@ -66,12 +90,33 @@ variable
 instance : CoeFun (OmegaMap D E) (fun _ => D → E) :=
   ⟨OmegaMap.toFun⟩
 
+instance : LE (OmegaMap D E) :=
+  ⟨fun f g => ∀ x, f x ≤ g x⟩
+
+instance : OrderBot (OmegaMap D E) where
+  bot :=
+    { toFun := fun _ => ⊥
+      monotone := fun _ _ _ => le_rfl
+      map_ωSup := fun c hc => by
+        apply le_antisymm
+        · exact bot_le
+        · exact OmegaComplete.ωSup_le (fun _ => ⊥)
+            ((monotone_const).comp hc) ⊥ (fun _ => le_rfl) }
+  bot_le _ _ := bot_le
+
 @[ext]
 theorem ext {f g : OmegaMap D E} (h : ∀ x, f x = g x) : f = g := by
   cases f
   cases g
   simp only [mk.injEq]
   exact funext h
+
+instance : PartialOrder (OmegaMap D E) where
+  le_refl _ _ := le_rfl
+  le_trans _ _ _ hfg hgh x := (hfg x).trans (hgh x)
+  le_antisymm f g hfg hgf := by
+    ext x
+    exact le_antisymm (hfg x) (hgf x)
 
 def id : OmegaMap D D where
   toFun x := x
@@ -140,6 +185,27 @@ theorem fix_le_of_prefixed (f : OmegaMap D D) {x : D} (hx : f x ≤ x) :
   induction n with
   | zero => exact bot_le
   | succ n ih => exact (f.monotone ih).trans hx
+
+/-- Least fixed points are monotone in their defining functional. -/
+theorem fix_mono {f g : OmegaMap D D} (hfg : f ≤ g) :
+    fix f ≤ fix g := by
+  apply fix_le_of_prefixed
+  calc
+    f (fix g) ≤ g (fix g) := hfg _
+    _ = fix g := fix_eq g
+
+/-- A parameter-indexed family of least fixed points. -/
+noncomputable def paramFix
+    {P : Type w} [PartialOrder P] [OrderBot P] [OmegaComplete P]
+    (f : P → OmegaMap D D) (p : P) : D :=
+  fix (f p)
+
+theorem paramFix_mono
+    {P : Type w} [PartialOrder P] [OrderBot P] [OmegaComplete P]
+    {f : P → OmegaMap D D} (hf : Monotone f) :
+    Monotone (paramFix f) := by
+  intro p q hpq
+  exact fix_mono (hf hpq)
 
 end OmegaMap
 
