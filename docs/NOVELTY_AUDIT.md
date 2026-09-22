@@ -58,8 +58,8 @@ Subject to a final search for other proof assistants, the following is safe:
   the concrete ordinary `Set ⊣ qRel` LNL adjunction (`quantumLNL`);
 - a separate kernel-checked category of quantum CPOs and Scott-continuous
   quantum functions;
-- integration of that model with the repository's typed source metatheory,
-  finite CP/instrument meanings, staging, and two-wire circuit reflection.
+- a typed source metatheory, finite CP/instrument meanings, staging, and
+  two-wire circuit reflection as separately checked layers.
 
 These are claims of new formal proofs or integration, not currently claims
 that the underlying mathematical theorems are new.
@@ -71,6 +71,13 @@ route is the lifted-qCPO Kleisli model
 formalization of that model or use it as evidence for recursive source
 denotation.
 
+The selected completion route is a typed submodel of the CP-enriched
+superoperator-module presheaf semantics of Tsukada and Asada. Their
+presheaf model, exponential, recursive types, soundness, adequacy, and full
+abstraction are published mathematical results. The repository may claim a
+new Lean formalization and integration only after the corresponding
+declarations compile; it must not claim those categorical results as new.
+
 ## Candidate genuinely new results
 
 Any mathematical novelty claim must name a theorem absent from the sources
@@ -78,9 +85,6 @@ above and explain why it is not merely a representation-level lemma.  The
 following remain candidates until the corresponding Lean declarations and a
 broader search exist:
 
-- a strengthened enriched adjunction theorem tailored to the exact
-  ω-chain/strictness interface used by this development;
-- a new constructive or finitary presentation of the qCPO internal hom;
 - extension of the checked two-wire circuit-completeness theorem to the full
   structured Composer/OpenQASM fragment and to an instantiated higher-order
   source denotation.

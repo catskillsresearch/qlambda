@@ -40,31 +40,6 @@ def muFree : Ty → Bool
   | .arrow _ A B => muFree A && muFree B
   | .mu _ => false
 
-/-- Types which may cross the staging boundary into a first-order circuit. -/
-inductive FirstOrder : Ty → Prop where
-  | unit : FirstOrder .unit
-  | bit : FirstOrder .bit
-  | qubit : FirstOrder .qubit
-  | tensor {A B} : FirstOrder A → FirstOrder B → FirstOrder (.tensor A B)
-
-def firstOrderB : Ty → Bool
-  | .unit | .bit | .qubit => true
-  | .tensor A B => firstOrderB A && firstOrderB B
-  | _ => false
-
-theorem firstOrderB_sound {A : Ty} (h : A.firstOrderB = true) :
-    FirstOrder A := by
-  induction A with
-  | unit => exact .unit
-  | bit => exact .bit
-  | qubit => exact .qubit
-  | tensor A B ihA ihB =>
-      simp only [firstOrderB, Bool.and_eq_true] at h
-      exact .tensor (ihA h.1) (ihB h.2)
-  | var n => simp [firstOrderB] at h
-  | arrow κ A B => simp [firstOrderB] at h
-  | mu A => simp [firstOrderB] at h
-
 end Ty
 
 namespace Term

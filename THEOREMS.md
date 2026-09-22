@@ -1,6 +1,7 @@
 # Typed linear qlambda theorem index
 
-This index lists the active replacement theorem surface.
+This index lists only declarations that exist in the active replacement
+theorem surface.  Unmet semantic objectives are listed separately at the end.
 
 ## Source language and runtime
 
@@ -14,7 +15,7 @@ This index lists the active replacement theorem surface.
 - `QLambda.Linear.Runtime.internal_preservation`
 - `QLambda.Linear.Runtime.measurement_preservation`
 - `QLambda.Linear.Runtime.progress`
-- `QLambda.Linear.Runtime.measureProbability_false_add_true`
+- `QLambda.Linear.Runtime.RegisterState.measureProbability_false_add_true`
 
 Probability labels measurement transitions; it is not a source term former.
 
@@ -71,10 +72,41 @@ quantum-lift Kleisli category, which is not yet constructed here.
 - `QLambda.Domain.CompletedCP.ofKraus_comp_assoc`
 - `QLambda.Domain.CompletedCP.measure_probability_normalization`
 - `QLambda.Linear.Prim.completedCP`
-- `QLambda.Linear.Prim.qubitMeasurement`
+- `QLambda.Linear.qubitMeasurement`
 
 `CompletedCP` identifies Kraus presentations by intrinsic semantic
 refinement. It is a first-order presentation, not the higher-order category.
+
+## CP-enriched presheaf foundation
+
+These declarations construct the finite CP/TNI substrate and the specialized
+module fragment used by the remaining semantic objective. They are not an
+LNL instance, a source denotation, or an adequacy theorem.
+
+- `QLambda.Domain.Presheaf.CPMap.completedEquiv`
+- `QLambda.Domain.Presheaf.CPMap.toCompleted_ofKraus`
+- `QLambda.Domain.Presheaf.CPMap.ofCompleted_toCompleted`
+- `QLambda.Domain.Presheaf.CPMap.toCompleted_ofCompleted`
+- `QLambda.Domain.Presheaf.Superoperator.ofQuantumOperation_toQuantumOperation`
+- `QLambda.Domain.Presheaf.Superoperator.comp_assoc`
+- `QLambda.Domain.Presheaf.Superoperator.tensor_comp`
+- `QLambda.Domain.Presheaf.Superoperator.cp_allocateZero`
+- `QLambda.Domain.Presheaf.Superoperator.cp_reset`
+- `QLambda.Domain.Presheaf.Instrument.measure_branch_zero`
+- `QLambda.Domain.Presheaf.Instrument.measure_branch_one`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.yonedaMap_id`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.yonedaMap_comp`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.yonedaEquiv`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.curry_uncurry_representable`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.uncurry_curry_representable`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.closedTensorRepresentable_module`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.symmetricAverage_idempotent`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.symmetricContraction_cocommutative`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.symmetricContraction_coassociative`
+- `QLambda.Linear.Prim.superoperator_completedCP`
+- `QLambda.Linear.qubitInstrument_zero`
+- `QLambda.Linear.qubitInstrument_one`
+- `QLambda.Linear.Ty.FirstOrder.object_tensor`
 
 ## Source equations
 
@@ -88,8 +120,9 @@ refinement. It is a first-order presentation, not the higher-order category.
 
 `DenotationModel` gives the compositional categorical interface and
 constructor equations. The exact operational quotient validates the listed
-source equations. The repository does not claim full abstraction or
-unrestricted adequacy for arbitrary recursive programs.
+source equations by construction; it is not an instantiated denotational
+model or an adequacy theorem. The repository does not claim full abstraction
+or unrestricted adequacy for arbitrary recursive programs.
 Allocation, reset, and general CP instruments are not quantum functions, so
 the qCPO-function category alone cannot instantiate these operations.
 
@@ -128,6 +161,10 @@ The supported fragment includes single-wire gates, distinct-wire CX, reset,
 measurement, store, sequencing, conditionals, and bounded repeat. Unsupported
 coin commands are excluded by `coin_not_quotable`.
 
+`Quotation.denote` and `GeneralQuotation.Quotation.denote` are defined from
+the represented command.  Their `denote_compile` results are exact CQ
+equalities, not source-denotation preservation theorems.
+
 ## OpenQASM interchange
 
 - `QLambda.Composer.parseStructuredProgram_render_roundTrip`
@@ -148,3 +185,18 @@ arbitrary OpenQASM 3 text.
 - `QLambda.Palomar.two_wire_circuit_completeness`
 
 `Challenge.lean` contains the matching statement holes by convention.
+
+## Unmet semantic objectives
+
+The following are goals, not existing declarations:
+
+- a typed CP-enriched superoperator-module presheaf submodel;
+- a premise-free LNL model whose homs contain allocation, reset, gates, and
+  measurement instruments;
+- interpretation of all source types and strictly positive recursive types;
+- a concrete structural source denotation independent of typing derivations;
+- semantic substitution, operational soundness, and fix/fold equations;
+- adequacy for closed terms with first-order observable results via
+  subnormalized finite approximants;
+- preservation of source denotation by successful staging and canonical
+  circuit quotation.

@@ -1,4 +1,4 @@
-# Published qCPO LNL route and remaining model boundary
+# qCPO boundary and selected CP-presheaf route
 
 The checked `quantumLNL` declaration is the ordinary compact-closed
 `Set ⊣ qRel` state adjunction. It is useful for relation algebra, but it is
@@ -6,7 +6,7 @@ not the recursive LNL model of *Quantum CPOs* or *Categories of Quantum CPOs*.
 
 ## Literature-supported construction
 
-The recursive model should use:
+The published pure recursive qCPO model would use:
 
 1. pointed classical omega-CPOs and continuous maps;
 2. quantum CPOs and Scott-continuous quantum functions, ordered by
@@ -25,11 +25,11 @@ not a graph functor from pointwise-ordered continuous maps into `qRel`.
 Ordinary graphs are not monotone for relation inclusion: distinct constant
 functions may be pointwise comparable while their graphs are disjoint.
 
-## Required Lean bundles
+## Why it is not the selected source model
 
 The existing `QuantumCPOCategory.lean` supplies the published pointwise order,
 arbitrary-domain limits, Scott maps, omega-complete homs, and enriched
-composition. The remaining construction requires:
+composition. Completing the pure qCPO route would require:
 
 - the lift quantum CPO, unit, map, and join;
 - monad and omega-continuity laws;
@@ -58,6 +58,12 @@ current `DenotationModel` for every physical primitive and measurement branch.
 That requires an additional probabilistic/CP monad or a different
 CP-enriched model, such as the enriched-presheaf direction.
 
+The selected semantic objective is instead a typed, basis-generated submodel
+of the Tsukada--Asada CP-enriched superoperator-module presheaf model.  This
+route is intended to contain general CP maps, allocation, reset, retained-
+qubit measurement, higher-order functions, and recursive types in one model.
+It is not yet formalized.
+
 No release claim should identify the existing ordinary `Set ⊣ qRel` instance
-with the published qCPO LNL model, or claim unrestricted adequacy before this
-boundary is resolved.
+or `qCPOCategory` with the selected source model, or claim source denotation
+or adequacy before the CP-presheaf construction is complete.

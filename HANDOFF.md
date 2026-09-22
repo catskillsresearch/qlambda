@@ -45,6 +45,10 @@ conditionals, and bounded repeat. OpenQASM is an ideal interchange format,
 not a noisy-backend or arbitrary-Qiskit semantics.
 
 The generic `DenotationModel` remains an explicit interface for compositional
-source denotation. The checked source equations additionally have an exact
-operational quotient. The release does not claim full abstraction or
+source denotation, not an instance. The checked source equations additionally
+have an exact operational quotient, not a semantic soundness result.
+`Quotation.denote` is inherited from its represented command. The selected
+completion objective is a typed CP-enriched presheaf submodel, concrete
+source denotation, first-order-observable adequacy, and a source-level staging
+theorem. The release does not claim those results, full abstraction, or
 unrestricted adequacy for every recursive term.

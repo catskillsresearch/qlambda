@@ -3,7 +3,9 @@
 # qlambda
 
 Lean 4 formalization of a typed linear/nonlinear quantum lambda calculus,
-quantum-relation/qCPO semantics, and a verified finite circuit interchange.
+quantum-relation and qCPO foundations, and a verified finite circuit
+interchange.  A concrete CP-enriched source denotation remains an explicit
+objective.
 
 The source judgment
 
@@ -37,6 +39,10 @@ measurement.  Probability arises only from measurement.  There is no source
 - `QLambda/Domain/QuantumCPOCategory.lean`, `RecursiveTypes.lean`: the
   Scott-continuous quantum-function category and continuous projection-chain
   shift/fold isomorphisms.
+- `QLambda/Domain/Presheaf/`: intrinsic Choi CP maps, TNI superoperators,
+  specialized modules, Yoneda, representable Day tensor/internal hom, and
+  finite symmetric powers.  This is the substrate for the remaining
+  CP-enriched source denotation, not that denotation.
 - `QLambda/Linear/RegFile.lean`, `Elaboration.lean`: deterministic,
   resource-certified staging of a terminating first-order fragment.
 - `QLambda/Linear/Circuit.lean`, `Quotation.lean`,
@@ -47,20 +53,23 @@ measurement.  Probability arises only from measurement.  There is no source
 
 ## Checked boundary
 
-The active root and Palomar surface now expose the typed redesign only.  The
-concrete LNL model, quantum-CPO category, projection-chain shift isomorphism,
-runtime, staging, two-wire quotation capstone, and OpenQASM round trips all
-compile without implementation `sorry`.
+The active root exposes the typed redesign only.  The ordinary
+`Set ⊣ qRel` LNL model, quantum-CPO category, generic projection-chain shift
+isomorphism, runtime, staging, two-wire quotation capstone, and OpenQASM
+round trips all compile without implementation `sorry`.
 
 `DenotationModel` remains the explicit interface for a compositional source
-interpretation; the source equations also have an exact operational quotient.
-This release does not claim an equivalence between the `Set ⊣ qRel` model and
-the Scott-function qCPO category, full abstraction, or unrestricted adequacy
-for arbitrary recursive programs. `docs/NOVELTY_AUDIT.md` records the
-distinction between published mathematics and new Lean proofs.
-`docs/QCPO_LNL_DESIGN.md` records the published lifted-qCPO Kleisli route and
-the remaining obstruction for allocation, reset, and arbitrary CP
-instruments.
+interpretation, not an instantiated semantics.  `ProjectionChain.shiftIso`
+does not yet interpret source `mu`, and quotation CQ equality is inherited
+from the represented command rather than proved from source denotation.
+
+The semantic objective is a typed submodel of the CP-enriched
+superoperator-module presheaf semantics, followed by source-type
+interpretation, a concrete structural denotation, first-order-observable
+adequacy, and a source-level staging theorem.  This release does not claim
+those results, full abstraction, or unrestricted higher-order adequacy.
+`docs/NOVELTY_AUDIT.md` records the distinction between published mathematics
+and new Lean proofs.
 
 ## Circuit and OpenQASM boundary
 

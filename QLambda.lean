@@ -27,6 +27,16 @@ import QLambda.Domain.QuantumMonoidal
 import QLambda.Domain.DiscreteSet
 import QLambda.Domain.QuantumClassical
 import QLambda.Domain.QuantumLNL
+import QLambda.Domain.Presheaf.CPMap
+import QLambda.Domain.Presheaf.Superoperator
+import QLambda.Domain.Presheaf.SigmaMon
+import QLambda.Domain.Presheaf.Module
+import QLambda.Domain.Presheaf.Yoneda
+import QLambda.Domain.Presheaf.Generated
+import QLambda.Domain.Presheaf.Monoidal
+import QLambda.Domain.Presheaf.SymmetricPower
+import QLambda.Domain.Presheaf.ClosedGenerated
+import QLambda.Domain.Presheaf.Exponential
 
 import QLambda.Linear.Syntax
 import QLambda.Linear.Context
@@ -41,6 +51,8 @@ import QLambda.Linear.Elaboration
 import QLambda.Linear.Quotation
 import QLambda.Linear.QuotationGeneral
 import QLambda.Linear.Denotation
+import QLambda.Linear.PrimitiveSuperoperator
+import QLambda.Linear.TypeInterpretation
 
 /-!
 # Typed linear qlambda

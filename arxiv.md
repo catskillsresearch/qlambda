@@ -12,12 +12,15 @@ strictly positive recursive types, allocation, unitary gates, reset, and
 measurement.  Probability is not a source-language choice operator: it arises
 only from quantum measurement.
 
-The semantic target is a type-indexed linear/nonlinear model based on quantum
-sets, quantum relations, and quantum CPOs.  Finite completely positive maps
-and instruments provide the first-order meanings of gates and measurement,
-while recursive types are represented by compatible chains of finite
-unfoldings.  A separate finite fragment stages deterministically to a typed
-circuit normal form and then to a versioned IBM Composer/OpenQASM subset.
+The completed semantic foundations comprise quantum relations, an ordinary
+compact-closed $\mathsf{Set}\dashv\mathsf{qRel}$ model, a separate enriched
+category of quantum CPOs, and presentation-independent finite completely
+positive maps.  They do not yet form one model of the source language.  Our
+semantic objective is a typed submodel of the CP-enriched presheaf semantics
+of Tsukada and Asada, in which allocation, reset, measurement, higher-order
+functions, and strictly positive recursive types coexist.  A separate finite
+fragment already stages deterministically to a typed circuit normal form and
+then to a versioned IBM Composer/OpenQASM subset.
 
 The mechanization required detailed proofs for which we found no reusable
 machine-checked development in the cited quantum-relation and qCPO
@@ -38,12 +41,14 @@ the literature audit described below.
 The present theorem boundary is explicit.  Source typing, substitution,
 preservation, runtime progress, measurement normalization, deterministic
 staging, the quantum-relation enrichment, and structured OpenQASM
-parse/render round trips are kernel checked.  So are the concrete quantum LNL
-instance, the Scott-function qCPO category, continuous projection-chain
-fold/unfold maps, and canonical two-wire lambda/circuit completeness.  The
-generic compositional denotation interface and exact operational quotient do
-not amount to full abstraction or unrestricted computational adequacy for
-arbitrary recursive programs; we make neither claim.  Full sources are at
+parse/render round trips are kernel checked.  So are the ordinary
+$\mathsf{Set}\dashv\mathsf{qRel}$ LNL instance, the Scott-function qCPO
+category, a generic continuous projection-chain shift isomorphism, and
+canonical two-wire lambda/circuit representability.  The CP-enriched
+presheaf model, interpretation of source recursive types, concrete
+compositional source denotation, source-level compilation theorem, and
+adequacy theorem are stated below as objectives, not completed results.
+Full sources are at
 https://github.com/catskillsresearch/qlambda.
 
 ---
@@ -61,20 +66,22 @@ $$
 $$
 
 where $\Gamma$ contains unrestricted assumptions and $\Delta$ contains
-exactly-once assumptions.  A derivation is intended to denote a morphism
+exactly-once assumptions.  The semantic objective assigns a derivation a
+morphism
 
 $$
 F\llbracket\Gamma\rrbracket\otimes\llbracket\Delta\rrbracket
 \longrightarrow \llbracket A\rrbracket
 $$
 
-in an $\omega$CPO-enriched LNL model.
+in a CP-enriched, $\omega$CPO-enriched LNL model.
 
 This is a typed, type-indexed account.  It does not use a universal untyped
-reflexive object, and it does not put all effects into a central continuation
-monad.  Each admissible recursive type has its own approximation chain.
-Quantum evolution is represented by linear morphisms; measurement is the
-source of probabilistic branching.
+reflexive object.  In the intended model, each admissible recursive type has
+its own approximation chain, quantum evolution is represented by linear
+morphisms, and measurement is the source of probabilistic branching.  The
+present Lean development establishes the source metatheory and supporting
+categorical components but does not yet assemble that intended model.
 
 ### Contributions
 
@@ -119,7 +126,11 @@ calibration, noise, transpiler heuristics, or arbitrary Python/Qiskit programs.
 
 ## 2. The Typed Linear Language
 
-Types are
+The binder mode, types, physical constants, terms, and values are:
+
+$$
+\kappa ::= \mathsf{lin}\mid\mathsf{unres},
+$$
 
 $$
 A,B ::= \alpha \mid 1 \mid \mathsf{Bit}\mid\mathsf{Qubit}
@@ -129,18 +140,92 @@ A,B ::= \alpha \mid 1 \mid \mathsf{Bit}\mid\mathsf{Qubit}
        \mid \mu\alpha.A.
 $$
 
-The two arrows correspond to linear and unrestricted binders.  The term
-syntax uses lambda as its only binder.  Tensor and measurement elimination are
-continuation based, which avoids adding ad hoc binding constructs.
+Here $A\multimap B$ abbreviates
+$\mathsf{arrow}(\mathsf{lin},A,B)$ and $A\to B$ abbreviates
+$\mathsf{arrow}(\mathsf{unres},A,B)$.  Recursive type variables use de Bruijn
+indices; $\mu A$ binds type index zero in $A$.
 
-The physical primitives are fresh-$|0\rangle$ allocation, $X$, $H$, $T$,
-rational-angle $RY$, saturated $CX$, reset, and measurement.  Measurement
-consumes a linear qubit and passes both the classical result and the
-post-measurement qubit to its continuation.  There is no `emit`, source
-sequencing primitive, probabilistic choice, internal choice, or external
-choice.
+$$
+\begin{aligned}
+p ::= {}&
+  \mathsf{new0}\mid \mathsf X\mid \mathsf H\mid \mathsf T
+  \mid \mathsf{RY}(r)\mid \mathsf{CX}\mid \mathsf{reset},
+  \qquad r\in\mathbb Q,\\[2mm]
+M,N,K ::= {}&
+  x^{\kappa}_{n}
+  \mid \lambda^{\kappa}(A).M
+  \mid M\,N
+  \mid \langle\rangle
+  \mid \mathsf{bit}(b)\\
+ &\mid \langle M,N\rangle
+  \mid \mathsf{unpair}\;M\;K
+  \mid \mathsf{if}\;M\;\mathsf{then}\;N\;\mathsf{else}\;K\\
+ &\mid p
+  \mid \mathsf{measure}\;M\;K
+  \mid \mathsf{fix}_{A}\;M
+  \mid \mathsf{fold}_{A}\;M
+  \mid \mathsf{unfold}\;M ,
+  \qquad b\in\{\mathsf{false},\mathsf{true}\}.
+\end{aligned}
+$$
+
+Term variables use separate de Bruijn indices in the unrestricted and linear
+contexts, selected by $\kappa$.  Lambda is the only term binder.  The
+eliminator $\mathsf{unpair}\;M\;K$ applies the curried linear continuation
+$K:A\multimap B\multimap C$ to the two components of
+$M:A\otimes B$.  Similarly, $\mathsf{measure}\;M\;K$ consumes
+$M:\mathsf{Qubit}$ and invokes
+$K:\mathsf{Bit}\to\mathsf{Qubit}\multimap A$: the measured bit is
+unrestricted, while the post-measurement qubit remains linear.
+
+The constants have the following complete source types:
+
+$$
+\begin{array}{rcl@{\qquad}rcl}
+\mathsf{new0} &:& 1\multimap\mathsf{Qubit}
+&
+\mathsf X,\mathsf H,\mathsf T,\mathsf{RY}(r)
+&:& \mathsf{Qubit}\multimap\mathsf{Qubit}
+\\
+\mathsf{CX} &:&
+  \mathsf{Qubit}\multimap\mathsf{Qubit}\multimap
+  (\mathsf{Qubit}\otimes\mathsf{Qubit})
+&
+\mathsf{reset} &:&
+  \mathsf{Qubit}\multimap\mathsf{Qubit}.
+\end{array}
+$$
+
+The call-by-value values are
+
+$$
+V,W ::= \langle\rangle\mid\mathsf{bit}(b)
+       \mid\lambda^\kappa(A).M
+       \mid\langle V,W\rangle
+       \mid p
+       \mid\mathsf{fold}_{A}\;V.
+$$
+
+Qubits are not closed source values; runtime wire handles inhabit the machine
+boundary.  Probability is likewise absent from the term grammar and appears
+only on measurement transitions.  There is no `emit`, source sequencing
+primitive, probabilistic choice, internal choice, or external choice.
 
 ### 2.1 Contexts and typing
+
+Typing judgments have the form
+
+$$
+\Gamma;\Delta\vdash M:A,
+\qquad
+\Gamma ::= \cdot\mid\Gamma,A,
+\qquad
+\Delta ::= \cdot\mid\Delta,\_ \mid\Delta,A.
+$$
+
+The unrestricted context $\Gamma$ is a list of types.  The linear context
+$\Delta$ is a position-preserving list of optional types: an empty cell
+$\_$ records a consumed or absent de Bruijn position.
 
 Unrestricted variables may be weakened and contracted.  A linear context is a
 list of optional type cells; context splitting partitions occupied cells while
@@ -265,31 +350,151 @@ yet present here.
 
 ## 5. Type-Indexed Denotation and Recursive Types
 
-The semantic interface assigns:
+This section states the semantic objective and identifies the checked
+components already available for it.  The intended interpretation assigns:
 
 $$
 \llbracket\Gamma;\Delta\rrbracket
  =F\llbracket\Gamma\rrbracket\otimes\llbracket\Delta\rrbracket.
 $$
 
-Tensor and arrows are interpreted by the monoidal and closed structure.
-Primitives carry presentation-independent finite CP classes.
-Measurement is a finite instrument into a classical sum.
+Tensor and arrows are to be interpreted by the monoidal and closed structure.
+Primitives are to embed the checked presentation-independent finite CP
+classes, and measurement is to be interpreted as a finite instrument into a
+classical sum while retaining the post-measurement qubit.
 
 For a strictly positive recursive body $A(\alpha)$, the intended object
 $\llbracket\mu\alpha.A\rrbracket$ is the bilimit of its finite unfolding
 chain.  `QLambda/Domain/RecursiveTypes.lean` constructs the carrier of
 compatible approximants and its complete-lattice structure.  Dropping and
 restoring the zeroth approximation define inverse $\omega$-continuous maps,
-packaged as `ProjectionChain.shiftIso`.
+packaged as `ProjectionChain.shiftIso`.  It does not yet construct the
+source-type functor or connect strict positivity to a concrete unfolding
+chain.
 
-`QLambda/Linear/Denotation.lean` records the exact operations needed by every
-typing rule, its constructor equations, and presentation-independent finite
-CP meanings for physical primitives.  Classical beta, fix unfolding, and
-fold/unfold are exact in the operational quotient.  We do not conflate that
-interface with a fully instantiated qCPO denotation or claim unrestricted
-adequacy: connecting every admissible source-type functor and every primitive
-to one higher-order qCPO model remains outside the theorem boundary.
+`QLambda/Linear/Denotation.lean` records the operations needed by every typing
+rule, its desired constructor equations, and presentation-independent finite
+CP meanings for physical primitives.  No concrete `DenotationModel` instance
+exists.  Classical beta, fix unfolding, and fold/unfold are exact only in the
+operational quotient generated by source reduction; these are not yet
+denotational soundness or adequacy theorems.
+
+The finite CP substrate for that target is now checked: intrinsic Choi maps
+are equivalent to the existing completed Kraus classes, TNI superoperators
+contain allocation, reset, gates, and measurement branches, and specialized
+modules have Yoneda, representable Day tensor, representable internal hom,
+and finite symmetric powers.  First-order source types (unit, bits, qubits,
+and their tensors) have representable objects, and every source primitive
+agrees with its intrinsic superoperator.  The remaining construction is the
+closed generated subcategory with a cofree exponential, its LNL packaging,
+and the higher-order and recursive type interpretation.  The intended
+adequacy boundary is closed terms with first-order observable result:
+denotation should equal the supremum of finite-step subnormalized operational
+instruments.  Adequacy at arbitrary higher-order result types and full
+abstraction are not claimed.
+
+### 5.1 Target compositional semantics
+
+For clarity, we state the complete Scott--Strachey-style definition that the
+remaining formalization must realize.  This subsection is a specification,
+not a list of completed theorems.  In the intended linear category
+$\mathcal L$, with tensor unit $I$, additives, internal hom
+$\multimap$, and exponential $!$, type objects are
+
+$$
+\begin{aligned}
+\llbracket 1\rrbracket &= I,&
+\llbracket\mathsf{Bit}\rrbracket &= I\oplus I,&
+\llbracket\mathsf{Qubit}\rrbracket &= y(2),\\
+\llbracket A\otimes B\rrbracket
+  &=\llbracket A\rrbracket\otimes\llbracket B\rrbracket,&
+\llbracket A\multimap B\rrbracket
+  &=\llbracket A\rrbracket\multimap\llbracket B\rrbracket,&
+\llbracket A\to B\rrbracket
+  &=!\llbracket A\rrbracket\multimap\llbracket B\rrbracket .
+\end{aligned}
+$$
+
+For a strictly positive body $A(\alpha)$,
+$\llbracket\mu\alpha.A\rrbracket$ is the embedding--projection colimit of
+
+$$
+0\longrightarrow \llbracket A\rrbracket(0)
+ \longrightarrow \llbracket A\rrbracket^2(0)
+ \longrightarrow\cdots ,
+$$
+
+with inverse continuous maps
+$\mathsf{fold}_A:\llbracket A[\mu\alpha.A/\alpha]\rrbracket
+\rightleftarrows\llbracket\mu\alpha.A\rrbracket:\mathsf{unfold}_A$.
+The context object is
+
+$$
+C_{\Gamma;\Delta}
+ =F\!\left(\prod_{A\in\Gamma}G\llbracket A\rrbracket\right)
+   \otimes\bigotimes_{A\in\Delta}\llbracket A\rrbracket ,
+$$
+
+where an empty linear cell contributes $I$.  A typing derivation denotes
+$\llbracket\Gamma;\Delta\vdash M:A\rrbracket:
+C_{\Gamma;\Delta}\to\llbracket A\rrbracket$.
+
+Let $\mathsf{split}_s$ be the structural map induced by a verified linear
+context split $s$, let $\mathsf{lookup}^{\omega}$ and
+$\mathsf{lookup}^{1}$ be unrestricted and linear projections, and let
+$\mathsf{discard}$ be the structural map available exactly for an all-empty
+linear context.  Writing $\mathsf{ev}_\kappa$, $\mathsf{curry}_\kappa$,
+$\mathsf{tensorElim}$, and $\mathsf{bitElim}(f,g)$ for the corresponding
+model-derived maps, the term clauses are required to be:
+
+$$
+\begin{aligned}
+\llbracket x^\omega_n\rrbracket
+  &=\mathsf{lookup}^{\omega}_n,\\
+\llbracket x^1_n\rrbracket
+  &=\mathsf{lookup}^{1}_n,\\
+\llbracket\lambda^\kappa(A).M\rrbracket
+  &=\mathsf{curry}_\kappa(\llbracket M\rrbracket),\\
+\llbracket M\,N\rrbracket
+  &=\mathsf{ev}_\kappa\circ
+    (\llbracket M\rrbracket\otimes\llbracket N\rrbracket)
+    \circ\mathsf{split}_s,\\
+\llbracket\langle\rangle\rrbracket
+  &=\mathsf{unit}\circ\mathsf{discard},\\
+\llbracket\mathsf{bit}(b)\rrbracket
+  &=\mathsf{bit}_b\circ\mathsf{discard},\\
+\llbracket\langle M,N\rangle\rrbracket
+  &=(\llbracket M\rrbracket\otimes\llbracket N\rrbracket)
+    \circ\mathsf{split}_s,\\
+\llbracket\mathsf{unpair}\;M\;K\rrbracket
+  &=\mathsf{tensorElim}\circ
+    (\llbracket M\rrbracket\otimes\llbracket K\rrbracket)
+    \circ\mathsf{split}_s,\\
+\llbracket\mathsf{if}\;B\;M\;N\rrbracket
+  &=\mathsf{bitElim}(\llbracket M\rrbracket,\llbracket N\rrbracket)
+    \circ(\llbracket B\rrbracket\otimes\mathsf{id})
+    \circ\mathsf{split}_s,\\
+\llbracket p\rrbracket
+  &=\mathsf{prim}_p\circ\mathsf{discard},\\
+\llbracket\mathsf{measure}\;M\;K\rrbracket
+  &=\mathsf{handleMeasure}\circ
+    (\llbracket M\rrbracket\otimes\llbracket K\rrbracket)
+    \circ\mathsf{split}_s,\\
+\llbracket\mathsf{fix}_A\;M\rrbracket
+  &=\bigsqcup_{n<\omega}\Phi_{\llbracket M\rrbracket}^{\,n}(\bot),\\
+\llbracket\mathsf{fold}_A\;M\rrbracket
+  &=\mathsf{fold}_A\circ\llbracket M\rrbracket,\\
+\llbracket\mathsf{unfold}\;M\rrbracket
+  &=\mathsf{unfold}_A\circ\llbracket M\rrbracket .
+\end{aligned}
+$$
+
+Here $\mathsf{prim}_p$ must be the checked CP map for the complete primitive
+signature, and $\mathsf{handleMeasure}$ must use the two subnormalized maps
+$\rho\mapsto P_b\rho P_b$ while promoting the known outcome bit and retaining
+the measured qubit.  The implementation is complete only when these clauses
+are derived from the concrete model, independent of typing derivations, and
+validated by substitution, soundness, and adequacy.
 
 ---
 
@@ -326,15 +531,21 @@ two classical registers, including distinct-wire $CX$, measurement,
 reset/reuse, store, sequencing, conditionals, and bounded repeat.  It excludes
 the unsupported coin command by an explicit `Quotable` predicate.
 
-The checked capstones have the following meanings:
+The checked circuit-level declarations have the following meanings:
 
-- `denote_compile`: staging and compilation preserve source denotation;
-- `denote_reflect`: quotation preserves circuit denotation;
+- `denote_compile`: the quotation meaning, defined from the represented
+  command, equals that command's CQ denotation;
+- `denote_reflect`: command reflection preserves the same inherited CQ
+  denotation;
 - `compile_reflect`: compiling a canonical representative returns the
   canonical circuit;
 - `quotation_capstone`: every `Quotable` command has a well-typed canonical
   lambda representative whose compilation is the original command and whose
   inherited CQ denotation is equal to the circuit denotation.
+
+These results do not yet relate a structural source denotation to circuit
+denotation.  That source-level `denote_compile` theorem is a semantic
+objective.
 
 ---
 
@@ -382,6 +593,19 @@ recursive source type, full abstraction, or unrestricted adequacy.  It also
 does not include noisy-device behavior or exact finite synthesis of every
 unitary.  Missing semantic structure is not introduced as an axiom or hidden
 as a theorem parameter.
+
+### Semantic objectives
+
+The remaining objective is to close the generated CP-enriched presheaf
+submodel under a cofree exponential, package its LNL structure, interpret
+every admissible source type including strictly positive recursive types, and
+derive a structural source denotation.  The finite CP maps, TNI
+superoperators, representable Yoneda/Day fragment, first-order type objects,
+and primitive agreement are checked; they are not that LNL instance or
+denotation.  On that basis we aim to prove operational soundness,
+first-order-observable adequacy by finite approximants, and source-denotation
+preservation for successful staging.  These remaining statements are goals
+and are not included in the checked theorem list.
 
 ---
 

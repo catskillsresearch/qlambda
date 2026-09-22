@@ -25,12 +25,15 @@ classification:
 status:
   scope: >-
     The compared surface contains three declarations: existence of the
-    concrete quantum LNL model, existence of the omega-CPO-enriched qCPO
-    category, and canonical typed lambda quotation for the supported
+    ordinary compact-closed Set-to-qRel LNL model, existence of the
+    omega-CPO-enriched qCPO category, and canonical typed lambda quotation for the supported
     two-qubit/two-bit circuit fragment. The quotation fragment supports
     single-wire gates, distinct-wire CX, reset, measurement, store, sequence,
     conditionals, and bounded repeat. Its theorem combines source typing,
     compile-after-reflect equality, and ideal CQ denotational equality.
+    Neither categorical existence result is a concrete source denotation.
+    The selected source-semantic objective is a typed CP-enriched presheaf
+    submodel and remains unproved.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]

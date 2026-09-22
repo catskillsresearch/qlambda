@@ -6,6 +6,9 @@ cd "$(dirname "$0")/.."
 TEX="arxiv.tex"
 PDF="arxiv.pdf"
 
+echo "==> Auditing publication theorem claims"
+python3 scripts/audit_publication_claims.py
+
 echo "==> Regenerating arxiv.tex + lean-listings/ + figures/"
 bash scripts/build_arxiv_tex.sh
 

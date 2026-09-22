@@ -96,6 +96,64 @@ linear capture. A linear function is not duplicable in general. -/
 def duplicable : Ty → Bool :=
   duplicableAt []
 
+/-- Types which may cross the staging boundary into a first-order circuit
+and which currently have representable presheaf objects. -/
+inductive FirstOrder : Ty → Prop where
+  | unit : FirstOrder .unit
+  | bit : FirstOrder .bit
+  | qubit : FirstOrder .qubit
+  | tensor {A B} : FirstOrder A → FirstOrder B → FirstOrder (.tensor A B)
+
+def firstOrderB : Ty → Bool
+  | .unit | .bit | .qubit => true
+  | .tensor A B => firstOrderB A && firstOrderB B
+  | _ => false
+
+theorem firstOrderB_sound {A : Ty} (h : A.firstOrderB = true) :
+    FirstOrder A := by
+  induction A with
+  | unit => exact .unit
+  | bit => exact .bit
+  | qubit => exact .qubit
+  | tensor A B ihA ihB =>
+      simp only [firstOrderB, Bool.and_eq_true] at h
+      exact .tensor (ihA h.1) (ihB h.2)
+  | var n => simp [firstOrderB] at h
+  | arrow κ A B => simp [firstOrderB] at h
+  | mu A => simp [firstOrderB] at h
+
+/-- Hilbert dimension of a first-order type.  Arrows and recursive types are
+mapped to `0` and are not used as objects.  Bits and qubits are both
+two-dimensional; their later additive versus linear distinction is not
+recorded here. -/
+def hilbertDim : Ty → ℕ
+  | .unit => 1
+  | .bit | .qubit => 2
+  | .tensor A B => A.hilbertDim * B.hilbertDim
+  | _ => 0
+
+def FirstOrder.dimension {A : Ty} (_h : FirstOrder A) : ℕ :=
+  A.hilbertDim
+
+@[simp]
+theorem FirstOrder.dimension_unit : FirstOrder.dimension .unit = 1 :=
+  rfl
+
+@[simp]
+theorem FirstOrder.dimension_bit : FirstOrder.dimension .bit = 2 :=
+  rfl
+
+@[simp]
+theorem FirstOrder.dimension_qubit : FirstOrder.dimension .qubit = 2 :=
+  rfl
+
+@[simp]
+theorem FirstOrder.dimension_tensor {A B : Ty}
+    (hA : FirstOrder A) (hB : FirstOrder B) :
+    FirstOrder.dimension (.tensor hA hB) =
+      hA.dimension * hB.dimension :=
+  rfl
+
 end Ty
 
 /-- Gate and allocation constants. Measurement is its own elimination form. -/
