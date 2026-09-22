@@ -64,9 +64,13 @@ does not yet interpret source `mu`, and quotation CQ equality is inherited
 from the represented command rather than proved from source denotation.
 
 The semantic objective is a typed submodel of the CP-enriched
-superoperator-module presheaf semantics, followed by source-type
-interpretation, a concrete structural denotation, first-order-observable
-adequacy, and a source-level staging theorem.  This release does not claim
+superoperator-module presheaf semantics.  Its exponential must satisfy
+`ComonoidHom(C, !ᶠA) ≃ Hom(C, A)` inside the based double-dual classical
+subcategory.  The existing coefficientwise symmetric tensor square is not
+yet a general Day tensor, so its coordinate split does not establish this
+universal property.  Source-type interpretation, a concrete structural
+denotation, first-order-observable adequacy, and a source-level staging
+theorem follow that gate.  This release does not claim
 those results, full abstraction, or unrestricted higher-order adequacy.
 `docs/NOVELTY_AUDIT.md` records the distinction between published mathematics
 and new Lean proofs.

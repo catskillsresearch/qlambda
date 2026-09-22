@@ -23,9 +23,9 @@ MODEL_CARDS: tuple[ModelCard, ...] = (
         label="Cursor",
         cite_key="Cur26",
         tool_note=(
-            "agent-assisted editing in the Cursor IDE: typed linear syntax and "
-            "metatheory, quantum-relation/qCPO and LNL proof development, "
-            "circuit quotation, Palomar packaging, and drafting this narrative. "
+            "agent-assisted editing in the Cursor IDE for the typed linear "
+            "calculus, quantum-relation and qCPO developments, the CP-presheaf "
+            "substrate, circuit quotation, and drafting this narrative. "
             "Generated Lean was provisional until it compiled under the pinned "
             "toolchain."
         ),
@@ -35,63 +35,32 @@ MODEL_CARDS: tuple[ModelCard, ...] = (
         ),
     ),
     ModelCard(
-        label="Cursor Composer 2.5 Fast",
-        cite_key="Cmp25",
+        label="xAI Grok 4.7",
+        cite_key="Grk47",
         tool_note=(
-            "routine multi-step work: module scaffolding, dependency-ordered wiring of "
-            "`Scott1972/ContinuousLattice/`, documentation and Mermaid blueprints, and medium "
-            "proof obligations where the strategy was already fixed. Per its model card, "
-            "Composer 2.5 is optimized for codebase navigation rather than open-ended "
-            "topological proof design; the Milner-block results (2.9–2.11, full 3.3) were not "
-            "delegated to it alone."
+            "formalization and drafting in Cursor: typed linear syntax and "
+            "metatheory, the intrinsic CP-map and superoperator-module "
+            "substrate, first-order type objects, primitive agreement, and "
+            "the proved-versus-objective boundary of this narrative. Every "
+            "emitted proof term was checked by the Lean kernel."
         ),
         reference=(
-            "Anysphere, Inc. *Composer 2.5*. Model announcement and documentation, "
-            "<https://cursor.com/blog/composer-2-5>; model card as integrated in Cursor, "
+            "xAI. *Grok 4.7*. Model documentation as integrated in Cursor, "
             "<https://cursor.com/docs/models> (accessed 2026)."
         ),
     ),
     ModelCard(
-        label="Anthropic Claude Sonnet 5 (medium reasoning)",
-        cite_key="Son26",
+        label="OpenAI GPT 5.6",
+        cite_key="Gpt56",
         tool_note=(
-            "day-to-day formalization and proof-engineering in Cursor at the medium reasoning "
-            "tier: inventory and narrative maintenance, module wiring, and medium-complexity "
-            "Lean obligations where the proof strategy was already fixed. Per its model card, "
-            "Sonnet 5 Medium balances cost and capability for agentic coding at moderate "
-            "reasoning depth."
+            "substantive Palomar editorial passes in Cursor "
+            "(`statement_alignment`, `definition_fidelity`, "
+            "`literature_notability`, and `synthesis`). Those passes review "
+            "claims; they do not replace kernel-checked Lean."
         ),
         reference=(
-            "Anthropic. *Claude Sonnet 5* (medium reasoning variant). System card, "
-            "<https://www.anthropic.com/claude-sonnet-5-system-card>; model documentation as "
-            "integrated in Cursor, <https://cursor.com/docs/models> (accessed 2026)."
-        ),
-    ),
-    ModelCard(
-        label="Anthropic Claude Opus 4.8 (high reasoning)",
-        cite_key="Ant26",
-        tool_note=(
-            "selective use for the heaviest proof work (Propositions 2.9–2.11, Theorem 2.12, "
-            "Theorem 3.3, Propositions 3.8–3.10, Theorem 4.4). Every emitted proof term was "
-            "checked by the Lean kernel."
-        ),
-        reference=(
-            "Anthropic. *Claude Opus 4.8* (high thinking/reasoning variant). System card and "
-            "announcement, <https://www.anthropic.com/news/claude-opus-4-8>; model documentation "
-            "as integrated in Cursor, <https://cursor.com/docs/models/claude-opus-4-8> "
-            "(accessed 2026)."
-        ),
-    ),
-    ModelCard(
-        label="Google Gemini 3.5 Flash",
-        cite_key="Gem25",
-        tool_note=(
-            "exploratory passes on Scott's typographic conventions (ambient vs subspace joins "
-            "in the Milner correction) and scope decisions."
-        ),
-        reference=(
-            "Google DeepMind. *Gemini 3.5 Flash*. Technical documentation and model cards. "
-            "<https://ai.google.dev/gemini-api/docs/models> (accessed 2026)."
+            "OpenAI. *GPT 5.6*. Model documentation as integrated in Cursor, "
+            "<https://cursor.com/docs/models> (accessed 2026)."
         ),
     ),
 )

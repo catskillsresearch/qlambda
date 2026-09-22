@@ -106,6 +106,31 @@ theorem applyMat_zero (ρ : Matrix (Fin n) (Fin n) ℂ) :
     (0 : Superoperator n m).cp.applyMat ρ = 0 :=
   CPMap.applyMat_zero ρ
 
+/-- Every CP map below a TNI map in Choi order is itself TNI. -/
+noncomputable def ofLE (Φ : CPMap n m) (Ψ : Superoperator n m)
+    (h : Φ ≤ Ψ.cp) : Superoperator n m where
+  cp := Φ
+  trace_nonincreasing := by
+    intro ρ hρ
+    let R : CPMap n m := CPMap.residualOfLE h
+    have hsum : Φ + R = Ψ.cp := CPMap.add_residualOfLE h
+    have hRtrace :
+        0 ≤ (Matrix.trace (R.applyMat ρ)).re := by
+      have hpos := CPMap.applyMat_posSemidef R hρ
+      exact
+        (RCLike.nonneg_iff (K := ℂ).mp
+          (Matrix.PosSemidef.trace_nonneg hpos)).1
+    have htni := Ψ.trace_nonincreasing ρ hρ
+    rw [← hsum, CPMap.applyMat_add_map, Matrix.trace_add,
+      Complex.add_re] at htni
+    linarith
+
+@[simp]
+theorem cp_ofLE (Φ : CPMap n m) (Ψ : Superoperator n m)
+    (h : Φ ≤ Ψ.cp) :
+    (ofLE Φ Ψ h).cp = Φ :=
+  rfl
+
 /-- Sequential composition, first `Φ` and then `Ψ`. -/
 noncomputable def comp (Ψ : Superoperator m ℓ) (Φ : Superoperator n m) :
     Superoperator n ℓ where

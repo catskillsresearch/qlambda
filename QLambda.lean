@@ -33,6 +33,8 @@ import QLambda.Domain.Presheaf.SigmaMon
 import QLambda.Domain.Presheaf.Module
 import QLambda.Domain.Presheaf.Yoneda
 import QLambda.Domain.Presheaf.Generated
+import QLambda.Domain.Presheaf.PseudoRepresentable
+import QLambda.Domain.Presheaf.Classical
 import QLambda.Domain.Presheaf.Monoidal
 import QLambda.Domain.Presheaf.SymmetricPower
 import QLambda.Domain.Presheaf.ClosedGenerated

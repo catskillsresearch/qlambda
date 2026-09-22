@@ -62,7 +62,15 @@ The selected semantic objective is instead a typed, basis-generated submodel
 of the Tsukada--Asada CP-enriched superoperator-module presheaf model.  This
 route is intended to contain general CP maps, allocation, reset, retained-
 qubit measurement, higher-order functions, and recursive types in one model.
-It is not yet formalized.
+It is not yet formalized.  In particular, the raw product of symmetric powers
+is not known to be the exponential.  The current coefficientwise tensor
+square is not a general Day tensor, and coordinatewise contraction has not
+been proved to factor through the genuine Day tensor.  The target must
+construct general Day closure and based double-dual classical objects, then
+prove `ComonoidHom(C, !ᶠA) ≃ Hom(C, A)`.  Its induced promotion has type
+`Hom(!B, A) → Hom(!B, !A)`.  The identity-in-every-degree Taylor series is
+required by this universal property; its split degrees are tensor
+coordinates, not branches to be summed.
 
 No release claim should identify the existing ordinary `Set ⊣ qRel` instance
 or `qCPOCategory` with the selected source model, or claim source denotation

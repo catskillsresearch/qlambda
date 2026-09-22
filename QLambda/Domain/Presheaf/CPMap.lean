@@ -17,7 +17,7 @@ positivity results from the existing operator-sum development.
 namespace QLambda
 
 open Matrix
-open scoped BigOperators ComplexConjugate ComplexOrder Kronecker MatrixOrder
+open scoped BigOperators ComplexConjugate ComplexOrder Kronecker MatrixOrder NNReal
 
 namespace KrausFamily
 
@@ -151,6 +151,20 @@ theorem ext {Φ Ψ : CPMap n m} (h : Φ.choi = Ψ.choi) : Φ = Ψ := by
   cases Ψ
   cases h
   rfl
+
+instance : LE (CPMap n m) :=
+  ⟨fun Φ Ψ => Φ.choi ≤ Ψ.choi⟩
+
+instance : PartialOrder (CPMap n m) where
+  le_refl Φ := by
+    change Φ.choi ≤ Φ.choi
+    exact le_rfl
+  le_trans Φ Ψ Χ hΦΨ hΨΧ := by
+    change Φ.choi ≤ Χ.choi
+    exact le_trans hΦΨ hΨΧ
+  le_antisymm Φ Ψ hΦΨ hΨΦ := by
+    apply ext
+    exact le_antisymm hΦΨ hΨΦ
 
 /-- A finite Kraus presentation determines an intrinsic CP map. -/
 def ofKraus (K : KrausFamily n m) : CPMap n m where
@@ -340,6 +354,133 @@ instance : AddCommMonoid (CPMap n m) where
   add_assoc Φ Ψ Χ := ext (add_assoc Φ.choi Ψ.choi Χ.choi)
   add_comm Φ Ψ := ext (add_comm Φ.choi Ψ.choi)
   nsmul := nsmulRec
+
+instance : OrderBot (CPMap n m) where
+  bot := 0
+  bot_le Φ := by
+    change (0 : Matrix (Fin m × Fin n) (Fin m × Fin n) ℂ) ≤ Φ.choi
+    rw [Matrix.le_iff]
+    simpa using Φ.choi_pos
+
+/-- Scaling by a nonnegative real preserves complete positivity. -/
+noncomputable def scaleNonneg
+    (c : ℝ) (hc : 0 ≤ c) (Φ : CPMap n m) : CPMap n m where
+  choi := c • Φ.choi
+  choi_pos := Φ.choi_pos.smul hc
+
+@[simp]
+theorem choi_scaleNonneg (c : ℝ) (hc : 0 ≤ c) (Φ : CPMap n m) :
+    (scaleNonneg c hc Φ).choi = c • Φ.choi :=
+  rfl
+
+@[simp]
+theorem scaleNonneg_zero (Φ : CPMap n m) :
+    scaleNonneg 0 le_rfl Φ = 0 := by
+  apply ext
+  simp
+
+@[simp]
+theorem scaleNonneg_one (Φ : CPMap n m) :
+    scaleNonneg 1 zero_le_one Φ = Φ := by
+  apply ext
+  simp
+
+theorem scaleNonneg_add (c : ℝ) (hc : 0 ≤ c) (Φ Ψ : CPMap n m) :
+    scaleNonneg c hc (Φ + Ψ) =
+      scaleNonneg c hc Φ + scaleNonneg c hc Ψ := by
+  apply ext
+  simp [scaleNonneg, smul_add]
+
+/-- Canonical nonnegative-real scalar multiplication on intrinsic CP maps. -/
+noncomputable def nnsmul (c : NNReal) (Φ : CPMap n m) : CPMap n m where
+  choi := (c : ℂ) • Φ.choi
+  choi_pos :=
+    Φ.choi_pos.smul
+      (Complex.nonneg_iff.mpr ⟨c.property, by simp⟩)
+
+noncomputable instance : SMul NNReal (CPMap n m) :=
+  ⟨nnsmul⟩
+
+@[simp]
+theorem choi_nnsmul (c : NNReal) (Φ : CPMap n m) :
+    (c • Φ).choi = (c : ℂ) • Φ.choi :=
+  rfl
+
+noncomputable instance : Module NNReal (CPMap n m) where
+  one_smul Φ := by
+    apply ext
+    simp
+  mul_smul c d Φ := by
+    apply ext
+    simp [mul_smul]
+  smul_add c Φ Ψ := by
+    apply ext
+    simp [smul_add]
+  smul_zero c := by
+    apply ext
+    simp
+  add_smul c d Φ := by
+    apply ext
+    simp [add_smul]
+  zero_smul Φ := by
+    apply ext
+    simp
+
+@[simp]
+theorem effect_nnsmul (c : NNReal) (Φ : CPMap n m) :
+    effect (c • Φ) = (c : ℂ) • effect Φ := by
+  ext i j
+  simp [effect, Finset.mul_sum]
+
+/-- Continuous linear operator represented by the input effect. -/
+noncomputable def effectCLM (Φ : CPMap n m) :
+    EuclideanSpace ℂ (Fin n) →L[ℂ] EuclideanSpace ℂ (Fin n) :=
+  LinearMap.toContinuousLinearMap (Matrix.toEuclideanLin Φ.effect)
+
+/-- Operator norm of the positive input effect. -/
+noncomputable def effectNorm (Φ : CPMap n m) : ℝ :=
+  ‖effectCLM Φ‖
+
+theorem effectNorm_nonneg (Φ : CPMap n m) :
+    0 ≤ effectNorm Φ :=
+  norm_nonneg _
+
+@[simp]
+theorem effectCLM_nnsmul (c : NNReal) (Φ : CPMap n m) :
+    effectCLM (c • Φ) = (c : ℂ) • effectCLM Φ := by
+  apply ContinuousLinearMap.ext
+  intro x
+  change Matrix.toEuclideanLin (effect (c • Φ)) x = _
+  rw [effect_nnsmul, map_smul]
+  rfl
+
+@[simp]
+theorem effectNorm_nnsmul (c : NNReal) (Φ : CPMap n m) :
+    effectNorm (c • Φ) = (c : ℝ) * effectNorm Φ := by
+  rw [effectNorm, effectCLM_nnsmul, norm_smul]
+  simp [effectNorm]
+
+/-- The positive residual witnessing refinement of intrinsic CP maps. -/
+def residualOfLE {Φ Ψ : CPMap n m} (h : Φ ≤ Ψ) : CPMap n m where
+  choi := Ψ.choi - Φ.choi
+  choi_pos := Matrix.le_iff.mp h
+
+@[simp]
+theorem add_residualOfLE {Φ Ψ : CPMap n m} (h : Φ ≤ Ψ) :
+    Φ + residualOfLE h = Ψ := by
+  apply ext
+  simp [residualOfLE]
+
+/-- Choi order is exactly existence of a completely positive residual. -/
+theorem le_iff_exists_add (Φ Ψ : CPMap n m) :
+    Φ ≤ Ψ ↔ ∃ Χ : CPMap n m, Φ + Χ = Ψ := by
+  constructor
+  · intro h
+    exact ⟨residualOfLE h, add_residualOfLE h⟩
+  · rintro ⟨Χ, rfl⟩
+    change Φ.choi ≤ (Φ + Χ).choi
+    rw [Matrix.le_iff]
+    simpa using Χ.choi_pos
 
 /-- Identity CP map. -/
 def identity (n : ℕ) : CPMap n n :=

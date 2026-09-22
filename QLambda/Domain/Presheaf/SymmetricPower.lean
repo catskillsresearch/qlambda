@@ -120,6 +120,14 @@ theorem tensorPowerDimension_eq_pow (A k : ℕ) :
   | succ k ih =>
       simp [tensorPowerDimension, pow_succ, ih, Nat.mul_comm]
 
+/-- Partitions of a fixed total degree have one common tensor-power dimension.
+This makes a mixed partition sum well-typed. It does not make that sum
+trace-nonincreasing. -/
+theorem tensorPowerDimension_mul_add (A p q : ℕ) :
+    tensorPowerDimension A p * tensorPowerDimension A q =
+      tensorPowerDimension A (p + q) := by
+  simp [tensorPowerDimension_eq_pow, pow_add]
+
 /-- Split a nonempty finite tuple into its head and tail. -/
 def finSuccFunctionEquiv (A k : ℕ) :
     (Fin (k + 1) → Fin A) ≃ Fin A × (Fin k → Fin A) where

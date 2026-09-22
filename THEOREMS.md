@@ -87,7 +87,10 @@ LNL instance, a source denotation, or an adequacy theorem.
 - `QLambda.Domain.Presheaf.CPMap.toCompleted_ofKraus`
 - `QLambda.Domain.Presheaf.CPMap.ofCompleted_toCompleted`
 - `QLambda.Domain.Presheaf.CPMap.toCompleted_ofCompleted`
+- `QLambda.Domain.Presheaf.CPMap.le_iff_exists_add`
+- `QLambda.Domain.Presheaf.CPMap.effectNorm_nnsmul`
 - `QLambda.Domain.Presheaf.Superoperator.ofQuantumOperation_toQuantumOperation`
+- `QLambda.Domain.Presheaf.Superoperator.ofLE`
 - `QLambda.Domain.Presheaf.Superoperator.comp_assoc`
 - `QLambda.Domain.Presheaf.Superoperator.tensor_comp`
 - `QLambda.Domain.Presheaf.Superoperator.cp_allocateZero`
@@ -97,12 +100,29 @@ LNL instance, a source denotation, or an adequacy theorem.
 - `QLambda.Domain.Presheaf.SuperoperatorModule.yonedaMap_id`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.yonedaMap_comp`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.yonedaEquiv`
+- `QLambda.Domain.Presheaf.SigmaMon.cpMapPartialCountableSum`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.cpmModule`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.PseudoRepresentable.toAmbient`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.PseudoBasis.matrixOfHom`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.PseudoBasis.AdmissibleMatrix.comp`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.dayTensorRepresentablePresentation`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.curry_uncurry_representable`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.uncurry_curry_representable`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.closedTensorRepresentable_module`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.symmetricAverage_idempotent`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.symmetricContraction_cocommutative`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.symmetricContraction_coassociative`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.tensorPowerDimension_mul_add`
+- `QLambda.Domain.Presheaf.SigmaMon.ChoiSum.tensor_finite_subfamily_cp_sum`
+
+`symmetricContraction` and `symmetricEquivalencePromotion` are a
+symmetric-series comonoid and an action of finite basis equivalences. They
+are not cofree promotion. The cofree universal property would be
+`ComonoidHom(C, !A) ≃ Hom(C, A)`, inducing
+`Hom(!B, A) → Hom(!B, !A)`. `tensorPowerDimension_mul_add` only identifies the
+Hilbert dimension of a fixed-degree partition.
+`tensor_finite_subfamily_cp_sum` is joint trace-nonincrease for the tensor of
+two families already summable at fixed dimensions.
 - `QLambda.Linear.Prim.superoperator_completedCP`
 - `QLambda.Linear.qubitInstrument_zero`
 - `QLambda.Linear.qubitInstrument_one`
@@ -190,7 +210,20 @@ arbitrary OpenQASM 3 text.
 
 The following are goals, not existing declarations:
 
-- a typed CP-enriched superoperator-module presheaf submodel;
+- mixed-partition trace-nonincrease: a joint bound on homogeneous branches
+  does not yet transport to a sum of tensors whose factors lie in different
+  symmetric-power degrees;
+- general Day tensor and internal hom for based modules.  The current
+  coefficientwise `symmetricFormalTensorSquare` is not proved to be the Day
+  tensor of two symmetric-series modules;
+- factorization of coordinatewise contraction through that genuine Day
+  tensor.  The identity-in-every-degree series is required by cofreeness and
+  is not a counterexample: different degree splits are tensor coordinates,
+  not branches to be added;
+- the cofree universal property `ComonoidHom(C, !A) ≃ Hom(C, A)`, its induced
+  co-Kleisli promotion `Hom(!B, A) → Hom(!B, !A)`, and the resulting comonad;
+- the based double-dual classical subcategory and its general Day tensor,
+  internal hom, additives, and omega-CPO enrichment;
 - a premise-free LNL model whose homs contain allocation, reset, gates, and
   measurement instruments;
 - interpretation of all source types and strictly positive recursive types;

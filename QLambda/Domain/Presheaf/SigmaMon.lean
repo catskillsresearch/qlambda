@@ -169,24 +169,24 @@ theorem flatten_of_summable {ι : Type} [Countable ι] {κ : ι → Type}
     HasSum (fun p : Σ i, κ i => f p.1 p.2) Φ :=
   _root_.HasSum.sigma_of_hasSum hg hrows hflat
 
-private theorem diag_re_nonneg {q : Type} [Fintype q]
+theorem diag_re_nonneg {q : Type} [Fintype q]
     {A : Matrix q q ℂ} (hA : A.PosSemidef) (i : q) :
     0 ≤ (A i i).re :=
   (RCLike.nonneg_iff.mp hA.diag_nonneg).1
 
-private theorem diag_im_eq_zero {q : Type} [Fintype q]
+theorem diag_im_eq_zero {q : Type} [Fintype q]
     {A : Matrix q q ℂ} (hA : A.PosSemidef) (i : q) :
     (A i i).im = 0 :=
   (RCLike.nonneg_iff.mp hA.diag_nonneg).2
 
-private theorem diag_re_le_trace_re {q : Type} [Fintype q]
+theorem diag_re_le_trace_re {q : Type} [Fintype q]
     {A : Matrix q q ℂ} (hA : A.PosSemidef) (i : q) :
     (A i i).re ≤ A.trace.re := by
   rw [show A.trace.re = ∑ j, (A j j).re by simp [Matrix.trace]]
   exact Finset.single_le_sum
     (fun j _ => diag_re_nonneg hA j) (Finset.mem_univ i)
 
-private theorem trace_re_nonneg {q : Type} [Fintype q]
+theorem trace_re_nonneg {q : Type} [Fintype q]
     {A : Matrix q q ℂ} (hA : A.PosSemidef) :
     0 ≤ A.trace.re :=
   (RCLike.nonneg_iff.mp hA.trace_nonneg).1
@@ -194,7 +194,7 @@ private theorem trace_re_nonneg {q : Type} [Fintype q]
 /-- Every entry of a positive semidefinite matrix is bounded by its trace.
 This is the finite-dimensional order-unit estimate used below to turn
 trace summability into norm summability. -/
-private theorem entry_norm_le_trace_re {q : Type} [Fintype q] [DecidableEq q]
+theorem entry_norm_le_trace_re {q : Type} [Fintype q] [DecidableEq q]
     {A : Matrix q q ℂ} (hA : A.PosSemidef) (i j : q) :
     ‖A i j‖ ≤ A.trace.re := by
   let e : Fin 2 → q := ![i, j]
@@ -229,7 +229,7 @@ private theorem entry_norm_le_trace_re {q : Type} [Fintype q] [DecidableEq q]
     nlinarith
   nlinarith [norm_nonneg (A i j)]
 
-private theorem hasSum_trace_re {ι q : Type} [Fintype q]
+theorem hasSum_trace_re {ι q : Type} [Fintype q]
     {f : ι → Matrix q q ℂ} {A : Matrix q q ℂ}
     (hf : _root_.HasSum f A) :
     _root_.HasSum (fun i => (f i).trace.re) A.trace.re := by
@@ -240,7 +240,7 @@ private theorem hasSum_trace_re {ι q : Type} [Fintype q]
 
 /-- The positive semidefinite cone of finite complex matrices is closed under
 unconditional sums. -/
-private theorem hasSum_posSemidef {ι q : Type} [Fintype q]
+theorem hasSum_posSemidef {ι q : Type} [Fintype q]
     {f : ι → Matrix q q ℂ} {A : Matrix q q ℂ}
     (hf : _root_.HasSum f A) (hp : ∀ i, (f i).PosSemidef) :
     A.PosSemidef := by
@@ -532,6 +532,158 @@ def partialCountableSum (hsub : SubfamilyClosed (n := n) (m := m))
         (hregroup f g hrows hg.summable)
 
 end ChoiSum
+
+/-! Partial countable sums in the ambient cone of all completely positive
+maps.  Unlike `ChoiSum`, this relation carries no trace-nonincreasing bound. -/
+namespace CPMapSum
+
+variable {n m : ℕ}
+
+def HasSum {ι : Type} [Countable ι]
+    (f : ι → CPMap n m) (Φ : CPMap n m) : Prop :=
+  _root_.HasSum (fun i => (f i).choi) Φ.choi
+
+theorem unique {ι : Type} [Countable ι] {f : ι → CPMap n m}
+    {Φ Ψ : CPMap n m} (hΦ : HasSum f Φ) (hΨ : HasSum f Ψ) :
+    Φ = Ψ :=
+  CPMap.ext (hΦ.unique hΨ)
+
+theorem empty :
+    HasSum (fun i : Empty => nomatch i) (0 : CPMap n m) :=
+  hasSum_empty
+
+theorem singleton (Φ : CPMap n m) :
+    HasSum (fun _ : PUnit => Φ) Φ :=
+  hasSum_single PUnit.unit
+    (fun i hi => (hi (Subsingleton.elim i PUnit.unit)).elim)
+
+theorem remove_zero {ι : Type} [Countable ι]
+    (f : ι → CPMap n m) (s : Set ι) (Φ : CPMap n m)
+    (hzero : ∀ i, i ∉ s → f i = 0) :
+    HasSum (fun i : s => f i) Φ ↔ HasSum f Φ := by
+  change
+    _root_.HasSum
+        ((fun i => (f i).choi) ∘ (fun i : s => (i : ι))) Φ.choi ↔
+      _root_.HasSum (fun i => (f i).choi) Φ.choi
+  apply Subtype.val_injective.hasSum_iff
+  intro i hi
+  rw [hzero i (by simpa using hi)]
+  rfl
+
+theorem reindex {ι κ : Type} [Countable ι] [Countable κ]
+    (e : κ ≃ ι) (f : ι → CPMap n m) (Φ : CPMap n m) :
+    HasSum (f ∘ e) Φ ↔ HasSum f Φ := by
+  change
+    _root_.HasSum ((fun i => (f i).choi) ∘ e) Φ.choi ↔
+      _root_.HasSum (fun i => (f i).choi) Φ.choi
+  exact e.hasSum_iff
+
+theorem group {ι : Type} [Countable ι] {κ : ι → Type}
+    [∀ i, Countable (κ i)] (f : (i : ι) → κ i → CPMap n m)
+    (g : ι → CPMap n m) (Φ : CPMap n m)
+    (hflat : HasSum (fun p : Σ i, κ i => f p.1 p.2) Φ)
+    (hrows : ∀ i, HasSum (f i) (g i)) :
+    HasSum g Φ :=
+  _root_.HasSum.sigma hflat hrows
+
+theorem flatten_of_summable {ι : Type} [Countable ι] {κ : ι → Type}
+    [∀ i, Countable (κ i)] (f : (i : ι) → κ i → CPMap n m)
+    (g : ι → CPMap n m) (Φ : CPMap n m)
+    (hrows : ∀ i, HasSum (f i) (g i)) (hg : HasSum g Φ)
+    (hflat : Summable (fun p : Σ i, κ i => (f p.1 p.2).choi)) :
+    HasSum (fun p : Σ i, κ i => f p.1 p.2) Φ :=
+  _root_.HasSum.sigma_of_hasSum hg hrows hflat
+
+def SubfamilyClosed : Prop :=
+  ∀ {ι : Type} [Countable ι] {κ : ι → Type}
+    [∀ i, Countable (κ i)] (f : (i : ι) → κ i → CPMap n m)
+    (Φ : CPMap n m),
+      HasSum (fun p : Σ i, κ i => f p.1 p.2) Φ →
+        ∀ i, ∃ Ψ, HasSum (f i) Ψ
+
+def RegroupingComplete : Prop :=
+  ∀ {ι : Type} [Countable ι] {κ : ι → Type}
+    [∀ i, Countable (κ i)] (f : (i : ι) → κ i → CPMap n m)
+    (g : ι → CPMap n m),
+      (∀ i, HasSum (f i) (g i)) →
+        Summable (fun i => (g i).choi) →
+        Summable (fun p : Σ i, κ i => (f p.1 p.2).choi)
+
+theorem subfamilyClosed : SubfamilyClosed (n := n) (m := m) := by
+  classical
+  intro ι _ κ _ f Φ hflat i
+  let F : (Σ i, κ i) → Matrix (Fin m × Fin n) (Fin m × Fin n) ℂ :=
+    fun p => (f p.1 p.2).choi
+  have hF : _root_.HasSum F Φ.choi := hflat
+  have hFs : Summable F := hF.summable
+  have hinj : Function.Injective (fun j : κ i => Sigma.mk i j) := by
+    intro a b h
+    exact eq_of_heq (Sigma.mk.inj h).2
+  have hrow : Summable (fun j : κ i => (f i j).choi) := by
+    simpa [F, Function.comp_def] using hFs.comp_injective hinj
+  let A := ∑' j : κ i, (f i j).choi
+  have hA : _root_.HasSum (fun j : κ i => (f i j).choi) A :=
+    hrow.hasSum
+  have hApos : A.PosSemidef :=
+    ChoiSum.hasSum_posSemidef hA (fun j => (f i j).choi_pos)
+  exact ⟨⟨A, hApos⟩, hA⟩
+
+theorem regroupingComplete :
+    RegroupingComplete (n := n) (m := m) := by
+  intro ι _ κ _ f g hrows hg
+  let T : (p : Σ i, κ i) → ℝ :=
+    fun p => (Matrix.trace (f p.1 p.2).choi).re
+  have hTnonneg : ∀ p, 0 ≤ T p :=
+    fun p => ChoiSum.trace_re_nonneg (f p.1 p.2).choi_pos
+  have hrowTrace (i : ι) :
+      _root_.HasSum (fun j => T ⟨i, j⟩)
+        (Matrix.trace (g i).choi).re :=
+    ChoiSum.hasSum_trace_re (hrows i)
+  have hgTrace :
+      Summable (fun i => (Matrix.trace (g i).choi).re) := by
+    rcases hg with ⟨G, hG⟩
+    exact (ChoiSum.hasSum_trace_re hG).summable
+  have hT : Summable T := by
+    apply (summable_sigma_of_nonneg hTnonneg).2
+    refine ⟨fun i => (hrowTrace i).summable, ?_⟩
+    exact hgTrace.congr fun i => (hrowTrace i).tsum_eq.symm
+  apply Pi.summable.mpr
+  intro a
+  apply Pi.summable.mpr
+  intro b
+  apply Summable.of_norm_bounded hT
+  intro p
+  exact ChoiSum.entry_norm_le_trace_re
+    (f p.1 p.2).choi_pos a b
+
+def partialCountableSum
+    (hsub : SubfamilyClosed (n := n) (m := m))
+    (hregroup : RegroupingComplete (n := n) (m := m)) :
+    PartialCountableSum (CPMap n m) where
+  HasSum := HasSum
+  unique := unique
+  empty := empty
+  singleton := singleton
+  remove_zero := remove_zero
+  reindex := reindex
+  flatten := by
+    intro ι _ κ _ f Φ
+    constructor
+    · intro hflat
+      choose g hg using fun i => hsub f Φ hflat i
+      exact ⟨g, hg, group f g Φ hflat hg⟩
+    · rintro ⟨g, hrows, hg⟩
+      exact flatten_of_summable f g Φ hrows hg
+        (hregroup f g hrows hg.summable)
+
+end CPMapSum
+
+/-- The premise-free partial countable sums of unrestricted intrinsic CP
+maps, used as the ambient module for pseudo-representable coefficients. -/
+noncomputable def cpMapPartialCountableSum :
+    PartialCountableSum (CPMap n m) :=
+  CPMapSum.partialCountableSum CPMapSum.subfamilyClosed
+    CPMapSum.regroupingComplete
 
 /-- The premise-free partial countable-sum structure on finite-dimensional
 trace-nonincreasing superoperators. -/

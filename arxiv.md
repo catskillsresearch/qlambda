@@ -385,9 +385,36 @@ contain allocation, reset, gates, and measurement branches, and specialized
 modules have Yoneda, representable Day tensor, representable internal hom,
 and finite symmetric powers.  First-order source types (unit, bits, qubits,
 and their tensors) have representable objects, and every source primitive
-agrees with its intrinsic superoperator.  The remaining construction is the
-closed generated subcategory with a cofree exponential, its LNL packaging,
-and the higher-order and recursive type interpretation.  The intended
+agrees with its intrinsic superoperator.  The symmetric series has weakening,
+dereliction, contraction, and promotion along finite basis equivalences.
+That comonoid action is not cofree promotion.  A partition of one fixed
+degree has a common Hilbert dimension, and the tensor of two families that
+are already summable at fixed dimensions is jointly trace-nonincreasing.
+The corresponding bound for a sum of tensors whose factors lie in different
+symmetric-power degrees is still missing, but it is not the only obstruction.
+In particular, an identity channel in every degree is not a counterexample:
+cofreeness over the tensor unit requires that Taylor series, and distinct
+degree splits are coordinates of a Day tensor rather than alternatives to be
+added.  The actual unresolved gate is to construct the general Day tensor for
+based modules and prove that coordinatewise contraction factors through it.
+The current coefficientwise tensor-square object does not establish that
+factorization.  The intended exponential must then satisfy the cofree
+universal property
+$$
+\operatorname{ComonoidHom}(C,!^{\mathrm f}A)
+  \cong \operatorname{Hom}(C,A).
+$$
+This induces the co-Kleisli promotion
+$\operatorname{Hom}(!B,A)\to\operatorname{Hom}(!B,!A)$; the previously
+considered type
+$\operatorname{Hom}(M,!A)\to\operatorname{Hom}(!M,!A)$ was not the cofree
+universal property.  Tsukada and Asada obtain the abstract cofree object from
+local presentability and an adjoint-functor theorem; their subsequent
+formal-series characterization assumes that object and therefore is not an
+independent direct construction.  General Day closure, the factorization
+theorem, the based double-dual classical subcategory, the exponential
+comonad, and the LNL package remain objectives.
+Consequently unrestricted arrows are not yet interpreted.  The intended
 adequacy boundary is closed terms with first-order observable result:
 denotation should equal the supremum of finite-step subnormalized operational
 instruments.  Adequacy at arbitrary higher-order result types and full
@@ -596,13 +623,23 @@ as a theorem parameter.
 
 ### Semantic objectives
 
-The remaining objective is to close the generated CP-enriched presheaf
-submodel under a cofree exponential, package its LNL structure, interpret
-every admissible source type including strictly positive recursive types, and
-derive a structural source denotation.  The finite CP maps, TNI
-superoperators, representable Yoneda/Day fragment, first-order type objects,
-and primitive agreement are checked; they are not that LNL instance or
-denotation.  On that basis we aim to prove operational soundness,
+The remaining objective begins with general Day tensor and internal hom on
+based modules, followed by a proof that coordinatewise symmetric-series
+contraction factors through the genuine Day tensor.  Joint trace-nonincrease
+for mixed symmetric-power calculations may be needed inside that proof, but
+cannot by itself establish cofreeness.  The next gate is the cofree
+equivalence
+$\operatorname{ComonoidHom}(C,!^{\mathrm f}A)\cong
+\operatorname{Hom}(C,A)$.  The published existence proof uses local
+presentability; its formal-series image theorem already assumes the abstract
+cofree object.  After that come double-dual classical closure and the
+resulting comonad and LNL package.  Only then can unrestricted arrows, every admissible
+source type including strictly positive recursive types, and a structural
+source denotation be interpreted.  The
+finite CP maps, TNI superoperators, representable Yoneda/Day fragment,
+first-order type objects, and primitive agreement are checked; they are not
+that LNL instance or denotation.  On that basis we aim to prove operational
+soundness,
 first-order-observable adequacy by finite approximants, and source-denotation
 preservation for successful staging.  These remaining statements are goals
 and are not included in the checked theorem list.
@@ -646,9 +683,32 @@ proof.
 - M. Pagani, P. Selinger, and B. Valiron, *Applying quantitative semantics to
   higher-order quantum computing*, POPL, 2014.
 - T. Tsukada and K. Asada, *Enriched presheaf model of quantum FPC*, 2024.
+- Committee on Publication Ethics (COPE). *Authorship and AI tools: COPE
+  position statement*. 2024.
+  <https://publicationethics.org/guidance/cope-position/authorship-and-ai-tools>
+<!-- AI_MODEL_REFERENCES -->
+- **[Cur26]** Anysphere, Inc. *Cursor: AI-native code editor and agent environment*. <https://cursor.com> (accessed 2026).
+- **[Grk47]** xAI. *Grok 4.7*. Model documentation as integrated in Cursor, <https://cursor.com/docs/models> (accessed 2026).
+- **[Gpt56]** OpenAI. *GPT 5.6*. Model documentation as integrated in Cursor, <https://cursor.com/docs/models> (accessed 2026).
+<!-- /AI_MODEL_REFERENCES -->
 
 ---
 
-Lean was produced with AI-agent assistance under the author's direction and
-review.  The trusted proof object is the Lean kernel output, not generated
-prose or tests.
+## Acknowledgments
+
+The human author retains sole responsibility for the mathematical content,
+the choice of formalization route, and every formal claim in this work.
+Following standard publisher practice (for example, COPE guidance on
+authorship and AI tools), no large language model is listed as a co-author.
+
+Lean and this narrative were produced with AI-agent assistance under the
+author's direction and review.  The trusted proof object is the Lean kernel
+output, not generated prose or tests.  Assistance from the following tools
+is recorded in `scripts/ai_model_cards.py` and expanded when building
+`arxiv.tex`:
+
+<!-- AI_MODEL_TOOL_BULLETS -->
+- **Cursor** **[Cur26]** — agent-assisted editing in the Cursor IDE for the typed linear calculus, quantum-relation and qCPO developments, the CP-presheaf substrate, circuit quotation, and drafting this narrative. Generated Lean was provisional until it compiled under the pinned toolchain.
+- **xAI Grok 4.7** **[Grk47]** — formalization and drafting in Cursor: typed linear syntax and metatheory, the intrinsic CP-map and superoperator-module substrate, first-order type objects, primitive agreement, and the proved-versus-objective boundary of this narrative. Every emitted proof term was checked by the Lean kernel.
+- **OpenAI GPT 5.6** **[Gpt56]** — substantive Palomar editorial passes in Cursor (`statement_alignment`, `definition_fidelity`, `literature_notability`, and `synthesis`). Those passes review claims; they do not replace kernel-checked Lean.
+<!-- /AI_MODEL_TOOL_BULLETS -->

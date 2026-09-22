@@ -67,6 +67,52 @@ theorem comp_right {ι : Type} [Countable ι]
 
 end SigmaMon.ChoiSum
 
+namespace SigmaMon.CPMapSum
+
+variable {n m ℓ : ℕ}
+
+/-- Postcomposition by a fixed CP map preserves ambient CP sums. -/
+theorem comp_left {ι : Type} [Countable ι]
+    (Ψ : CPMap m ℓ) {f : ι → CPMap n m}
+    {Φ : CPMap n m} (h : HasSum f Φ) :
+    HasSum (fun i => CPMap.comp Ψ (f i)) (CPMap.comp Ψ Φ) := by
+  change _root_.HasSum
+    (fun k => (CPMap.comp Ψ (f k)).choi) (CPMap.comp Ψ Φ).choi
+  apply Pi.hasSum.mpr
+  rintro ⟨a, i⟩
+  apply Pi.hasSum.mpr
+  rintro ⟨b, j⟩
+  simp_rw [CPMap.choi_comp_apply]
+  apply hasSum_sum
+  intro x _
+  apply hasSum_sum
+  intro y _
+  exact
+    ((Pi.hasSum.mp (Pi.hasSum.mp h (x, i)) (y, j)).mul_left
+      (Ψ.choi (a, x) (b, y)))
+
+/-- Precomposition by a fixed CP map preserves ambient CP sums. -/
+theorem comp_right {ι : Type} [Countable ι]
+    {f : ι → CPMap m ℓ} {Ψ : CPMap m ℓ}
+    (Φ : CPMap n m) (h : HasSum f Ψ) :
+    HasSum (fun i => CPMap.comp (f i) Φ) (CPMap.comp Ψ Φ) := by
+  change _root_.HasSum
+    (fun k => (CPMap.comp (f k) Φ).choi) (CPMap.comp Ψ Φ).choi
+  apply Pi.hasSum.mpr
+  rintro ⟨a, i⟩
+  apply Pi.hasSum.mpr
+  rintro ⟨b, j⟩
+  simp_rw [CPMap.choi_comp_apply]
+  apply hasSum_sum
+  intro x _
+  apply hasSum_sum
+  intro y _
+  exact
+    ((Pi.hasSum.mp (Pi.hasSum.mp h (a, x)) (b, y)).mul_right
+      (Φ.choi (x, i) (y, j)))
+
+end SigmaMon.CPMapSum
+
 namespace SuperoperatorModule
 
 universe u v w x
@@ -111,6 +157,46 @@ structure Module where
       {f : ι → Superoperator m n} {s : Superoperator m n},
       SigmaMon.ChoiSum.HasSum f s →
         (obj m).HasSum (fun i => act x (f i)) (act x s)
+
+/-- The ambient module `CPM(-, A)` of unrestricted completely positive maps.
+It is distinct from the representable `Q(-, A)`, whose elements are TNI. -/
+noncomputable def cpmModule (A : ℕ) : Module where
+  obj n :=
+    { Carrier := CPMap n A
+      zero := 0
+      summation := SigmaMon.cpMapPartialCountableSum }
+  act := fun x f => CPMap.comp x f.cp
+  act_zero_element := by
+    intro m n f
+    exact CPMap.comp_zero_left f.cp
+  act_zero_map := by
+    intro m n x
+    exact CPMap.comp_zero_right x
+  act_id := by
+    intro n x
+    change CPMap.comp x (Superoperator.identity n).cp = x
+    rw [show (Superoperator.identity n).cp = CPMap.identity n from rfl]
+    exact CPMap.comp_identity x
+  act_comp := by
+    intro ℓ m n x f g
+    simpa using (CPMap.comp_assoc x f.cp g.cp).symm
+  act_sum_element := by
+    intro ι _ m n x s f h
+    exact SigmaMon.CPMapSum.comp_right f.cp h
+  act_sum_map := by
+    intro ι _ m n x f s h
+    exact SigmaMon.CPMapSum.comp_left x h
+
+@[simp]
+theorem cpmModule_obj (A n : ℕ) :
+    ((cpmModule A).obj n).Carrier = CPMap n A :=
+  rfl
+
+@[simp]
+theorem cpmModule_act {A m n : ℕ}
+    (x : CPMap n A) (f : Superoperator m n) :
+    (cpmModule A).act x f = CPMap.comp x f.cp :=
+  rfl
 
 /-- A sum-preserving natural transformation of specialized modules. -/
 structure Hom (M : Module.{u}) (N : Module.{v}) where
@@ -264,6 +350,24 @@ theorem hasSum_reindex {M : Module.{u}} {N : Module.{v}}
       (fun i => (f i).app n x) (s.app n x)).mp (h n x)
   · exact ((N.obj n).summation.reindex e
       (fun i => (f i).app n x) (s.app n x)).mpr (h n x)
+
+/-- Postcomposition preserves every defined pointwise sum of module maps. -/
+theorem hasSum_comp_left {L : Module.{u}} {M : Module.{v}}
+    {N : Module.{w}} {ι : Type} [Countable ι]
+    (g : Hom M N) {f : ι → Hom L M} {s : Hom L M}
+    (h : HasSum f s) :
+    HasSum (fun i => comp g (f i)) (comp g s) := by
+  intro n x
+  exact g.map_sum (h n x)
+
+/-- Precomposition preserves every defined pointwise sum of module maps. -/
+theorem hasSum_comp_right {L : Module.{u}} {M : Module.{v}}
+    {N : Module.{w}} {ι : Type} [Countable ι]
+    {f : ι → Hom M N} {s : Hom M N} (g : Hom L M)
+    (h : HasSum f s) :
+    HasSum (fun i => comp (f i) g) (comp s g) := by
+  intro n x
+  exact h n (g.app n x)
 
 end Hom
 

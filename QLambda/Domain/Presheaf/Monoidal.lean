@@ -63,6 +63,38 @@ theorem ext {M : Module.{u}} {N : Module.{v}} {L : Module.{w}}
 
 end Bilinear
 
+/-- Postcomposition of a bilinear map by a module morphism. -/
+def Bilinear.postcomp {M : Module.{u}} {N : Module.{v}}
+    {L : Module.{w}} {K : Module.{u}}
+    (f : Hom L K) (b : Bilinear M N L) : Bilinear M N K where
+  app := fun x y => f.app _ (b.app x y)
+  map_zero_left := by
+    intro m n y
+    rw [b.map_zero_left, f.map_zero]
+  map_zero_right := by
+    intro m n x
+    rw [b.map_zero_right, f.map_zero]
+  map_sum_left := by
+    intro ι _ m n xs s y h
+    exact f.map_sum (b.map_sum_left y h)
+  map_sum_right := by
+    intro ι _ m n x ys s h
+    exact f.map_sum (b.map_sum_right x h)
+  naturality := by
+    intro m' m n' n x y g h
+    rw [b.naturality, f.naturality]
+
+/-- Universal-property package for one genuine Day tensor.  Constructing this
+for all modules is the categorical gate not supplied by the representable
+fragment below. -/
+structure DayTensorPresentation (M : Module.{u}) (N : Module.{v}) where
+  object : Module.{w}
+  intro : Bilinear M N object
+  universal : ∀ L : Module.{u}, Hom object L ≃ Bilinear M N L
+  universal_apply :
+    ∀ (L : Module.{u}) (f : Hom object L),
+      universal L f = Bilinear.postcomp f intro
+
 /-- Tensoring representables is represented by multiplication of their finite
 dimensions. -/
 noncomputable abbrev dayTensorRepresentable (A B : ℕ) : Module :=
@@ -182,6 +214,17 @@ noncomputable def dayTensorRepresentableEquiv
   left_inv := bilinearToDayTensor_toBilinear
   right_inv := dayTensorToBilinear_bilinearToDayTensor
 
+/-- The representable construction packaged as an actual Day tensor. -/
+noncomputable def dayTensorRepresentablePresentation (A B : ℕ) :
+    DayTensorPresentation (representable A) (representable B) where
+  object := dayTensorRepresentable A B
+  intro := dayTensorIntro A B
+  universal := fun L => dayTensorRepresentableEquiv A B L
+  universal_apply := by
+    intro L f
+    ext m n x y
+    rfl
+
 /-- Concrete right adjoint to tensoring by a representable:
 `[y(A), N](n) = N(n*A)`. -/
 noncomputable def internalHomRepresentable (A : ℕ) (N : Module.{u}) :
@@ -244,6 +287,21 @@ theorem uncurry_curry_representable {X A : ℕ} {N : Module.{u}}
     (f : Hom (dayTensorRepresentable X A) N) :
     uncurryRepresentable (curryRepresentable f) = f :=
   (closedRepresentableEquiv X A N).symm_apply_apply f
+
+/-- Exact existence interface for general Day monoidal closure.
+
+No value of this structure is currently defined.  The representable results
+above instantiate each field only when the relevant tensor inputs are
+representable; constructing this package requires the enriched coend
+quotient and is the next categorical gate. -/
+structure DayClosedPresentation where
+  tensor :
+    (M N : Module) → DayTensorPresentation M N
+  internalHom :
+    Module → Module → Module
+  closed :
+    ∀ (X A N : Module),
+      Hom (tensor X A).object N ≃ Hom X (internalHom A N)
 
 end SuperoperatorModule
 

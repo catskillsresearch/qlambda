@@ -20,18 +20,33 @@ cocommutativity, and coassociativity are all constructed and proved.
 
 Functorial structural promotion is proved for maps induced by finite basis
 equivalences.  This class is nontrivial and preserves weakening and
-contraction, but it is not described as the source-language cofree property.
-Maps out of countable coefficientwise Day tensors are characterized by
-globally admissible homogeneous component families, with a concrete
-constructor and uniqueness theorem.  The symmetric averaging projector now
-makes every homogeneous extension
-`Hom (Sym^k B) (y A) → Hom (y (B^k)) (y A)` concrete and premise-free.  Thus
-the remaining issue for arbitrary promotion is solely the global
-admissibility of its countable partition formula.  Every finite subfamily of
-the ordinary homogeneous branches of an arbitrary `Hom` is proved jointly
-TNI below.  What is not yet supplied by the module interface is the
-ancillary/tensor closure carrying those bounds to mixed partition branches
-whose coefficient dimensions differ.
+contraction, but it is not cofree promotion and it is not used as one.  The
+cofree universal property would be
+`ComonoidHom C (!A) ≃ Hom C A`; its induced co-Kleisli operation has type
+`Hom (!B) A → Hom (!B) (!A)`, not `Hom M (!A) → Hom (!M) (!A)`.
+`tensorPowerDimension_mul_add` shows that a partition of a fixed total degree
+lands in one common tensor-power dimension, so the missing fact is not a
+dimension mismatch.  `ChoiSum.tensor_finite_subfamily_cp_sum` supplies joint
+trace-nonincrease only for the tensor of two families that are already
+summable at two fixed dimensions.  It does not transport the homogeneous
+branch bound
+`countableProductHom_finite_components_tni` across a sum of tensors whose
+factors lie in different symmetric-power degrees.
+
+This does not make the identity-in-every-degree series a counterexample:
+cofreeness over the tensor unit requires precisely that series, and the
+different degree splits are coordinates of a Day tensor rather than branches
+to be added.  The actual unresolved gate is categorical.  The object named
+`symmetricFormalTensorSquare` below is an ambient coefficientwise product; it
+has not been proved to be the genuine Day tensor of two symmetric-series
+modules, and the coordinatewise split has not been proved to factor through
+such a tensor.  The published abstract cofree object exists by local
+presentability and an adjoint-functor theorem; its later formal-series
+description assumes that existence and is not an independent construction.
+General Day closure, hereditary factorization, the cofree universal property,
+double-dual classical closure, and the resulting comonad are all still
+required.  No cofree promotion, comonad multiplication, or `LNLModel`
+instance is defined from the equivalence action.
 -/
 
 namespace QLambda.Domain.Presheaf
