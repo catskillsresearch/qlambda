@@ -22,8 +22,8 @@ theorem typed_scoped {Γ Δ M A} (h : HasType Γ Δ M A) :
   induction h with
   | varU hlookup _ _ => exact hlookup.lt_length
   | varL hlookup _ => exact hlookup.lt_length
-  | lamU _ _ _ ih => simpa [Scoped] using ih
-  | lamL _ ih => simpa [Scoped] using ih
+  | lamU _ _ _ _ ih => simpa [Scoped] using ih
+  | lamL _ _ ih => simpa [Scoped] using ih
   | appL hsplit _ _ ihF ihX =>
       obtain ⟨hFlen, hXlen⟩ := hsplit.lengths
       exact ⟨hFlen.symm ▸ ihF, hXlen.symm ▸ ihX⟩
@@ -46,9 +46,9 @@ theorem typed_scoped {Γ Δ M A} (h : HasType Γ Δ M A) :
   | measure hsplit _ _ ihQ ihK =>
       obtain ⟨hQlen, hKlen⟩ := hsplit.lengths
       exact ⟨hQlen.symm ▸ ihQ, hKlen.symm ▸ ihK⟩
-  | fix _ _ _ ih => exact ih
-  | fold _ ih => exact ih
-  | unfold _ ih => exact ih
+  | fix _ _ _ _ ih => exact ih
+  | fold _ _ ih => exact ih
+  | unfold _ _ ih => exact ih
 
 theorem closed_typed_scoped {M A} (h : HasType [] [] M A) :
     Scoped 0 0 M := by

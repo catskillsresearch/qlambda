@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Linear.Context
+import QLambda.Linear.TypeFormation
 
 /-!
 # Typing
@@ -17,16 +18,18 @@ namespace QLambda.Linear
 
 inductive HasType : List Ty → List (Option Ty) → Term → Ty → Prop where
   | varU {Γ Δ n A} :
-      Lookup Γ n A → Ty.duplicable A = true → AllNone Δ →
+      Lookup Γ n A → Ty.Duplicable A → AllNone Δ →
       HasType Γ Δ (.var .unres n) A
   | varL {Γ Δ n A} :
       Lookup Δ n (some A) → OnlySomeAt Δ n → HasType Γ Δ (.var .lin n) A
   | lamU {Γ Δ A B M} :
-      Ty.duplicable A = true →
+      Ty.Admissible A →
+      Ty.Duplicable A →
       AllNone Δ →
       HasType (A :: Γ) Δ M B →
       HasType Γ Δ (.lam .unres A M) (.arrow .unres A B)
   | lamL {Γ Δ A B M} :
+      Ty.Admissible A →
       HasType Γ (some A :: Δ) M B →
       HasType Γ Δ (.lam .lin A M) (.arrow .lin A B)
   | appL {Γ Δ Δ₁ Δ₂ A B F X} :
@@ -65,14 +68,17 @@ inductive HasType : List Ty → List (Option Ty) → Term → Ty → Prop where
       HasType Γ Δ₂ K (.arrow .unres .bit (.arrow .lin .qubit A)) →
       HasType Γ Δ (.measure Q K) A
   | fix {Γ Δ A M} :
-      Ty.duplicable A = true →
+      Ty.Admissible A →
+      Ty.Duplicable A →
       AllNone Δ →
       HasType Γ Δ M (.arrow .unres A A) →
       HasType Γ Δ (.fix A M) A
   | fold {Γ Δ A M} :
+      Ty.Admissible (.mu A) →
       HasType Γ Δ M (Ty.subst 0 (.mu A) A) →
       HasType Γ Δ (.fold A M) (.mu A)
   | unfold {Γ Δ A M} :
+      Ty.Admissible (.mu A) →
       HasType Γ Δ M (.mu A) →
       HasType Γ Δ (.unfold M) (Ty.subst 0 (.mu A) A)
 
@@ -91,16 +97,18 @@ def infer (Γ Δ : List Ty) : Term → Option (Ty × List Bool)
       | some A => some (A, mark n Δ)
       | none => none
   | .lam .unres A M =>
-      if Ty.duplicable A = true then
+      if Ty.admissible A = true ∧ Ty.duplicable A = true then
         match infer (A :: Γ) Δ M with
         | some (B, u) =>
             if allFalse u = true then some (.arrow .unres A B, u) else none
         | none => none
       else none
   | .lam .lin A M =>
-      match infer Γ (A :: Δ) M with
-      | some (B, true :: u) => some (.arrow .lin A B, u)
-      | _ => none
+      if Ty.admissible A = true then
+        match infer Γ (A :: Δ) M with
+        | some (B, true :: u) => some (.arrow .lin A B, u)
+        | _ => none
+      else none
   | .app F X =>
       match infer Γ Δ F, infer Γ Δ X with
       | some (.arrow κ A B, uF), some (A', uX) =>
@@ -156,18 +164,24 @@ def infer (Γ Δ : List Ty) : Term → Option (Ty × List Bool)
   | .fix A M =>
       match infer Γ Δ M with
       | some (.arrow .unres A₁ A₂, u) =>
-          if Ty.duplicable A = true ∧ A₁ = A ∧ A₂ = A ∧ allFalse u = true then
+          if Ty.admissible A = true ∧ Ty.duplicable A = true ∧
+              A₁ = A ∧ A₂ = A ∧ allFalse u = true then
             some (A, u)
           else none
       | _ => none
   | .fold A M =>
       match infer Γ Δ M with
       | some (B, u) =>
-          if B = Ty.subst 0 (.mu A) A then some (.mu A, u) else none
+          if Ty.admissible (.mu A) = true ∧ B = Ty.subst 0 (.mu A) A then
+            some (.mu A, u)
+          else none
       | none => none
   | .unfold M =>
       match infer Γ Δ M with
-      | some (.mu A, u) => some (Ty.subst 0 (.mu A) A, u)
+      | some (.mu A, u) =>
+          if Ty.admissible (.mu A) = true then
+            some (Ty.subst 0 (.mu A) A, u)
+          else none
       | _ => none
 
 theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
@@ -183,7 +197,8 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
           | some A' =>
               simp [hΓ] at h
               obtain ⟨hdup, rfl, rfl⟩ := h
-              exact ⟨HasType.varU (lookup_of_get? hΓ) hdup (allNone_unused Δ),
+              exact ⟨HasType.varU (lookup_of_get? hΓ)
+                  (Ty.duplicable_eq_true_iff.mp hdup) (allNone_unused Δ),
                 by simp [List.length_replicate]⟩
       | lin =>
           simp only [infer] at h
@@ -203,27 +218,35 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
           | some p =>
               obtain ⟨C, uC⟩ := p
               simp [hM] at h
-              obtain ⟨hdup, hnone, rfl, rfl⟩ := h
+              obtain ⟨hform, hnone, rfl, rfl⟩ := h
+              rcases hform with ⟨hadm, hdup⟩
               obtain ⟨hC, hlen⟩ := ih hM
-              exact ⟨HasType.lamU hdup (allNone_of_allFalse hlen hnone) hC, hlen⟩
+              exact ⟨HasType.lamU (Ty.admissible_eq_true_iff.mp hadm)
+                  (Ty.duplicable_eq_true_iff.mp hdup)
+                  (allNone_of_allFalse hlen hnone) hC, hlen⟩
       | lin =>
           simp only [infer] at h
-          cases hM : infer Γ (B :: Δ) M with
-          | none => simp [hM] at h
-          | some p =>
-              obtain ⟨C, uC⟩ := p
-              cases uC with
-              | nil => simp [hM] at h
-              | cons head tail =>
-                  cases head with
-                  | false => simp [hM] at h
-                  | true =>
-                      simp [hM] at h
-                      obtain ⟨rfl, rfl⟩ := h
-                      obtain ⟨hC, hlen⟩ := ih hM
-                      have hlen' : tail.length = Δ.length := by
-                        simpa [List.length_cons] using hlen
-                      exact ⟨HasType.lamL hC, hlen'⟩
+          by_cases hadm : Ty.admissible B = true
+          · rw [if_pos hadm] at h
+            cases hM : infer Γ (B :: Δ) M with
+            | none => simp [hM] at h
+            | some p =>
+                obtain ⟨C, uC⟩ := p
+                cases uC with
+                | nil => simp [hM] at h
+                | cons head tail =>
+                    cases head with
+                    | false => simp [hM] at h
+                    | true =>
+                        simp [hM] at h
+                        obtain ⟨rfl, rfl⟩ := h
+                        obtain ⟨hC, hlen⟩ := ih hM
+                        have hlen' : tail.length = Δ.length := by
+                          simpa [List.length_cons] using hlen
+                        exact ⟨HasType.lamL (Ty.admissible_eq_true_iff.mp hadm) hC,
+                          hlen'⟩
+          · rw [if_neg hadm] at h
+            simp at h
   | app F X ihF ihX =>
       simp only [infer] at h
       cases hF : infer Γ Δ F with
@@ -499,13 +522,15 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
               | unres =>
                   dsimp at h
                   by_cases hfix :
-                      Ty.duplicable A₀ = true ∧ A₁ = A₀ ∧ A₂ = A₀ ∧
-                        allFalse uM = true
+                      Ty.admissible A₀ = true ∧ Ty.duplicable A₀ = true ∧
+                        A₁ = A₀ ∧ A₂ = A₀ ∧ allFalse uM = true
                   · rw [if_pos hfix] at h
                     obtain ⟨rfl, rfl⟩ := h
-                    rcases hfix with ⟨hdup, rfl, rfl, hu⟩
+                    rcases hfix with ⟨hadm, hdup, rfl, rfl, hu⟩
                     obtain ⟨hMty, hlen⟩ := ih hM
-                    exact ⟨HasType.fix hdup (allNone_of_allFalse hlen hu) hMty, hlen⟩
+                    exact ⟨HasType.fix (Ty.admissible_eq_true_iff.mp hadm)
+                        (Ty.duplicable_eq_true_iff.mp hdup)
+                        (allNone_of_allFalse hlen hu) hMty, hlen⟩
                   ·
                     rw [if_neg hfix] at h
                     simp at h
@@ -516,10 +541,11 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
       | some p =>
           obtain ⟨B, uM⟩ := p
           simp [hM] at h
-          rcases h with ⟨hB, rfl, rfl⟩
+          rcases h with ⟨hform, rfl, rfl⟩
+          rcases hform with ⟨hadm, hB⟩
           subst hB
           obtain ⟨hMty, hlen⟩ := ih hM
-          exact ⟨HasType.fold hMty, hlen⟩
+          exact ⟨HasType.fold (Ty.admissible_eq_true_iff.mp hadm) hMty, hlen⟩
   | unfold M ih =>
       simp only [infer] at h
       cases hM : infer Γ Δ M with
@@ -535,20 +561,24 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
           | tensor _ _ => simp at h
           | arrow _ _ _ => simp at h
           | mu A₀ =>
-              obtain ⟨rfl, rfl⟩ := h
-              obtain ⟨hMty, hlen⟩ := ih hM
-              exact ⟨HasType.unfold hMty, hlen⟩
+              by_cases hadm : Ty.admissible (.mu A₀) = true
+              · simp [hadm] at h
+                obtain ⟨rfl, rfl⟩ := h
+                obtain ⟨hMty, hlen⟩ := ih hM
+                exact ⟨HasType.unfold (Ty.admissible_eq_true_iff.mp hadm) hMty,
+                  hlen⟩
+              · simp [hadm] at h
 
 /-- No well-typed unrestricted lambda may bind a qubit. -/
 theorem no_unrestricted_qubit_binder {Γ Δ M A}
     (h : HasType Γ Δ (.lam .unres .qubit M) A) : False := by
   cases h with
-  | lamU hdup _ _ => simp [Ty.duplicable, Ty.duplicableAt] at hdup
+  | lamU _ hdup _ _ => simp [Ty.Duplicable, Ty.DuplicableAt] at hdup
 
 /-- Unrestricted closures carry no free linear resource. -/
 theorem unrestricted_lambda_no_linear_capture {Γ Δ A M B}
     (h : HasType Γ Δ (.lam .unres A M) B) : AllNone Δ := by
   cases h with
-  | lamU _ hnone _ => exact hnone
+  | lamU _ _ hnone _ => exact hnone
 
 end QLambda.Linear

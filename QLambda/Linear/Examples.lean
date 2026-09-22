@@ -88,4 +88,34 @@ def rejectedCapture : Term :=
 theorem rejectedCapture_infer : infer [] [] rejectedCapture = none := by
   rfl
 
+/-- The degenerate recursive type `μα. α` is scoped and strictly positive. -/
+def recursiveIdTy : Ty :=
+  .mu (.var 0)
+
+theorem recursiveIdTy_admissible : Ty.Admissible recursiveIdTy := by
+  decide
+
+/-- Folding after unfolding at an admissible recursive type is accepted. -/
+def recursiveFoldUnfold : Term :=
+  .lam .lin recursiveIdTy <|
+    .fold (.var 0) (.unfold (.var .lin 0))
+
+theorem recursiveFoldUnfold_infer :
+    infer [] [] recursiveFoldUnfold =
+      some (.arrow .lin recursiveIdTy recursiveIdTy, []) := by
+  rfl
+
+theorem recursiveFoldUnfold_typed :
+    HasType [] [] recursiveFoldUnfold
+      (.arrow .lin recursiveIdTy recursiveIdTy) :=
+  (infer_sound recursiveFoldUnfold_infer).1
+
+/-- A recursive occurrence in a function domain is not strictly positive. -/
+def negativeRecursiveTy : Ty :=
+  .mu (.arrow .lin (.var 0) .unit)
+
+theorem negativeRecursiveTy_rejected :
+    Ty.admissible negativeRecursiveTy = false := by
+  rfl
+
 end QLambda.Linear

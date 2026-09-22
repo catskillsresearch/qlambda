@@ -379,8 +379,8 @@ theorem progress {M : Term} {A : Ty} (h : HasType [] [] M A) :
     | varL hlookup _ =>
         rw [hΔ] at hlookup
         cases hlookup
-    | lamU _ _ _ => exact Or.inl Value.lam
-    | lamL _ => exact Or.inl Value.lam
+    | lamU _ _ _ _ => exact Or.inl Value.lam
+    | lamL _ _ => exact Or.inl Value.lam
     | appL hsplit hF hX ihF ihX =>
         rw [hΔ] at hsplit
         obtain ⟨rfl, rfl⟩ := oSplit_nil hsplit
@@ -447,17 +447,17 @@ theorem progress {M : Term} {A : Ty} (h : HasType [] [] M A) :
         · exact Or.inr (Or.inr (QuantumBlocked.measure hVQ))
         · exact Or.inr (Or.inl ⟨_, Step.measureC hSQ⟩)
         · exact Or.inr (Or.inr (QuantumBlocked.measureC hBQ))
-    | fix _ _ _ ih =>
+    | fix _ _ _ _ ih =>
         rcases ih hΓ hΔ with hV | ⟨⟨N, hS⟩ | hQ⟩
         · exact Or.inr (Or.inl ⟨_, Step.fixBeta hV⟩)
         · exact Or.inr (Or.inl ⟨_, Step.fixC hS⟩)
         · exact Or.inr (Or.inr (QuantumBlocked.fixC hQ))
-    | fold _ ih =>
+    | fold _ _ ih =>
         rcases ih hΓ hΔ with hV | ⟨⟨N, hS⟩ | hQ⟩
         · exact Or.inl (Value.fold hV)
         · exact Or.inr (Or.inl ⟨_, Step.foldC hS⟩)
         · exact Or.inr (Or.inr (QuantumBlocked.foldC hQ))
-    | unfold hM ih =>
+    | unfold _ hM ih =>
         rcases ih hΓ hΔ with hV | ⟨⟨N, hS⟩ | hQ⟩
         · obtain ⟨V, rfl, hV'⟩ := value_mu_shape hV hM
           exact Or.inr (Or.inl ⟨_, Step.unfoldBeta hV'⟩)
