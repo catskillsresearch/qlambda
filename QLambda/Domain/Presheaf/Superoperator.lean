@@ -25,6 +25,14 @@ def TraceNonincreasing {n m : ℕ} (Φ : CPMap n m) : Prop :=
   ∀ ρ : Matrix (Fin n) (Fin n) ℂ, ρ.PosSemidef →
     (Matrix.trace (Φ.applyMat ρ)).re ≤ (Matrix.trace ρ).re
 
+/-- Intrinsic trace non-increase is exactly the input-effect bound.  Notice
+that this bounds the output partial trace of the Choi matrix, not the whole
+Choi matrix itself. -/
+theorem traceNonincreasing_iff_effect_le_one {n m : ℕ} (Φ : CPMap n m) :
+    TraceNonincreasing Φ ↔ Φ.effect ≤ 1 :=
+  ⟨CPMap.effect_le_one_of_trace_nonincreasing Φ,
+    CPMap.trace_nonincreasing_of_effect_le_one Φ⟩
+
 /-- A finite-dimensional trace-nonincreasing completely positive map. -/
 structure Superoperator (n m : ℕ) where
   cp : CPMap n m
@@ -239,6 +247,557 @@ def unitary (U : KrausOperator n n) (hU : Uᴴ * U = 1) :
 theorem cp_ofIsometry (A : KrausOperator n m) (hA : Aᴴ * A = 1) :
     (ofIsometry A hA).cp = CPMap.ofKraus [A] :=
   rfl
+
+/-- The permutation matrix associated to an equivalence of finite bases. -/
+def equivalenceMatrix {n m : ℕ} (e : Fin n ≃ Fin m) :
+    Matrix (Fin m) (Fin n) ℂ :=
+  fun i j => if i = e j then 1 else 0
+
+theorem equivalenceMatrix_isometry {n m : ℕ} (e : Fin n ≃ Fin m) :
+    (equivalenceMatrix e)ᴴ * equivalenceMatrix e = 1 := by
+  ext i j
+  simp only [Matrix.mul_apply, Matrix.conjTranspose_apply, equivalenceMatrix]
+  by_cases hij : i = j
+  · subst j
+    simp
+  · simp [hij, Ne.symm hij]
+
+theorem equivalenceMatrix_comp {n m ℓ : ℕ}
+    (e : Fin n ≃ Fin m) (f : Fin m ≃ Fin ℓ) :
+    equivalenceMatrix (e.trans f) =
+      equivalenceMatrix f * equivalenceMatrix e := by
+  ext i j
+  simp [equivalenceMatrix, Matrix.mul_apply]
+  rfl
+
+/-- A finite basis equivalence as a reversible superoperator. -/
+def ofEquivalence {n m : ℕ} (e : Fin n ≃ Fin m) :
+    Superoperator n m :=
+  ofIsometry (equivalenceMatrix e) (equivalenceMatrix_isometry e)
+
+@[simp]
+theorem ofEquivalence_comp {n m ℓ : ℕ}
+    (e : Fin n ≃ Fin m) (f : Fin m ≃ Fin ℓ) :
+    comp (ofEquivalence f) (ofEquivalence e) =
+      ofEquivalence (e.trans f) := by
+  apply ext
+  apply CPMap.ext_apply
+  intro ρ
+  simp only [cp_comp, CPMap.applyMat_comp]
+  simp only [ofEquivalence, ofIsometry, ofQuantumOperation, ofKraus,
+    CPMap.applyMat_ofKraus, KrausFamily.applyMat,
+    QuantumOperation.ofIsometry]
+  simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
+    add_zero]
+  rw [equivalenceMatrix_comp, Matrix.conjTranspose_mul]
+  simp only [Matrix.mul_assoc]
+
+@[simp]
+theorem ofEquivalence_refl (n : ℕ) :
+    ofEquivalence (Equiv.refl (Fin n)) = identity n := by
+  apply ext
+  apply CPMap.ext_apply
+  intro ρ
+  simp only [ofEquivalence, identity, CPMap.identity, ofIsometry,
+    ofQuantumOperation, ofKraus, CPMap.applyMat_ofKraus,
+    KrausFamily.applyMat, QuantumOperation.ofIsometry,
+    KrausFamily.identity]
+  have h : equivalenceMatrix (Equiv.refl (Fin n)) = 1 := by
+    ext i j
+    simp [equivalenceMatrix, Matrix.one_apply]
+    rfl
+  rw [h]
+
+theorem comp_ofEquivalence_finCongr {n a b : ℕ} (h : a = b)
+    (x : Superoperator n a) :
+    comp (ofEquivalence (finCongr h)) x = h ▸ x := by
+  subst b
+  simp
+
+/-- The canonical reassociation of three finite tensor-product bases. -/
+def tensorAssociatorEquiv (a b c : ℕ) :
+    Fin ((a * b) * c) ≃ Fin (a * (b * c)) :=
+  finProdFinEquiv.symm |>.trans
+    ((Equiv.prodCongr finProdFinEquiv.symm (Equiv.refl (Fin c))).trans
+      ((Equiv.prodAssoc (Fin a) (Fin b) (Fin c)).trans
+        ((Equiv.prodCongr (Equiv.refl (Fin a)) finProdFinEquiv).trans
+          finProdFinEquiv)))
+
+/-- The canonical left-unitor equivalence of finite tensor-product bases. -/
+def tensorLeftUnitorEquiv (a : ℕ) : Fin (1 * a) ≃ Fin a :=
+  finProdFinEquiv.symm |>.trans
+    ((Equiv.prodCongr finOneEquiv (Equiv.refl (Fin a))).trans
+      (Equiv.punitProd (Fin a)))
+
+/-- The canonical right-unitor equivalence of finite tensor-product bases. -/
+def tensorRightUnitorEquiv (a : ℕ) : Fin (a * 1) ≃ Fin a :=
+  finProdFinEquiv.symm |>.trans
+    ((Equiv.prodCongr (Equiv.refl (Fin a)) finOneEquiv).trans
+      (Equiv.prodPUnit (Fin a)))
+
+/-- The canonical swap of two finite tensor-product bases. -/
+def tensorSwapEquiv (a b : ℕ) : Fin (a * b) ≃ Fin (b * a) :=
+  finProdFinEquiv.symm |>.trans
+    ((Equiv.prodComm (Fin a) (Fin b)).trans finProdFinEquiv)
+
+/-- Tensor product of finite basis equivalences. -/
+def tensorEquiv {a a' b b' : ℕ}
+    (e : Fin a ≃ Fin a') (f : Fin b ≃ Fin b') :
+    Fin (a * b) ≃ Fin (a' * b') :=
+  finProdFinEquiv.symm |>.trans
+    ((Equiv.prodCongr e f).trans finProdFinEquiv)
+
+theorem choi_ofEquivalence_apply {n m : ℕ} (e : Fin n ≃ Fin m)
+    (a b : Fin m) (i j : Fin n) :
+    (ofEquivalence e).cp.choi (a, i) (b, j) =
+      (if a = e i ∧ b = e j then 1 else 0) := by
+  simp only [ofEquivalence, ofIsometry, ofQuantumOperation, ofKraus,
+    CPMap.choi_ofKraus, QuantumOperation.ofIsometry,
+    KrausFamily.choi_single, KrausFamily.choiTerm, equivalenceMatrix]
+  by_cases hai : a = e i <;> by_cases hbj : b = e j <;>
+    simp [hai, hbj]
+
+theorem choi_comp_ofEquivalence_right {n m ℓ : ℕ}
+    (e : Fin n ≃ Fin m) (Φ : Superoperator m ℓ)
+    (a b : Fin ℓ) (i j : Fin n) :
+    (comp Φ (ofEquivalence e)).cp.choi (a, i) (b, j) =
+      Φ.cp.choi (a, e i) (b, e j) := by
+  classical
+  rw [cp_comp, CPMap.choi_comp_apply]
+  simp only [choi_ofEquivalence_apply]
+  rw [Finset.sum_eq_single (e i)]
+  · rw [Finset.sum_eq_single (e j)]
+    · simp
+    · intro y _ hy
+      simp [hy]
+    · intro h
+      exact (h (Finset.mem_univ _)).elim
+  · intro x _ hx
+    simp [hx]
+  · intro h
+    exact (h (Finset.mem_univ _)).elim
+
+theorem choi_comp_ofEquivalence_left {n m ℓ : ℕ}
+    (e : Fin m ≃ Fin ℓ) (Φ : Superoperator n m)
+    (a b : Fin ℓ) (i j : Fin n) :
+    (comp (ofEquivalence e) Φ).cp.choi (a, i) (b, j) =
+      Φ.cp.choi (e.symm a, i) (e.symm b, j) := by
+  classical
+  rw [cp_comp, CPMap.choi_comp_apply]
+  simp only [choi_ofEquivalence_apply]
+  rw [Finset.sum_eq_single (e.symm a)]
+  · rw [Finset.sum_eq_single (e.symm b)]
+    · simp
+    · intro y _ hy
+      have hne : b ≠ e y := by
+        intro h
+        apply hy
+        apply e.injective
+        simpa using h.symm
+      simp [hne]
+    · intro h
+      exact (h (Finset.mem_univ _)).elim
+  · intro x _ hx
+    have hne : a ≠ e x := by
+      intro h
+      apply hx
+      apply e.injective
+      simpa using h.symm
+    simp [hne]
+  · intro h
+    exact (h (Finset.mem_univ _)).elim
+
+@[simp]
+theorem tensor_ofEquivalence {a a' b b' : ℕ}
+    (e : Fin a ≃ Fin a') (f : Fin b ≃ Fin b') :
+    tensor (ofEquivalence e) (ofEquivalence f) =
+      ofEquivalence (tensorEquiv e f) := by
+  apply ext
+  apply CPMap.ext
+  ext ai bj
+  rcases ai with ⟨x, i⟩
+  rcases bj with ⟨y, j⟩
+  simp only [cp_tensor, CPMap.choi_tensor, Matrix.reindex_apply,
+    Matrix.submatrix_apply, Matrix.kroneckerMap_apply,
+    choi_ofEquivalence_apply]
+  dsimp [CPMap.choiTensorEquiv, tensorEquiv]
+  rw [choi_ofEquivalence_apply, choi_ofEquivalence_apply]
+  have hx :
+      x = finProdFinEquiv (e i.divNat, f i.modNat) ↔
+        x.divNat = e i.divNat ∧ x.modNat = f i.modNat := by
+    constructor
+    · intro h
+      subst x
+      have h := finProdFinEquiv.left_inv (e i.divNat, f i.modNat)
+      exact ⟨congrArg Prod.fst h, congrArg Prod.snd h⟩
+    · rintro ⟨h₁, h₂⟩
+      rw [← finProdFinEquiv.apply_symm_apply x]
+      exact congrArg finProdFinEquiv (Prod.ext h₁ h₂)
+  have hy :
+      y = finProdFinEquiv (e j.divNat, f j.modNat) ↔
+        y.divNat = e j.divNat ∧ y.modNat = f j.modNat := by
+    constructor
+    · intro h
+      subst y
+      have h := finProdFinEquiv.left_inv (e j.divNat, f j.modNat)
+      exact ⟨congrArg Prod.fst h, congrArg Prod.snd h⟩
+    · rintro ⟨h₁, h₂⟩
+      rw [← finProdFinEquiv.apply_symm_apply y]
+      exact congrArg finProdFinEquiv (Prod.ext h₁ h₂)
+  split <;> split <;> simp_all
+
+/-- Reversible superoperator implementing tensor reassociation. -/
+def tensorAssociator (a b c : ℕ) :
+    Superoperator ((a * b) * c) (a * (b * c)) :=
+  ofEquivalence (tensorAssociatorEquiv a b c)
+
+/-- Reversible superoperator implementing the left tensor unitor. -/
+def tensorLeftUnitor (a : ℕ) : Superoperator (1 * a) a :=
+  ofEquivalence (tensorLeftUnitorEquiv a)
+
+/-- Reversible superoperator implementing the right tensor unitor. -/
+def tensorRightUnitor (a : ℕ) : Superoperator (a * 1) a :=
+  ofEquivalence (tensorRightUnitorEquiv a)
+
+/-- Reversible superoperator implementing tensor-factor swap. -/
+def tensorSwap (a b : ℕ) : Superoperator (a * b) (b * a) :=
+  ofEquivalence (tensorSwapEquiv a b)
+
+def tensorAssociatorInv (a b c : ℕ) :
+    Superoperator (a * (b * c)) ((a * b) * c) :=
+  ofEquivalence (tensorAssociatorEquiv a b c).symm
+
+def tensorLeftUnitorInv (a : ℕ) : Superoperator a (1 * a) :=
+  ofEquivalence (tensorLeftUnitorEquiv a).symm
+
+def tensorRightUnitorInv (a : ℕ) : Superoperator a (a * 1) :=
+  ofEquivalence (tensorRightUnitorEquiv a).symm
+
+@[simp]
+theorem tensorAssociator_hom_inv (a b c : ℕ) :
+    comp (tensorAssociator a b c) (tensorAssociatorInv a b c) =
+      identity (a * (b * c)) := by
+  rw [tensorAssociator, tensorAssociatorInv, ofEquivalence_comp]
+  convert ofEquivalence_refl (a * (b * c))
+  ext
+  simp
+
+@[simp]
+theorem tensorAssociator_inv_hom (a b c : ℕ) :
+    comp (tensorAssociatorInv a b c) (tensorAssociator a b c) =
+      identity ((a * b) * c) := by
+  rw [tensorAssociator, tensorAssociatorInv, ofEquivalence_comp]
+  convert ofEquivalence_refl ((a * b) * c)
+  ext
+  simp
+
+@[simp]
+theorem tensorLeftUnitor_hom_inv (a : ℕ) :
+    comp (tensorLeftUnitor a) (tensorLeftUnitorInv a) = identity a := by
+  rw [tensorLeftUnitor, tensorLeftUnitorInv, ofEquivalence_comp]
+  convert ofEquivalence_refl a
+  ext
+  simp
+
+@[simp]
+theorem tensorLeftUnitor_inv_hom (a : ℕ) :
+    comp (tensorLeftUnitorInv a) (tensorLeftUnitor a) =
+      identity (1 * a) := by
+  rw [tensorLeftUnitor, tensorLeftUnitorInv, ofEquivalence_comp]
+  convert ofEquivalence_refl (1 * a)
+  ext
+  simp
+
+@[simp]
+theorem tensorRightUnitor_hom_inv (a : ℕ) :
+    comp (tensorRightUnitor a) (tensorRightUnitorInv a) = identity a := by
+  rw [tensorRightUnitor, tensorRightUnitorInv, ofEquivalence_comp]
+  convert ofEquivalence_refl a
+  ext
+  simp
+
+@[simp]
+theorem tensorRightUnitor_inv_hom (a : ℕ) :
+    comp (tensorRightUnitorInv a) (tensorRightUnitor a) =
+      identity (a * 1) := by
+  rw [tensorRightUnitor, tensorRightUnitorInv, ofEquivalence_comp]
+  convert ofEquivalence_refl (a * 1)
+  ext
+  simp
+
+@[simp]
+theorem tensorSwap_involutive (a b : ℕ) :
+    comp (tensorSwap b a) (tensorSwap a b) = identity (a * b) := by
+  rw [tensorSwap, tensorSwap, ofEquivalence_comp]
+  convert ofEquivalence_refl (a * b)
+  ext x
+  simp [tensorSwapEquiv]
+  exact Nat.mod_add_div x.val b
+
+theorem tensor_pentagon (a b c d : ℕ) :
+    comp (tensorAssociator a b (c * d))
+        (tensorAssociator (a * b) c d) =
+      comp (tensor (identity a) (tensorAssociator b c d))
+        (comp (tensorAssociator a (b * c) d)
+          (tensor (tensorAssociator a b c) (identity d))) := by
+  rw [← ofEquivalence_refl a, ← ofEquivalence_refl d]
+  simp only [tensorAssociator, tensor_ofEquivalence, tensorEquiv,
+    ofEquivalence_comp]
+  congr 1
+  ext x
+  simp [tensorAssociatorEquiv]
+
+theorem tensor_triangle (a b : ℕ) :
+    comp (tensor (identity a) (tensorLeftUnitor b))
+        (tensorAssociator a 1 b) =
+      tensor (tensorRightUnitor a) (identity b) := by
+  simp only [tensorAssociator, tensorLeftUnitor, tensorRightUnitor,
+    ← ofEquivalence_refl, tensor_ofEquivalence, ofEquivalence_comp]
+  congr 1
+  ext x
+  simp [tensorAssociatorEquiv, tensorLeftUnitorEquiv,
+    tensorRightUnitorEquiv, tensorEquiv]
+
+theorem tensor_hexagon (a b c : ℕ) :
+    comp (tensorSwap a (b * c)) (tensorAssociator a b c) =
+      comp (tensorAssociatorInv b c a)
+        (comp (tensor (identity b) (tensorSwap a c))
+          (comp (tensorAssociator b a c)
+            (tensor (tensorSwap a b) (identity c)))) := by
+  simp only [tensorAssociator, tensorAssociatorInv, tensorSwap,
+    ← ofEquivalence_refl, tensor_ofEquivalence, ofEquivalence_comp]
+  congr 1
+  ext x
+  simp [tensorAssociatorEquiv, tensorSwapEquiv, tensorEquiv]
+
+/-- Reassociation in the reverse direction, expressed using only forward
+associators and symmetric braidings. -/
+theorem tensorAssociatorInv_braiding (a b c : ℕ) :
+    comp (tensorSwap c (a * b))
+      (comp (tensorAssociator c a b)
+        (comp (tensorSwap b (c * a))
+          (comp (tensorAssociator b c a)
+            (tensorSwap a (b * c))))) =
+      tensorAssociatorInv a b c := by
+  simp only [tensorAssociator, tensorAssociatorInv, tensorSwap,
+    ofEquivalence_comp]
+  congr 1
+  ext x
+  simp [tensorAssociatorEquiv, tensorSwapEquiv]
+
+theorem tensorAssociator_naturality
+    {a a' b b' c c' : ℕ}
+    (f : Superoperator a a') (g : Superoperator b b')
+    (h : Superoperator c c') :
+    comp (tensorAssociator a' b' c') (tensor (tensor f g) h) =
+      comp (tensor f (tensor g h)) (tensorAssociator a b c) := by
+  apply ext
+  apply CPMap.ext
+  ext ai bj
+  rcases ai with ⟨x, i⟩
+  rcases bj with ⟨y, j⟩
+  rw [show tensorAssociator a' b' c' =
+    ofEquivalence (tensorAssociatorEquiv a' b' c') from rfl,
+    choi_comp_ofEquivalence_left]
+  rw [show tensorAssociator a b c =
+    ofEquivalence (tensorAssociatorEquiv a b c) from rfl,
+    choi_comp_ofEquivalence_right]
+  simp only [cp_tensor, CPMap.choi_tensor, Matrix.reindex_apply,
+    Matrix.submatrix_apply, Matrix.kroneckerMap_apply]
+  dsimp [CPMap.choiTensorEquiv, tensorAssociatorEquiv]
+  simp
+  ring
+
+theorem tensorLeftUnitor_naturality {a a' : ℕ}
+    (f : Superoperator a a') :
+    comp (tensorLeftUnitor a') (tensor (identity 1) f) =
+      comp f (tensorLeftUnitor a) := by
+  apply ext
+  apply CPMap.ext
+  ext ai bj
+  rcases ai with ⟨x, i⟩
+  rcases bj with ⟨y, j⟩
+  rw [show tensorLeftUnitor a' =
+    ofEquivalence (tensorLeftUnitorEquiv a') from rfl,
+    choi_comp_ofEquivalence_left]
+  rw [show tensorLeftUnitor a =
+    ofEquivalence (tensorLeftUnitorEquiv a) from rfl,
+    choi_comp_ofEquivalence_right]
+  simp only [cp_tensor, CPMap.choi_tensor, Matrix.reindex_apply,
+    Matrix.submatrix_apply, Matrix.kroneckerMap_apply]
+  dsimp [CPMap.choiTensorEquiv, tensorLeftUnitorEquiv, identity,
+    CPMap.identity, KrausFamily.identity, KrausFamily.choi,
+    KrausFamily.choiTerm]
+  have hi : finOneEquiv.symm PUnit.unit = i.divNat :=
+    Subsingleton.elim _ _
+  have hj : finOneEquiv.symm PUnit.unit = j.divNat :=
+    Subsingleton.elim _ _
+  have hij : i.divNat = j.divNat := Subsingleton.elim _ _
+  simp [KrausFamily.choiTerm, hi, hij]
+
+theorem tensorRightUnitor_naturality {a a' : ℕ}
+    (f : Superoperator a a') :
+    comp (tensorRightUnitor a') (tensor f (identity 1)) =
+      comp f (tensorRightUnitor a) := by
+  apply ext
+  apply CPMap.ext
+  ext ai bj
+  rcases ai with ⟨x, i⟩
+  rcases bj with ⟨y, j⟩
+  rw [show tensorRightUnitor a' =
+    ofEquivalence (tensorRightUnitorEquiv a') from rfl,
+    choi_comp_ofEquivalence_left]
+  rw [show tensorRightUnitor a =
+    ofEquivalence (tensorRightUnitorEquiv a) from rfl,
+    choi_comp_ofEquivalence_right]
+  simp only [cp_tensor, CPMap.choi_tensor, Matrix.reindex_apply,
+    Matrix.submatrix_apply, Matrix.kroneckerMap_apply]
+  dsimp [CPMap.choiTensorEquiv, tensorRightUnitorEquiv, identity,
+    CPMap.identity, KrausFamily.identity, KrausFamily.choi,
+    KrausFamily.choiTerm]
+  have hi : finOneEquiv.symm PUnit.unit = i.modNat :=
+    Subsingleton.elim _ _
+  have hj : finOneEquiv.symm PUnit.unit = j.modNat :=
+    Subsingleton.elim _ _
+  have hij : i.modNat = j.modNat := Subsingleton.elim _ _
+  simp [KrausFamily.choiTerm, hi, hij]
+
+theorem tensorSwap_naturality {a a' b b' : ℕ}
+    (f : Superoperator a a') (g : Superoperator b b') :
+    comp (tensorSwap a' b') (tensor f g) =
+      comp (tensor g f) (tensorSwap a b) := by
+  apply ext
+  apply CPMap.ext
+  ext ai bj
+  rcases ai with ⟨x, i⟩
+  rcases bj with ⟨y, j⟩
+  rw [show tensorSwap a' b' =
+    ofEquivalence (tensorSwapEquiv a' b') from rfl,
+    choi_comp_ofEquivalence_left]
+  rw [show tensorSwap a b =
+    ofEquivalence (tensorSwapEquiv a b) from rfl,
+    choi_comp_ofEquivalence_right]
+  simp only [cp_tensor, CPMap.choi_tensor, Matrix.reindex_apply,
+    Matrix.submatrix_apply, Matrix.kroneckerMap_apply]
+  dsimp [CPMap.choiTensorEquiv, tensorSwapEquiv]
+  simp
+  ring
+
+theorem tensorAssociatorInv_naturality
+    {a a' b b' c c' : ℕ}
+    (f : Superoperator a a') (g : Superoperator b b')
+    (h : Superoperator c c') :
+    comp (tensor (tensor f g) h) (tensorAssociatorInv a b c) =
+      comp (tensorAssociatorInv a' b' c')
+        (tensor f (tensor g h)) := by
+  apply ext
+  apply CPMap.ext
+  ext ai bj
+  rcases ai with ⟨x, i⟩
+  rcases bj with ⟨y, j⟩
+  rw [show tensorAssociatorInv a b c =
+    ofEquivalence (tensorAssociatorEquiv a b c).symm from rfl,
+    choi_comp_ofEquivalence_right]
+  rw [show tensorAssociatorInv a' b' c' =
+    ofEquivalence (tensorAssociatorEquiv a' b' c').symm from rfl,
+    choi_comp_ofEquivalence_left]
+  simp only [cp_tensor, CPMap.choi_tensor, Matrix.reindex_apply,
+    Matrix.submatrix_apply, Matrix.kroneckerMap_apply]
+  dsimp [CPMap.choiTensorEquiv, tensorAssociatorEquiv]
+  simp
+  ring
+
+theorem tensorLeftUnitorInv_naturality {a a' : ℕ}
+    (f : Superoperator a a') :
+    comp (tensor (identity 1) f) (tensorLeftUnitorInv a) =
+      comp (tensorLeftUnitorInv a') f := by
+  apply ext
+  apply CPMap.ext
+  ext ai bj
+  rcases ai with ⟨x, i⟩
+  rcases bj with ⟨y, j⟩
+  rw [show tensorLeftUnitorInv a =
+    ofEquivalence (tensorLeftUnitorEquiv a).symm from rfl,
+    choi_comp_ofEquivalence_right]
+  rw [show tensorLeftUnitorInv a' =
+    ofEquivalence (tensorLeftUnitorEquiv a').symm from rfl,
+    choi_comp_ofEquivalence_left]
+  simp only [cp_tensor, CPMap.choi_tensor, Matrix.reindex_apply,
+    Matrix.submatrix_apply, Matrix.kroneckerMap_apply]
+  dsimp [CPMap.choiTensorEquiv, tensorLeftUnitorEquiv, identity,
+    CPMap.identity, KrausFamily.identity, KrausFamily.choi,
+    KrausFamily.choiTerm]
+  have hxy : x.divNat = y.divNat := Subsingleton.elim _ _
+  have hone : y.divNat = finOneEquiv.symm PUnit.unit :=
+    Subsingleton.elim _ _
+  simp [KrausFamily.choiTerm, hxy, hone]
+
+theorem tensorRightUnitorInv_naturality {a a' : ℕ}
+    (f : Superoperator a a') :
+    comp (tensor f (identity 1)) (tensorRightUnitorInv a) =
+      comp (tensorRightUnitorInv a') f := by
+  apply ext
+  apply CPMap.ext
+  ext ai bj
+  rcases ai with ⟨x, i⟩
+  rcases bj with ⟨y, j⟩
+  rw [show tensorRightUnitorInv a =
+    ofEquivalence (tensorRightUnitorEquiv a).symm from rfl,
+    choi_comp_ofEquivalence_right]
+  rw [show tensorRightUnitorInv a' =
+    ofEquivalence (tensorRightUnitorEquiv a').symm from rfl,
+    choi_comp_ofEquivalence_left]
+  simp only [cp_tensor, CPMap.choi_tensor, Matrix.reindex_apply,
+    Matrix.submatrix_apply, Matrix.kroneckerMap_apply]
+  dsimp [CPMap.choiTensorEquiv, tensorRightUnitorEquiv, identity,
+    CPMap.identity, KrausFamily.identity, KrausFamily.choi,
+    KrausFamily.choiTerm]
+  have hxy : x.modNat = y.modNat := Subsingleton.elim _ _
+  have hone : y.modNat = finOneEquiv.symm PUnit.unit :=
+    Subsingleton.elim _ _
+  simp [KrausFamily.choiTerm, hxy, hone]
+
+theorem tensor_triangle_naturality {u : ℕ}
+    (a b : ℕ) (q : Superoperator u 1) :
+    comp
+        (tensor (identity a)
+          (comp (tensorLeftUnitor b)
+            (tensor q (identity b))))
+        (tensorAssociator a u b) =
+      tensor
+        (comp (tensorRightUnitor a)
+          (tensor (identity a) q))
+        (identity b) := by
+  calc
+    comp
+        (tensor (identity a)
+          (comp (tensorLeftUnitor b)
+            (tensor q (identity b))))
+        (tensorAssociator a u b) =
+      comp (tensor (identity a) (tensorLeftUnitor b))
+        (comp (tensor (identity a)
+          (tensor q (identity b)))
+          (tensorAssociator a u b)) := by
+            rw [comp_assoc, ← tensor_comp]
+            simp
+    _ = comp (tensor (identity a) (tensorLeftUnitor b))
+        (comp (tensorAssociator a 1 b)
+          (tensor (tensor (identity a) q) (identity b))) := by
+            rw [← tensorAssociator_naturality]
+    _ = comp
+        (comp (tensor (identity a) (tensorLeftUnitor b))
+          (tensorAssociator a 1 b))
+        (tensor (tensor (identity a) q) (identity b)) := by
+            rw [comp_assoc]
+    _ = comp (tensor (tensorRightUnitor a) (identity b))
+        (tensor (tensor (identity a) q) (identity b)) := by
+            rw [tensor_triangle]
+    _ = tensor
+        (comp (tensorRightUnitor a)
+          (tensor (identity a) q))
+        (identity b) := by
+            rw [← tensor_comp]
+            simp
 
 theorem allocZeroMatrix_isometry (q : ℕ) :
     (CompletedCP.allocZeroMatrix q)ᴴ * CompletedCP.allocZeroMatrix q = 1 := by

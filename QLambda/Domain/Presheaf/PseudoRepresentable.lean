@@ -135,6 +135,26 @@ structure PseudoBasis (M : Module.{u}) where
 
 attribute [instance] PseudoBasis.countableIndex
 
+/-- A positive-dimensional representable has the canonical one-coordinate
+pseudo-basis.  This is the basic source constructor required by the
+biorthogonal presentation; unlike the unrestricted `Basis` wrapper, its
+coefficient carries the hereditary and bounded pseudo-representability
+witnesses. -/
+noncomputable def representablePseudoBasis (A : ℕ) (hA : 0 < A) :
+    PseudoBasis (representable A) where
+  Index := PUnit
+  countableIndex := inferInstance
+  coeff := fun _ => PseudoRepresentable.representable A hA
+  ket := fun _ => Hom.id _
+  bra := fun _ => Hom.id _
+  resolves := by
+    have h := Hom.hasSum_singleton (Hom.id (representable A))
+    convert h using 1
+    funext i
+    apply Hom.ext
+    intro n x
+    rfl
+
 /-- Orthogonality is an optional strengthening of a pseudo-representable
 basis; it does not imply diagonal normalization. -/
 structure OrthogonalPseudoBasis (M : Module.{u}) where

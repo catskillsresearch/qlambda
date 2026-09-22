@@ -288,12 +288,11 @@ theorem uncurry_curry_representable {X A : ℕ} {N : Module.{u}}
     uncurryRepresentable (curryRepresentable f) = f :=
   (closedRepresentableEquiv X A N).symm_apply_apply f
 
-/-- Exact existence interface for general Day monoidal closure.
+/-- Exact interface for general Day monoidal closure.
 
-No value of this structure is currently defined.  The representable results
-above instantiate each field only when the relevant tensor inputs are
-representable; constructing this package requires the enriched coend
-quotient and is the next categorical gate. -/
+The representable results above instantiate each field on the elementary
+fragment.  `DayCoend.lean` constructs the general enriched coend quotient and
+provides a concrete value of this structure. -/
 structure DayClosedPresentation where
   tensor :
     (M N : Module) → DayTensorPresentation M N

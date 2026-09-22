@@ -35,7 +35,10 @@ import QLambda.Domain.Presheaf.Yoneda
 import QLambda.Domain.Presheaf.Generated
 import QLambda.Domain.Presheaf.PseudoRepresentable
 import QLambda.Domain.Presheaf.Classical
+import QLambda.Domain.Presheaf.ClassicalCategory
 import QLambda.Domain.Presheaf.Monoidal
+import QLambda.Domain.Presheaf.DayCoend
+import QLambda.Domain.Presheaf.OmegaEnriched
 import QLambda.Domain.Presheaf.SymmetricPower
 import QLambda.Domain.Presheaf.ClosedGenerated
 import QLambda.Domain.Presheaf.Exponential
