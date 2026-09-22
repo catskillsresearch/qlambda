@@ -41,6 +41,7 @@ import QLambda.ScottLowerSet
 import QLambda.Soundness
 import QLambda.Linear.Circuit
 import QLambda.Linear.Operational
+import QLambda.Linear.Runtime
 import QLambda.Source.Denotation
 import QLambda.Source.Syntax
 import QLambda.Syntax
