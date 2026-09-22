@@ -37,6 +37,7 @@ import QLambda.RoundedTheoryOmega
 import QLambda.Saturation
 import QLambda.ScottLowerSet
 import QLambda.Soundness
+import QLambda.Linear.Operational
 import QLambda.Source.Denotation
 import QLambda.Source.Syntax
 import QLambda.Syntax

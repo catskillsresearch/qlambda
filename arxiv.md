@@ -1,6 +1,4 @@
-# Finite-Valuation Approximable Structures, Quantum $\lambda$-Calculus, and the Jung–Tix Problem: Semantics and Formal Verification in Lean 4
-
-
+# Domain Semantics and Circuit Completeness for a Typed Linear Quantum λ-Calculus Formalized in Lean 4
 ---
 
 ## Abstract
