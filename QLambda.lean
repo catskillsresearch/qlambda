@@ -10,9 +10,11 @@ import QLambda.Compiler.Correctness
 import QLambda.Composer.Denotation
 import QLambda.Composer.Fixtures
 import QLambda.Composer.OpenQASM
+import QLambda.Composer.OpenQASMParser
 import QLambda.Composer.WellFormed
 import QLambda.Effects
 import QLambda.FiniteImageNonclosure
+import QLambda.Domain.OmegaCPO
 import QLambda.HardwareAdequacy
 import QLambda.HardwareChannelSemantics
 import QLambda.HardwareCompletenessCounterexample
@@ -37,6 +39,7 @@ import QLambda.RoundedTheoryOmega
 import QLambda.Saturation
 import QLambda.ScottLowerSet
 import QLambda.Soundness
+import QLambda.Linear.Circuit
 import QLambda.Linear.Operational
 import QLambda.Source.Denotation
 import QLambda.Source.Syntax

@@ -17,19 +17,27 @@ namespace QLambda.Linear
 
 inductive HasType : List Ty → List (Option Ty) → Term → Ty → Prop where
   | varU {Γ Δ n A} :
-      Lookup Γ n A → AllNone Δ → HasType Γ Δ (.var .unres n) A
+      Lookup Γ n A → Ty.duplicable A = true → AllNone Δ →
+      HasType Γ Δ (.var .unres n) A
   | varL {Γ Δ n A} :
       Lookup Δ n (some A) → OnlySomeAt Δ n → HasType Γ Δ (.var .lin n) A
   | lamU {Γ Δ A B M} :
+      Ty.duplicable A = true →
+      AllNone Δ →
       HasType (A :: Γ) Δ M B →
       HasType Γ Δ (.lam .unres A M) (.arrow .unres A B)
   | lamL {Γ Δ A B M} :
       HasType Γ (some A :: Δ) M B →
       HasType Γ Δ (.lam .lin A M) (.arrow .lin A B)
-  | app {Γ Δ Δ₁ Δ₂ κ A B F X} :
+  | appL {Γ Δ Δ₁ Δ₂ A B F X} :
       OSplit Δ Δ₁ Δ₂ →
-      HasType Γ Δ₁ F (.arrow κ A B) →
+      HasType Γ Δ₁ F (.arrow .lin A B) →
       HasType Γ Δ₂ X A →
+      HasType Γ Δ (.app F X) B
+  | appU {Γ Δ A B F X} :
+      AllNone Δ →
+      HasType Γ Δ F (.arrow .unres A B) →
+      HasType Γ Δ X A →
       HasType Γ Δ (.app F X) B
   | unit {Γ Δ} : AllNone Δ → HasType Γ Δ .unit .unit
   | bitLit {Γ Δ b} : AllNone Δ → HasType Γ Δ (.bitLit b) .bit
@@ -56,6 +64,7 @@ inductive HasType : List Ty → List (Option Ty) → Term → Ty → Prop where
       HasType Γ Δ₂ K (.arrow .unres .bit (.arrow .lin .qubit A)) →
       HasType Γ Δ (.measure Q K) A
   | fix {Γ Δ A M} :
+      Ty.duplicable A = true →
       AllNone Δ →
       HasType Γ Δ M (.arrow .unres A A) →
       HasType Γ Δ (.fix A M) A
@@ -71,27 +80,39 @@ of the supplied linear scope are used. -/
 def infer (Γ Δ : List Ty) : Term → Option (Ty × List Bool)
   | .var .unres n =>
       match Γ[n]? with
-      | some A => some (A, List.replicate Δ.length false)
+      | some A =>
+          if Ty.duplicable A = true then
+            some (A, List.replicate Δ.length false)
+          else none
       | none => none
   | .var .lin n =>
       match Δ[n]? with
       | some A => some (A, mark n Δ)
       | none => none
   | .lam .unres A M =>
-      match infer (A :: Γ) Δ M with
-      | some (B, u) => some (.arrow .unres A B, u)
-      | none => none
+      if Ty.duplicable A = true then
+        match infer (A :: Γ) Δ M with
+        | some (B, u) =>
+            if allFalse u = true then some (.arrow .unres A B, u) else none
+        | none => none
+      else none
   | .lam .lin A M =>
       match infer Γ (A :: Δ) M with
       | some (B, true :: u) => some (.arrow .lin A B, u)
       | _ => none
   | .app F X =>
       match infer Γ Δ F, infer Γ Δ X with
-      | some (.arrow _ A B, uF), some (A', uX) =>
+      | some (.arrow κ A B, uF), some (A', uX) =>
           if A = A' then
-            match zipOr uF uX with
-            | some u => some (B, u)
-            | none => none
+            match κ with
+            | .lin =>
+                match zipOr uF uX with
+                | some u => some (B, u)
+                | none => none
+            | .unres =>
+                if allFalse uF = true ∧ allFalse uX = true then
+                  some (B, List.replicate Δ.length false)
+                else none
           else none
       | _, _ => none
   | .unit => some (.unit, List.replicate Δ.length false)
@@ -132,7 +153,9 @@ def infer (Γ Δ : List Ty) : Term → Option (Ty × List Bool)
   | .fix A M =>
       match infer Γ Δ M with
       | some (.arrow .unres A₁ A₂, u) =>
-          if A₁ = A ∧ A₂ = A ∧ allFalse u = true then some (A, u) else none
+          if Ty.duplicable A = true ∧ A₁ = A ∧ A₂ = A ∧ allFalse u = true then
+            some (A, u)
+          else none
       | _ => none
   | .fold A M =>
       match infer Γ Δ M with
@@ -156,8 +179,8 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
           | none => simp [hΓ] at h
           | some A' =>
               simp [hΓ] at h
-              obtain ⟨rfl, rfl⟩ := h
-              exact ⟨HasType.varU (lookup_of_get? hΓ) (allNone_unused Δ),
+              obtain ⟨hdup, rfl, rfl⟩ := h
+              exact ⟨HasType.varU (lookup_of_get? hΓ) hdup (allNone_unused Δ),
                 by simp [List.length_replicate]⟩
       | lin =>
           simp only [infer] at h
@@ -177,9 +200,9 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
           | some p =>
               obtain ⟨C, uC⟩ := p
               simp [hM] at h
-              obtain ⟨rfl, rfl⟩ := h
+              obtain ⟨hdup, hnone, rfl, rfl⟩ := h
               obtain ⟨hC, hlen⟩ := ih hM
-              exact ⟨HasType.lamU hC, hlen⟩
+              exact ⟨HasType.lamU hdup (allNone_of_allFalse hlen hnone) hC, hlen⟩
       | lin =>
           simp only [infer] at h
           cases hM : infer Γ (B :: Δ) M with
@@ -221,16 +244,35 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
                   by_cases hA : A₀ = TX
                   · subst hA
                     rw [if_pos rfl] at h
-                    cases hzip : zipOr uF uX with
-                    | none => simp [hzip] at h
-                    | some u' =>
-                        simp [hzip] at h
-                        obtain ⟨rfl, rfl⟩ := h
-                        obtain ⟨hFty, hFlen⟩ := ihF hF
-                        obtain ⟨hXty, hXlen⟩ := ihX hX
-                        have hsplit := oSplit_of_zipOr hzip hFlen hXlen
-                        obtain ⟨hlen, _⟩ := zipOr_length hzip
-                        exact ⟨HasType.app hsplit hFty hXty, hlen.trans hFlen⟩
+                    cases κ with
+                    | lin =>
+                        cases hzip : zipOr uF uX with
+                        | none => simp [hzip] at h
+                        | some u' =>
+                            simp [hzip] at h
+                            obtain ⟨rfl, rfl⟩ := h
+                            obtain ⟨hFty, hFlen⟩ := ihF hF
+                            obtain ⟨hXty, hXlen⟩ := ihX hX
+                            have hsplit := oSplit_of_zipOr hzip hFlen hXlen
+                            obtain ⟨hlen, _⟩ := zipOr_length hzip
+                            exact ⟨HasType.appL hsplit hFty hXty, hlen.trans hFlen⟩
+                    | unres =>
+                        by_cases hnone :
+                            allFalse uF = true ∧ allFalse uX = true
+                        · rw [if_pos hnone] at h
+                          obtain ⟨rfl, rfl⟩ := h
+                          obtain ⟨hFty, hFlen⟩ := ihF hF
+                          obtain ⟨hXty, hXlen⟩ := ihX hX
+                          have huF : uF = List.replicate Δ.length false := by
+                            rw [eq_replicate_false_of_allFalse hnone.1, hFlen]
+                          have huX : uX = List.replicate Δ.length false := by
+                            rw [eq_replicate_false_of_allFalse hnone.2, hXlen]
+                          subst uF
+                          subst uX
+                          exact ⟨HasType.appU (allNone_unused Δ) hFty hXty,
+                            by simp [List.length_replicate]⟩
+                        · rw [if_neg hnone] at h
+                          simp at h
                   · rw [if_neg hA] at h
                     simp at h
   | unit =>
@@ -453,12 +495,14 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
               | lin => simp at h
               | unres =>
                   dsimp at h
-                  by_cases hfix : A₁ = A₀ ∧ A₂ = A₀ ∧ allFalse uM = true
-                  · rcases hfix with ⟨rfl, rfl, hu⟩
-                    rw [if_pos (And.intro rfl (And.intro rfl hu))] at h
+                  by_cases hfix :
+                      Ty.duplicable A₀ = true ∧ A₁ = A₀ ∧ A₂ = A₀ ∧
+                        allFalse uM = true
+                  · rw [if_pos hfix] at h
                     obtain ⟨rfl, rfl⟩ := h
+                    rcases hfix with ⟨hdup, rfl, rfl, hu⟩
                     obtain ⟨hMty, hlen⟩ := ih hM
-                    exact ⟨HasType.fix (allNone_of_allFalse hlen hu) hMty, hlen⟩
+                    exact ⟨HasType.fix hdup (allNone_of_allFalse hlen hu) hMty, hlen⟩
                   ·
                     rw [if_neg hfix] at h
                     simp at h
@@ -491,5 +535,17 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
               obtain ⟨rfl, rfl⟩ := h
               obtain ⟨hMty, hlen⟩ := ih hM
               exact ⟨HasType.unfold hMty, hlen⟩
+
+/-- No well-typed unrestricted lambda may bind a qubit. -/
+theorem no_unrestricted_qubit_binder {Γ Δ M A}
+    (h : HasType Γ Δ (.lam .unres .qubit M) A) : False := by
+  cases h with
+  | lamU hdup _ _ => simp [Ty.duplicable] at hdup
+
+/-- Unrestricted closures carry no free linear resource. -/
+theorem unrestricted_lambda_no_linear_capture {Γ Δ A M B}
+    (h : HasType Γ Δ (.lam .unres A M) B) : AllNone Δ := by
+  cases h with
+  | lamU _ hnone _ => exact hnone
 
 end QLambda.Linear

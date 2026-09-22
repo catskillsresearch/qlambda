@@ -68,6 +68,20 @@ def subst (n : Nat) (σ : Ty) : Ty → Ty
 def unfoldMu (A : Ty) : Ty :=
   subst 0 (.mu A) A
 
+/-- Types whose values may be copied and discarded.
+
+An unrestricted function is duplicable because its typing rule forbids a
+linear capture. A linear function is not duplicable in general. -/
+def duplicable : Ty → Bool
+  | .var _ => true
+  | .unit => true
+  | .bit => true
+  | .qubit => false
+  | .tensor A B => duplicable A && duplicable B
+  | .arrow .lin _ _ => false
+  | .arrow .unres _ _ => true
+  | .mu A => duplicable A
+
 end Ty
 
 /-- Gate and allocation constants. Measurement is its own elimination form. -/

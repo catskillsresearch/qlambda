@@ -120,6 +120,14 @@ noncomputable def sqrtTwoHalf : ℂ :=
 noncomputable def h₂ : QubitMatrix :=
   fun i j => if i && j then -sqrtTwoHalf else sqrtTwoHalf
 
+/-- Primitive eighth root of unity used by the `T` gate. -/
+noncomputable def tPhase : ℂ :=
+  sqrtTwoHalf + sqrtTwoHalf * Complex.I
+
+/-- The `T = diag(1, exp(iπ/4))` phase gate. -/
+noncomputable def t₂ : QubitMatrix :=
+  fun i j => if i = j then if i then tPhase else 1 else 0
+
 noncomputable def cosHalf (θ : ℝ) : ℂ :=
   (Real.cos (θ / 2) : ℝ)
 
@@ -167,6 +175,19 @@ private theorem sqrtTwoHalf_sq :
 @[simp] private theorem star_sqrtTwoHalf : star sqrtTwoHalf = sqrtTwoHalf := by
   simp [sqrtTwoHalf]
 
+@[simp] theorem star_tPhase_mul_tPhase : star tPhase * tPhase = 1 := by
+  have hstar : star tPhase =
+      sqrtTwoHalf - sqrtTwoHalf * Complex.I := by
+    simp [tPhase]
+    ring
+  rw [hstar]
+  simp only [tPhase]
+  ring_nf
+  have hs : sqrtTwoHalf ^ 2 = (1 / 2 : ℂ) := by
+    simpa [pow_two] using sqrtTwoHalf_sq
+  rw [hs, Complex.I_sq]
+  norm_num
+
 @[simp] private theorem star_cosHalf (θ : ℝ) : star (cosHalf θ) = cosHalf θ := by
   exact Complex.conj_ofReal _
 
@@ -193,6 +214,13 @@ theorem h₂_isometry : h₂ᴴ * h₂ = 1 := by
     simp only [mul_neg, neg_neg]
     repeat rw [sqrtTwoHalf_sq]
     norm_num
+
+theorem t₂_isometry : t₂ᴴ * t₂ = 1 := by
+  ext i j
+  cases i <;> cases j <;>
+    simp [t₂, Matrix.mul_apply]
+  change star tPhase * tPhase = 1
+  exact star_tPhase_mul_tPhase
 
 theorem ry₂_isometry (θ : ℝ) : (ry₂ θ)ᴴ * ry₂ θ = 1 := by
   have htrig :
@@ -319,6 +347,10 @@ noncomputable def xMatrix {q : ℕ} (w : Fin q) : KrausOperator (CQ.QDim q) (CQ.
 noncomputable def hMatrix {q : ℕ} (w : Fin q) : KrausOperator (CQ.QDim q) (CQ.QDim q) :=
   onWire w h₂
 
+/-- Canonical arbitrary-register `T` phase gate. -/
+noncomputable def tMatrix {q : ℕ} (w : Fin q) : KrausOperator (CQ.QDim q) (CQ.QDim q) :=
+  onWire w t₂
+
 /-- Canonical arbitrary-register Y rotation. -/
 noncomputable def ryMatrix {q : ℕ} (θ : ℝ) (w : Fin q) :
     KrausOperator (CQ.QDim q) (CQ.QDim q) :=
@@ -346,6 +378,10 @@ theorem xMatrix_isometry {q : ℕ} (w : Fin q) :
 theorem hMatrix_isometry {q : ℕ} (w : Fin q) :
     (hMatrix w)ᴴ * hMatrix w = 1 := by
   simp [hMatrix, h₂_isometry]
+
+theorem tMatrix_isometry {q : ℕ} (w : Fin q) :
+    (tMatrix w)ᴴ * tMatrix w = 1 := by
+  simp [tMatrix, t₂_isometry]
 
 theorem ryMatrix_isometry {q : ℕ} (θ : ℝ) (w : Fin q) :
     (ryMatrix θ w)ᴴ * ryMatrix θ w = 1 := by
@@ -502,6 +538,10 @@ theorem fixture_h_one :
     (hMatrix (0 : Fin 1))ᴴ * hMatrix (0 : Fin 1) = 1 :=
   hMatrix_isometry _
 
+theorem fixture_t_one :
+    (tMatrix (0 : Fin 1))ᴴ * tMatrix (0 : Fin 1) = 1 :=
+  tMatrix_isometry _
+
 theorem fixture_ry_one (θ : ℝ) :
     (ryMatrix θ (0 : Fin 1))ᴴ * ryMatrix θ (0 : Fin 1) = 1 :=
   ryMatrix_isometry _ _
@@ -535,6 +575,7 @@ noncomputable def canonicalModel (q c : ℕ) : Model q c where
   gate
     | .x w => QuantumOperation.ofIsometry (xMatrix w) (xMatrix_isometry w)
     | .h w => QuantumOperation.ofIsometry (hMatrix w) (hMatrix_isometry w)
+    | .t w => QuantumOperation.ofIsometry (tMatrix w) (tMatrix_isometry w)
     | .ry θ w =>
         QuantumOperation.ofIsometry (ryMatrix θ.eval w) (ryMatrix_isometry θ.eval w)
     | .cx control target =>

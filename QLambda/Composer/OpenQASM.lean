@@ -42,6 +42,7 @@ def AngleExpr.toOpenQASM : AngleExpr → String
 def Gate.toOpenQASM {q : ℕ} : Gate q → String
   | .x w => "x " ++ qref w ++ ";"
   | .h w => "h " ++ qref w ++ ";"
+  | .t w => "t " ++ qref w ++ ";"
   | .ry θ w => "ry(" ++ θ.toOpenQASM ++ ") " ++ qref w ++ ";"
   | .cx control target => "cx " ++ qref control ++ ", " ++ qref target ++ ";"
 

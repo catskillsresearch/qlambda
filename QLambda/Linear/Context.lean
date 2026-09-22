@@ -44,6 +44,20 @@ inductive OSplit :
   | right {A Δ Δ₁ Δ₂} :
       OSplit Δ Δ₁ Δ₂ → OSplit (some A :: Δ) (none :: Δ₁) (some A :: Δ₂)
 
+theorem Lookup.lt_length {α : Type} {xs : List α} {n : Nat} {a : α}
+    (h : Lookup xs n a) : n < xs.length := by
+  induction h with
+  | zero => simp
+  | succ _ ih => simpa using Nat.succ_lt_succ ih
+
+theorem OSplit.lengths {Δ Δ₁ Δ₂ : List (Option Ty)}
+    (h : OSplit Δ Δ₁ Δ₂) :
+    Δ₁.length = Δ.length ∧ Δ₂.length = Δ.length := by
+  induction h with
+  | nil => exact ⟨rfl, rfl⟩
+  | none _ ih | left _ ih | right _ ih =>
+      exact ⟨by simp [ih.1], by simp [ih.2]⟩
+
 /-- Mark index `n` and leave every other in-scope variable unused. -/
 def mark : Nat → List Ty → List Bool
   | _, [] => []

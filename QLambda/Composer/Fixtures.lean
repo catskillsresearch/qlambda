@@ -3,7 +3,7 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Composer.OpenQASM
+import QLambda.Composer.OpenQASMParser
 import QLambda.Composer.WellFormed
 
 /-!
@@ -49,6 +49,10 @@ example :
     bell.toOpenQASM bell_wellFormed =
       "OPENQASM 3.0;\ninclude \"stdgates.inc\";\nqubit[2] q;\nbit[2] c;\n" ++
       "h q[0];\ncx q[0], q[1];\nc[0] = measure q[0];\nc[1] = measure q[1];" := by
+  native_decide
+
+theorem bell_openQASM_parse_succeeds :
+    (parseFlatProgram 2 2 (bell.toOpenQASM bell_wellFormed)).isSome = true := by
   native_decide
 
 end QLambda.Composer.Fixtures

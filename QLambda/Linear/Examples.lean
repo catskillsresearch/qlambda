@@ -21,6 +21,13 @@ def idQ : Term :=
 def idQTy : Ty :=
   .arrow .lin .qubit .qubit
 
+/-- Identity at the gate type, used for a closed β-reduction regression. -/
+def idGate : Term :=
+  .lam .lin (.arrow .lin .qubit .qubit) (.var .lin 0)
+
+def idGateTy : Ty :=
+  .arrow .lin (.arrow .lin .qubit .qubit) (.arrow .lin .qubit .qubit)
+
 /-- `λ¹(a : Qubit). λ¹(b : Qubit). CX (H a) b`, with the pair repackaged. -/
 def bell : Term :=
   .lam .lin .qubit <|
@@ -47,6 +54,9 @@ def measureX : Term :=
 theorem idQ_infer : infer [] [] idQ = some (idQTy, []) := by
   rfl
 
+theorem idGate_infer : infer [] [] idGate = some (idGateTy, []) := by
+  rfl
+
 theorem bell_infer : infer [] [] bell = some (bellTy, []) := by
   rfl
 
@@ -61,5 +71,21 @@ theorem bell_typed : HasType [] [] bell bellTy :=
 
 theorem measureX_typed : HasType [] [] measureX idQTy :=
   (infer_sound measureX_infer).1
+
+/-- An unrestricted qubit binder would permit cloning and is rejected. -/
+def rejectedClone : Term :=
+  .lam .unres .qubit <|
+    .pair (.var .unres 0) (.var .unres 0)
+
+theorem rejectedClone_infer : infer [] [] rejectedClone = none := by
+  rfl
+
+/-- An unrestricted closure may not capture a linear qubit. -/
+def rejectedCapture : Term :=
+  .lam .lin .qubit <|
+    .lam .unres .bit (.var .lin 0)
+
+theorem rejectedCapture_infer : infer [] [] rejectedCapture = none := by
+  rfl
 
 end QLambda.Linear

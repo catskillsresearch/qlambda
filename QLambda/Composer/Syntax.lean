@@ -55,6 +55,7 @@ structure Probability where
   val : ℚ
   nonneg : 0 ≤ val
   le_one : val ≤ 1
+  deriving DecidableEq, Repr
 
 namespace Probability
 
@@ -78,6 +79,7 @@ inductive AngleExpr where
   /-- `2 * acos (sqrt p)`, so RY followed by Z measurement returns zero
   with probability `p`. -/
   | coin : Probability → AngleExpr
+  deriving DecidableEq, Repr
 
 namespace AngleExpr
 
@@ -92,8 +94,10 @@ end AngleExpr
 inductive Gate (q : ℕ) where
   | x : Fin q → Gate q
   | h : Fin q → Gate q
+  | t : Fin q → Gate q
   | ry : AngleExpr → Fin q → Gate q
   | cx : Fin q → Fin q → Gate q
+  deriving DecidableEq, Repr
 
 namespace Gate
 
@@ -101,6 +105,7 @@ namespace Gate
 def mapWires {q q' : ℕ} (f : Fin q → Fin q') : Gate q → Gate q'
   | .x w => .x (f w)
   | .h w => .h (f w)
+  | .t w => .t (f w)
   | .ry θ w => .ry θ (f w)
   | .cx control target => .cx (f control) (f target)
 
