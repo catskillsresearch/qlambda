@@ -43,6 +43,7 @@ import QLambda.Linear.Circuit
 import QLambda.Linear.Denotation
 import QLambda.Linear.Elaboration
 import QLambda.Linear.Operational
+import QLambda.Linear.Quotation
 import QLambda.Linear.RegFile
 import QLambda.Linear.Runtime
 import QLambda.Source.Denotation
