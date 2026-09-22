@@ -40,6 +40,7 @@ import QLambda.Saturation
 import QLambda.ScottLowerSet
 import QLambda.Soundness
 import QLambda.Linear.Circuit
+import QLambda.Linear.Denotation
 import QLambda.Linear.Operational
 import QLambda.Linear.Runtime
 import QLambda.Source.Denotation
