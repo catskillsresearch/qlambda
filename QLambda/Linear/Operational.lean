@@ -54,14 +54,14 @@ theorem step_preservation {Γ Δ M N A}
       cases ht with
       | appL hsplit hF hX =>
           cases hF with
-          | lamL hM => exact substLin_zero_preserves hsplit hM hX
+          | lamL _ hM => exact substLin_zero_preserves hsplit hM hX
       | appU hsplit hnone hF hX => cases hF
   | betaU hV =>
       cases ht with
       | appL hsplit hF hX => cases hF
       | appU hsplit hnoneX hF hX =>
           cases hF with
-          | lamU hdup hnoneF hM =>
+          | lamU _ _ hnoneF hM =>
               have hlen : _ := hsplit.lengths.2.trans hsplit.lengths.1.symm
               have hsub := substUnres_zero_preserves hM hX hnoneX hlen
               rw [hsplit.eq_left_of_allNone_right hnoneX]
@@ -118,24 +118,24 @@ theorem step_preservation {Γ Δ M N A}
           exact HasType.pair hsplit hM (ih hN)
   | unfoldBeta hV =>
       cases ht with
-      | unfold hFold =>
+      | unfold _ hFold =>
           cases hFold with
-          | fold hV => exact hV
+          | fold _ hV => exact hV
   | unfoldC hstep ih =>
       cases ht with
-      | unfold hM => exact HasType.unfold (ih hM)
+      | unfold hadm hM => exact HasType.unfold hadm (ih hM)
   | fixBeta hV =>
       cases ht with
-      | fix hdup hnone hM =>
+      | fix hadm hdup hnone hM =>
           exact HasType.appU (OSplit.self_of_allNone hnone) hnone hM
-            (HasType.fix hdup hnone hM)
+            (HasType.fix hadm hdup hnone hM)
   | fixC hstep ih =>
       cases ht with
-      | fix hdup hnone hM =>
-          exact HasType.fix hdup hnone (ih hM)
+      | fix hadm hdup hnone hM =>
+          exact HasType.fix hadm hdup hnone (ih hM)
   | foldC hstep ih =>
       cases ht with
-      | fold hM => exact HasType.fold (ih hM)
+      | fold hadm hM => exact HasType.fold hadm (ih hM)
   | measureC hstep ih =>
       cases ht with
       | measure hsplit hQ hK =>

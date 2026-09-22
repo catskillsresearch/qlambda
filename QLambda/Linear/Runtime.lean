@@ -73,7 +73,7 @@ noncomputable def reset (w : Fin q) (ρ : RegisterState q) : RegisterState q whe
       (Composer.resetKraus_completeness w) ρ.mat).trans ρ.trace_eq_one
 
 /-- The actual Kraus branch used for runtime measurement. -/
-def measureBranch (w : Fin q) (b : Bool) :
+noncomputable def measureBranch (w : Fin q) (b : Bool) :
     KrausFamily (CQ.QDim q) (CQ.QDim q) :=
   [Composer.projector w b]
 
@@ -139,9 +139,9 @@ theorem reset_canonical (w : Fin q) (ρ : RegisterState q) :
 
 theorem measureBranch_canonical (w : Fin q) (b : Bool) :
     measureBranch w b =
-      (Composer.canonicalModel q 0).measure w |>.branch
+      ((Composer.canonicalModel q 0).measure w).branch
         (if b then (1 : Fin 2) else (0 : Fin 2)) := by
-  cases b <;> rfl
+  cases b <;> simp [measureBranch, Composer.canonicalModel, Composer.measure]
 
 end RegisterState
 
@@ -325,19 +325,55 @@ inductive MeasurementStep {q : Nat} : Config q → Real → Bool → Config q �
 theorem internal_preservation {q : Nat} {s s' : Config q} {A : Ty}
     (ht : s.WellTyped A) (hs : InternalStep s s') :
     s'.WellTyped A := by
-  cases hs <;>
-    simp_all [Config.WellTyped, Control.typeOf, Control.wires,
-      Control.Valid, Value.typeOf, Value.wires, Value.Valid,
-      Finset.disjoint_left]
+  rcases ht with ⟨htype, hvalid, hframe⟩
+  cases hs with
+  | allocate hfree =>
+      have hA : A = .qubit := by
+        simpa [Control.typeOf, Value.typeOf, primTy] using htype.symm
+      subst A
+      exact ⟨rfl, .ret .wire, by
+        simpa [Control.wires, Value.wires, Finset.disjoint_left] using hfree⟩
+  | x | h | t | ry =>
+      have hA : A = .qubit := by
+        simpa [Control.typeOf, Value.typeOf, primTy] using htype.symm
+      subst A
+      exact ⟨rfl, .ret .wire, by
+        simpa [Control.wires, Value.wires] using hframe⟩
+  | cxControl =>
+      have hA :
+          A = .arrow .lin .qubit (.tensor .qubit .qubit) := by
+        simpa [Control.typeOf, Value.typeOf, primTy] using htype.symm
+      subst A
+      exact ⟨rfl, .ret .cxControl, by
+        simpa [Control.wires, Value.wires] using hframe⟩
+  | cx hne =>
+      have hA : A = .tensor .qubit .qubit := by
+        simpa [Control.typeOf, Value.typeOf] using htype.symm
+      subst A
+      cases hvalid with
+      | app _ _ hdisjoint =>
+          exact ⟨rfl,
+            .ret (.pair .wire .wire hdisjoint),
+            by simpa [Control.wires, Value.wires] using hframe⟩
+  | reset =>
+      have hA : A = .qubit := by
+        simpa [Control.typeOf, Value.typeOf, primTy] using htype.symm
+      subst A
+      exact ⟨rfl, .ret .wire, by
+        simpa [Control.wires, Value.wires] using hframe⟩
 
 theorem measurement_preservation {q : Nat} {s s' : Config q}
     {weight : Real} {outcome : Bool} {A : Ty}
     (ht : s.WellTyped A) (hs : MeasurementStep s weight outcome s') :
     s'.WellTyped A := by
+  rcases ht with ⟨htype, hvalid, hframe⟩
   cases hs
-  simp_all [Config.WellTyped, Control.typeOf, Control.wires,
-    Control.Valid, Value.typeOf, Value.wires, Value.Valid,
-    Finset.disjoint_left]
+  have hA : A = .tensor .bit .qubit := by
+    simpa [Control.typeOf, Value.typeOf] using htype.symm
+  subst A
+  exact ⟨rfl,
+    .ret (.pair .bit .wire (by simp [Value.wires])),
+    by simpa [Control.wires, Value.wires] using hframe⟩
 
 theorem measurement_weight_nonneg {q : Nat} {s s' : Config q}
     {weight : Real} {outcome : Bool}
@@ -365,7 +401,10 @@ theorem progress {q : Nat} {s : Config q} {A : Ty}
   | ret value =>
       exact Or.inl ⟨value, hcontrol⟩
   | measure qubit =>
-      subst hcontrol
+      have hs : s = {s with control := .measure qubit} := by
+        cases s
+        simp_all
+      rw [hs] at htype hvalid hframe ⊢
       cases qubit with
       | unit => simp [Control.typeOf, Value.typeOf] at htype
       | bit b => simp [Control.typeOf, Value.typeOf] at htype
@@ -387,7 +426,10 @@ theorem progress {q : Nat} {s : Config q} {A : Ty}
             exact Or.inr (Or.inr (Or.inr
               ⟨_, true, _, MeasurementStep.branch hone⟩))
   | app fn arg =>
-      subst hcontrol
+      have hs : s = {s with control := .app fn arg} := by
+        cases s
+        simp_all
+      rw [hs] at htype hvalid hframe ⊢
       cases fn with
       | unit => simp [Control.typeOf, Value.typeOf] at htype
       | bit b => simp [Control.typeOf, Value.typeOf] at htype
@@ -398,7 +440,8 @@ theorem progress {q : Nat} {s : Config q} {A : Ty}
           | unit => simp [Control.typeOf, Value.typeOf] at htype
           | bit b => simp [Control.typeOf, Value.typeOf] at htype
           | pair left right => simp [Control.typeOf, Value.typeOf] at htype
-          | prim p => simp [Control.typeOf, Value.typeOf] at htype
+          | prim p =>
+              cases p <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
           | cxControl w => simp [Control.typeOf, Value.typeOf] at htype
           | wire target =>
               cases hvalid with
@@ -421,27 +464,70 @@ theorem progress {q : Nat} {s : Config q} {A : Ty}
                       ⟨_, InternalStep.allocate hw⟩))
               | bit b => simp [Control.typeOf, Value.typeOf, primTy] at htype
               | pair left right => simp [Control.typeOf, Value.typeOf, primTy] at htype
-              | prim p => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | prim p =>
+                  cases p <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
               | wire w => simp [Control.typeOf, Value.typeOf, primTy] at htype
               | cxControl w => simp [Control.typeOf, Value.typeOf, primTy] at htype
           | x =>
-              cases arg <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
-              exact Or.inr (Or.inr (Or.inl ⟨_, InternalStep.x⟩))
+              cases arg with
+              | unit => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | bit b => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | pair l r => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | prim p =>
+                  cases p <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | cxControl w => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | wire w =>
+                  exact Or.inr (Or.inr (Or.inl ⟨_, InternalStep.x⟩))
           | h =>
-              cases arg <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
-              exact Or.inr (Or.inr (Or.inl ⟨_, InternalStep.h⟩))
+              cases arg with
+              | unit => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | bit b => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | pair l r => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | prim p =>
+                  cases p <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | cxControl w => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | wire w =>
+                  exact Or.inr (Or.inr (Or.inl ⟨_, InternalStep.h⟩))
           | t =>
-              cases arg <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
-              exact Or.inr (Or.inr (Or.inl ⟨_, InternalStep.t⟩))
+              cases arg with
+              | unit => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | bit b => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | pair l r => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | prim p =>
+                  cases p <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | cxControl w => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | wire w =>
+                  exact Or.inr (Or.inr (Or.inl ⟨_, InternalStep.t⟩))
           | ry angle =>
-              cases arg <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
-              exact Or.inr (Or.inr (Or.inl ⟨_, InternalStep.ry⟩))
+              cases arg with
+              | unit => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | bit b => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | pair l r => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | prim p =>
+                  cases p <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | cxControl w => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | wire w =>
+                  exact Or.inr (Or.inr (Or.inl ⟨_, InternalStep.ry⟩))
           | cx =>
-              cases arg <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
-              exact Or.inr (Or.inr (Or.inl ⟨_, InternalStep.cxControl⟩))
+              cases arg with
+              | unit => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | bit b => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | pair l r => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | prim p =>
+                  cases p <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | cxControl w => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | wire w =>
+                  exact Or.inr (Or.inr (Or.inl ⟨_, InternalStep.cxControl⟩))
           | reset =>
-              cases arg <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
-              exact Or.inr (Or.inr (Or.inl ⟨_, InternalStep.reset⟩))
+              cases arg with
+              | unit => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | bit b => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | pair l r => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | prim p =>
+                  cases p <;> simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | cxControl w => simp [Control.typeOf, Value.typeOf, primTy] at htype
+              | wire w =>
+                  exact Or.inr (Or.inr (Or.inl ⟨_, InternalStep.reset⟩))
 
 /-- For well-typed configurations, being stuck with no transition means
 exactly either returning a value or exhausting the finite allocation pool. -/

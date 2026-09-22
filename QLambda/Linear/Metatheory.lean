@@ -72,11 +72,11 @@ theorem shiftUnres_typing {Γ Γ' Δ M A C k}
         HasType.varU (hlookup.insertAt hi) hdup hnone
   | varL hlookup honly =>
       simpa [shiftUnres] using HasType.varL (Γ := Γ') hlookup honly
-  | lamU hdup hnone hM ih =>
+  | lamU hadm hdup hnone hM ih =>
       simpa [shiftUnres] using
-        HasType.lamU hdup hnone (ih (InsertAt.succ hi))
-  | lamL hM ih =>
-      simpa [shiftUnres] using HasType.lamL (ih hi)
+        HasType.lamU hadm hdup hnone (ih (InsertAt.succ hi))
+  | lamL hadm hM ih =>
+      simpa [shiftUnres] using HasType.lamL hadm (ih hi)
   | appL hs hF hX ihF ihX =>
       simpa [shiftUnres] using HasType.appL hs (ihF hi) (ihX hi)
   | appU hs hnone hF hX ihF ihX =>
@@ -95,10 +95,12 @@ theorem shiftUnres_typing {Γ Γ' Δ M A C k}
   | prim hnone => simpa [shiftUnres] using HasType.prim (Γ := Γ') hnone
   | measure hs hQ hK ihQ ihK =>
       simpa [shiftUnres] using HasType.measure hs (ihQ hi) (ihK hi)
-  | fix hdup hnone hM ih =>
-      simpa [shiftUnres] using HasType.fix hdup hnone (ih hi)
-  | fold hM ih => simpa [shiftUnres] using HasType.fold (ih hi)
-  | unfold hM ih => simpa [shiftUnres] using HasType.unfold (ih hi)
+  | fix hadm hdup hnone hM ih =>
+      simpa [shiftUnres] using HasType.fix hadm hdup hnone (ih hi)
+  | fold hadm hM ih =>
+      simpa [shiftUnres] using HasType.fold hadm (ih hi)
+  | unfold hadm hM ih =>
+      simpa [shiftUnres] using HasType.unfold hadm (ih hi)
 
 /-- Insert an unused linear cell at an arbitrary de Bruijn cutoff. -/
 theorem shiftLin_typing {Γ Δ Δ' M A k}
@@ -112,11 +114,11 @@ theorem shiftLin_typing {Γ Δ Δ' M A k}
   | varL hlookup honly =>
       simpa [shiftLin] using
         HasType.varL (hlookup.insertAt hi) (honly.insertNone hi)
-  | lamU hdup hnone hM ih =>
+  | lamU hadm hdup hnone hM ih =>
       simpa [shiftLin] using
-        HasType.lamU hdup (AllNone.insertNone hi hnone) (ih hi)
-  | lamL hM ih =>
-      simpa [shiftLin] using HasType.lamL (ih (InsertAt.succ hi))
+        HasType.lamU hadm hdup (AllNone.insertNone hi hnone) (ih hi)
+  | lamL hadm hM ih =>
+      simpa [shiftLin] using HasType.lamL hadm (ih (InsertAt.succ hi))
   | appL hs hF hX ihF ihX =>
       obtain ⟨Δ₁', Δ₂', hi₁, hi₂, hs'⟩ := hs.insertNone hi
       simpa [shiftLin] using HasType.appL hs' (ihF hi₁) (ihX hi₂)
@@ -144,11 +146,13 @@ theorem shiftLin_typing {Γ Δ Δ' M A k}
   | measure hs hQ hK ihQ ihK =>
       obtain ⟨Δ₁', Δ₂', hi₁, hi₂, hs'⟩ := hs.insertNone hi
       simpa [shiftLin] using HasType.measure hs' (ihQ hi₁) (ihK hi₂)
-  | fix hdup hnone hM ih =>
+  | fix hadm hdup hnone hM ih =>
       simpa [shiftLin] using
-        HasType.fix hdup (AllNone.insertNone hi hnone) (ih hi)
-  | fold hM ih => simpa [shiftLin] using HasType.fold (ih hi)
-  | unfold hM ih => simpa [shiftLin] using HasType.unfold (ih hi)
+        HasType.fix hadm hdup (AllNone.insertNone hi hnone) (ih hi)
+  | fold hadm hM ih =>
+      simpa [shiftLin] using HasType.fold hadm (ih hi)
+  | unfold hadm hM ih =>
+      simpa [shiftLin] using HasType.unfold hadm (ih hi)
 
 theorem weakenUnres {Γ Δ M A C} (h : HasType Γ Δ M A) :
     HasType (C :: Γ) Δ (liftUnres 0 M) A :=
@@ -284,11 +288,11 @@ theorem substLin_unused {Γ Δ Δ' M B V k}
       obtain ⟨n', heq, hlookup', honly'⟩ := hd.var hlookup honly
       rw [heq]
       exact HasType.varL hlookup' honly'
-  | lamU hdup hnone hM ih =>
+  | lamU hadm hdup hnone hM ih =>
       simpa [substLin] using
-        HasType.lamU hdup (hd.allNone hnone) (ih hd)
-  | lamL hM ih =>
-      simpa [substLin] using HasType.lamL (ih (DropLin.succ hd))
+        HasType.lamU hadm hdup (hd.allNone hnone) (ih hd)
+  | lamL hadm hM ih =>
+      simpa [substLin] using HasType.lamL hadm (ih (DropLin.succ hd))
   | appL hs hF hX ihF ihX =>
       obtain ⟨Δ₁', Δ₂', hd₁, hd₂, hs'⟩ := hd.split hs
       simpa [substLin] using HasType.appL hs' (ihF hd₁) (ihX hd₂)
@@ -315,11 +319,13 @@ theorem substLin_unused {Γ Δ Δ' M B V k}
   | measure hs hQ hK ihQ ihK =>
       obtain ⟨Δ₁', Δ₂', hd₁, hd₂, hs'⟩ := hd.split hs
       simpa [substLin] using HasType.measure hs' (ihQ hd₁) (ihK hd₂)
-  | fix hdup hnone hM ih =>
+  | fix hadm hdup hnone hM ih =>
       simpa [substLin] using
-        HasType.fix hdup (hd.allNone hnone) (ih hd)
-  | fold hM ih => simpa [substLin] using HasType.fold (ih hd)
-  | unfold hM ih => simpa [substLin] using HasType.unfold (ih hd)
+        HasType.fix hadm hdup (hd.allNone hnone) (ih hd)
+  | fold hadm hM ih =>
+      simpa [substLin] using HasType.fold hadm (ih hd)
+  | unfold hadm hM ih =>
+      simpa [substLin] using HasType.unfold hadm (ih hd)
 
 /-- Replace one occupied linear cell, merging the replacement resources into
 the suffix after the de Bruijn cutoff. -/
@@ -464,10 +470,10 @@ theorem substLin_preserves {Γ Δold Δv Δout M A B V k}
   | varU hlookup hdup hnone =>
       exact (hnone.noLookupSome hc.lookupTarget).elim
   | varL hlookup honly => exact hc.var hV hlookup honly
-  | lamU hdup hnone hM ih =>
+  | lamU hadm hdup hnone hM ih =>
       exact (hnone.noLookupSome hc.lookupTarget).elim
-  | lamL hM ih =>
-      simpa [substLin] using HasType.lamL (ih (.succ hc) hV)
+  | lamL hadm hM ih =>
+      simpa [substLin] using HasType.lamL hadm (ih (.succ hc) hV)
   | appL hs hF hX ihF ihX =>
       obtain ⟨ΔF', ΔX', hs', hcases⟩ := hc.split hs
       rcases hcases with hleft | hright
@@ -527,12 +533,12 @@ theorem substLin_preserves {Γ Δold Δv Δout M A B V k}
       · simpa [substLin] using
           HasType.measure hs' (substLin_unused hright.1 hQ)
             (ihK hright.2 hV)
-  | fix hdup hnone hM ih =>
+  | fix hadm hdup hnone hM ih =>
       exact (hnone.noLookupSome hc.lookupTarget).elim
-  | fold hM ih =>
-      simpa [substLin] using HasType.fold (ih hc hV)
-  | unfold hM ih =>
-      simpa [substLin] using HasType.unfold (ih hc hV)
+  | fold hadm hM ih =>
+      simpa [substLin] using HasType.fold hadm (ih hc hV)
+  | unfold hadm hM ih =>
+      simpa [substLin] using HasType.unfold hadm (ih hc hV)
 
 theorem substLin_zero_preserves {Γ Δ Δm Δv M V A B}
     (hs : OSplit Δ Δm Δv)
@@ -618,7 +624,7 @@ theorem UnresSubCtx.var {A B Γ Γold Γout Δ Δv V k n}
     (hc : UnresSubCtx A Γ k Γold Γout)
     (hV : HasType Γ Δv V A) (hnV : AllNone Δv)
     (hlen : Δv.length = Δ.length)
-    (hl : Lookup Γold n B) (hdup : Ty.duplicable B = true)
+    (hl : Lookup Γold n B) (hdup : Ty.Duplicable B)
     (hn : AllNone Δ) :
     HasType Γout Δ (substUnres k V (.var .unres n)) B := by
   induction hc generalizing n Δ Δv V with
@@ -653,17 +659,17 @@ theorem substUnres_preserves {A B Γ Γold Γout Δ Δv M V k}
   | varL hlookup honly =>
       simpa [substUnres] using
         HasType.varL (Γ := Γout) hlookup honly
-  | lamU hdup hnone hM ih =>
+  | lamU hadm hdup hnone hM ih =>
       simpa [substUnres] using
-        HasType.lamU hdup hnone (ih (.succ hc) hV hnV hlen)
-  | @lamL Γ₀ Δ₀ A₀ B₀ M₀ hM ih =>
+        HasType.lamU hadm hdup hnone (ih (.succ hc) hV hnV hlen)
+  | @lamL Γ₀ Δ₀ A₀ B₀ M₀ hadm hM ih =>
       have hV' := weakenLinNone hV
       have hnV' : AllNone (none :: Δv) := by simpa [AllNone] using hnV
       have hlen' :
           (none :: Δv).length = (some A₀ :: Δ₀).length := by
         simp [hlen]
       simpa [substUnres] using
-        HasType.lamL (ih hc hV' hnV' hlen')
+        HasType.lamL hadm (ih hc hV' hnV' hlen')
   | appL hs hF hX ihF ihX =>
       obtain ⟨hFlen, hXlen⟩ := hs.lengths
       simpa [substUnres] using
@@ -702,13 +708,13 @@ theorem substUnres_preserves {A B Γ Γold Γout Δ Δv M V k}
       simpa [substUnres] using
         HasType.measure hs (ihQ hc hV hnV (hlen.trans hQlen.symm))
           (ihK hc hV hnV (hlen.trans hKlen.symm))
-  | fix hdup hnone hM ih =>
+  | fix hadm hdup hnone hM ih =>
       simpa [substUnres] using
-        HasType.fix hdup hnone (ih hc hV hnV hlen)
-  | fold hM ih =>
-      simpa [substUnres] using HasType.fold (ih hc hV hnV hlen)
-  | unfold hM ih =>
-      simpa [substUnres] using HasType.unfold (ih hc hV hnV hlen)
+        HasType.fix hadm hdup hnone (ih hc hV hnV hlen)
+  | fold hadm hM ih =>
+      simpa [substUnres] using HasType.fold hadm (ih hc hV hnV hlen)
+  | unfold hadm hM ih =>
+      simpa [substUnres] using HasType.unfold hadm (ih hc hV hnV hlen)
 
 theorem substUnres_zero_preserves {A B Γ Δ Δv M V}
     (hM : HasType (A :: Γ) Δ M B)

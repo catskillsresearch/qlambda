@@ -78,18 +78,18 @@ foundations do not define a functor from completed CP maps to `M.linear`. -/
 structure DenotationModel (M : LNLModel.{u, v}) where
   ty : Ty → M.linear.Obj
   varU :
-    ∀ {Γ Δ n A}, Lookup Γ n A → Ty.duplicable A = true → AllNone Δ →
+    ∀ {Γ Δ n A}, Lookup Γ n A → Ty.Duplicable A → AllNone Δ →
       M.linear.Hom (ContextObject.combined M ty Γ Δ) (ty A)
   varL :
     ∀ {Γ Δ n A}, Lookup Δ n (some A) → OnlySomeAt Δ n →
       M.linear.Hom (ContextObject.combined M ty Γ Δ) (ty A)
   lamU :
-    ∀ {Γ Δ A B}, Ty.duplicable A = true → AllNone Δ →
+    ∀ {Γ Δ A B}, Ty.Admissible A → Ty.Duplicable A → AllNone Δ →
       M.linear.Hom (ContextObject.combined M ty (A :: Γ) Δ) (ty B) →
       M.linear.Hom (ContextObject.combined M ty Γ Δ)
         (ty (.arrow .unres A B))
   lamL :
-    ∀ {Γ Δ A B},
+    ∀ {Γ Δ A B}, Ty.Admissible A →
       M.linear.Hom (ContextObject.combined M ty Γ (some A :: Δ)) (ty B) →
       M.linear.Hom (ContextObject.combined M ty Γ Δ) (ty (.arrow .lin A B))
   appL :
@@ -137,17 +137,17 @@ structure DenotationModel (M : LNLModel.{u, v}) where
         (ty (.arrow .unres .bit (.arrow .lin .qubit A))) →
       M.linear.Hom (ContextObject.combined M ty Γ Δ) (ty A)
   fix :
-    ∀ {Γ Δ A}, Ty.duplicable A = true → AllNone Δ →
+    ∀ {Γ Δ A}, Ty.Admissible A → Ty.Duplicable A → AllNone Δ →
       M.linear.Hom (ContextObject.combined M ty Γ Δ)
         (ty (.arrow .unres A A)) →
       M.linear.Hom (ContextObject.combined M ty Γ Δ) (ty A)
   fold :
-    ∀ {Γ Δ A},
+    ∀ {Γ Δ A}, Ty.Admissible (.mu A) →
       M.linear.Hom (ContextObject.combined M ty Γ Δ)
         (ty (Ty.subst 0 (.mu A) A)) →
       M.linear.Hom (ContextObject.combined M ty Γ Δ) (ty (.mu A))
   unfold :
-    ∀ {Γ Δ A},
+    ∀ {Γ Δ A}, Ty.Admissible (.mu A) →
       M.linear.Hom (ContextObject.combined M ty Γ Δ) (ty (.mu A)) →
       M.linear.Hom (ContextObject.combined M ty Γ Δ)
         (ty (Ty.subst 0 (.mu A) A))
@@ -156,19 +156,21 @@ structure DenotationModel (M : LNLModel.{u, v}) where
       M.linear.Hom (ContextObject.combined M ty Γ Δ) (ty A)
   interpret_varU :
     ∀ {Γ Δ n A} (h : Lookup Γ n A)
-      (hdup : Ty.duplicable A = true) (hnone : AllNone Δ),
+      (hdup : Ty.Duplicable A) (hnone : AllNone Δ),
       interpret (HasType.varU h hdup hnone) = varU h hdup hnone
   interpret_varL :
     ∀ {Γ Δ n A} (h : Lookup Δ n (some A)) (honly : OnlySomeAt Δ n),
       interpret (HasType.varL (Γ := Γ) h honly) = varL (Γ := Γ) h honly
   interpret_lamU :
-    ∀ {Γ Δ A B t} (hdup : Ty.duplicable A = true) (hnone : AllNone Δ)
+    ∀ {Γ Δ A B t} (hadm : Ty.Admissible A)
+      (hdup : Ty.Duplicable A) (hnone : AllNone Δ)
       (h : HasType (A :: Γ) Δ t B),
-      interpret (HasType.lamU hdup hnone h) =
-        lamU hdup hnone (interpret h)
+      interpret (HasType.lamU hadm hdup hnone h) =
+        lamU hadm hdup hnone (interpret h)
   interpret_lamL :
-    ∀ {Γ Δ A B t} (h : HasType Γ (some A :: Δ) t B),
-      interpret (HasType.lamL h) = lamL (interpret h)
+    ∀ {Γ Δ A B t} (hadm : Ty.Admissible A)
+      (h : HasType Γ (some A :: Δ) t B),
+      interpret (HasType.lamL hadm h) = lamL hadm (interpret h)
   interpret_appL :
     ∀ {Γ Δ Δ₁ Δ₂ A B F X} (hs : OSplit Δ Δ₁ Δ₂)
       (hF : HasType Γ Δ₁ F (.arrow .lin A B)) (hX : HasType Γ Δ₂ X A),
@@ -216,16 +218,19 @@ structure DenotationModel (M : LNLModel.{u, v}) where
       interpret (HasType.measure hs hq hk) =
         measure hs (interpret hq) (interpret hk)
   interpret_fix :
-    ∀ {Γ Δ A t} (hdup : Ty.duplicable A = true) (hnone : AllNone Δ)
+    ∀ {Γ Δ A t} (hadm : Ty.Admissible A)
+      (hdup : Ty.Duplicable A) (hnone : AllNone Δ)
       (ht : HasType Γ Δ t (.arrow .unres A A)),
-      interpret (HasType.fix hdup hnone ht) =
-        fix hdup hnone (interpret ht)
+      interpret (HasType.fix hadm hdup hnone ht) =
+        fix hadm hdup hnone (interpret ht)
   interpret_fold :
-    ∀ {Γ Δ A t} (ht : HasType Γ Δ t (Ty.subst 0 (.mu A) A)),
-      interpret (HasType.fold ht) = fold (interpret ht)
+    ∀ {Γ Δ A t} (hadm : Ty.Admissible (.mu A))
+      (ht : HasType Γ Δ t (Ty.subst 0 (.mu A) A)),
+      interpret (HasType.fold hadm ht) = fold hadm (interpret ht)
   interpret_unfold :
-    ∀ {Γ Δ A t} (ht : HasType Γ Δ t (.mu A)),
-      interpret (HasType.unfold ht) = unfold (interpret ht)
+    ∀ {Γ Δ A t} (hadm : Ty.Admissible (.mu A))
+      (ht : HasType Γ Δ t (.mu A)),
+      interpret (HasType.unfold hadm ht) = unfold hadm (interpret ht)
 
 namespace HasType
 
@@ -240,7 +245,7 @@ def denote {M : LNLModel.{u, v}} (S : DenotationModel M)
   S.interpret h
 
 @[simp] theorem denote_varU {M : LNLModel.{u, v}} (S : DenotationModel M)
-    {Γ Δ n A} (h : Lookup Γ n A) (hdup : Ty.duplicable A = true)
+    {Γ Δ n A} (h : Lookup Γ n A) (hdup : Ty.Duplicable A)
     (hnone : AllNone Δ) :
     denote S (HasType.varU h hdup hnone) = S.varU h hdup hnone :=
   S.interpret_varU h hdup hnone
