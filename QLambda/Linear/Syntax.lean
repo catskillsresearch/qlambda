@@ -41,21 +41,25 @@ inductive Ty where
 
 namespace Ty
 
-/-- Lift free type variables at or above `n`. -/
-def lift (n : Nat) : Ty → Ty
-  | .var i => .var (if i < n then i else i + 1)
+/-- Shift free type variables by `d` at or above `cutoff`. -/
+def shift (d cutoff : Nat) : Ty → Ty
+  | .var i => .var (if i < cutoff then i else i + d)
   | .unit => .unit
   | .bit => .bit
   | .qubit => .qubit
-  | .tensor A B => .tensor (lift n A) (lift n B)
-  | .arrow κ A B => .arrow κ (lift n A) (lift n B)
-  | .mu A => .mu (lift (n + 1) A)
+  | .tensor A B => .tensor (shift d cutoff A) (shift d cutoff B)
+  | .arrow κ A B => .arrow κ (shift d cutoff A) (shift d cutoff B)
+  | .mu A => .mu (shift d (cutoff + 1) A)
+
+/-- Lift free type variables at or above `n` by one. -/
+abbrev lift (n : Nat) : Ty → Ty :=
+  shift 1 n
 
 /-- Substitute `σ` for type variable `n`, lowering variables above it. -/
 def subst (n : Nat) (σ : Ty) : Ty → Ty
   | .var i =>
       if i < n then .var i
-      else if i = n then lift n σ
+      else if i = n then shift n 0 σ
       else .var (i - 1)
   | .unit => .unit
   | .bit => .bit
@@ -68,19 +72,29 @@ def subst (n : Nat) (σ : Ty) : Ty → Ty
 def unfoldMu (A : Ty) : Ty :=
   subst 0 (.mu A) A
 
-/-- Types whose values may be copied and discarded.
+theorem subst_avoids_capture :
+    subst 0 (.var 0) (.mu (.var 1)) = .mu (.var 1) := by
+  rfl
 
-An unrestricted function is duplicable because its typing rule forbids a
-linear capture. A linear function is not duplicable in general. -/
-def duplicable : Ty → Bool
-  | .var _ => true
+/-- Duplicability relative to recursive type variables. Free variables are
+conservatively nonduplicable; `mu` assumes its own recursive occurrence is
+duplicable and rejects any quantum component in the body. -/
+def duplicableAt (κ : List Bool) : Ty → Bool
+  | .var i => κ[i]?.getD false
   | .unit => true
   | .bit => true
   | .qubit => false
-  | .tensor A B => duplicable A && duplicable B
+  | .tensor A B => duplicableAt κ A && duplicableAt κ B
   | .arrow .lin _ _ => false
   | .arrow .unres _ _ => true
-  | .mu A => duplicable A
+  | .mu A => duplicableAt (true :: κ) A
+
+/-- Closed types whose values may be copied and discarded.
+
+An unrestricted function is duplicable because its typing rule forbids a
+linear capture. A linear function is not duplicable in general. -/
+def duplicable : Ty → Bool :=
+  duplicableAt []
 
 end Ty
 

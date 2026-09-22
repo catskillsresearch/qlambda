@@ -282,9 +282,11 @@ theorem progress {M : Term} {A : Ty} (h : HasType [] [] M A) :
           · exact Or.inr (Or.inr (QuantumBlocked.appX hVF hQX))
         · exact Or.inr (Or.inl ⟨_, Step.appF hSF⟩)
         · exact Or.inr (Or.inr (QuantumBlocked.appF hQF))
-    | appU _ hF hX ihF ihX =>
-        rcases ihF hΓ hΔ with hVF | ⟨⟨NF, hSF⟩ | hQF⟩
-        · rcases ihX hΓ hΔ with hVX | ⟨⟨NX, hSX⟩ | hQX⟩
+    | appU hsplit _ hF hX ihF ihX =>
+        rw [hΔ] at hsplit
+        obtain ⟨rfl, rfl⟩ := oSplit_nil hsplit
+        rcases ihF hΓ rfl with hVF | ⟨⟨NF, hSF⟩ | hQF⟩
+        · rcases ihX hΓ rfl with hVX | ⟨⟨NX, hSX⟩ | hQX⟩
           · rcases value_arrow_shape hVF hF with hLam | hPrim
             · obtain ⟨C, Body, rfl⟩ := hLam
               exact Or.inr (Or.inl ⟨_, Step.betaU hVX⟩)

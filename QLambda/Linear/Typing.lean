@@ -34,10 +34,11 @@ inductive HasType : List Ty → List (Option Ty) → Term → Ty → Prop where
       HasType Γ Δ₁ F (.arrow .lin A B) →
       HasType Γ Δ₂ X A →
       HasType Γ Δ (.app F X) B
-  | appU {Γ Δ A B F X} :
-      AllNone Δ →
-      HasType Γ Δ F (.arrow .unres A B) →
-      HasType Γ Δ X A →
+  | appU {Γ Δ ΔF ΔX A B F X} :
+      OSplit Δ ΔF ΔX →
+      AllNone ΔX →
+      HasType Γ ΔF F (.arrow .unres A B) →
+      HasType Γ ΔX X A →
       HasType Γ Δ (.app F X) B
   | unit {Γ Δ} : AllNone Δ → HasType Γ Δ .unit .unit
   | bitLit {Γ Δ b} : AllNone Δ → HasType Γ Δ (.bitLit b) .bit
@@ -110,8 +111,10 @@ def infer (Γ Δ : List Ty) : Term → Option (Ty × List Bool)
                 | some u => some (B, u)
                 | none => none
             | .unres =>
-                if allFalse uF = true ∧ allFalse uX = true then
-                  some (B, List.replicate Δ.length false)
+                if allFalse uX = true then
+                  match zipOr uF uX with
+                  | some u => some (B, u)
+                  | none => none
                 else none
           else none
       | _, _ => none
@@ -257,20 +260,20 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
                             obtain ⟨hlen, _⟩ := zipOr_length hzip
                             exact ⟨HasType.appL hsplit hFty hXty, hlen.trans hFlen⟩
                     | unres =>
-                        by_cases hnone :
-                            allFalse uF = true ∧ allFalse uX = true
+                        by_cases hnone : allFalse uX = true
                         · rw [if_pos hnone] at h
-                          obtain ⟨rfl, rfl⟩ := h
-                          obtain ⟨hFty, hFlen⟩ := ihF hF
-                          obtain ⟨hXty, hXlen⟩ := ihX hX
-                          have huF : uF = List.replicate Δ.length false := by
-                            rw [eq_replicate_false_of_allFalse hnone.1, hFlen]
-                          have huX : uX = List.replicate Δ.length false := by
-                            rw [eq_replicate_false_of_allFalse hnone.2, hXlen]
-                          subst uF
-                          subst uX
-                          exact ⟨HasType.appU (allNone_unused Δ) hFty hXty,
-                            by simp [List.length_replicate]⟩
+                          cases hzip : zipOr uF uX with
+                          | none => simp [hzip] at h
+                          | some u' =>
+                              simp [hzip] at h
+                              obtain ⟨rfl, rfl⟩ := h
+                              obtain ⟨hFty, hFlen⟩ := ihF hF
+                              obtain ⟨hXty, hXlen⟩ := ihX hX
+                              have hsplit := oSplit_of_zipOr hzip hFlen hXlen
+                              have hXnone := allNone_of_allFalse hXlen hnone
+                              obtain ⟨hlen, _⟩ := zipOr_length hzip
+                              exact ⟨HasType.appU hsplit hXnone hFty hXty,
+                                hlen.trans hFlen⟩
                         · rw [if_neg hnone] at h
                           simp at h
                   · rw [if_neg hA] at h
@@ -540,7 +543,7 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
 theorem no_unrestricted_qubit_binder {Γ Δ M A}
     (h : HasType Γ Δ (.lam .unres .qubit M) A) : False := by
   cases h with
-  | lamU hdup _ _ => simp [Ty.duplicable] at hdup
+  | lamU hdup _ _ => simp [Ty.duplicable, Ty.duplicableAt] at hdup
 
 /-- Unrestricted closures carry no free linear resource. -/
 theorem unrestricted_lambda_no_linear_capture {Γ Δ A M B}

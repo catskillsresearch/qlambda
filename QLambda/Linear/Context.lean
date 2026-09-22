@@ -58,6 +58,50 @@ theorem OSplit.lengths {Δ Δ₁ Δ₂ : List (Option Ty)}
   | none _ ih | left _ ih | right _ ih =>
       exact ⟨by simp [ih.1], by simp [ih.2]⟩
 
+theorem OSplit.symm {Δ Δ₁ Δ₂ : List (Option Ty)}
+    (h : OSplit Δ Δ₁ Δ₂) : OSplit Δ Δ₂ Δ₁ := by
+  induction h with
+  | nil => exact .nil
+  | none _ ih => exact .none ih
+  | left _ ih => exact .right ih
+  | right _ ih => exact .left ih
+
+theorem allNone_eq_replicate (Δ : List (Option Ty)) (h : AllNone Δ) :
+    Δ = List.replicate Δ.length none := by
+  induction Δ with
+  | nil => rfl
+  | cons cell Δ ih =>
+      cases cell with
+      | none =>
+          simp only [AllNone] at h
+          change none :: Δ = none :: List.replicate Δ.length none
+          rw [ih h]
+          simp
+      | some _ => simp [AllNone] at h
+
+theorem allNone_unique {Δ₁ Δ₂ : List (Option Ty)}
+    (h₁ : AllNone Δ₁) (h₂ : AllNone Δ₂)
+    (hlen : Δ₁.length = Δ₂.length) : Δ₁ = Δ₂ := by
+  rw [allNone_eq_replicate Δ₁ h₁, allNone_eq_replicate Δ₂ h₂, hlen]
+
+theorem OSplit.eq_right_of_allNone_left {Δ Δ₁ Δ₂ : List (Option Ty)}
+    (hs : OSplit Δ Δ₁ Δ₂) (h₁ : AllNone Δ₁) :
+    Δ = Δ₂ := by
+  induction hs with
+  | nil => rfl
+  | none _ ih =>
+      simp only [AllNone] at h₁
+      simp [ih h₁]
+  | left _ _ => simp [AllNone] at h₁
+  | right _ ih =>
+      simp only [AllNone] at h₁
+      simp [ih h₁]
+
+theorem OSplit.eq_left_of_allNone_right {Δ Δ₁ Δ₂ : List (Option Ty)}
+    (hs : OSplit Δ Δ₁ Δ₂) (h₂ : AllNone Δ₂) :
+    Δ = Δ₁ :=
+  hs.symm.eq_right_of_allNone_left h₂
+
 /-- Mark index `n` and leave every other in-scope variable unused. -/
 def mark : Nat → List Ty → List Bool
   | _, [] => []

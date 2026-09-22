@@ -27,7 +27,9 @@ theorem typed_scoped {Γ Δ M A} (h : HasType Γ Δ M A) :
   | appL hsplit _ _ ihF ihX =>
       obtain ⟨hFlen, hXlen⟩ := hsplit.lengths
       exact ⟨hFlen.symm ▸ ihF, hXlen.symm ▸ ihX⟩
-  | appU _ _ _ ihF ihX => exact ⟨ihF, ihX⟩
+  | appU hsplit _ _ _ ihF ihX =>
+      obtain ⟨hFlen, hXlen⟩ := hsplit.lengths
+      exact ⟨hFlen.symm ▸ ihF, hXlen.symm ▸ ihX⟩
   | unit _ => trivial
   | bitLit _ => trivial
   | pair hsplit _ _ ihM ihN =>
