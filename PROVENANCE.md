@@ -1,61 +1,63 @@
 # Provenance
 
-This Palomar snapshot is the quantum-domain companion to
-[`scott1972`](https://github.com/catskillsresearch/scott1972)
-(Lean 4 mechanization of Dana Scott, *Continuous Lattices*, LNM 274).
-The 1972 library is copied into `vendor/scott1972` at the frozen SHA in
-`vendor/FROZEN.txt` so a preservation fork of `qlambda` contains the
-complete development. The remote remains the 1972 home.
+This repository is an original Lean 4 development by Lars Warren Ericson of
+a typed linear/nonlinear quantum lambda calculus, quantum-relation and
+quantum-CPO infrastructure, and finite circuit interchange.
 
-## Palomar entry
+## Mathematical sources
 
-The Comparator configuration `comparator.json` selects one theorem:
+- Weaver, *Quantum relations* (2012): operator-subspace presentation of
+  quantum relations.
+- Kornell, Lindenhovius, and Mislove, *Quantum CPOs* (2021): quantum posets,
+  quantum functions, and quantum CPO continuity.
+- Jenča and Lindenhovius, *Monoidal Quantaloids* (2025): complete
+  relation-hom lattices, arbitrary-join-preserving composition, and dagger
+  compactness.
+- Kornell, Lindenhovius, and Mislove, *A Category of Quantum Posets* (2023)
+  and *Categories of Quantum CPOs* (2026): function order, explicit qCPO
+  limits, and the lifted Kleisli LNL construction.
+- Selinger and Valiron, *A linear-non-linear model for a quantum lambda
+  calculus* (2009): LNL semantic architecture.
+- Smyth and Plotkin, *The category-theoretic solution of recursive domain
+  equations* (1982): projection-chain and bilimit method.
 
-`Scott1972.ContinuousLattice.canonical_omegaQVA_quantum_domain_equation_solved`
+`docs/NOVELTY_AUDIT.md` records the focused source check supporting the
+qualified novelty language in `arxiv.md`.
 
-Challenge.lean states the capstone and its Mathlib type surface; Solution.lean
-imports the sorry-free proof from `QLambda/QuantumDomainEquation.lean`.
-The selected theorem constructs the canonical one-point base and stage-zero
-projection pair for every `QuantumPowerModel`. The original general theorem
-with supplied `(D₀, j₀)`, the concrete `TTContinuation.model` specialization,
-supporting project results, and hardware capstones are documented in
-`formalization.yaml`, `THEOREMS.md`, and `arxiv.md` but are outside this
-Comparator selection.
+## Original formal proofs
 
-Local readiness:
+The repository supplies the selected matrix/subspace representation and Lean
+proofs of quantum-relation composition, dagger, complete hom orders,
+countable-join preservation, compact closure, the concrete `Set ⊣ qRel`
+adjunction, the Scott-function qCPO category, continuous projection-chain
+shift isomorphisms, deterministic staging, canonical two-wire lambda
+quotation, and structured OpenQASM round trips.
 
-```bash
-bash scripts/palomar_preflight.sh --mechanical-only   # CI
-bash scripts/palomar_preflight.sh                       # before submission
-```
+These are claimed as novel formal proofs. Mathematical priority is asserted
+only where `arxiv.md` says “to our knowledge” and is limited by the documented
+literature search.
 
-Registry submission is a separate step at
-[submit.palomar-registry.org](https://submit.palomar-registry.org/) and
-requires a pinned GitHub commit plus explicit consent after Palomar's
-mechanical and editorial checks.
+The checked `Set ⊣ qRel` declaration is not identified with the published
+lifted-qCPO recursive model. See `docs/QCPO_LNL_DESIGN.md`.
 
-Packaging pattern reference: [`scott_models`](https://github.com/catskillsresearch/scott_models).
+## Vendored material and automation
 
-## Author work
+`vendor/scott1972` is a frozen same-author Lean development of Scott's
+*Continuous Lattices*, identified by `vendor/FROZEN.txt`. It is retained for
+preservation and background order theory; the compared typed-linear
+statements do not import the retired omega-QVA architecture.
 
-The ω**QVA** type surface, Loewner state space, saturation flattening
-used for the quantum bilimit, and the capstone
-`canonical_omegaQVA_quantum_domain_equation_solved` are original Lean of
-Lars Warren Ericson (Catskills Research Company, 2026). They extend
-Scott 1972 inverse limits (`embInf`, `projInf`, Theorem 4.4) from
-`D_∞ ≅ [D_∞ → D_∞]` to the quantum functor `[D → Q(D)]`.
+AI agents assisted with proof exploration, refactoring, tests, and prose
+under author direction. Lean kernel checking, not generated text, is the
+proof authority.
 
-## Literature used in the proofs
+## Palomar surface
 
-Chen, Kou, and Lyu, *Finite-valuation approximable structures*
-(arXiv:2608.03073, 2026) supply the classical saturation pattern
-(v1 Lemmas 6.5–6.7). The paper is in `sources/`. The lemmas are
-mechanized in `QLambda/Saturation.lean`.
+`comparator.json` selects:
 
-## Related remotes
+- `QLambda.Palomar.quantum_lnl_model`;
+- `QLambda.Palomar.quantum_cpo_enriched_category`;
+- `QLambda.Palomar.two_wire_circuit_completeness`.
 
-| Remote | Role |
-| --- | --- |
-| [`scott1972`](https://github.com/catskillsresearch/scott1972) | Continuous lattices; Theorem 4.4 (vendored) |
-| [`scott_models`](https://github.com/catskillsresearch/scott_models) | Palomar packaging pattern; presentation bridges |
-| arXiv:2608.03073 | Chen–Kou–Lyu ω**FVA** / Jung–Tix (`sources/`) |
+`Challenge.lean` states these results with explicit holes under the Palomar
+convention. `Solution.lean` proves the same statements without `sorry`.

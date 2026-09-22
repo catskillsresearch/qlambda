@@ -55,4 +55,19 @@ theorem bell_openQASM_parse_succeeds :
     (parseFlatProgram 2 2 (bell.toOpenQASM bell_wellFormed)).isSome = true := by
   native_decide
 
+theorem dynamicX_wellFormed : dynamicX.WellFormed := by
+  unfold Program.WellFormed dynamicX
+  apply Block.WellFormedAt.cons
+  · exact .measure
+  apply Block.WellFormedAt.cons
+  · apply Instr.WellFormedAt.ite
+    · exact .cons (.gate trivial) .nil
+    · exact .cons (.barrier (by simp)) .nil
+  exact .nil
+
+theorem dynamicX_openQASM_parse_succeeds :
+    (parseStructuredProgram 1 1
+      (dynamicX.toOpenQASM dynamicX_wellFormed)).isSome = true := by
+  native_decide
+
 end QLambda.Composer.Fixtures

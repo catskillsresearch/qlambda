@@ -1,146 +1,50 @@
-# Handoff — qlambda (ωQVA / quantum domain equation)
+# Handoff — typed linear qlambda
 
-Palomar compared statement of record (1 theorem in `comparator.json`):
-`canonical_omegaQVA_quantum_domain_equation_solved`.
+The active repository is the typed linear redesign. The retired untyped
+omega-QVA, choice/continuation, scratch-lowering, and hardware-adequacy source
+trees have been removed.
 
-Other principal results (not selected by Comparator for this entry):
-the general `(M, D₀, j₀)` theorem `omegaQVA_quantum_domain_equation_solved`,
-the concrete `QLambda.TTContinuation` canonical specialization,
-`finitelySeparated_wayBelow`, `qDInf_isOmegaQVA`, and hardware capstones
-`closed_stuck_free_presented_channelTreeCompleteness` and
-`closed_stuck_free_presented_token_adequacy`.
+## Entry points
 
-Narrative: `arxiv.md`. Index: `THEOREMS.md`.
-Palomar style: `docs/PALOMAR_STYLE.md`, `docs/PALOMAR_EDITORIAL_AUDIT.md`.
-Metadata: `formalization.yaml`, `comparator.json`.
-Vendor: `vendor/scott1972` (frozen SHA in `vendor/FROZEN.txt`).
-CKL 2026 paper in `sources/`.
+- Paper: `arxiv.md`
+- Theorem index: `THEOREMS.md`
+- Root import: `QLambda.lean`
+- Palomar statements/proofs: `Challenge.lean`, `Solution.lean`
+- Comparator metadata: `comparator.json`, `formalization.yaml`
+- Novelty evidence: `docs/NOVELTY_AUDIT.md`
 
-## Resume
+The compared declarations are:
 
-1. Read this file and `PROVENANCE.md`.
-2. `lake build QLambda Challenge Solution`
-3. `bash scripts/palomar_preflight.sh --mechanical-only`
-4. Compared names must match between Challenge and Solution (`pp.all`).
+- `QLambda.Palomar.quantum_lnl_model`
+- `QLambda.Palomar.quantum_cpo_enriched_category`
+- `QLambda.Palomar.two_wire_circuit_completeness`
 
-Before a Palomar registry submission:
+## Verification
 
-5. `bash scripts/palomar_preflight.sh` (full mechanical + editorial audit).
-6. Submit the pinned commit with Comparator path `comparator.json` at
-   [submit.palomar-registry.org](https://submit.palomar-registry.org/).
+```bash
+lake build
+lake env lean Challenge.lean
+lake env lean Solution.lean
+bash scripts/palomar_preflight.sh --mechanical-only
+bash scripts/build_arxiv_pdf.sh
+bash scripts/package_zenodo.sh
+```
 
-Local preflight green is necessary but not sufficient for registration.
-Palomar additionally runs Comparator, Lean/NanoDa replay, and automated
-editorial review before the author chooses whether to register.
+`Challenge.lean` is the only intended location for theorem holes.
+`Solution.lean` and the `QLambda/` implementation must remain sorry-free.
 
-## Status (2026-08-31)
+## Scope
 
-Palomar packaging (Apache-2.0, Zenodo/arXiv scripts, Challenge /
-Solution / comparator / formalization.yaml, preflight scripts) is in place.
-`lake build` typechecks `QLambda`, `Challenge`, and `Solution` under
-`leanprover/lean4:v4.33.0`. Proof modules in `QLambda/` are
-sorry-free where previously discharged. `Challenge.lean` may `sorry`.
-`bash scripts/palomar_preflight.sh --mechanical-only` is the CI gate.
+The concrete LNL instance is the ordinary `Set ⊣ qRel` model. A separate
+category packages quantum CPOs and Scott-continuous quantum functions. The
+repository does not claim those categories equivalent.
 
-The domain construction now includes the concrete fixed-register
-`TTContinuation.model`, its lawful continuation monad, and
-`TTPhysicalEmbedding.embed` for finite TNI CP instruments. Exact return,
-finitely presented map/bind compatibility, represented-test refinement
-recovery, and the directed-supremum obstruction to a finite-image Scott
-retract are proved.
+Circuit completeness is for the declared canonical two-wire finite fragment:
+single-wire gates, distinct-wire CX, reset, measurement, store, sequencing,
+conditionals, and bounded repeat. OpenQASM is an ideal interchange format,
+not a noisy-backend or arbitrary-Qiskit semantics.
 
-The selected domain-equation theorem now starts from the canonical one-point
-`QDomain`; for every `QuantumPowerModel`, the stage-zero inclusion is the
-bottom function and the bonding retraction maps
-`[PUnit → Q(PUnit)] ↠ PUnit`. The original general theorem remains available
-for any supplied embedding–retraction pair `j₀`.
-
-The computation-valued core is also implemented. `Term Prim` and the
-operational relations support closed primitives and recursive abstractions.
-`QLambda.interp` denotes every term in `Q(D∞)`: values use monadic `unit`,
-application uses Scott-continuous bind, and recursion uses Scott `fix`.
-Environment continuity, constructor equations, value purity, recursive
-unfolding, general capture-avoiding value substitution, ordinary and
-recursive semantic β-equations, and α-invariance for ordinary and recursive
-binders are proved without `sorry`.
-
-Unweighted internal reduction is sound: `Step M N` implies
-`interp N ρ ≤ interp M ρ`, and the result lifts to `Reduces`. External
-selection and weighted branches now have separate abstract specifications;
-top-level external and probabilistic branch theorems preserve their Boolean
-label and probability respectively. Full abstract `WeightedStep` soundness is
-proved under explicit application-closure laws. TT internal choice is
-implemented as pointwise join and is exactly preserved by continuation bind.
-Concrete qubit return, Pauli-X, and Z-measurement primitives are embedded into
-the two-dimensional TT model.
-
-Weighted TT result aggregation is generated by a physical coin instrument and
-is not lattice join.  Probabilistic choice is its pointwise lift to
-continuations.  External choice is a countable branch tree with exact Boolean
-selectors and is not identified with internal join.  The tagged TT model
-registers lawful `HasComputationChoice`, `HasExternalSelection`,
-`HasWeightedBranchSemantics`, and `HasWeightedApplicationClosure` instances.
-Token-by-token adequacy is proved for the finitely presented primitive
-fragment: return, Pauli-X, Z measurement, finite bind, interior weighted
-traces, and external selection. Every rational coded source test now has a
-Scott-continuous finite result representation, so embedding order
-unconditionally implies `FinitaryTTRefines`. A concrete one-dimensional
-dyadic-prefix chain has finite embedded stages, is directed, and has a
-supremum outside the finite image. Consequently no Scott retraction onto the
-finite physical image exists.
-
-A hardware-faithful qubit CEK machine now carries a normalized density matrix,
-lexical closures, and an evaluation stack. Its internal, weighted, and
-externally selected transitions are separate. Finite branch-complete execution
-trees aggregate probability and measurement physically before TT embedding;
-runtime values, environments, controls, and stacks are related to the recursive
-semantic domain. A formal `|0⟩` counterexample shows why one normalized run
-cannot reconstruct a state-independent channel when a locally zero measurement
-branch is globally nonzero. The proof semantics therefore has a separate
-subnormalized `ChannelConfig`/`ChannelTree` layer which retains every physical
-branch, including zero states. It folds exactly to finite instruments, agrees
-with positive executable transitions after normalization, and gives exact TT
-token adequacy for every realized finite tree. Scott fixed points are
-finite-iterate suprema.
-
-## Current hardware boundary
-
-General closed-term hardware adequacy no longer assumes one finite denotation.
-`ChannelTreeCompleteness` is proved for closed return, Pauli-X, measure-Z,
-compositional internal and external choice, and probabilistic choice at the
-weight endpoints; interior weights are complete at every finitely presented
-continuation by physical coin aggregation, never lattice join. Unique-successor
-identity CEK steps (application, argument evaluation, closure beta, recursive
-beta, lambda, recursive abstraction) transfer completeness, and selector paths
-commute with `semanticBind`, `applyContinuation`, and `semanticUnfold`.
-Recursive denotations are identified with the supremum of finite `iterateBot`
-unfoldings. `ProductiveClosedCase` now includes
-`RestrictedExternApplication`: ordinary and recursive lambda applications
-with an external-choice argument, under the explicit `NoApp`, `AdminNoApp`,
-and `Atomic` hypotheses proved in `HardwareChannel/Productive.lean`.
-
-`ClosedStuckFreeCoverage` consolidates the exact closed-program boundary:
-closed `NoApp`, `FunAppFrag`, `Produces 0`, productive cases with
-`MeasureDistinct`, and restricted extern applications. Its final theorems in
-`HardwareChannel/Coverage.lean` are
-`closed_stuck_free_presented_channelTreeCompleteness` and
-`closed_stuck_free_presented_token_adequacy`. The restricted extern
-constructor uses its direct completeness proof and does not require
-`MeasureDistinct`.
-
-This does not assert completeness for every closed term. Arbitrary stuck
-applications such as payload-under-function states remain excluded, and
-interior probability is complete at finitely presented continuations rather
-than arbitrary Scott continuations.
-
-The rank-one Choi-ray obstruction is formalized in
-`QLambda/ChoiRayObstruction.lean`: for register dimension `2 ≤ n`, mixing
-weights in `(0, 1)` inject into distinct rays, while any countable family of
-`PhysicalBasisApproximant`s covers only countably many generating rays. This
-does not claim that raw `InstrumentPower` lies outside `ωQVA`, and it does
-not apply to the countable `RatCPMatrix` / rounded-token construction.
-
-The formalized theorem is the quantum `ωQVA` result. Chen–Kou–Lyu `ωFVA` and
-Jung–Tix are motivating classical literature, not a full formalization in
-this repository. Qiskit is presentation context only; no compiler or formal
-Qiskit correspondence theorem is claimed.
+The generic `DenotationModel` remains an explicit interface for compositional
+source denotation. The checked source equations additionally have an exact
+operational quotient. The release does not claim full abstraction or
+unrestricted adequacy for every recursive term.

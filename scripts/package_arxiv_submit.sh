@@ -33,14 +33,8 @@ if [[ ! -d "$LISTINGS_DIR" ]]; then
   missing=1
 fi
 lean_count="$(find "$LISTINGS_DIR" -maxdepth 1 -type f 2>/dev/null | wc -l)"
-if [[ "$lean_count" -eq 0 ]]; then
-  echo "error: no listing files in $LISTINGS_DIR" >&2
-  missing=1
-fi
-if [[ ${#FIGURE_PNGS[@]} -eq 0 ]]; then
-  echo "error: no mermaid figure PNGs in $FIGURES_DIR" >&2
-  missing=1
-fi
+# Papers without extracted code blocks or Mermaid diagrams legitimately have
+# empty include directories; the complete Lean source tree is packaged below.
 for f in "${LEAN_FILES[@]}"; do
   if [[ ! -f "$f" ]]; then
     echo "error: missing $f" >&2

@@ -19,15 +19,13 @@ universe u v
 
 set_option linter.checkUnivs false
 
-/-- A bundled pointed ω-complete partial order. -/
+/-- A bundled ω-complete partial order. -/
 structure OmegaObject where
   Carrier : Type u
   partialOrder : PartialOrder Carrier
-  orderBot : OrderBot Carrier
   omegaComplete : OmegaComplete Carrier
 
-attribute [instance] OmegaObject.partialOrder OmegaObject.orderBot
-  OmegaObject.omegaComplete
+attribute [instance] OmegaObject.partialOrder OmegaObject.omegaComplete
 
 namespace OmegaObject
 
@@ -91,6 +89,17 @@ structure Functor (C D : OmegaCategory) where
     ∀ {A B E : C.Obj} (g : C.Hom B E) (f : C.Hom A B),
       map (C.comp g f) = D.comp (map g) (map f)
 
+/-- An ordinary functor between the underlying categories.  LNL adjunctions
+need not preserve the chosen hom orders; enrichment is retained separately on
+the semantic categories and on functors that genuinely preserve it. -/
+structure PlainFunctor (C D : OmegaCategory) where
+  obj : C.Obj → D.Obj
+  map : {A B : C.Obj} → C.Hom A B → D.Hom (obj A) (obj B)
+  map_id : ∀ {A : C.Obj}, map (@C.id A) = D.id
+  map_comp :
+    ∀ {A B E : C.Obj} (g : C.Hom B E) (f : C.Hom A B),
+      map (C.comp g f) = D.comp (map g) (map f)
+
 end OmegaCategory
 
 /-- The canonical ωCPO-enriched category of pointed ωCPOs and
@@ -100,7 +109,6 @@ noncomputable def omegaMapCategory : OmegaCategory.{u + 1, u} where
   hom A B :=
     { Carrier := OmegaMap A B
       partialOrder := inferInstance
-      orderBot := inferInstance
       omegaComplete := OmegaMap.instOmegaCompleteFunctionSpace }
   id := OmegaMap.id
   comp := OmegaMap.comp

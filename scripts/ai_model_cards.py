@@ -23,9 +23,9 @@ MODEL_CARDS: tuple[ModelCard, ...] = (
         label="Cursor",
         cite_key="Cur26",
         tool_note=(
-            "agent-assisted editing in the Cursor IDE: Palomar packaging of ωQVA, "
-            "vendoring scott1972, mechanizing Chen–Kou–Lyu saturation in the "
-            "Scott1972 setting, and drafting this narrative (`arxiv.md`). "
+            "agent-assisted editing in the Cursor IDE: typed linear syntax and "
+            "metatheory, quantum-relation/qCPO and LNL proof development, "
+            "circuit quotation, Palomar packaging, and drafting this narrative. "
             "Generated Lean was provisional until it compiled under the pinned "
             "toolchain."
         ),

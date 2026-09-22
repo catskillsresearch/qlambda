@@ -1,169 +1,150 @@
-# Principal theorem index
+# Typed linear qlambda theorem index
 
-This is a compact index of the proved Lean surface. `arxiv.md` is the
-narrative status of record. Names below are Lean declarations, not claims
-about the motivating literature or a Qiskit compiler.
+This index lists the active replacement theorem surface.
 
-## Definition crosswalk
+## Source language and runtime
 
-- `IsOmegaQVA`, `QFactorable`, `DensityVec` — `QLambda/OmegaQVA.lean`;
-  spectrahedrally approximable continuous-lattice objects.
-- `QDInf`, `qEmbInfInf`, `qProjInfInf` — `QLambda/QDomain.lean` and
-  `QLambda/QuantumDomainEquation.lean`; the inverse-limit value domain and
-  its reflexive isomorphism.
-- `IsQuantumPowerModel`, `IsQuantumMonad`, `TTContinuationPower` —
-  `QLambda/QuantumPower.lean`, `QLambda/Monad.lean`, and
-  `QLambda/TTContinuationMonad.lean`; abstract Q and its concrete
-  fixed-register continuation instance.
+- `QLambda.Linear.infer_sound`
+- `QLambda.Linear.substLin_zero_preserves`
+- `QLambda.Linear.substUnres_zero_preserves`
+- `QLambda.Linear.step_preservation`
+- `QLambda.Linear.measStep_preservation`
+- `QLambda.Linear.step_deterministic`
+- `QLambda.Linear.progress`
+- `QLambda.Linear.Runtime.internal_preservation`
+- `QLambda.Linear.Runtime.measurement_preservation`
+- `QLambda.Linear.Runtime.progress`
+- `QLambda.Linear.Runtime.measureProbability_false_add_true`
 
-## Composer circuit semantics and compiler
+Probability labels measurement transitions; it is not a source term former.
 
-- `QLambda.CQ.Sem`, `QLambda.CQ.CompEq`, `QLambda.CQ.Eq` —
-  `QLambda/CQ/Domain.lean`; register-indexed classical–quantum instrument
-  meanings and presentation-independent observational equality.
-- `QLambda.Composer.denoteInstr`, `QLambda.Composer.denoteBlock` —
-  `QLambda/Composer/Denotation.lean`; compositional circuit semantics.
-- `QLambda.Compiler.denoteBlock_append` —
-  `QLambda/Compiler/Correctness.lean`; circuit concatenation is CQ
-  sequencing.
-- `QLambda.Compiler.compile_correct` —
-  `QLambda/Compiler/Correctness.lean`; hidden physical compilation on the
-  `Compilable` fragment: skip, data-wire X/H/RY/CX, measurement, reset,
-  store, general sequencing, probabilistic choice, intern, and extern.
-- `QLambda.Compiler.elaborates_compile_correct` — CBV staging then
-  compilation preserves CQ meaning on that fragment.
-- `QLambda.Compiler.denote_embed` — recompiling a `BlockCompilable` logical
-  block (those same instructions) agrees with its source embedding after
-  `hideScratch`.
-- `QLambda.Compiler.compile_embed` — total Composer embedding recompiles to
-  wire/store lifting.
-- `QLambda.Compiler.hideScratch_coin_op` — the physical coin's hidden
-  denotation is source `probSem` when both branches factor through scratch.
-- `QLambda.Compiler.physicalCoin_amplitudes`,
-  `applyMat_reset_scratch`, `ry_coin_mul_initZero` —
-  `QLambda/Compiler/Physical.lean`; reset on the reserved wire is
-  initialize-after-discard, and coin-angle RY prepares
-  `√p|0⟩ + √(1-p)|1⟩`.
-- `QLambda.CQ.hideScratch_seq_of_insensitive` —
-  `QLambda/CQ/Scratch.lean`; hidden sequencing is compositional when the
-  continuation ignores leftover scratch.
-- `QLambda.Composer.canonicalModel`, `ry₂_coin_zero` —
-  `QLambda/Composer/MatrixSemantics.lean`; the compiler capstone uses this
-  model, not an unconstrained `Composer.Model`.
-- `QLambda.Source.Elaborates.deterministic`, `quote_elaborates` —
-  CBV staging of the compilable fragment is deterministic.
+## Omega-CPO foundations
 
-Boundary: the target is the frozen versioned AST in
-`QLambda/Composer/Syntax.lean`, not arbitrary Qiskit Python. Compilation
-always uses `q+1,c+1` with `hideScratch`. There is no caller-supplied
-lowering law. `compile_correct` is unconditional on the declared fragment.
-Loops, barrier, delay, lossless IBM/Qiskit execution, noisy backends, and
-a global D∞/CQ bridge are outside that theorem.
-Bounded `while` is exported by unrolling so QASM and denotation share the
-same fuel.
+- `QLambda.Domain.OmegaMap.fix_eq`
+- `QLambda.Domain.OmegaMap.fix_le_of_prefixed`
+- `QLambda.Domain.OmegaMap.paramFix_mono`
+- `QLambda.Domain.omegaMapCategory`
+- `QLambda.Domain.ProjectionChain.shiftForwardMap`
+- `QLambda.Domain.ProjectionChain.shiftBackwardMap`
+- `QLambda.Domain.ProjectionChain.shiftIso`
 
-## Quantum domain
+`OmegaComplete` does not imply pointedness. Least fixed points separately
+require `OrderBot`.
 
-- `Scott1972.ContinuousLattice.canonical_omegaQVA_quantum_domain_equation_solved`
-  — `QLambda/QuantumDomainEquation.lean`; the Palomar theorem of record. For
-  every bundled `QuantumPowerModel`, the canonical one-point tower has an
-  `omegaQVA` inverse limit, exact mutually inverse limit maps, an order
-  isomorphism with `[D_infinity -> Q(D_infinity)]`, and Scott's bilimit
-  identity.
-- `Scott1972.ContinuousLattice.omegaQVA_quantum_domain_equation_solved`
-  — `QLambda/QuantumDomainEquation.lean`. The more general theorem takes an
-  initial `QDomain D₀` and a supplied embedding–retraction pair `j₀`; its
-  bonding retraction has direction `[D₀ -> Q(D₀)] ↠ D₀`.
-- `QLambda.TTContinuation.canonical_omegaQVA_quantum_domain_equation_solved`
-  — `QLambda/TTContinuationDomainEquation.lean`. The canonical result
-  specialized to the concrete fixed-register continuation model.
-- `Scott1972.ContinuousLattice.qDInf_isOmegaQVA`
-  — `QLambda/QuantumDomainEquation.lean`. The inverse limit is an
-  `omegaQVA`, by the retract-of-countable-product construction.
-- `Scott1972.ContinuousLattice.finitelySeparated_wayBelow`
-  — `QLambda/Saturation.lean`. A finitely separated Scott map satisfies
-  `f x << x`.
-- `Scott1972.ContinuousLattice.omegaQVA_closed_under_functionSpace`
-  — `QLambda/QuantumPower.lean`. Function spaces preserve `omegaQVA`.
+## Quantum relations, closure, and LNL
 
-Boundary: these theorems formalize the quantum `omegaQVA` construction and
-the parameterized quantum domain equation. They do not formalize the full
-classical Chen–Kou–Lyu `omegaFVA` development or independently re-prove the
-Jung–Tix result.
+- `QLambda.Domain.QuantumRel.dagger_dagger`
+- `QLambda.Domain.QuantumRel.dagger_comp`
+- `QLambda.Domain.QuantumRel.id_comp`
+- `QLambda.Domain.QuantumRel.comp_id`
+- `QLambda.Domain.QuantumRel.assoc`
+- `QLambda.Domain.QuantumRel.comp_iSup_left`
+- `QLambda.Domain.QuantumRel.comp_iSup_right`
+- `QLambda.Domain.QuantumRel.IsFunction.comp`
+- `QLambda.Domain.QuantumFunction.comp_dagger_le_order`
+- `QLambda.Domain.QuantumRel.tensor_comp`
+- `QLambda.Domain.QuantumRel.curry_uncurry`
+- `QLambda.Domain.QuantumRel.uncurry_curry`
+- `QLambda.Domain.qRelSymmetricMonoidalClosed`
+- `QLambda.Domain.classicalToQRel`
+- `QLambda.Domain.qRelStates`
+- `QLambda.Domain.quantumLNL`
 
-## Token theories and physical embedding
+The nonlinear side uses discrete hom orders. This avoids the false claim that
+ordinary graph relations are monotone from pointwise-ordered function homs.
 
-- `QLambda.finitaryTTRefines_iff_token_holds`
-  — `QLambda/TTRefinement.lean`. Finitary TT refinement is characterized by
-  preservation of all finite strict tokens.
-- `QLambda.ttTokenTheory_isContinuousLattice` and
-  `QLambda.satisfiedTTTheory_le_iff_finitaryTTRefines`
-  — `QLambda/TTRoundedTheory.lean`. The token completion is a continuous
-  lattice and its order exactly captures finitary TT refinement.
-- `QLambda.TTPhysicalEmbedding.embed_unit`,
-  `QLambda.TTPhysicalEmbedding.embed_map_satisfied`, and
-  `QLambda.TTPhysicalEmbedding.embed_bind_satisfied`
-  — `QLambda/TTPhysicalEmbedding.lean`. Return is preserved exactly; map and
-  bind agree on finitely presented result continuations.
-- `QLambda.TTPhysicalEmbedding.finitaryTTRefines_of_embed_le`
-  — `QLambda/TTPhysicalEmbedding.lean`. Embedding order implies finitary TT
-  refinement, using the proved representation of every rational coded test.
-- `QLambda.no_finiteImageScottRetraction_dyadic`
-  — `QLambda/FiniteImageNonclosure.lean`. A concrete directed dyadic chain
-  rules out a Scott retraction onto the finite embedded image.
+## Quantum CPO category
 
-Boundary: finite instruments embed into a larger continuation model. The
-results do not identify that carrier with finite instruments, and do not
-claim that raw `InstrumentPower` is an `omegaQVA`.
+- the `PartialOrder (QLambda.Domain.QuantumFunction P Q)` instance
+- `QLambda.Domain.discrete_isQuantumCPO`
+- `QLambda.Domain.ScottFunction.comp`
+- `QLambda.Domain.ScottFunction.ofDiscreteDomain`
+- `QLambda.Domain.qCPOCategory`
 
-## Language semantics
+The qCPO category and the concrete `Set ⊣ qRel` LNL model are both checked;
+no equivalence between them is claimed. The published recursive model uses a
+quantum-lift Kleisli category, which is not yet constructed here.
 
-- `QLambda.interp_continuous`, `QLambda.interp_value`, and
-  `QLambda.recLambdaValue_unfold` — `QLambda/Interp.lean`. Terms have a
-  compositional Scott-continuous call-by-value interpretation; values are
-  pure computations and recursive abstractions satisfy the fixed-point
-  unfolding equation.
-- `QLambda.interp_step_le` and `QLambda.interp_reduces_le`
-  — `QLambda/Soundness.lean`. The unweighted operational relations are
-  sound in the denotational order.
+## Finite quantum operations
 
-Boundary: probabilistic, internal, and external choice are distinct
-operations in the concrete TT continuation model. This is not a Qiskit
-compiler or a formal Qiskit equivalence theorem.
+- `QLambda.Domain.CompletedCP.ofKraus_eq_of_semEq`
+- `QLambda.Domain.CompletedCP.ofKraus_comp_assoc`
+- `QLambda.Domain.CompletedCP.measure_probability_normalization`
+- `QLambda.Linear.Prim.completedCP`
+- `QLambda.Linear.Prim.qubitMeasurement`
 
-## Hardware channel-tree completeness
+`CompletedCP` identifies Kraus presentations by intrinsic semantic
+refinement. It is a first-order presentation, not the higher-order category.
 
-- `QLambda.HardwareChannelSemantics.closed_term_presented_channelTreeCompleteness_of_productive_case`
-  and
-  `QLambda.HardwareChannelSemantics.closed_term_presented_token_adequacy_of_productive_case`
-  — `QLambda/HardwareChannel/Productive.lean`. These cover
-  `ProductiveClosedCase`, including the explicitly restricted ordinary and
-  recursive lambda applications whose argument is an `extern`.
-- `QLambda.HardwareChannelSemantics.closed_stuck_free_presented_channelTreeCompleteness`
-  and
-  `QLambda.HardwareChannelSemantics.closed_stuck_free_presented_token_adequacy`
-  — `QLambda/HardwareChannel/Coverage.lean`. These are the final consolidated
-  capstones for programs carrying a `ClosedStuckFreeCoverage` witness.
+## Source equations
 
-`ClosedStuckFreeCoverage` is the exact boundary. Its constructors cover
-closed `NoApp`, `FunAppFrag`, `Produces 0`, `ProductiveClosedCase` with
-`MeasureDistinct`, and `RestrictedExternApplication`. The last class is
-limited to
-`app (lam x body) (extern left right)` and
-`app (recLam self x body) (extern left right)` with the stated `NoApp`,
-`AdminNoApp`, and `Atomic` hypotheses; its direct theorem does not require
-`MeasureDistinct`.
+- `QLambda.Linear.step_sound`
+- `QLambda.Linear.betaL_exact`
+- `QLambda.Linear.betaU_exact`
+- `QLambda.Linear.unpair_exact`
+- `QLambda.Linear.unfold_fold_exact`
+- `QLambda.Linear.fix_exact`
+- `QLambda.Linear.operational_quotient_exact`
 
-The token capstone is presented adequacy: it quantifies over a continuation
-represented by a finite instrument and characterizes selected TT tokens by
-a realized finite channel tree. It is not an unrestricted theorem for every
-closed source term, arbitrary stuck application, or arbitrary Scott
-continuation.
+`DenotationModel` gives the compositional categorical interface and
+constructor equations. The exact operational quotient validates the listed
+source equations. The repository does not claim full abstraction or
+unrestricted adequacy for arbitrary recursive programs.
+Allocation, reset, and general CP instruments are not quantum functions, so
+the qCPO-function category alone cannot instantiate these operations.
 
-## External context
+## Staging and circuit normal form
 
-Chen–Kou–Lyu `omegaFVA` and the Jung–Tix problem motivate the finite
-separation and saturation pattern; they are literature, not a Lean
-dependency and not formalized here in full. The Qiskit tables in `arxiv.md`
-are operational motivation through shared CP denotations, not verified
-compiler correctness or a formal back-and-forth theorem.
+- `QLambda.Linear.elaborates_deterministic`
+- `QLambda.Linear.elaborates_type_preservation`
+- `QLambda.Linear.elaborates_resource_preservation`
+- `QLambda.Linear.elaborates_command_wellFormed`
+- `QLambda.Linear.elaborates_allocation_bounds`
+- `QLambda.Linear.elaborates_compile_agreement`
+- `QLambda.Linear.Command.circuit_complete`
+- `QLambda.Linear.Command.wellFormed_circuit_complete`
+- `QLambda.Linear.Command.compile_wellFormed`
+
+## Canonical lambda quotation
+
+One-wire compatibility layer:
+
+- `QLambda.Linear.Command.quote_typed`
+- `QLambda.Linear.Command.Quotation.compile_reflect`
+- `QLambda.Linear.Command.Quotation.denote_compile`
+- `QLambda.Linear.Command.Quotation.denote_reflect`
+- `QLambda.Linear.Command.Quotation.reflect_compile`
+
+Two-wire supported fragment:
+
+- `QLambda.Linear.Command.GeneralQuotation.quote_typed`
+- `QLambda.Linear.Command.GeneralQuotation.Quotation.typing`
+- `QLambda.Linear.Command.GeneralQuotation.Quotation.compile_reflect`
+- `QLambda.Linear.Command.GeneralQuotation.Quotation.denote_compile`
+- `QLambda.Linear.Command.GeneralQuotation.Quotation.denote_reflect`
+- `QLambda.Linear.Command.GeneralQuotation.Quotation.quotation_capstone`
+
+The supported fragment includes single-wire gates, distinct-wire CX, reset,
+measurement, store, sequencing, conditionals, and bounded repeat. Unsupported
+coin commands are excluded by `coin_not_quotable`.
+
+## OpenQASM interchange
+
+- `QLambda.Composer.parseStructuredProgram_render_roundTrip`
+- `QLambda.Composer.Program.parse_render_roundTrip`
+- `QLambda.Composer.parseStructuredProgram_toOpenQASM_roundTrip`
+- `QLambda.Composer.Fixtures.bell_openQASM_parse_succeeds`
+- `QLambda.Composer.Fixtures.dynamicX_openQASM_parse_succeeds`
+
+The parser theorem covers the declared canonical structured subset, not
+arbitrary OpenQASM 3 text.
+
+## Palomar capstones
+
+`Solution.lean` proves:
+
+- `QLambda.Palomar.quantum_lnl_model`
+- `QLambda.Palomar.quantum_cpo_enriched_category`
+- `QLambda.Palomar.two_wire_circuit_completeness`
+
+`Challenge.lean` contains the matching statement holes by convention.

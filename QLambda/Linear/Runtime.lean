@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Composer.MatrixSemantics
-import QLambda.HardwareOperational
+import QLambda.QuantumRuntimeState
 import QLambda.Linear.Operational
 
 /-!
@@ -30,7 +30,7 @@ open scoped MatrixOrder ComplexOrder
 namespace QLambda.Linear.Runtime
 
 abbrev RegisterState (q : Nat) :=
-  HardwareOperational.NormalizedDensity (CQ.QDim q)
+  NormalizedDensity (CQ.QDim q)
 
 namespace RegisterState
 
@@ -80,12 +80,12 @@ noncomputable def measureBranch (w : Fin q) (b : Bool) :
 /-- Born probability of one computational-basis outcome. -/
 noncomputable def measureProbability (ρ : RegisterState q)
     (w : Fin q) (b : Bool) : Real :=
-  HardwareOperational.NormalizedDensity.bornWeight (measureBranch w b) ρ
+  NormalizedDensity.bornWeight (measureBranch w b) ρ
 
 theorem measureProbability_nonneg (ρ : RegisterState q)
     (w : Fin q) (b : Bool) :
     0 ≤ measureProbability ρ w b :=
-  HardwareOperational.NormalizedDensity.bornWeight_nonneg _ _
+  NormalizedDensity.bornWeight_nonneg _ _
 
 private theorem trace_projector_apply (ρ : RegisterState q)
     (w : Fin q) (b : Bool) :
@@ -123,7 +123,7 @@ theorem measureProbability_le_one (ρ : RegisterState q)
 not become machine transitions. -/
 noncomputable def measured (ρ : RegisterState q) (w : Fin q) (b : Bool)
     (h : 0 < measureProbability ρ w b) : RegisterState q :=
-  HardwareOperational.NormalizedDensity.normalizeBranch (measureBranch w b) ρ h
+  NormalizedDensity.normalizeBranch (measureBranch w b) ρ h
 
 /-- Gate execution is exactly application of the corresponding canonical
 Composer operation, not an unrelated abstract unitary. -/
@@ -458,7 +458,7 @@ theorem progress {q : Nat} {s : Config q} {A : Ty}
                   · exact Or.inr (Or.inl ⟨rfl, by
                       intro w
                       simp [Config.live, Control.wires, Value.wires, hfull w]⟩)
-                  · push_neg at hfull
+                  · push Not at hfull
                     obtain ⟨w, hw⟩ := hfull
                     exact Or.inr (Or.inr (Or.inl
                       ⟨_, InternalStep.allocate hw⟩))

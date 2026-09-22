@@ -26,9 +26,10 @@ Output: `dist/qlambda-zenodo.zip`
 ## Citation (after upload)
 
 ```text
-Ericson, L. W. (2026). ωQVA: Quantum-valuation approximable domains (Lean 4)
+Ericson, L. W. (2026). Domain semantics and circuit completeness for a typed
+linear quantum lambda-calculus (Lean 4)
 (Version 0.1.0) [Software]. Zenodo.
 https://doi.org/10.5281/zenodo.XXXXXXX
 ```
 
-Related: https://github.com/catskillsresearch/qlambda · https://arxiv.org/abs/2608.03073 · https://github.com/catskillsresearch/scott1972
+Related: https://github.com/catskillsresearch/qlambda · https://arxiv.org/abs/2109.02196 · https://github.com/catskillsresearch/scott1972

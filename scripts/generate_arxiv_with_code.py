@@ -36,10 +36,12 @@ def file_role(path: str) -> str:
         return "Palomar challenge statements"
     if path == "Solution.lean":
         return "Palomar compared solutions"
-    if path.startswith("QLambda/HardwareChannel/"):
-        return "Hardware channel-tree semantics layer"
-    if path == "QLambda/QuantumDomainEquation.lean":
-        return "Capstone domain equation"
+    if path.startswith("QLambda/Domain/"):
+        return "Quantum relation, qCPO, and LNL semantics"
+    if path.startswith("QLambda/Linear/"):
+        return "Typed linear language, runtime, and circuit correspondence"
+    if path.startswith("QLambda/Composer/"):
+        return "Composer/OpenQASM interchange"
     return "QLambda development"
 
 

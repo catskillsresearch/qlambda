@@ -21,10 +21,11 @@ the supplied fuel and fixed `(q,c)` allocation bounds.  Fuel affects
 completeness only; every successful result carries the same static
 certificates.
 
-`Linear.Denotation` is not yet present in the repository.  The semantic
+`Linear.Denotation` currently exposes the categorical operations required by
+source typing but has no concrete quantum `DenotationModel`.  The semantic
 agreement proved here is therefore the strongest statement exposed by the
-existing APIs: compiling the staged command to Composer has exactly the
-command's `CQ` denotation.
+instantiated APIs: compiling the staged command to Composer has exactly the
+command's `CQ` denotation.  The source-denotation bridge is a release blocker.
 -/
 
 namespace QLambda.Linear

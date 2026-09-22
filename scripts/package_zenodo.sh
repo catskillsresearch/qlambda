@@ -44,8 +44,8 @@ mkdir -p "$OUT_DIR"
 cat > "${STAGE}/README-ZENODO.md" <<'EOF'
 # qlambda — Zenodo deposit
 
-Lean 4 / Palomar snapshot of ωQVA and the quantum domain equation
-D_∞ ≅ [D_∞ → Q(D_∞)], with a vendored scott1972 foundation.
+Lean 4 / Palomar snapshot of the typed linear quantum lambda calculus,
+quantum-relation/qCPO semantics, and verified finite circuit interchange.
 
 Repository: https://github.com/catskillsresearch/qlambda
 

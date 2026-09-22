@@ -1,15 +1,15 @@
-# arXiv submission metadata (QLambda / ωQVA formalization)
+# arXiv submission metadata (typed linear qlambda formalization)
 
 Copy-paste fields for the arXiv web form. Regenerate the PDF and zip with
 `bash scripts/build_arxiv_pdf.sh` before uploading `dist/arxiv_submit.zip`.
 
 ## Title (plain text for arXiv web form)
 
-The `#` title in `arxiv.md` uses LaTeX (`$\lambda$`) and an en-dash (`Jung–Tix`);
-the metadata field must be **ASCII plain text** (no `$`, `\`, or Unicode dashes).
+The metadata field must be **ASCII plain text** (no `$`, `\`, or Unicode
+dashes).
 
 ```
-Finite-Valuation Approximable Structures, Quantum lambda-Calculus, and the Jung-Tix Problem: Semantics and Formal Verification in Lean 4
+Domain Semantics and Circuit Completeness for a Typed Linear Quantum Lambda-Calculus Formalized in Lean 4
 ```
 
 The PDF title still comes from `arxiv.md` / `\title{...}` with proper math and typography.
@@ -49,5 +49,6 @@ pdfLaTeX (`00README.json` sets `"compiler": "pdflatex"`).
 
 https://github.com/catskillsresearch/qlambda
 
-Note: vendored `vendor/scott1972` is indexed in Appendix A but not duplicated in the
-arXiv zip; the zip ships `QLambda/` sources for the compared development.
+The source archive should ship the active `Domain`, `Linear`, reusable
+CP/CQ/Composer modules, and the exact theorem index. Legacy modules are not
+part of the paper's claimed surface.

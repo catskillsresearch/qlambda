@@ -88,7 +88,6 @@ complete lattice. -/
 noncomputable def bilimitOmegaObject : OmegaObject where
   Carrier := C.Bilimit
   partialOrder := inferInstance
-  orderBot := inferInstance
   omegaComplete := inferInstance
 
 /-- Equality is determined by all finite approximants. -/
@@ -97,6 +96,112 @@ theorem ext {x y : C.Bilimit}
   apply Subtype.ext
   funext n
   exact h n
+
+/-- The tail chain drops the zeroth approximation. -/
+abbrev tail : ProjectionChain where
+  Stage n := C.Stage (n + 1)
+  complete n := C.complete (n + 1)
+  project n := C.project (n + 1)
+
+/-- Unfold a compatible chain by dropping its zeroth approximation. -/
+def shiftForward (x : C.Bilimit) : C.tail.Bilimit :=
+  ⟨fun n => x.1 (n + 1), fun n => x.2 (n + 1)⟩
+
+/-- Fold a tail-compatible chain by restoring the uniquely determined zeroth
+approximation. -/
+def shiftBackward (x : C.tail.Bilimit) : C.Bilimit where
+  val
+    | 0 => C.project 0 (x.1 0)
+    | n + 1 => x.1 n
+  property := by
+    intro n
+    cases n with
+    | zero => rfl
+    | succ n => exact x.2 n
+
+@[simp] theorem shiftForward_shiftBackward (x : C.tail.Bilimit) :
+    C.shiftForward (C.shiftBackward x) = x := by
+  apply C.tail.ext
+  intro n
+  rfl
+
+@[simp] theorem shiftBackward_shiftForward (x : C.Bilimit) :
+    C.shiftBackward (C.shiftForward x) = x := by
+  apply C.ext
+  intro n
+  cases n with
+  | zero => exact x.2 0
+  | succ n => rfl
+
+/-- Dropping the zeroth approximation is ω-continuous. -/
+noncomputable def shiftForwardMap :
+    OmegaMap C.bilimitOmegaObject C.tail.bilimitOmegaObject where
+  toFun := C.shiftForward
+  monotone := by
+    intro x y h
+    exact fun n => h (n + 1)
+  map_ωSup c hc := by
+    change (ℕ → C.Bilimit) at c
+    change C.shiftForward (⨆ k, c k) =
+      ⨆ k, C.shiftForward (c k)
+    apply C.tail.ext
+    intro n
+    simp only [projection, shiftForward, CompleteSublattice.coe_iSup]
+    rw [iSup_apply, iSup_apply]
+
+/-- Restoring the uniquely determined zeroth approximation is
+ω-continuous. -/
+noncomputable def shiftBackwardMap :
+    OmegaMap C.tail.bilimitOmegaObject C.bilimitOmegaObject where
+  toFun := C.shiftBackward
+  monotone := by
+    intro x y h
+    intro n
+    cases n with
+    | zero =>
+        have hxy : x.1 0 ⊔ y.1 0 = y.1 0 :=
+          sup_eq_right.mpr (h 0)
+        calc
+          C.project 0 (x.1 0) ≤
+              C.project 0 (x.1 0) ⊔ C.project 0 (y.1 0) := le_sup_left
+          _ = C.project 0 (x.1 0 ⊔ y.1 0) :=
+            (map_sup (C.project 0) _ _).symm
+          _ = C.project 0 (y.1 0) :=
+            congrArg (C.project 0) hxy
+    | succ n => exact h n
+  map_ωSup c hc := by
+    change (ℕ → C.tail.Bilimit) at c
+    change C.shiftBackward (⨆ k, c k) =
+      ⨆ k, C.shiftBackward (c k)
+    apply C.ext
+    intro n
+    cases n with
+    | zero =>
+        simp only [projection, shiftBackward, CompleteSublattice.coe_iSup]
+        rw [iSup_apply, iSup_apply]
+        simp only
+        simpa [tail] using
+          (map_iSup (C.project 0) (fun i => (c i).1 0))
+    | succ n =>
+        simp only [projection, shiftBackward, CompleteSublattice.coe_iSup]
+        rw [iSup_apply, iSup_apply]
+
+/-- Every projection-chain bilimit is continuously isomorphic to the
+bilimit of its tail.  These are the generic fold/unfold maps used by
+strictly-positive recursive-object chains. -/
+noncomputable def shiftIso :
+    OmegaCategory.Iso omegaMapCategory
+      C.bilimitOmegaObject C.tail.bilimitOmegaObject where
+  hom := C.shiftForwardMap
+  inv := C.shiftBackwardMap
+  hom_inv := by
+    apply OmegaMap.ext
+    intro x
+    exact C.shiftForward_shiftBackward x
+  inv_hom := by
+    apply OmegaMap.ext
+    intro x
+    exact C.shiftBackward_shiftForward x
 
 end ProjectionChain
 

@@ -3,64 +3,50 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Adequacy
-import QLambda.ChoiRayObstruction
+
+import QLambda.QuantumInstrument
+import QLambda.QuantumRuntimeState
 import QLambda.CQ.Domain
-import QLambda.Compiler.Correctness
+
 import QLambda.Composer.Denotation
 import QLambda.Composer.Fixtures
 import QLambda.Composer.OpenQASM
 import QLambda.Composer.OpenQASMParser
 import QLambda.Composer.WellFormed
-import QLambda.Effects
-import QLambda.FiniteImageNonclosure
+
 import QLambda.Domain.OmegaCPO
-import QLambda.HardwareAdequacy
-import QLambda.HardwareChannelSemantics
-import QLambda.HardwareCompletenessCounterexample
-import QLambda.Interp
-import QLambda.InstrumentPower
-import QLambda.Monad
-import QLambda.ObservationBasis
-import QLambda.OmegaQVA
-import QLambda.Operational
-import QLambda.PhysicalTheory
-import QLambda.QDomain
-import QLambda.QuantumDomainEquation
-import QLambda.QuantumInstrument
-import QLambda.QuantumPower
-import QLambda.QuantumStateSpace
-import QLambda.RationalComplex
-import QLambda.RationalCP
-import QLambda.RefinementCounterexample
-import QLambda.RoundedTheory
-import QLambda.RoundedTheoryMorphisms
-import QLambda.RoundedTheoryOmega
-import QLambda.Saturation
-import QLambda.ScottLowerSet
-import QLambda.Soundness
-import QLambda.Linear.Circuit
-import QLambda.Linear.Denotation
-import QLambda.Linear.Elaboration
+import QLambda.Domain.Enriched
+import QLambda.Domain.LinearNonlinear
+import QLambda.Domain.RecursiveTypes
+import QLambda.Domain.QuantumSet
+import QLambda.Domain.QuantumRel
+import QLambda.Domain.QuantumRelational
+import QLambda.Domain.QuantumCPOCategory
+import QLambda.Domain.QuantumCategory
+import QLambda.Domain.QuantumMonoidal
+import QLambda.Domain.DiscreteSet
+import QLambda.Domain.QuantumClassical
+import QLambda.Domain.QuantumLNL
+
+import QLambda.Linear.Syntax
+import QLambda.Linear.Context
+import QLambda.Linear.TypeFormation
+import QLambda.Linear.Typing
+import QLambda.Linear.Metatheory
 import QLambda.Linear.Operational
-import QLambda.Linear.Quotation
-import QLambda.Linear.RegFile
 import QLambda.Linear.Runtime
-import QLambda.Source.Denotation
-import QLambda.Source.Syntax
-import QLambda.Syntax
-import QLambda.TTObservationBasis
-import QLambda.TTComputationChoice
-import QLambda.TTContinuationMonad
-import QLambda.TTExternalChoice
-import QLambda.TTInternalChoice
-import QLambda.TTPhysicalEmbedding
-import QLambda.TTPhysicalPrimitives
-import QLambda.TTProbChoice
-import QLambda.TTRefinement
-import QLambda.TTResultAlgebra
-import QLambda.TTResultApproximation
-import QLambda.TTResultOperations
-import QLambda.TTRoundedTheory
-import QLambda.TTTokenTheoryOperations
-import QLambda.TTWeightedAggregation
+import QLambda.Linear.Circuit
+import QLambda.Linear.RegFile
+import QLambda.Linear.Elaboration
+import QLambda.Linear.Quotation
+import QLambda.Linear.QuotationGeneral
+import QLambda.Linear.Denotation
+
+/-!
+# Typed linear qlambda
+
+The active root exports the reusable matrix/CP/CQ and Composer layers together
+with the typed `Domain` and `Linear` redesign.  The former untyped omega-QVA,
+choice, `emit`, physical-scratch, and hardware-adequacy tower is intentionally
+not reachable from this import.
+-/

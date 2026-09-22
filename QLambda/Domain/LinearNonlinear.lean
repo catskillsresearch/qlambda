@@ -103,14 +103,16 @@ structure SymmetricMonoidalClosed (L : OmegaCategory.{u, v}) where
       curry (OmegaComplete.ωSup c hc) =
         OmegaComplete.ωSup (fun n => curry (c n)) (curry_mono.comp hc)
 
-/-- A CPO-enriched strong symmetric monoidal adjunction `F ⊣ G`. -/
+/-- A strong symmetric monoidal adjunction between CPO-enriched categories.
+The adjunction functors are ordinary functors: important models such as
+`Set ⊣ qRel` do not preserve the selected hom orders in both directions. -/
 structure LNLModel where
   nonlinear : OmegaCategory.{u, v}
   linear : OmegaCategory.{u, v}
   nonlinearClosed : CartesianClosed nonlinear
   linearClosed : SymmetricMonoidalClosed linear
-  F : nonlinear.Functor linear
-  G : linear.Functor nonlinear
+  F : nonlinear.PlainFunctor linear
+  G : linear.PlainFunctor nonlinear
   toLinear :
     {A : nonlinear.Obj} → {B : linear.Obj} →
       nonlinear.Hom A (G.obj B) → linear.Hom (F.obj A) B
@@ -138,21 +140,18 @@ structure LNLModel where
 noncomputable def omegaTerminal : OmegaObject where
   Carrier := PUnit
   partialOrder := inferInstance
-  orderBot := inferInstance
   omegaComplete := inferInstance
 
 /-- Product pointed ωCPO. -/
 noncomputable def omegaProduct (A B : OmegaObject) : OmegaObject where
   Carrier := A × B
   partialOrder := inferInstance
-  orderBot := inferInstance
   omegaComplete := inferInstance
 
 /-- Pointed ωCPO of continuous maps. -/
 noncomputable def omegaExponential (A B : OmegaObject) : OmegaObject where
   Carrier := OmegaMap A B
   partialOrder := inferInstance
-  orderBot := inferInstance
   omegaComplete := inferInstance
 
 attribute [reducible] omegaTerminal omegaProduct omegaExponential
@@ -325,13 +324,9 @@ noncomputable def omegaSymmetricMonoidalClosed :
     rfl
 
 private noncomputable def omegaIdentityFunctor :
-    (omegaMapCategory.{u}).Functor omegaMapCategory where
+    (omegaMapCategory.{u}).PlainFunctor omegaMapCategory where
   obj := id
   map := id
-  map_mono := by
-    intro A B f g h
-    exact h
-  map_ωSup := fun _ _ => rfl
   map_id := rfl
   map_comp := fun _ _ => rfl
 

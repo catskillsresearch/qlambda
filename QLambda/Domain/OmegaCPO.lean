@@ -7,7 +7,7 @@ import Mathlib.Order.CompleteLattice.Basic
 import Mathlib.Order.FixedPoints
 
 /-!
-# Pointed ω-complete partial orders
+# ω-complete partial orders and pointed fixed points
 
 This is the domain-theoretic foundation of the typed linear calculus.  It is
 independent of valuation powerdomains, ωQVA, and the Jung--Tix problem.
@@ -17,9 +17,9 @@ namespace QLambda.Domain
 
 universe u v w
 
-/-- A partial order with a least element and suprema of increasing
-`ℕ`-chains. -/
-class OmegaComplete (D : Type u) [PartialOrder D] [OrderBot D] where
+/-- A partial order with suprema of increasing `ℕ`-chains.  Pointedness is
+separate: only least-fixed-point constructions require `OrderBot`. -/
+class OmegaComplete (D : Type u) [PartialOrder D] where
   ωSup : (c : ℕ → D) → Monotone c → D
   le_ωSup : ∀ (c : ℕ → D) (hc : Monotone c) (n : ℕ), c n ≤ ωSup c hc
   ωSup_le : ∀ (c : ℕ → D) (hc : Monotone c) (x : D),
@@ -33,7 +33,7 @@ noncomputable instance (D : Type u) [CompleteLattice D] : OmegaComplete D where
 
 namespace OmegaComplete
 
-variable {D : Type u} [PartialOrder D] [OrderBot D] [OmegaComplete D]
+variable {D : Type u} [PartialOrder D] [OmegaComplete D]
 
 theorem ωSup_unique (c : ℕ → D) (hc : Monotone c) {x : D}
     (hupper : ∀ n, c n ≤ x) (hleast : ∀ y, (∀ n, c n ≤ y) → x ≤ y) :
@@ -58,11 +58,11 @@ theorem ωSup_const (x : D) :
 
 end OmegaComplete
 
-/-- Products of pointed ωCPOs carry the pointwise ωCPO structure. -/
+/-- Products of ωCPOs carry the pointwise ωCPO structure. -/
 noncomputable instance instOmegaCompleteProd
     {D : Type u} {E : Type v}
-    [PartialOrder D] [OrderBot D] [OmegaComplete D]
-    [PartialOrder E] [OrderBot E] [OmegaComplete E] :
+    [PartialOrder D] [OmegaComplete D]
+    [PartialOrder E] [OmegaComplete E] :
     OmegaComplete (D × E) where
   ωSup c hc :=
     (OmegaComplete.ωSup (fun n => (c n).1)
@@ -82,11 +82,11 @@ noncomputable instance instOmegaCompleteProd
         (fun _ _ h => (hc h).2) x.2
         (fun n => (hx n).2)⟩
 
-/-- Scott/ω-continuous maps between pointed ωCPOs. -/
+/-- Scott/ω-continuous maps between ωCPOs. -/
 structure OmegaMap
     (D : Type u) (E : Type v)
-    [PartialOrder D] [OrderBot D] [OmegaComplete D]
-    [PartialOrder E] [OrderBot E] [OmegaComplete E] where
+    [PartialOrder D] [OmegaComplete D]
+    [PartialOrder E] [OmegaComplete E] where
   toFun : D → E
   monotone : Monotone toFun
   map_ωSup : ∀ (c : ℕ → D) (hc : Monotone c),
@@ -97,10 +97,10 @@ namespace OmegaMap
 
 variable
   {D : Type u} {E : Type v} {F : Type w} {G : Type u}
-  [PartialOrder D] [OrderBot D] [OmegaComplete D]
-  [PartialOrder E] [OrderBot E] [OmegaComplete E]
-  [PartialOrder F] [OrderBot F] [OmegaComplete F]
-  [PartialOrder G] [OrderBot G] [OmegaComplete G]
+  [PartialOrder D] [OmegaComplete D]
+  [PartialOrder E] [OmegaComplete E]
+  [PartialOrder F] [OmegaComplete F]
+  [PartialOrder G] [OmegaComplete G]
 
 instance : CoeFun (OmegaMap D E) (fun _ => D → E) :=
   ⟨OmegaMap.toFun⟩
@@ -108,7 +108,7 @@ instance : CoeFun (OmegaMap D E) (fun _ => D → E) :=
 instance : LE (OmegaMap D E) :=
   ⟨fun f g => ∀ x, f x ≤ g x⟩
 
-instance : OrderBot (OmegaMap D E) where
+instance [OrderBot E] : OrderBot (OmegaMap D E) where
   bot :=
     { toFun := fun _ => ⊥
       monotone := fun _ _ _ => le_rfl
@@ -161,6 +161,10 @@ theorem comp_assoc (h : OmegaMap F G) (g : OmegaMap E F) (f : OmegaMap D E) :
   ext
   rfl
 
+section Pointed
+
+variable [OrderBot D]
+
 /-- Finite iterates from bottom. -/
 def iterateBot (f : OmegaMap D D) : ℕ → D
   | 0 => ⊥
@@ -211,16 +215,18 @@ theorem fix_mono {f g : OmegaMap D D} (hfg : f ≤ g) :
 
 /-- A parameter-indexed family of least fixed points. -/
 noncomputable def paramFix
-    {P : Type w} [PartialOrder P] [OrderBot P] [OmegaComplete P]
+    {P : Type w} [PartialOrder P] [OmegaComplete P]
     (f : P → OmegaMap D D) (p : P) : D :=
   fix (f p)
 
 theorem paramFix_mono
-    {P : Type w} [PartialOrder P] [OrderBot P] [OmegaComplete P]
+    {P : Type w} [PartialOrder P] [OmegaComplete P]
     {f : P → OmegaMap D D} (hf : Monotone f) :
     Monotone (paramFix f) := by
   intro p q hpq
   exact fix_mono (hf hpq)
+
+end Pointed
 
 end OmegaMap
 
@@ -229,10 +235,10 @@ namespace OmegaMap
 section FunctionSpace
 
 variable {D : Type u} {E : Type v}
-  [PartialOrder D] [OrderBot D] [OmegaComplete D]
-  [PartialOrder E] [OrderBot E] [OmegaComplete E]
+  [PartialOrder D] [OmegaComplete D]
+  [PartialOrder E] [OmegaComplete E]
 
-/-- Continuous maps form a pointed ωCPO under the pointwise order. -/
+/-- Continuous maps form an ωCPO under the pointwise order. -/
 noncomputable instance instOmegaCompleteFunctionSpace :
     OmegaComplete (OmegaMap D E) where
   ωSup c hc :=
@@ -311,9 +317,9 @@ section ClosedStructure
 
 variable
   {A : Type u} {B : Type v} {X : Type w}
-  [PartialOrder A] [OrderBot A] [OmegaComplete A]
-  [PartialOrder B] [OrderBot B] [OmegaComplete B]
-  [PartialOrder X] [OrderBot X] [OmegaComplete X]
+  [PartialOrder A] [OmegaComplete A]
+  [PartialOrder B] [OmegaComplete B]
+  [PartialOrder X] [OmegaComplete X]
 
 def fst : OmegaMap (A × B) A where
   toFun := Prod.fst

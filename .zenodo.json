@@ -1,10 +1,10 @@
 {
-  "title": "ωQVA: Quantum-valuation approximable domains and the untyped quantum λ-calculus (Lean 4)",
+  "title": "Domain semantics and circuit completeness for a typed linear quantum lambda-calculus (Lean 4)",
   "upload_type": "software",
   "access_right": "open",
   "language": "eng",
   "version": "0.1.0",
-  "description": "Initial Lean 4 / Palomar snapshot of the category ωQVA of quantum-valuation approximable domains, the Loewner spectrahedron S_≤1(M_n), Chen–Kou–Lyu saturation flattening, and the capstone inverse-limit theorem D_∞ ≅ [D_∞ → Q(D_∞)] inside ωQVA. Builds on a vendored copy of the author's scott1972 formalization of Dana Scott, Continuous Lattices (1972). Sorry-free target; classical footprint {propext, Classical.choice, Quot.sound}. Narrative: arxiv.md.",
+  "description": "Lean 4 formalization of a typed linear/nonlinear quantum lambda-calculus, quantum sets, relations and quantum CPOs, finite completely positive maps and instruments, deterministic staging to a finite circuit normal form, and structured IBM Composer/OpenQASM interchange. The release boundary is theorem-indexed in THEOREMS.md; narrative and limitations are in arxiv.md.",
   "creators": [
     {
       "name": "Ericson, Lars Warren",
@@ -17,11 +17,12 @@
     "mathlib",
     "formal verification",
     "domain theory",
-    "continuous lattices",
-    "Jung-Tix problem",
+    "quantum CPO",
+    "quantum relations",
+    "linear types",
     "quantum lambda calculus",
     "denotational semantics",
-    "omega-QVA"
+    "OpenQASM"
   ],
   "subjects": [
     {
@@ -51,7 +52,7 @@
     }
   ],
   "license": "Apache-2.0",
-  "notes": "Software and Lean sources are Apache-2.0 (see LICENSE). vendor/scott1972 is the author's 1972 library (Apache-2.0). Chen–Kou–Lyu arXiv:2608.03073 is cited literature in sources/. Prepared with LLM assistance; authors remain responsible for mathematical content.",
+  "notes": "Software and Lean sources are Apache-2.0 (see LICENSE). The quantum-set/qCPO model follows Weaver and Kornell–Lindenhovius–Mislove. Prepared with LLM assistance; authors remain responsible for mathematical content.",
   "related_identifiers": [
     {
       "identifier": "https://github.com/catskillsresearch/qlambda",
@@ -66,13 +67,7 @@
       "resource_type": "software"
     },
     {
-      "identifier": "2608.03073",
-      "relation": "cites",
-      "scheme": "arxiv",
-      "resource_type": "publication-preprint"
-    },
-    {
-      "identifier": "2606.30782",
+      "identifier": "2109.02196",
       "relation": "cites",
       "scheme": "arxiv",
       "resource_type": "publication-preprint"

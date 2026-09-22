@@ -2,143 +2,74 @@
 
 # qlambda
 
-Lean 4 development toward denotational semantics of an untyped quantum
-λ-calculus using **ωQVA** (quantum-valuation approximable domains) and
-finite CP instruments. The library builds on top
-of a vendored [`scott1972`](https://github.com/catskillsresearch/scott1972)
-formalization of Dana Scott, *Continuous Lattices* (LNM 274).
+Lean 4 formalization of a typed linear/nonlinear quantum lambda calculus,
+quantum-relation/qCPO semantics, and a verified finite circuit interchange.
 
-The three semantic objects are explicit:
+The source judgment
 
-- **ωQVA** is the full subcategory of continuous lattices carrying
-  `IsOmegaQVA`: identity is an increasing supremum of finitely separated
-  approximants factoring through finite products of density spectrahedra;
-- **D∞** is `QDInf`, the inverse limit of
-  `D_(n+1) = [D_n → Q(D_n)]`;
-- **Q** is an `IsQuantumPowerModel`, and an `IsQuantumMonad` for term
-  interpretation. The concrete instance is
-  `TTContinuationPower n D = [[D → TTResult n] → TTResult n]`.
-
-See **“The Three Semantic Objects: ωQVA, D∞, and Q”** in `arxiv.md` for the
-definitions and the paper-symbol-to-Lean crosswalk.
-
-The **Palomar compared statement of record** is the canonical-base domain capstone
-
-`canonical_omegaQVA_quantum_domain_equation_solved`:
-
-for every bundled `QuantumPowerModel` `M`, start from the canonical one-point
-ωQVA domain. The canonical stage-zero pair embeds the point as the bottom
-function and has bonding retraction `[PUnit → Q(PUnit)] ↠ PUnit`. The inverse
-limit `D_∞` of `D_{n+1} = [D_n → Q(D_n)]` lies in ωQVA; the constructed maps
-`qEmbInfInf : D_∞ → [D_∞ → Q(D_∞)]` and
-`qProjInfInf : [D_∞ → Q(D_∞)] → D_∞` are mutual inverses; `D_∞` is
-order-isomorphic to that function space; and Scott's inverse-limit identity
-holds on the tower.
-
-The wider repository retains the conditional theorem
-`omegaQVA_quantum_domain_equation_solved M D₀ j₀`, where `j₀` is a supplied
-embedding–retraction pair with `incl : D₀ → [D₀ → Q(D₀)]` and bonding
-`retr : [D₀ → Q(D₀)] ↠ D₀`. It also proves supporting lemmas, the concrete
-`QLambda.TTContinuation.canonical_omegaQVA_quantum_domain_equation_solved n`,
-and bounded hardware adequacy capstones. These are indexed in `THEOREMS.md`
-but are not selected by `comparator.json` for this Palomar entry.
-
-A concrete fixed-register instance is now constructed as
-`TTContinuation.model n`, with carrier
-`TTContinuationPower n D = [[D → TTResult n] → TTResult n]`.
-`TTPhysicalEmbedding.embed` maps Kraus-presented finite
-trace-nonincreasing instruments into this carrier. It preserves return
-exactly, agrees with finite map and bind on finitely presented result
-continuations, and recovers explicitly Scott-represented finitary TT
-tests from embedding order.
-
-The final hardware adequacy capstones are
-`closed_stuck_free_presented_channelTreeCompleteness` and
-`closed_stuck_free_presented_token_adequacy`. They apply exactly to closed
-programs carrying a `ClosedStuckFreeCoverage` witness, including the
-restricted ordinary and recursive lambda applications with an external
-choice argument represented by `RestrictedExternApplication`.
-
-## Status and boundaries
-
-The domain construction is complete at its stated interface:
-
-- ωQVA Cartesian closure and inverse-limit domain equation;
-- the fixed-register continuation quantum power and monad;
-- physical finite-instrument embedding and finite monad compatibility;
-- represented-test refinement recovery and the directed-supremum
-  obstruction to a finite-image Scott retract.
-
-The core language layer is now implemented: syntax is parameterized by
-closed quantum primitives and includes recursive abstractions;
-`QLambda.interp` maps every term compositionally into `Q(D_∞)`, with pure
-values lifted by monadic `unit`, call-by-value application implemented by
-Scott-continuous `bind`, and recursion interpreted by Scott `fix`.
-Environment lookup/update, constructor equations, value purity,
-compositional Scott continuity, recursive unfolding, substitution and
-β-equations, and operational soundness are proved. The concrete TT model
-keeps probabilistic, internal, and external choice distinct. The hardware
-result is presented channel-tree completeness and token adequacy at the
-named `ClosedStuckFreeCoverage` boundary, not an unrestricted theorem for
-every closed term or arbitrary Scott continuation.
-
-See `THEOREMS.md` for the compact theorem/file index and exact boundaries.
-See `arxiv.md` for the proof journey, definitions, theorem statements,
-examples, and narrative status.
-
-The formalized result is the quantum `ωQVA` domain theorem and its language
-and hardware interfaces. Chen–Kou–Lyu `ωFVA` / Jung–Tix is motivating
-classical literature and is not re-formalized here in full.
-
-The revised circuit layer now includes:
-
-- a frozen versioned Composer/OpenQASM AST and well-formedness judgment;
-- a register-indexed classical–quantum instrument denotation;
-- an untyped CBV `emit` source plus finite residual command language;
-- total Composer→qλ embedding and scheduler-parameterized qλ→Composer
-  compilation;
-- `compile_correct` on the `Compilable` fragment (supported gates including
-  CX, measurement, reset, store, general sequencing, and probabilistic
-  choice, plus intern and extern), `elaborates_compile_correct`,
-  `denote_embed` for blocks of those instructions, `compile_embed`, and
-  `hideScratch_coin_op`.
-
-Untyped source terms may diverge. `Source.Elaborates` records terminating CBV
-staging to a finite command; that command is the total compiler's input.
-Compilation always targets `q+1` qubits and `c+1` bits. Source and
-Composer meanings agree after `hideScratch` initializes and discards the
-reserved resources. There is no caller-supplied `LawfulProbLowering` and
-no unconstrained `Composer.Model` in the capstone. The physical coin is
-`physicalCoin` (reset, `RY(2·acos(√p))`, measure, conditional) on the
-reserved last wire/bit. `hideScratch_coin_op` shows that this coin,
-including measurement, branch dispatch, and scratch erasure, denotes
-source `probSem` after `hideScratch`. OpenQASM export is not a claim about arbitrary
-Qiskit Python or noisy IBM backend behavior.
-
-Narrative: `arxiv.md`. Theorem index: `THEOREMS.md`. Palomar metadata:
-`comparator.json`, `formalization.yaml`, `docs/PALOMAR_STYLE.md`.
-Vendor / attribution: `PROVENANCE.md`, `vendor/FROZEN.txt`.
-
-## Palomar packaging
-
-Local mechanical readiness (CI runs this on every push):
-
-```bash
-bash scripts/palomar_preflight.sh --mechanical-only
+```text
+Γ ; Δ ⊢ M : A
 ```
 
-Before registry submission, run the full gate (mechanical checks plus
-vendored-policy sync and Cursor editorial audit):
+separates unrestricted classical assumptions from exactly-once linear
+assumptions.  The language has linear and unrestricted functions, tensors,
+classical bits, qubits, recursive types, allocation, gates, reset, and
+measurement.  Probability arises only from measurement.  There is no source
+`emit`, probabilistic choice, internal choice, or external choice.
 
-```bash
-bash scripts/palomar_preflight.sh
-```
+## Current formalized layers
 
-Mechanical green means Challenge and Solution types match under Comparator
-rules and Solution sources contain no `sorry`. It does **not** assign a
-Palomar registry ID. Actual registration requires a public GitHub repository,
-a full 40-character commit SHA, the root project path, and explicit selection
-of `comparator.json` at [submit.palomar-registry.org](https://submit.palomar-registry.org/).
+- `QLambda/Linear/Syntax.lean`, `Typing.lean`, `Metatheory.lean`:
+  scope, verified type inference, substitution, preservation, and source
+  progress.
+- `QLambda/Linear/Runtime.lean`: finite quantum registers, gate/reset/
+  measurement transitions, preservation, progress, and measurement
+  normalization.
+- `QLambda/Domain/OmegaCPO.lean`, `Enriched.lean`,
+  `LinearNonlinear.lean`: omega-complete orders, continuous maps,
+  enriched-category interfaces, and fixed points on pointed objects.
+- `QLambda/Domain/QuantumSet.lean`, `QuantumRel.lean`,
+  `QuantumRelational.lean`, `QuantumMonoidal.lean`, `QuantumLNL.lean`:
+  quantum sets, complete-lattice relation homs,
+  dagger/category laws, the published pointwise order on quantum functions,
+  compact closure, the concrete `Set ⊣ qRel` LNL model, discrete qCPOs, and
+  finite gate embeddings.
+- `QLambda/Domain/QuantumCPOCategory.lean`, `RecursiveTypes.lean`: the
+  Scott-continuous quantum-function category and continuous projection-chain
+  shift/fold isomorphisms.
+- `QLambda/Linear/RegFile.lean`, `Elaboration.lean`: deterministic,
+  resource-certified staging of a terminating first-order fragment.
+- `QLambda/Linear/Circuit.lean`, `Quotation.lean`,
+  `QuotationGeneral.lean`: circuit normal form, Composer reflection, and
+  canonical typed quotation for the declared two-wire fragment.
+- `QLambda/Composer/OpenQASMParser.lean`: canonical structured OpenQASM
+  parse/render round trips.
+
+## Checked boundary
+
+The active root and Palomar surface now expose the typed redesign only.  The
+concrete LNL model, quantum-CPO category, projection-chain shift isomorphism,
+runtime, staging, two-wire quotation capstone, and OpenQASM round trips all
+compile without implementation `sorry`.
+
+`DenotationModel` remains the explicit interface for a compositional source
+interpretation; the source equations also have an exact operational quotient.
+This release does not claim an equivalence between the `Set ⊣ qRel` model and
+the Scott-function qCPO category, full abstraction, or unrestricted adequacy
+for arbitrary recursive programs. `docs/NOVELTY_AUDIT.md` records the
+distinction between published mathematics and new Lean proofs.
+`docs/QCPO_LNL_DESIGN.md` records the published lifted-qCPO Kleisli route and
+the remaining obstruction for allocation, reset, and arbitrary CP
+instruments.
+
+## Circuit and OpenQASM boundary
+
+The circuit target is a frozen, versioned Composer/OpenQASM AST with ideal
+classical--quantum instrument semantics.  It is not the Qiskit Python API and
+does not model calibration, transpiler heuristics, device noise, or arbitrary
+OpenQASM text.  “Circuit completeness” means representability of every
+well-formed circuit in the declared supported fragment, not exact finite
+synthesis of every unitary.
 
 ## Build
 
@@ -147,39 +78,26 @@ lake exe cache get
 lake build
 ```
 
-`lake build` typechecks `QLambda`, `Challenge`, and `Solution`.
-`Challenge.lean` may contain `sorry`. `Solution.lean` re-exports the
-sorry-free compared proofs; unfinished semantics modules are outside
-that compared surface.
-
-Palomar type check (green `lake build` is not enough):
+Mechanical Palomar checks:
 
 ```bash
 bash scripts/palomar_preflight.sh --mechanical-only
 ```
 
-Or the underlying Comparator diff alone:
+Before a release candidate:
 
 ```bash
-bash scripts/palomar_preflight.sh --mechanical-only
+bash scripts/palomar_preflight.sh
+bash scripts/build_arxiv_pdf.sh
+bash scripts/package_zenodo.sh
 ```
 
-ArXiv / Zenodo: `bash scripts/build_arxiv_pdf.sh` and
-`bash scripts/package_zenodo.sh` (see `ZENODO.md`).
+## Provenance
 
-### Provenance, Attribution & Third-Party Software Statement
+The development uses Mathlib and the vendored
+[`scott1972`](https://github.com/catskillsresearch/scott1972) formalization.
+The quantum-set/qCPO construction follows Weaver and
+Kornell--Lindenhovius--Mislove.  See `PROVENANCE.md` and the paper references.
 
-1. **Original Mathematical Formalizations (Author: Lars Warren Ericson):**
-   * The core formalization of D. S. Scott's 1972 *Continuous Lattices* in `vendor/scott1972/` is the original work of Lars Warren Ericson (Catskills Research, 2026); the remote remains [`scott1972`](https://github.com/catskillsresearch/scott1972).
-   * The non-commutative operator extension (ω**QVA**), spectrahedral state-space formalization, and quantum domain equation in `QLambda/` were designed and mechanized by Lars Warren Ericson.
-
-2. **Literature (not a Lean dependency):**
-   * Chen, Kou, and Lyu, *Finite-valuation approximable structures* (arXiv:2608.03073, 2026), in `sources/`. Saturation lemmas are mechanized in `QLambda/Saturation.lean`.
-
-3. **Literature Citations:**
-   * Foundational domain theory: D. S. Scott (1972, LNM 274); M. B. Smyth & G. D. Plotkin (1982).
-   * Probabilistic resolution of Jung–Tix: Y. Chen, H. Kou, Z. Lyu (arXiv:2608.03073, 2026).
-   * Quantum process calculi and programming: P. Selinger & B. Valiron (2009); M. Ying (2016).
-
-4. **AI Tooling Disclosure:**
-   * Large language models (Cursor Grok 4.6, GPT-5.6 Sol Medium, and others) were used as assistive tools for scaffolding, proof exploration, LaTeX/Markdown, and literature cross-checking. All formal Lean 4 proof scripts remain the author's responsibility; generated Lean is provisional until it compiles under the pinned toolchain.
+AI agents assisted with proof exploration, code, and prose under the author's
+direction.  Lean kernel checking, not generated text, is the proof authority.
