@@ -46,6 +46,119 @@ inductive MeasStep : Term → Bool → Term → Prop where
       Value Q →
       MeasStep (.measure Q K) b (.app (.app K (.bitLit b)) Q)
 
+theorem step_preservation {Γ Δ M N A}
+    (hs : Step M N) (ht : HasType Γ Δ M A) :
+    HasType Γ Δ N A := by
+  induction hs generalizing Γ Δ A with
+  | betaL hV =>
+      cases ht with
+      | appL hsplit hF hX =>
+          cases hF with
+          | lamL hM => exact substLin_zero_preserves hsplit hM hX
+      | appU hsplit hnone hF hX => cases hF
+  | betaU hV =>
+      cases ht with
+      | appL hsplit hF hX => cases hF
+      | appU hsplit hnoneX hF hX =>
+          cases hF with
+          | lamU hdup hnoneF hM =>
+              have hlen : _ := hsplit.lengths.2.trans hsplit.lengths.1.symm
+              have hsub := substUnres_zero_preserves hM hX hnoneX hlen
+              rw [hsplit.eq_left_of_allNone_right hnoneX]
+              exact hsub
+  | appF hstep ih =>
+      cases ht with
+      | appL hsplit hF hX =>
+          exact HasType.appL hsplit (ih hF) hX
+      | appU hsplit hnone hF hX =>
+          exact HasType.appU hsplit hnone (ih hF) hX
+  | appX hV hstep ih =>
+      cases ht with
+      | appL hsplit hF hX =>
+          exact HasType.appL hsplit hF (ih hX)
+      | appU hsplit hnone hF hX =>
+          exact HasType.appU hsplit hnone hF (ih hX)
+  | iteTrue =>
+      cases ht with
+      | ite hsplit hB hT hE =>
+          cases hB with
+          | bitLit hnone =>
+              rw [hsplit.eq_right_of_allNone_left hnone]
+              exact hT
+  | iteFalse =>
+      cases ht with
+      | ite hsplit hB hT hE =>
+          cases hB with
+          | bitLit hnone =>
+              rw [hsplit.eq_right_of_allNone_left hnone]
+              exact hE
+  | iteC hstep ih =>
+      cases ht with
+      | ite hsplit hB hT hE =>
+          exact HasType.ite hsplit (ih hB) hT hE
+  | unpairBeta hM hN =>
+      cases ht with
+      | unpair houter hPair hK =>
+          cases hPair with
+          | pair hinner htM htN =>
+              obtain ⟨Δkm, hkm, hout⟩ := houter.rotate hinner
+              exact HasType.appL hout
+                (HasType.appL hkm hK htM) htN
+  | unpairC hstep ih =>
+      cases ht with
+      | unpair hsplit hM hK =>
+          exact HasType.unpair hsplit (ih hM) hK
+  | pairL hstep ih =>
+      cases ht with
+      | pair hsplit hM hN =>
+          exact HasType.pair hsplit (ih hM) hN
+  | pairR hV hstep ih =>
+      cases ht with
+      | pair hsplit hM hN =>
+          exact HasType.pair hsplit hM (ih hN)
+  | unfoldBeta hV =>
+      cases ht with
+      | unfold hFold =>
+          cases hFold with
+          | fold hV => exact hV
+  | unfoldC hstep ih =>
+      cases ht with
+      | unfold hM => exact HasType.unfold (ih hM)
+  | fixBeta hV =>
+      cases ht with
+      | fix hdup hnone hM =>
+          exact HasType.appU (OSplit.self_of_allNone hnone) hnone hM
+            (HasType.fix hdup hnone hM)
+  | fixC hstep ih =>
+      cases ht with
+      | fix hdup hnone hM =>
+          exact HasType.fix hdup hnone (ih hM)
+  | foldC hstep ih =>
+      cases ht with
+      | fold hM => exact HasType.fold (ih hM)
+  | measureC hstep ih =>
+      cases ht with
+      | measure hsplit hQ hK =>
+          exact HasType.measure hsplit (ih hQ) hK
+
+theorem measStep_preservation {Γ Δ M N A b}
+    (hm : MeasStep M b N) (ht : HasType Γ Δ M A) :
+    HasType Γ Δ N A := by
+  cases hm with
+  | @branch Q K b hV =>
+      cases ht with
+      | @measure Γ₀ Δ₀ Δ₁ Δ₂ A₀ Q₀ K₀ hsplit hQ hK =>
+          let Δnone :=
+            List.replicate Δ₂.length (Option.none : Option Ty)
+          have hnone : AllNone Δnone := allNone_replicate_none _
+          have hbit : HasType Γ Δnone (.bitLit b) .bit :=
+            HasType.bitLit hnone
+          have hKbit :
+              HasType Γ _ (.app K (.bitLit b))
+                (.arrow .lin .qubit A) :=
+            HasType.appU (OSplit.withNoneRight _) hnone hK hbit
+          exact HasType.appL hsplit.symm hKbit hQ
+
 /-- A source evaluation context has reached a quantum primitive.  The staging
 or machine layer, rather than classical β-reduction, handles this case. -/
 inductive QuantumBlocked : Term → Prop where

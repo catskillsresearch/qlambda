@@ -102,6 +102,170 @@ theorem OSplit.eq_left_of_allNone_right {Δ Δ₁ Δ₂ : List (Option Ty)}
     Δ = Δ₁ :=
   hs.symm.eq_right_of_allNone_left h₂
 
+theorem OSplit.withNoneRight (Δ : List (Option Ty)) :
+    OSplit Δ Δ (List.replicate Δ.length (Option.none : Option Ty)) := by
+  induction Δ with
+  | nil => exact .nil
+  | cons cell Δ ih =>
+      cases cell with
+      | none => simpa [List.replicate_succ] using OSplit.none ih
+      | some A => simpa [List.replicate_succ] using OSplit.left ih
+
+theorem allNone_replicate_none (n : Nat) :
+    AllNone (List.replicate n (Option.none : Option Ty)) := by
+  induction n with
+  | zero => trivial
+  | succ n ih => simpa [List.replicate_succ, AllNone]
+
+theorem OSplit.self_of_allNone {Δ : List (Option Ty)} (hn : AllNone Δ) :
+    OSplit Δ Δ Δ := by
+  induction Δ with
+  | nil => exact .nil
+  | cons cell Δ ih =>
+      cases cell with
+      | none =>
+          simp only [AllNone] at hn
+          exact .none (ih hn)
+      | some A => simp [AllNone] at hn
+
+/-- Reassociate a three-way split, moving the outside right part before the
+first inside part. -/
+theorem OSplit.rotate {Δ Δmn Δk Δm Δn : List (Option Ty)}
+    (h : OSplit Δ Δmn Δk) (hmn : OSplit Δmn Δm Δn) :
+    ∃ Δkm, OSplit Δkm Δk Δm ∧ OSplit Δ Δkm Δn := by
+  induction h generalizing Δm Δn with
+  | nil =>
+      cases hmn
+      exact ⟨[], .nil, .nil⟩
+  | none h ih =>
+      cases hmn with
+      | none hmn =>
+          obtain ⟨Δkm, hkm, hout⟩ := ih hmn
+          exact ⟨Option.none :: Δkm, .none hkm, .none hout⟩
+  | left h ih =>
+      cases hmn with
+      | left hmn =>
+          obtain ⟨Δkm, hkm, hout⟩ := ih hmn
+          exact ⟨some _ :: Δkm, .right hkm, .left hout⟩
+      | right hmn =>
+          obtain ⟨Δkm, hkm, hout⟩ := ih hmn
+          exact ⟨Option.none :: Δkm, .none hkm, .right hout⟩
+  | right h ih =>
+      cases hmn with
+      | none hmn =>
+          obtain ⟨Δkm, hkm, hout⟩ := ih hmn
+          exact ⟨some _ :: Δkm, .left hkm, .left hout⟩
+
+/-- Insert one element at a de Bruijn cutoff. -/
+inductive InsertAt {α : Type} (a : α) : Nat → List α → List α → Prop where
+  | zero (xs : List α) : InsertAt a 0 xs (a :: xs)
+  | succ {n xs ys b} : InsertAt a n xs ys →
+      InsertAt a (n + 1) (b :: xs) (b :: ys)
+
+theorem InsertAt.length {α : Type} {a : α} {n : Nat} {xs ys : List α}
+    (h : InsertAt a n xs ys) : ys.length = xs.length + 1 := by
+  induction h with
+  | zero => simp
+  | succ _ ih => simp [ih, Nat.add_assoc]
+
+theorem InsertAt.le_length {α : Type} {a : α} {n : Nat} {xs ys : List α}
+    (h : InsertAt a n xs ys) : n ≤ xs.length := by
+  induction h with
+  | zero => exact Nat.zero_le _
+  | succ _ ih => simpa using Nat.succ_le_succ ih
+
+theorem Lookup.insertAt {α : Type} {a b : α} {k n : Nat} {xs ys : List α}
+    (hi : InsertAt b k xs ys) (hl : Lookup xs n a) :
+    Lookup ys (if n < k then n else n + 1) a := by
+  induction hi generalizing n with
+  | zero =>
+      simp
+      exact Lookup.succ hl
+  | @succ k xs ys b hi ih =>
+      cases hl with
+      | zero =>
+          rw [if_pos (Nat.zero_lt_succ k)]
+          exact Lookup.zero
+      | @succ _ _ n _ hl =>
+          have h := ih hl
+          simp only [Nat.succ_lt_succ_iff]
+          by_cases hn : n < k
+          · rw [if_pos hn]
+            rw [if_pos hn] at h
+            exact Lookup.succ h
+          · rw [if_neg hn]
+            rw [if_neg hn] at h
+            exact Lookup.succ h
+
+theorem AllNone.insertNone {Δ Δ' : List (Option Ty)} {k : Nat}
+    (hi : InsertAt (Option.none : Option Ty) k Δ Δ') (h : AllNone Δ) :
+    AllNone Δ' := by
+  induction hi with
+  | zero => simpa [AllNone]
+  | succ hi ih =>
+      cases ‹Option Ty› with
+      | none =>
+          simp only [AllNone] at h ⊢
+          exact ih h
+      | some A => simp [AllNone] at h
+
+theorem OnlySomeAt.insertNone {Δ Δ' : List (Option Ty)} {k n : Nat}
+    (hi : InsertAt (Option.none : Option Ty) k Δ Δ') (ho : OnlySomeAt Δ n) :
+    OnlySomeAt Δ' (if n < k then n else n + 1) := by
+  induction hi generalizing n with
+  | zero =>
+      simp only [Nat.not_lt_zero, if_false]
+      simpa [OnlySomeAt] using ho
+  | @succ k Δ Δ' cell hi ih =>
+      cases n with
+      | zero =>
+          rw [if_pos (Nat.zero_lt_succ k)]
+          cases cell with
+          | none => simp [OnlySomeAt] at ho
+          | some A =>
+              change AllNone Δ'
+              exact AllNone.insertNone hi ho
+      | succ n =>
+          cases cell with
+          | some A => simp [OnlySomeAt] at ho
+          | none =>
+              simp only [OnlySomeAt] at ho
+              have h := ih ho
+              simp only [Nat.succ_lt_succ_iff]
+              by_cases hn : n < k
+              · rw [if_pos hn]
+                rw [if_pos hn] at h
+                exact h
+              · rw [if_neg hn]
+                rw [if_neg hn] at h
+                exact h
+
+/-- Inserting an unused cell into a split inserts it in both children. -/
+theorem OSplit.insertNone {Δ Δ₁ Δ₂ Δ' : List (Option Ty)} {k : Nat}
+    (hs : OSplit Δ Δ₁ Δ₂)
+    (hi : InsertAt (Option.none : Option Ty) k Δ Δ') :
+    ∃ Δ₁' Δ₂',
+      InsertAt (Option.none : Option Ty) k Δ₁ Δ₁' ∧
+      InsertAt (Option.none : Option Ty) k Δ₂ Δ₂' ∧
+      OSplit Δ' Δ₁' Δ₂' := by
+  induction hi generalizing Δ₁ Δ₂ with
+  | zero =>
+      exact ⟨Option.none :: Δ₁, Option.none :: Δ₂, .zero _, .zero _, .none hs⟩
+  | @succ k Δ Δ' cell hi ih =>
+      cases hs with
+      | none hs =>
+          obtain ⟨Δ₁', Δ₂', h₁, h₂, hs'⟩ := ih hs
+          exact ⟨Option.none :: Δ₁', Option.none :: Δ₂',
+            .succ h₁, .succ h₂, .none hs'⟩
+      | left hs =>
+          obtain ⟨Δ₁', Δ₂', h₁, h₂, hs'⟩ := ih hs
+          exact ⟨some _ :: Δ₁', Option.none :: Δ₂',
+            .succ h₁, .succ h₂, .left hs'⟩
+      | right hs =>
+          obtain ⟨Δ₁', Δ₂', h₁, h₂, hs'⟩ := ih hs
+          exact ⟨Option.none :: Δ₁', some _ :: Δ₂',
+            .succ h₁, .succ h₂, .right hs'⟩
+
 /-- Mark index `n` and leave every other in-scope variable unused. -/
 def mark : Nat → List Ty → List Bool
   | _, [] => []
