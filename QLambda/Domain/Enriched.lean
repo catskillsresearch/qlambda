@@ -123,4 +123,6 @@ noncomputable def omegaMapCategory : OmegaCategory.{u + 1, u} where
   comp_id := OmegaMap.comp_id
   assoc := OmegaMap.comp_assoc
 
+attribute [reducible] omegaMapCategory
+
 end QLambda.Domain

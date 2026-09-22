@@ -134,4 +134,233 @@ structure LNLModel where
       linear.Iso (F.obj (nonlinearClosed.product A B))
         (linearClosed.tensor (F.obj A) (F.obj B))
 
+/-- Terminal pointed ωCPO. -/
+noncomputable def omegaTerminal : OmegaObject where
+  Carrier := PUnit
+  partialOrder := inferInstance
+  orderBot := inferInstance
+  omegaComplete := inferInstance
+
+/-- Product pointed ωCPO. -/
+noncomputable def omegaProduct (A B : OmegaObject) : OmegaObject where
+  Carrier := A × B
+  partialOrder := inferInstance
+  orderBot := inferInstance
+  omegaComplete := inferInstance
+
+/-- Pointed ωCPO of continuous maps. -/
+noncomputable def omegaExponential (A B : OmegaObject) : OmegaObject where
+  Carrier := OmegaMap A B
+  partialOrder := inferInstance
+  orderBot := inferInstance
+  omegaComplete := inferInstance
+
+attribute [reducible] omegaTerminal omegaProduct omegaExponential
+
+/-- The ordinary category of pointed ωCPOs is Cartesian closed.  This
+serves as the nonlinear side of concrete LNL models. -/
+noncomputable def omegaCartesianClosed :
+    CartesianClosed (omegaMapCategory.{u}) where
+  terminal := omegaTerminal
+  product := omegaProduct
+  exponential := omegaExponential
+  terminate :=
+    { toFun := fun _ => PUnit.unit
+      monotone := fun _ _ _ => le_rfl
+      map_ωSup := fun _ _ => by
+        exact (OmegaComplete.ωSup_const PUnit.unit).symm }
+  fst := OmegaMap.fst
+  snd := OmegaMap.snd
+  pair := OmegaMap.pair
+  eval := OmegaMap.eval
+  curry := OmegaMap.curry
+  terminal_unique := by
+    intro A f
+    apply OmegaMap.ext
+    intro x
+    exact Subsingleton.elim _ _
+  fst_pair := by
+    intro X A B f g
+    apply OmegaMap.ext
+    intro x
+    rfl
+  snd_pair := by
+    intro X A B f g
+    apply OmegaMap.ext
+    intro x
+    rfl
+  pair_eta := by
+    intro X A B f
+    apply OmegaMap.ext
+    intro x
+    exact Prod.eta _
+  beta := by
+    intro X A B f
+    apply OmegaMap.ext
+    intro p
+    cases p
+    rfl
+  curry_mono := by
+    intro X A B f g h x a
+    exact h (x, a)
+  curry_ωSup := by
+    intro X A B c hc
+    apply OmegaMap.ext
+    intro x
+    apply OmegaMap.ext
+    intro a
+    rfl
+
+/-- The Cartesian tensor also gives the ωCPO category a symmetric
+monoidal closed structure. -/
+noncomputable def omegaSymmetricMonoidalClosed :
+    SymmetricMonoidalClosed (omegaMapCategory.{u}) where
+  unit := omegaTerminal
+  tensor := omegaProduct
+  internalHom := omegaExponential
+  tensorMap := fun f g =>
+    OmegaMap.pair (f.comp OmegaMap.fst) (g.comp OmegaMap.snd)
+  tensorMap_mono_left := by
+    intro A B C D g f₁ f₂ h p
+    exact ⟨h p.1, le_rfl⟩
+  tensorMap_mono_right := by
+    intro A B C D f g₁ g₂ h p
+    exact ⟨le_rfl, h p.2⟩
+  tensorMap_id := by
+    intro A B
+    apply OmegaMap.ext
+    intro p
+    exact Prod.eta _
+  tensorMap_comp := by
+    intro A B C D E F f₂ f₁ g₂ g₁
+    apply OmegaMap.ext
+    intro p
+    rfl
+  leftUnitor := fun A =>
+    { hom := OmegaMap.snd
+      inv :=
+        { toFun := fun a => (PUnit.unit, a)
+          monotone := fun _ _ h => ⟨le_rfl, h⟩
+          map_ωSup := by
+            intro c hc
+            apply Prod.ext
+            · exact (OmegaComplete.ωSup_const PUnit.unit).symm
+            · rfl }
+      hom_inv := by
+        apply OmegaMap.ext
+        intro a
+        rfl
+      inv_hom := by
+        apply OmegaMap.ext
+        intro p
+        apply Prod.ext
+        · exact Subsingleton.elim _ _
+        · rfl }
+  rightUnitor := fun A =>
+    { hom := OmegaMap.fst
+      inv :=
+        { toFun := fun a => (a, PUnit.unit)
+          monotone := fun _ _ h => ⟨h, le_rfl⟩
+          map_ωSup := by
+            intro c hc
+            apply Prod.ext
+            · rfl
+            · exact (OmegaComplete.ωSup_const PUnit.unit).symm }
+      hom_inv := by
+        apply OmegaMap.ext
+        intro a
+        rfl
+      inv_hom := by
+        apply OmegaMap.ext
+        intro p
+        apply Prod.ext
+        · rfl
+        · exact Subsingleton.elim _ _ }
+  associator := fun A B C =>
+    { hom :=
+        { toFun := fun p => (p.1.1, (p.1.2, p.2))
+          monotone := fun _ _ h =>
+            ⟨h.1.1, h.1.2, h.2⟩
+          map_ωSup := fun _ _ => rfl }
+      inv :=
+        { toFun := fun p => ((p.1, p.2.1), p.2.2)
+          monotone := fun _ _ h =>
+            ⟨⟨h.1, h.2.1⟩, h.2.2⟩
+          map_ωSup := fun _ _ => rfl }
+      hom_inv := by
+        apply OmegaMap.ext
+        intro p
+        rcases p with ⟨a, b, c⟩
+        rfl
+      inv_hom := by
+        apply OmegaMap.ext
+        intro p
+        rcases p with ⟨⟨a, b⟩, c⟩
+        rfl }
+  braiding := fun A B =>
+    { hom := OmegaMap.pair OmegaMap.snd OmegaMap.fst
+      inv := OmegaMap.pair OmegaMap.snd OmegaMap.fst
+      hom_inv := by
+        apply OmegaMap.ext
+        intro p
+        exact Prod.eta _
+      inv_hom := by
+        apply OmegaMap.ext
+        intro p
+        exact Prod.eta _ }
+  eval := OmegaMap.eval
+  curry := OmegaMap.curry
+  uncurry := OmegaMap.uncurry
+  curry_uncurry := OmegaMap.curry_uncurry
+  uncurry_curry := OmegaMap.uncurry_curry
+  curry_mono := by
+    intro X A B f g h x a
+    exact h (x, a)
+  curry_ωSup := by
+    intro X A B c hc
+    apply OmegaMap.ext
+    intro x
+    apply OmegaMap.ext
+    intro a
+    rfl
+
+private noncomputable def omegaIdentityFunctor :
+    (omegaMapCategory.{u}).Functor omegaMapCategory where
+  obj := id
+  map := id
+  map_mono := by
+    intro A B f g h
+    exact h
+  map_ωSup := fun _ _ => rfl
+  map_id := rfl
+  map_comp := fun _ _ => rfl
+
+/-- The identity adjunction supplies a fully concrete classical LNL
+model.  The quantum model replaces its linear side with the completed
+CP/instrument category while retaining this nonlinear side. -/
+noncomputable def omegaIdentityLNL : LNLModel.{u + 1, u} where
+  nonlinear := omegaMapCategory
+  linear := omegaMapCategory
+  nonlinearClosed := omegaCartesianClosed
+  linearClosed := omegaSymmetricMonoidalClosed
+  F := omegaIdentityFunctor
+  G := omegaIdentityFunctor
+  toLinear := fun f => f
+  toNonlinear := fun f => f
+  toLinear_toNonlinear := fun _ => rfl
+  toNonlinear_toLinear := fun _ => rfl
+  adjunction_mono := by
+    intro A B f g h
+    exact h
+  F_unit :=
+    { hom := OmegaMap.id
+      inv := OmegaMap.id
+      hom_inv := OmegaMap.id_comp _
+      inv_hom := OmegaMap.id_comp _ }
+  F_tensor := fun _ _ =>
+    { hom := OmegaMap.id
+      inv := OmegaMap.id
+      hom_inv := OmegaMap.id_comp _
+      inv_hom := OmegaMap.id_comp _ }
+
 end QLambda.Domain
