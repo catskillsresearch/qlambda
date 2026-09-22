@@ -48,6 +48,15 @@ private def unused (n : Nat) : List (Option Ty) :=
 private def liveQubit (n : Nat) : List (Option Ty) :=
   some .qubit :: unused n
 
+private theorem bit_admissible : Ty.Admissible .bit :=
+  Ty.admissible_eq_true_iff.mp rfl
+
+private theorem qubit_admissible : Ty.Admissible .qubit :=
+  Ty.admissible_eq_true_iff.mp rfl
+
+private theorem bit_duplicable : Ty.Duplicable .bit :=
+  Ty.duplicable_eq_true_iff.mp rfl
+
 /-- Exact command fragment represented by the current source primitives. -/
 inductive Quotable : Command 1 1 → Prop where
   | skip : Quotable .skip
@@ -77,18 +86,11 @@ theorem Quotable.wellFormed {C : Command 1 1} (hC : Quotable C) :
   | branch _ _ ihYes ihNo => exact .branch ihYes ihNo
 
 private theorem allNone_unused (n : Nat) : AllNone (unused n) := by
-  induction n with
-  | zero => trivial
-  | succ n =>
-      simpa [unused, List.replicate_succ, AllNone] using allNone_unused n
+  simpa [unused] using allNone_replicate_none n
 
 private theorem split_unused (n : Nat) :
     OSplit (unused n) (unused n) (unused n) := by
-  induction n with
-  | zero => exact .nil
-  | succ n =>
-      simpa [unused, List.replicate_succ] using
-        (OSplit.none (split_unused n))
+  exact OSplit.self_of_allNone (allNone_unused n)
 
 private theorem split_live_left (n : Nat) :
     OSplit (liveQubit n) (liveQubit n) (unused (n + 1)) := by
@@ -105,7 +107,7 @@ private theorem typed_live_var (Γ : List Ty) (n : Nat) :
 
 private theorem typed_bit_var (Γ : List Ty) (n : Nat) :
     HasType (.bit :: Γ) (unused n) (.var .unres 0) .bit := by
-  exact .varU .zero (by rfl) (allNone_unused n)
+  exact .varU .zero bit_duplicable (allNone_unused n)
 
 /-- Interpret a one-bit classical expression as a pure source bit term.
 The supplied term is the current value of the sole classical slot. -/
@@ -223,32 +225,38 @@ private theorem quoteBody_typed {C : Command 1 1}
       intro Γ n current hcurrent
       apply HasType.appL (split_live_right n)
       · apply HasType.lamL
+        · exact qubit_admissible
         exact hk Γ (n + 1) current hcurrent
       · exact gateArg_typed (.bit :: Γ) n .x rfl
   | h =>
       intro Γ n current hcurrent
       apply HasType.appL (split_live_right n)
       · apply HasType.lamL
+        · exact qubit_admissible
         exact hk Γ (n + 1) current hcurrent
       · exact gateArg_typed (.bit :: Γ) n .h rfl
   | t =>
       intro Γ n current hcurrent
       apply HasType.appL (split_live_right n)
       · apply HasType.lamL
+        · exact qubit_admissible
         exact hk Γ (n + 1) current hcurrent
       · exact gateArg_typed (.bit :: Γ) n .t rfl
   | ry =>
       intro Γ n current hcurrent
       apply HasType.appL (split_live_right n)
       · apply HasType.lamL
+        · exact qubit_admissible
         exact hk Γ (n + 1) current hcurrent
       · exact gateArg_typed (.bit :: Γ) n (.ry _) rfl
   | measure =>
       intro Γ n current hcurrent
       apply HasType.measure (split_live_left n)
       · exact typed_live_var (.bit :: Γ) n
-      · apply HasType.lamU (by rfl) (allNone_unused (n + 1))
+      · apply HasType.lamU bit_admissible bit_duplicable
+          (allNone_unused (n + 1))
         apply HasType.lamL
+        · exact qubit_admissible
         apply hk (.bit :: Γ) (n + 1) (.var .unres 0)
         intro m
         exact typed_bit_var (.bit :: Γ) m
@@ -256,12 +264,15 @@ private theorem quoteBody_typed {C : Command 1 1}
       intro Γ n current hcurrent
       apply HasType.appL (split_live_right n)
       · apply HasType.lamL
+        · exact qubit_admissible
         exact hk Γ (n + 1) current hcurrent
       · exact gateArg_typed (.bit :: Γ) n .reset rfl
   | store =>
+      rename_i cbit e
       intro Γ n current hcurrent
-      apply hk Γ n (quoteCExpr current ‹Composer.CExpr 1›)
-      exact quoteCExpr_typed hcurrent
+      simpa [quoteBody] using
+        hk Γ n (quoteCExpr current e)
+          (fun m => quoteCExpr_typed hcurrent e m)
   | seq hA hB ihA ihB =>
       intro Γ n current hcurrent
       apply ihA
@@ -292,8 +303,15 @@ def quote (C : Command 1 1) : Term :=
 well-typed canonical lambda quotation. -/
 theorem quote_typed {C : Command 1 1} (hC : C.Quotable) :
     HasType [] [] C.quote quotationTy := by
-  apply HasType.lamU (by rfl) trivial
+  unfold quote quotationTy
+  apply HasType.lamU (Γ := []) (Δ := [])
+    bit_admissible bit_duplicable trivial
   apply HasType.lamL
+  · exact qubit_admissible
+  change HasType [.bit] (liveQubit 0)
+    (quoteBody C (.var .unres 0)
+      (fun current => .pair (.var .lin 0) current))
+    (.tensor .qubit .bit)
   apply quoteBody_typed hC
   · intro Γ n current hcurrent
     exact HasType.pair (split_live_left n)
