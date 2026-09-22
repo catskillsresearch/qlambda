@@ -15,7 +15,7 @@ that composition preserves them in each argument.
 
 namespace QLambda.Domain
 
-universe u v
+universe u
 
 /-- A bundled pointed ω-complete partial order. -/
 structure OmegaObject where
@@ -38,7 +38,7 @@ end OmegaObject
 ω-continuous in each argument. -/
 structure OmegaCategory where
   Obj : Type u
-  hom : Obj → Obj → OmegaObject.{v}
+  hom : Obj → Obj → OmegaObject.{u}
   id : {A : Obj} → hom A A
   comp : {A B C : Obj} → hom B C → hom A B → hom A C
   comp_mono_left :
@@ -63,7 +63,7 @@ structure OmegaCategory where
 
 namespace OmegaCategory
 
-abbrev Hom (C : OmegaCategory) (A B : C.Obj) : Type v :=
+abbrev Hom (C : OmegaCategory) (A B : C.Obj) : Type u :=
   C.hom A B
 
 infixr:10 " ⟶ω " => Hom

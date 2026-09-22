@@ -15,12 +15,12 @@ without proving the category, closure, adjunction, and strong-monoidal laws.
 
 namespace QLambda.Domain
 
-universe u v
+universe u
 
 open OmegaCategory
 
 /-- Cartesian closed structure on an enriched category. -/
-structure CartesianClosed (C : OmegaCategory.{u, v}) where
+structure CartesianClosed (C : OmegaCategory.{u}) where
   terminal : C.Obj
   product : C.Obj → C.Obj → C.Obj
   exponential : C.Obj → C.Obj → C.Obj
@@ -54,7 +54,7 @@ structure CartesianClosed (C : OmegaCategory.{u, v}) where
         OmegaComplete.ωSup (fun n => curry (c n)) (curry_mono.comp hc)
 
 /-- Symmetric monoidal closed structure on an enriched category. -/
-structure SymmetricMonoidalClosed (L : OmegaCategory.{u, v}) where
+structure SymmetricMonoidalClosed (L : OmegaCategory.{u}) where
   unit : L.Obj
   tensor : L.Obj → L.Obj → L.Obj
   internalHom : L.Obj → L.Obj → L.Obj
@@ -103,8 +103,8 @@ structure SymmetricMonoidalClosed (L : OmegaCategory.{u, v}) where
 
 /-- A CPO-enriched strong symmetric monoidal adjunction `F ⊣ G`. -/
 structure LNLModel where
-  nonlinear : OmegaCategory.{u, v}
-  linear : OmegaCategory.{u, v}
+  nonlinear : OmegaCategory.{u}
+  linear : OmegaCategory.{u}
   nonlinearClosed : CartesianClosed nonlinear
   linearClosed : SymmetricMonoidalClosed linear
   F : nonlinear.Functor linear
