@@ -89,7 +89,7 @@ def splitWires {q : ℕ} (control target : Fin q) (hne : control ≠ target) :
     funext v
     by_cases hc : v = control
     · subst v
-      simp [hne]
+      simp
     · by_cases ht : v = target
       · subst v
         simp [hc]
@@ -98,7 +98,7 @@ def splitWires {q : ℕ} (control target : Fin q) (hne : control ≠ target) :
     apply Prod.ext
     · apply Prod.ext
       · simp
-      · simp [hne, Ne.symm hne]
+      · simp [Ne.symm hne]
     · funext v
       simp [v.2.1, v.2.2]
 
@@ -200,8 +200,7 @@ theorem h₂_isometry : h₂ᴴ * h₂ = 1 := by
     simp only [Matrix.mul_apply, conjTranspose_apply, h₂] <;>
     rw [Fintype.sum_bool] <;>
     simp only [Bool.false_and, Bool.true_and, Bool.false_eq_true,
-      Bool.true_eq_false, if_false, if_true, one_apply, ↓reduceIte,
-      star_sqrtTwoHalf, map_neg]
+      Bool.true_eq_false, one_apply, ↓reduceIte, star_sqrtTwoHalf]
   ·
     repeat rw [sqrtTwoHalf_sq]
     norm_num
@@ -233,8 +232,7 @@ theorem ry₂_isometry (θ : ℝ) : (ry₂ θ)ᴴ * ry₂ θ = 1 := by
     simp only [Matrix.mul_apply, conjTranspose_apply, ry₂] <;>
     rw [Fintype.sum_bool] <;>
     simp only [one_apply, ↓reduceIte, star_neg, star_cosHalf, star_sinHalf,
-      neg_mul, mul_neg, neg_neg, Bool.false_eq_true, Bool.true_eq_false,
-      if_false, if_true]
+      neg_mul, mul_neg, neg_neg, Bool.false_eq_true, Bool.true_eq_false]
   ·
     simpa only [add_comm] using htrig
   ·

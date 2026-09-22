@@ -3,6 +3,7 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
+import QLambda.CQ.Basic
 import QLambda.InstrumentPower
 
 /-!
@@ -22,12 +23,6 @@ existing observational equivalence from `InstrumentPower`.
 namespace QLambda
 
 namespace CQ
-
-/-- Hilbert-space dimension of a register containing `q` qubits. -/
-abbrev QDim (q : ℕ) : ℕ := 2 ^ q
-
-/-- A fixed finite classical bit store. -/
-abbrev CStore (c : ℕ) := Fin c → Bool
 
 /-- Ideal classical--quantum meaning of a circuit.
 
