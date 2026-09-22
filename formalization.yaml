@@ -24,33 +24,31 @@ classification:
 
 status:
   scope: >-
-    The compared surface contains three declarations: existence of the
-    ordinary compact-closed Set-to-qRel LNL model, existence of the
-    omega-CPO-enriched qCPO category, and canonical typed lambda quotation for the supported
-    two-qubit/two-bit circuit fragment. The quotation fragment supports
-    single-wire gates, distinct-wire CX, reset, measurement, store, sequence,
-    conditionals, and bounded repeat. Its theorem combines source typing,
-    compile-after-reflect equality, and ideal CQ denotational equality.
-    Neither categorical existence result is a concrete source denotation.
-    The selected source-semantic objective is a typed CP-enriched presheaf
-    submodel and remains unproved.
+    The compared surface contains two declarations over a Mathlib-only
+    Challenge that restates the source syntax, typing judgment,
+    call-by-value reduction, circuit normal form, and canonical quotation.
+    First, type safety for closed programs of the typed linear quantum
+    lambda-calculus: progress to a value, a classical step, or a quantum
+    primitive boundary; determinism of classical steps; and preservation of
+    the type by classical and measurement steps. Second, every command in the
+    supported two-qubit/one-bit circuit fragment quotes to a closed source
+    term of the canonical curried register type. The quotation fragment
+    supports single-wire gates, rational RY, distinct-wire CX, reset,
+    measurement, store, sequencing, and conditionals. The Set-to-qRel LNL
+    model and the qCPO category are checked in the development but are not
+    compared. The selected source-semantic objective is a typed CP-enriched
+    presheaf submodel and remains unproved.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
   main_results:
-    - declaration: "QLambda.Palomar.quantum_lnl_model"
+    - declaration: "QLambda.Palomar.source_type_safety"
       file: "Solution.lean"
       sorry_count: 0
       axioms: ["propext", "Quot.sound", "Classical.choice"]
       comparator_config: "comparator.json"
       literature_dependencies: []
-    - declaration: "QLambda.Palomar.quantum_cpo_enriched_category"
-      file: "Solution.lean"
-      sorry_count: 0
-      axioms: ["propext", "Quot.sound", "Classical.choice"]
-      comparator_config: "comparator.json"
-      literature_dependencies: []
-    - declaration: "QLambda.Palomar.two_wire_circuit_completeness"
+    - declaration: "QLambda.Palomar.two_wire_quotation_typed"
       file: "Solution.lean"
       sorry_count: 0
       axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -139,21 +137,22 @@ limitations:
     Circuit completeness means canonical representability of supported
     well-formed circuits, not exact synthesis of every unitary.
   - >-
+    Source type safety is for the classical call-by-value relation.
+    Applications of quantum primitives and measurements are a declared
+    boundary (QuantumBlocked) handled by staging or the register machine,
+    whose separate progress and preservation theorems are not compared.
+  - >-
     The formalization does not claim full abstraction or unrestricted
     computational adequacy for arbitrary recursive programs.
 
 alignment:
   namespace: "QLambda.Palomar"
   statements:
-    - source: "A concrete Set-to-quantum-relations LNL model exists"
-      lean: "quantum_lnl_model"
-      module: "Challenge (statement), Solution / QLambda.Domain.QuantumLNL (proof)"
+    - source: "Closed well-typed programs make progress, classical reduction is deterministic, and classical and measurement steps preserve types"
+      lean: "source_type_safety"
+      module: "Challenge (statement), Solution / QLambda.Linear.Operational (proof)"
       status: proved
-    - source: "Quantum CPOs and Scott-continuous quantum functions form an enriched category"
-      lean: "quantum_cpo_enriched_category"
-      module: "Challenge (statement), Solution / QLambda.Domain.QuantumCPOCategory (proof)"
-      status: proved
-    - source: "Every supported two-wire circuit has a canonical typed lambda representative"
-      lean: "two_wire_circuit_completeness"
+    - source: "Every supported two-wire circuit quotes to a closed well-typed lambda term"
+      lean: "two_wire_quotation_typed"
       module: "Challenge (statement), Solution / QLambda.Linear.QuotationGeneral (proof)"
       status: proved

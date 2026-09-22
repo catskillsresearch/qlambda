@@ -553,9 +553,9 @@ denotation.  Reflection is total on a proof-carrying supported block, and
 compilation after reflection returns the original block.
 
 A canonical lambda quotation uses unrestricted binders for classical slots
-and linear binders for wires.  `QuotationGeneral.lean` covers two qubit and
-two classical registers, including distinct-wire $CX$, measurement,
-reset/reuse, store, sequencing, conditionals, and bounded repeat.  It excludes
+and linear binders for wires.  `QuotationGeneral.lean` covers two qubits and
+one classical bit, including distinct-wire $CX$, measurement,
+reset/reuse, store, sequencing, and conditionals.  It excludes
 the unsupported coin command by an explicit `Quotable` predicate.
 
 The checked circuit-level declarations have the following meanings:

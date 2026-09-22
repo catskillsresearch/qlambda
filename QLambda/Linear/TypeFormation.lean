@@ -133,13 +133,13 @@ theorem strictlyPositiveAt_eq_true_iff {target A} :
 
 /-- Every recursive body in a type is strictly positive in its own binder. -/
 def PositiveRec : Ty → Prop
+  | .mu A => StrictlyPositiveAt 0 A ∧ PositiveRec A
   | .var _ => True
   | .unit => True
   | .bit => True
   | .qubit => True
   | .tensor A B => PositiveRec A ∧ PositiveRec B
   | .arrow _ A B => PositiveRec A ∧ PositiveRec B
-  | .mu A => StrictlyPositiveAt 0 A ∧ PositiveRec A
 
 /-- Executable checker for positivity of all recursive binders. -/
 def positiveRec : Ty → Bool

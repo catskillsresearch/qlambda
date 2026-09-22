@@ -2,9 +2,8 @@
   "challenge_module": "Challenge",
   "solution_module": "Solution",
   "theorem_names": [
-    "QLambda.Palomar.quantum_lnl_model",
-    "QLambda.Palomar.quantum_cpo_enriched_category",
-    "QLambda.Palomar.two_wire_circuit_completeness"
+    "QLambda.Palomar.source_type_safety",
+    "QLambda.Palomar.two_wire_quotation_typed"
   ],
   "definition_names": [],
   "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]

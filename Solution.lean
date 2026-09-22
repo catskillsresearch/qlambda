@@ -9,32 +9,25 @@ import QLambda
 
 namespace QLambda.Palomar
 
-open Domain
-open Linear
+open QLambda.Linear
 
-theorem quantum_lnl_model :
-    Nonempty LNLModel.{1, 0} :=
-  ⟨quantumLNL⟩
+theorem source_type_safety {M : Term} {A : Ty} (h : HasType [] [] M A) :
+    MakesProgress M ∧
+      (∀ N, Step M N → HasType [] [] N A) ∧
+      (∀ b N, MeasStep M b N → HasType [] [] N A) ∧
+      (∀ N₁ N₂, Step M N₁ → Step M N₂ → N₁ = N₂) :=
+  ⟨progress h,
+    fun _ hs => step_preservation hs h,
+    fun _ _ hm => measStep_preservation hm h,
+    fun _ _ h₁ h₂ => step_deterministic h₁ h₂⟩
 
-theorem quantum_cpo_enriched_category :
-    Nonempty OmegaCategory.{1, 0} :=
-  ⟨qCPOCategory⟩
-
-theorem two_wire_circuit_completeness
-    (model : Composer.Model
-      Linear.Command.GeneralQuotation.quantumSize
-      Linear.Command.GeneralQuotation.classicalSize)
-    (C : Linear.Command
-      Linear.Command.GeneralQuotation.quantumSize
-      Linear.Command.GeneralQuotation.classicalSize)
-    (hC : Linear.Command.GeneralQuotation.Quotable C) :
-    Linear.HasType [] []
-        (Linear.Command.GeneralQuotation.Quotation.reflect C hC).term
-        Linear.Command.GeneralQuotation.quotationTy ∧
-      (Linear.Command.GeneralQuotation.Quotation.reflect C hC).compile = C ∧
-      CQ.Eq
-        ((Linear.Command.GeneralQuotation.Quotation.reflect C hC).denote model)
-        (C.denote model) :=
-  Linear.Command.GeneralQuotation.Quotation.quotation_capstone model C hC
+theorem two_wire_quotation_typed
+    (C : Command
+      Command.GeneralQuotation.quantumSize
+      Command.GeneralQuotation.classicalSize)
+    (hC : Command.GeneralQuotation.Quotable C) :
+    HasType [] [] (Command.GeneralQuotation.quote C)
+      Command.GeneralQuotation.quotationTy :=
+  Command.GeneralQuotation.quote_typed hC
 
 end QLambda.Palomar

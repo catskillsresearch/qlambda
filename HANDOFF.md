@@ -15,9 +15,15 @@ trees have been removed.
 
 The compared declarations are:
 
-- `QLambda.Palomar.quantum_lnl_model`
-- `QLambda.Palomar.quantum_cpo_enriched_category`
-- `QLambda.Palomar.two_wire_circuit_completeness`
+- `QLambda.Palomar.source_type_safety`
+- `QLambda.Palomar.two_wire_quotation_typed`
+
+`Challenge.lean` imports only Mathlib and restates the supporting definitions
+verbatim. Comparator compares their elaborated constants, including
+auxiliary match functions, so edits to `QLambda/Linear/Syntax.lean`,
+`TypeFormation.lean`, `Context.lean`, `Typing.lean`, `Substitution.lean`,
+`Operational.lean`, `Circuit.lean`, `Composer/Syntax.lean`, or the public
+quotation definitions in `QuotationGeneral.lean` must be mirrored there.
 
 ## Verification
 
@@ -41,7 +47,7 @@ repository does not claim those categories equivalent.
 
 Circuit completeness is for the declared canonical two-wire finite fragment:
 single-wire gates, distinct-wire CX, reset, measurement, store, sequencing,
-conditionals, and bounded repeat. OpenQASM is an ideal interchange format,
+and conditionals. OpenQASM is an ideal interchange format,
 not a noisy-backend or arbitrary-Qiskit semantics.
 
 The generic `DenotationModel` remains an explicit interface for compositional

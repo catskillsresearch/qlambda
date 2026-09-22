@@ -178,7 +178,7 @@ Two-wire supported fragment:
 - `QLambda.Linear.Command.GeneralQuotation.Quotation.quotation_capstone`
 
 The supported fragment includes single-wire gates, distinct-wire CX, reset,
-measurement, store, sequencing, conditionals, and bounded repeat. Unsupported
+measurement, store, sequencing, and conditionals. Unsupported
 coin commands are excluded by `coin_not_quotable`.
 
 `Quotation.denote` and `GeneralQuotation.Quotation.denote` are defined from
@@ -195,16 +195,22 @@ equalities, not source-denotation preservation theorems.
 
 The parser theorem covers the declared canonical structured subset, not
 arbitrary OpenQASM 3 text.
+The two fixture parses are checked by `native_decide`, which trusts compiled
+evaluation in addition to the kernel.
 
 ## Palomar capstones
 
 `Solution.lean` proves:
 
-- `QLambda.Palomar.quantum_lnl_model`
-- `QLambda.Palomar.quantum_cpo_enriched_category`
-- `QLambda.Palomar.two_wire_circuit_completeness`
+- `QLambda.Palomar.source_type_safety`: closed-program progress, preservation
+  under classical and measurement steps, and determinism of classical steps;
+- `QLambda.Palomar.two_wire_quotation_typed`: every supported two-wire
+  command quotes to a closed term of the canonical register type.
 
-`Challenge.lean` contains the matching statement holes by convention.
+`Challenge.lean` imports only Mathlib and contains the matching statement
+holes by convention. The categorical existence results `quantumLNL` and
+`qCPOCategory` are not on the compared surface: `Nonempty` of either bundled
+structure is also witnessed by a one-object model with singleton homs.
 
 ## Unmet semantic objectives
 

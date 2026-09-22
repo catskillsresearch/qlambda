@@ -140,7 +140,7 @@ theorem Quotable.wellFormed
   | branch _ _ ihYes ihNo => exact .branch ihYes ihNo
 
 /-- Interpret the sole classical register cell as a pure source bit term. -/
-private def quoteCExpr (current : Term) : Composer.CExpr classicalSize → Term
+def quoteCExpr (current : Term) : Composer.CExpr classicalSize → Term
   | .lit b => .bitLit b
   | .bit _ => current
   | .not e => .ite (quoteCExpr current e) (.bitLit false) (.bitLit true)
@@ -188,7 +188,7 @@ private theorem quoteCExpr_typed
       exact .ite (split_unused n) (ih₁ n) hnot (ih₂ n)
 
 /-- Apply a unary source primitive to one component of a two-qubit tensor. -/
-private def unaryRegister (p : Prim) (w : Fin quantumSize) : Term :=
+def unaryRegister (p : Prim) (w : Fin quantumSize) : Term :=
   .lam .lin qubitRegisterTy <|
     .unpair (.var .lin 0) <|
       .lam .lin .qubit <|
@@ -199,7 +199,7 @@ private def unaryRegister (p : Prim) (w : Fin quantumSize) : Term :=
             .pair (.var .lin 1) (.app (.prim p) (.var .lin 0))
 
 /-- Apply `cx`, restoring canonical register order in the reverse orientation. -/
-private def cxRegister (control target : Fin quantumSize) : Term :=
+def cxRegister (control target : Fin quantumSize) : Term :=
   .lam .lin qubitRegisterTy <|
     .unpair (.var .lin 0) <|
       .lam .lin .qubit <|
@@ -263,15 +263,15 @@ private theorem cxRegister_typed (control target : Fin quantumSize)
       (.arrow .lin qubitRegisterTy qubitRegisterTy) := by
   exact closed_typed_any (infer_sound (cxRegister_infer control target)).1 Γ n
 
-private def bindRegister (next body : Term) : Term :=
+def bindRegister (next body : Term) : Term :=
   .app (.lam .lin qubitRegisterTy body) next
 
-private def continueWith (k : Term → Term) (current register : Term) : Term :=
+def continueWith (k : Term → Term) (current register : Term) : Term :=
   bindRegister register (k current)
 
 /-- Measurement of either wire.  The measurement continuation is linearly
 closed and returns a function waiting for the untouched wire. -/
-private def measureRegister (qbit : Fin quantumSize)
+def measureRegister (qbit : Fin quantumSize)
     (k : Term → Term) : Term :=
   .unpair (.var .lin 0) <|
     .lam .lin .qubit <|
@@ -295,7 +295,7 @@ private def measureRegister (qbit : Fin quantumSize)
                       (.pair (.var .lin 0) (.var .lin 1)))
             (.var .lin 1)
 
-private def quoteBody
+def quoteBody
     (C : Command quantumSize classicalSize)
     (current : Term) (k : Term → Term) : Term :=
   match C with

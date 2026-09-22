@@ -55,9 +55,10 @@ proof authority.
 
 `comparator.json` selects:
 
-- `QLambda.Palomar.quantum_lnl_model`;
-- `QLambda.Palomar.quantum_cpo_enriched_category`;
-- `QLambda.Palomar.two_wire_circuit_completeness`.
+- `QLambda.Palomar.source_type_safety`;
+- `QLambda.Palomar.two_wire_quotation_typed`.
 
-`Challenge.lean` states these results with explicit holes under the Palomar
-convention. `Solution.lean` proves the same statements without `sorry`.
+`Challenge.lean` imports only Mathlib. It restates the source syntax, typing,
+reduction, circuit normal form, and two-wire quotation verbatim and states
+these results with explicit holes under the Palomar convention.
+`Solution.lean` proves the same statements from `QLambda` without `sorry`.
