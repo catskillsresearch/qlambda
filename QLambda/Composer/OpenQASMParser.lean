@@ -183,11 +183,13 @@ private def finishParsed {q c : ℕ} :
 private def finishWhile {q c : ℕ} (guard : CExpr c)
     (body : List (ParsedInstr q c)) : Option (ParsedInstr q c) :=
   match body.reverse with
-  | .whileEnd :: prefix =>
-      return .whileStep 1 guard (← finishParsed prefix.reverse)
-  | .whileStep fuel _ _ :: prefix =>
-      return .whileStep (fuel + 1) guard (← finishParsed prefix.reverse)
+  | .whileEnd :: prefixLines =>
+      return .whileStep 1 guard (← finishParsed prefixLines.reverse)
+  | .whileStep fuel _ _ :: prefixLines =>
+      return .whileStep (fuel + 1) guard (← finishParsed prefixLines.reverse)
   | _ => none
+
+mutual
 
 private partial def parseBlock (q c : ℕ) :
     List String → Option (List (ParsedInstr q c) × List String)
@@ -258,6 +260,8 @@ private partial def parseStructuredInstr (q c : ℕ)
     pure (.instr (.box label (← finishParsed body)), rest)
   else
     return (.instr (← parseSimpleInstr q c line), rest)
+
+end
 
 private def parseCandidate (q c : ℕ) (text : String) :
     Option (Program .openQASM3_0_ibmComposer_2026_09 q c) :=

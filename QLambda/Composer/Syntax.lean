@@ -130,12 +130,11 @@ inductive Instr (q c : ℕ) where
   | box : String → List (Instr q c) → Instr q c
   | break
   | continue
-  deriving DecidableEq, Repr, Nonempty
+  deriving Nonempty
 
 /-- One complete fixed-register circuit. -/
 structure Program (v : Version) (q c : ℕ) where
   body : List (Instr q c)
-  deriving DecidableEq, Repr
 
 end Composer
 
