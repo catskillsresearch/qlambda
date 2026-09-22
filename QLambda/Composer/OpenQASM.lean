@@ -93,14 +93,19 @@ mutual
 
 end
 
-/-- Export a well-formed normalized program as OpenQASM 3 text. -/
-def Program.toOpenQASM {v q c} (P : Program v q c)
-    (_hP : P.WellFormed) : String :=
+/-- Render a program.  This proof-free form is also used by the parser's
+canonicality check; clients should normally use `Program.toOpenQASM`. -/
+def Program.renderOpenQASM {v q c} (P : Program v q c) : String :=
   lines
     [ "OPENQASM 3.0;",
       "include \"stdgates.inc\";",
       "qubit[" ++ toString q ++ "] q;",
       "bit[" ++ toString c ++ "] c;",
       lines (blockToOpenQASM P.body) ]
+
+/-- Export a well-formed normalized program as OpenQASM 3 text. -/
+def Program.toOpenQASM {v q c} (P : Program v q c)
+    (_hP : P.WellFormed) : String :=
+  P.renderOpenQASM
 
 end QLambda.Composer
