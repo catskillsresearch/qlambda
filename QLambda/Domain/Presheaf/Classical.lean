@@ -216,6 +216,65 @@ theorem unit_natural {M N : Module} (f : Hom M N) :
       (Superoperator.tensorSwap p q))
     (f.naturality x r).symm
 
+/-- Precomposition with the double-negation unit retracts the canonical unit
+of a negated module.  The other composite is the bipolar statement for `¬M`
+and is not a formal consequence of Day closure. -/
+theorem map_unit_unit_neg (M : Module) :
+    Hom.comp (map (unit M)) (unit (neg M)) = Hom.id (neg M) := by
+  apply Hom.ext
+  intro k φ
+  apply Bilinear.ext
+  intro p q x y
+  change Superoperator p k at x
+  have hinner :
+      ((unit M).app q y).app (Superoperator.identity q)
+          ((neg M).act φ x) =
+        Superoperator.comp (φ.app x y)
+          (Superoperator.tensorSwap q p) := by
+    rw [unit, DayInternalHom.curry]
+    change
+      dayTensorUnit.act
+          (((neg M).act φ x).app (Superoperator.identity p)
+            (M.act y (Superoperator.identity q)))
+          (Superoperator.tensorSwap q p) =
+        Superoperator.comp (φ.app x y) (Superoperator.tensorSwap q p)
+    rw [M.act_id]
+    have hpre :
+        ((neg M).act φ x).app (Superoperator.identity p) y =
+          φ.app x y := by
+      change
+        (DayInternalHom.precompose x φ).app
+            (Superoperator.identity p) y =
+          φ.app x y
+      simp only [DayInternalHom.precompose, Superoperator.comp_identity]
+    rw [hpre]
+    rw (config := { transparency := .default }) [representable_act]
+  simp only [Hom.comp_app, Hom.id_app, map, mapBilinear, unit,
+    DayInternalHom.curry]
+  change
+    dayTensorUnit.act
+        (((unit M).app q y).app (Superoperator.identity q)
+          ((neg M).act φ x))
+        (Superoperator.tensorSwap p q) =
+      φ.app x y
+  rw [hinner]
+  rw (config := { transparency := .all }) [representable_act]
+  rw (config := { transparency := .all })
+    [← Superoperator.comp_assoc, Superoperator.tensorSwap_involutive,
+      Superoperator.comp_identity]
+
+/-- The canonical unit of a negated module is fiberwise injective. -/
+theorem unit_neg_injective (M : Module) (n : ℕ) :
+    Function.Injective ((unit (neg M)).app n) := by
+  intro x y hxy
+  have hret (z : ((neg M).obj n).Carrier) :
+      (map (unit M)).app n ((unit (neg M)).app n z) = z := by
+    have h := congrArg
+      (fun f : Hom (neg M) (neg M) => f.app n z)
+      (map_unit_unit_neg M)
+    simpa using h
+  rw [← hret x, hxy, hret y]
+
 /-- The concrete negation data supplied by Day closure. -/
 noncomputable def data : NegationData where
   neg := neg
