@@ -336,8 +336,10 @@ private noncomputable def omegaIdentityFunctor :
   map_comp := fun _ _ => rfl
 
 /-- The identity adjunction supplies a fully concrete classical LNL
-model.  The quantum model replaces its linear side with the completed
-CP/instrument category while retaining this nonlinear side. -/
+model.  The intended quantum model instead uses the published category of
+pointed quantum CPOs as its linear side.  Finite CP maps and instruments embed
+the circuit fragment into that category; they are not themselves asserted to
+form the higher-order monoidal-closed category. -/
 noncomputable def omegaIdentityLNL : LNLModel.{u + 1, u} where
   nonlinear := omegaMapCategory
   linear := omegaMapCategory

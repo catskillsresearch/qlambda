@@ -28,9 +28,10 @@ interfaces.
 There is deliberately no claimed concrete `DenotationModel`.  The current
 `LNLModel` interface has no chosen interpretation of base or recursive types,
 no context-splitting/coherence maps, no branching object, and no map from
-`CompletedCP` into linear homs.  Moreover `CompletedCP` currently exposes
-finite composition monotonicity but not the Scott-continuous extension needed
-to make completed CP maps an `OmegaCategory`.  Supplying any of these as an
+`CompletedCP` into linear homs.  The concrete route is the published
+quantum-relational `qCPO` category, with finite CP operations embedded as the
+circuit fragment; `CompletedCP` is not claimed to be the monoidal-closed
+higher-order category itself.  Supplying the missing qCPO structure as an
 unproved theorem premise would merely hide the missing model.
 -/
 
@@ -74,7 +75,7 @@ end ContextObject
 The operations are data, not axioms claiming that a concrete model exists.
 Their types expose every presently missing structural map.  In particular,
 `prim` and `measure` cannot yet be derived from `CompletedCP`, because the
-foundations do not define a functor from completed CP maps to `M.linear`. -/
+foundations do not yet define their embedding into quantum-CPO homs. -/
 structure DenotationModel (M : LNLModel.{u, v}) where
   ty : Ty → M.linear.Obj
   varU :
