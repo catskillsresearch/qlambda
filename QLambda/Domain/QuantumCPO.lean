@@ -22,7 +22,7 @@ This module deliberately imports neither `QuantumPower` nor `OmegaQVA`.
 
 namespace QLambda.Domain
 
-open scoped MatrixOrder
+open scoped BigOperators ComplexConjugate MatrixOrder
 
 /-- A wrapper giving finite Kraus presentations their semantic CP
 refinement order rather than any structural list order. -/
@@ -64,6 +64,42 @@ noncomputable def zero : CompletedCP n m :=
 /-- The embedded identity channel. -/
 noncomputable def identity (n : ℕ) : CompletedCP n n :=
   ofKraus (KrausFamily.identity n)
+
+/-- Allocate one fresh qubit in `|0⟩`.  Basis states of the old register
+embed into the lower half of the enlarged register. -/
+def allocZeroMatrix (q : ℕ) :
+    KrausOperator (CQ.QDim q) (CQ.QDim (q + 1)) :=
+  fun i j => if i.val = j.val then 1 else 0
+
+/-- Completed CP interpretation of fresh-zero allocation. -/
+noncomputable def new0 (q : ℕ) :
+    CompletedCP (CQ.QDim q) (CQ.QDim (q + 1)) :=
+  ofKraus [allocZeroMatrix q]
+
+/-- Completed CP interpretation of `X`. -/
+noncomputable def x {q : ℕ} (w : Fin q) :
+    CompletedCP (CQ.QDim q) (CQ.QDim q) :=
+  ofKraus [Composer.xMatrix w]
+
+/-- Completed CP interpretation of `H`. -/
+noncomputable def h {q : ℕ} (w : Fin q) :
+    CompletedCP (CQ.QDim q) (CQ.QDim q) :=
+  ofKraus [Composer.hMatrix w]
+
+/-- Completed CP interpretation of `T`. -/
+noncomputable def t {q : ℕ} (w : Fin q) :
+    CompletedCP (CQ.QDim q) (CQ.QDim q) :=
+  ofKraus [Composer.tMatrix w]
+
+/-- Completed CP interpretation of a rational-angle `RY`. -/
+noncomputable def ry {q : ℕ} (θ : ℚ) (w : Fin q) :
+    CompletedCP (CQ.QDim q) (CQ.QDim q) :=
+  ofKraus [Composer.ryMatrix θ w]
+
+/-- Completed CP interpretation of saturated controlled-X. -/
+noncomputable def cx {q : ℕ} (control target : Fin q) :
+    CompletedCP (CQ.QDim q) (CQ.QDim q) :=
+  ofKraus [Composer.cxMatrix control target]
 
 theorem ofKraus_mono {K L : KrausFamily n m}
     (hKL : KrausFamily.ResidualRefines K L) :
@@ -123,6 +159,30 @@ two-outcome completed instrument. -/
 noncomputable def measure {q : ℕ} (w : Fin q) :
     Instrument (CQ.QDim q) (CQ.QDim q) 2 :=
   Instrument.ofQuantumInstrument (Composer.measure w)
+
+/-- Measurement is the sole source of branching probability, and its
+two branch weights sum to the input trace. -/
+theorem measure_probability_normalization {q : ℕ} (w : Fin q)
+    (ρ : Matrix (Fin (CQ.QDim q)) (Fin (CQ.QDim q)) ℂ) :
+    (∑ i : Fin 2,
+      Matrix.trace
+        (KrausFamily.applyMat ((Composer.measure w).branch i) ρ)).re =
+      (Matrix.trace ρ).re := by
+  rw [Fin.sum_univ_two]
+  have hne : (1 : Fin 2) ≠ 0 := by decide
+  simp only [Composer.measure, hne, ↓reduceIte]
+  rw [KrausFamily.applyMat_single, KrausFamily.applyMat_single]
+  rw [Matrix.trace_mul_comm
+      (Composer.projector w false * ρ)
+      (Composer.projector w false).conjTranspose,
+    Matrix.trace_mul_comm
+      (Composer.projector w true * ρ)
+      (Composer.projector w true).conjTranspose]
+  rw [Composer.projector_conjTranspose, Composer.projector_conjTranspose,
+    ← Matrix.mul_assoc, ← Matrix.mul_assoc,
+    Composer.projector_mul_self, Composer.projector_mul_self,
+    ← Matrix.trace_add, ← Matrix.add_mul,
+    Composer.projector_completeness, Matrix.one_mul]
 
 /-- The canonical reset channel embedded in the completion. -/
 noncomputable def reset {q : ℕ} (w : Fin q) :
