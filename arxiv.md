@@ -640,8 +640,12 @@ Route~A/global-bound refutations, and primitive agreement are checked; they
 are not that all-dimensional LNL instance or full-language denotation.  On
 that basis we aim to prove operational soundness, first-order-observable
 adequacy by finite approximants, and source-denotation preservation for
-successful staging.  These remaining statements are goals and are not
-included in the checked theorem list.
+successful staging beyond the minimum fragment.  The minimum fragment
+(first-order data, linear FO-domain arrows, unrestricted bit binders,
+primitives, measurement) now has a checked Route~A
+`PresheafFragmentModel`, closed unit/bit adequacy, and fragment step
+preservation; full-language adequacy remains a goal and is not included in
+the checked theorem list.
 
 ---
 

@@ -955,8 +955,9 @@ theorem half_one_ne_one {n : ℕ} (hn : 0 < n) :
       (1 : Matrix (Fin n) (Fin n) ℂ) := by
   intro heq
   have h00 := congrArg (fun M : Matrix (Fin n) (Fin n) ℂ => M ⟨0, hn⟩ ⟨0, hn⟩) heq
-  simp only [Matrix.smul_apply, Matrix.one_apply, ↓reduceIte, smul_eq_mul] at h00
-  -- `(2:ℂ)⁻¹ * 1 = 1` is false
+  simp only [Matrix.smul_apply, Matrix.one_apply, ↓reduceIte, smul_eq_mul,
+    mul_one] at h00
+  -- `(2:ℂ)⁻¹ = 1` is false
   have : ((2 : ℕ) : ℂ)⁻¹ ≠ 1 := by norm_num
   exact this h00
 

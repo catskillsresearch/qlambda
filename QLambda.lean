@@ -62,6 +62,10 @@ import QLambda.Linear.QuotationGeneral
 import QLambda.Linear.Denotation
 import QLambda.Linear.PrimitiveSuperoperator
 import QLambda.Linear.TypeInterpretation
+import QLambda.Linear.SemanticFragment
+import QLambda.Linear.FragmentModel
+import QLambda.Linear.FragmentDenotation
+import QLambda.Linear.FragmentAdequacy
 
 /-!
 # Typed linear qlambda

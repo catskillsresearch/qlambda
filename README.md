@@ -77,10 +77,14 @@ series.  Scaling by `1/2` repairs the `(2,1)` matrix inequality, but
 left/right counit force the `(0,1)`/`(1,0)` boundary weights to remain `1`,
 so half-scaling is not a counital repair; `BangComultDayTransferWitness`
 remains open.  An all-dimensional cofree bang, general Day closure on based
-modules, a premise-free `presheafQuantumLNL`, source-type interpretation, a
-concrete structural denotation, first-order-observable adequacy, and a
-source-level staging theorem remain objectives.  This release does not claim
-those results, full abstraction, or unrestricted higher-order adequacy.
+modules, a premise-free `presheafQuantumLNL`, and full-language adequacy remain
+objectives.  The **minimum fragment** (first-order data, linear arrows with
+first-order domain, unrestricted bit binders, primitives, measurement; no
+`mu`/`fix`) now has a Route A `PresheafFragmentModel`, closed unit/bit
+denotation/adequacy, and fragment step preservation — see
+`QLambda/Linear/SemanticFragment.lean`, `FragmentModel.lean`,
+`FragmentDenotation.lean`, `FragmentAdequacy.lean`.  This release does not claim
+full abstraction or unrestricted higher-order adequacy.
 `docs/NOVELTY_AUDIT.md` records the distinction between published mathematics
 and new Lean proofs.
 

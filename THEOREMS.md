@@ -19,6 +19,27 @@ theorem surface.  Unmet semantic objectives are listed separately at the end.
 
 Probability labels measurement transitions; it is not a source term former.
 
+## Minimum CP-presheaf source fragment
+
+- `QLambda.Linear.Ty.SemanticFragment`
+- `QLambda.Linear.Term.SemanticFragment`
+- `QLambda.Linear.quotationTy_semanticFragment`
+- `QLambda.Linear.generalQuotationTy_semanticFragment`
+- `QLambda.Linear.routeA_fragment_acceptance`
+- `QLambda.Linear.routeA_succeeded`
+- `QLambda.Linear.FragCert.toHasType`
+- `QLambda.Linear.fragment_unit_adequacy`
+- `QLambda.Linear.fragment_bitLit_adequacy`
+- `QLambda.Linear.fragment_step_preserves`
+- `QLambda.Linear.fragment_measStep_preserves`
+- `QLambda.Linear.fragment_program_complete`
+
+Route A supplies `PresheafFragmentModel` / `routeAFragmentModel` with
+classical-bit discard/copy and primitive/measurement Yoneda maps, without a
+global bang or `LNLModel`.  Routes B–F are skipped.  Closed unit/bit
+adequacy and fragment step/measurement preservation are checked; full
+higher-order / recursive adequacy remains an objective.
+
 ## Omega-CPO foundations
 
 - `QLambda.Domain.OmegaMap.fix_eq`
