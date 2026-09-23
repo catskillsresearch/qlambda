@@ -30,13 +30,16 @@ interface for `A ≤ 1`** (`bangPromote`, `bangMap`, UP laws).
 `(k+1) • effect(coeff)`. Witness `not_bangSplitFamilyEffectLe_two_one`
 (`A=2`, `k=1`, identity series): `2 I ≰ I`.
 
-**Gates 6–9 architecture decision:** Route A does not automatically yield
+**Gates 6–9 claim boundary:** Route A does not automatically yield
 `¬ BangComultComponentsAdmissible 2` (`BangComultDayTransferWitness` remains
-open). Raw-effect hereditary subobjects are **not cofree**
-(`bangSplitEffectAdmissible_excludes_identity_two`). Normalization repairs the
-`(2,1)` joint-effect bound
-(`bangNormalizedSplitFamilyEffect_two_one_eq_one`) but is **not** selected as
-a completed all-dimensional construction. Downstream Gates 10–26 stop.
+open). `BangSplitEffectAdmissible` is a **global universal joint-effect bound**,
+not a carrier-membership predicate; it fails at `A = 2` because it excludes
+the degree-one identity series
+(`bangSplitEffectAdmissible_excludes_identity_two`). Scaling the degree-one
+joint effect by `1/2` repairs that matrix inequality
+(`bangNormalizedSplitFamilyEffect_two_one_eq_one`) but is **not** a counital
+repair: left/right counit force the `(0,1)` and `(1,0)` boundary weights to
+remain `1` (`half_scale_not_counital_bang_repair`).
 
 ## Fiber support (critical)
 
@@ -834,7 +837,7 @@ theorem bangSplitFamily_effect_le :
   exact not_bangSplitFamilyEffectLe_two_one
     (h 2 1 (tensorPowerDimension 2 1) (bangIdentityDegreeOne 2))
 
-/-! ## Gates 6–9: Day transfer gap, subobject feasibility, architecture
+/-! ## Gates 6–9: Day transfer gap and claim boundary
 
 Route A refutes a *joint-effect* bound on the raw split Superoperators.  The
 Day gate `BangComultComponentsAdmissible` quantifies over every bilinear
@@ -845,6 +848,11 @@ TNI fiber so they are added together.  Fixed projection pairs
 ids in different summands; ambient CP always admits sums.  We therefore
 record an explicit transfer obligation rather than claiming
 `¬ BangComultComponentsAdmissible 2`.
+
+`BangSplitEffectAdmissible` is a **global universal quantification** of the
+Route A bound over every series element — not a hereditary carrier-membership
+predicate for a subobject of `bang A`.  Its failure at `A = 2` therefore
+refutes that global bound, not “every hereditary subobject”.
 -/
 
 /-- Gate 6 transfer obligation: a bilinear into a TNI/representable module
@@ -875,30 +883,31 @@ theorem routeA_refutation_exists :
   ⟨2, 1, tensorPowerDimension 2 1, bangIdentityDegreeOne 2,
     not_bangSplitFamilyEffectLe_two_one⟩
 
-/-- Predicates that demand the raw Route A joint-effect bound on every series
-element. -/
+/-- Global universal form of the raw Route A joint-effect bound (not a
+carrier-membership / hereditary-subobject predicate). -/
 def BangSplitEffectAdmissible (A : ℕ) : Prop :=
   ∀ (k n : ℕ) (x : ((bang A).obj n).Carrier),
     BangSplitFamilyEffectLeOne A k n x
 
-/-- Gate 7: any such raw-effect hereditary predicate excludes the degree-one
-identity series at `A = 2` (required by dereliction / cofree lift of `id`). -/
+/-- The global raw split-effect bound fails at `A = 2`: it excludes the
+degree-one identity series needed by dereliction / cofree lift of `id`.
+This does **not** refute every hereditary subobject of `bang 2`. -/
 theorem bangSplitEffectAdmissible_excludes_identity_two :
     ¬ BangSplitEffectAdmissible 2 := by
   intro h
   exact not_bangSplitFamilyEffectLeOne_two_one
     (h 1 (tensorPowerDimension 2 1) (bangIdentityDegreeOne 2))
 
-/-- Gate 7 feasibility: a hereditary `admissibleBang` whose membership
-implies the raw Route A effect bound cannot contain the cofree generator at
-`A = 2`. -/
-theorem rawEffectAdmissible_subobject_not_cofree :
+/-- Alias retained for earlier theorem-index citations; same statement as
+`bangSplitEffectAdmissible_excludes_identity_two`. -/
+theorem raw_global_effect_bound_fails_at_two :
     ¬ BangSplitEffectAdmissible 2 :=
   bangSplitEffectAdmissible_excludes_identity_two
 
 /-- Normalized degree-one split weights: the raw joint effect scaled by
-`1/2`.  Joint effect is then `I`, repairing the raw Route A obstruction at
-`(A,k) = (2,1)`. -/
+`1/2`.  Joint effect is then `I`, repairing the raw Route A *matrix*
+obstruction at `(A,k) = (2,1)`.  This is not by itself a counital
+comultiplication (see `half_scale_not_counital_bang_repair`). -/
 noncomputable def bangNormalizedSplitFamilyEffect_two_one :
     Matrix (Fin (tensorPowerDimension 2 1))
       (Fin (tensorPowerDimension 2 1)) ℂ :=
@@ -940,19 +949,16 @@ theorem bangNormalizedSplitFamilyEffect_two_one_le_one :
         (Fin (tensorPowerDimension 2 1)) ℂ) := by
   rw [bangNormalizedSplitFamilyEffect_two_one_eq_one]
 
-/-- Gate 9 architecture decision (kernel-supported fragment).
-
-* Raw Route A: **refuted**.
-* Raw-effect hereditary subobject: **refuted** as a cofree carrier (excludes
-  the degree-one identity generator at `A = 2`).
-* Normalized degree-one effect bound: **repairs** the `(2,1)` joint-effect
-  obstruction, but Day admissibility, counit/coassociativity for a normalized
-  comultiplication, and the cofree UP are **not** kernel-checked.
-* Therefore no positive all-dimensional branch is selected; Gates 10–26 stop.
--/
-def BangArchitectureDecision : String :=
-  "raw_route_A_refuted; raw_effect_subobject_not_cofree; \
-normalized_effect_open_not_selected; stop_before_all_dimensional_build"
+/-- Half of the identity matrix is not the identity on a nonempty system. -/
+theorem half_one_ne_one {n : ℕ} (hn : 0 < n) :
+    ((2 : ℕ) : ℂ)⁻¹ • (1 : Matrix (Fin n) (Fin n) ℂ) ≠
+      (1 : Matrix (Fin n) (Fin n) ℂ) := by
+  intro heq
+  have h00 := congrArg (fun M : Matrix (Fin n) (Fin n) ℂ => M ⟨0, hn⟩ ⟨0, hn⟩) heq
+  simp only [Matrix.smul_apply, Matrix.one_apply, ↓reduceIte, smul_eq_mul] at h00
+  -- `(2:ℂ)⁻¹ * 1 = 1` is false
+  have : ((2 : ℕ) : ℂ)⁻¹ ≠ 1 := by norm_num
+  exact this h00
 
 /-- Yoneda unit at homogeneous degree `k`, injected into the series. -/
 noncomputable def bangDegreeUnit (A k : ℕ) :
@@ -2652,6 +2658,109 @@ theorem rightCounit_bangComultComponent_of_pos (A p q n : ℕ) (hq : q ≠ 0)
         Φ) = 0
   rw [Superoperator.tensor_zero_right, Superoperator.comp_zero_right,
     Superoperator.comp_zero_left, (bang A).act_zero_map]
+
+/-! ### Counit forces degree-one boundary weights to remain `1`
+
+Left (resp. right) counit recovers the full degree-one coefficient from the
+unscaled `(0,1)` (resp. `(1,0)`) bang-split component.  Uniform `1/2`
+scaling of those boundary components is therefore incompatible with the
+counit laws, even though the same scale repairs the raw Route A joint-effect
+matrix inequality at `(A,k)=(2,1)`.
+-/
+
+/-- Left counit on the unscaled `(0,1)` component recovers the full degree-one
+coefficient (`A ≤ 1`). -/
+theorem leftCounit_forces_zero_one_weight_one_of_le_one
+    (A : ℕ) (hA : A ≤ 1) (n : ℕ) (x : ((bang A).obj n).Carrier) :
+    (Hom.comp (DayTensor.leftUnitor (bang A))
+        (Hom.comp (DayTensor.map (bangCounit A) (Hom.id (bang A)))
+          (bangComultComponent A 0 1))).app n x =
+      (bangInjection A 1).app n (x 1) :=
+  leftCounit_bangComultComponent_zero_of_le_one A hA 1 n x
+
+/-- Right counit on the unscaled `(1,0)` component recovers the full degree-one
+coefficient (`A ≤ 1`). -/
+theorem rightCounit_forces_one_zero_weight_one_of_le_one
+    (A : ℕ) (hA : A ≤ 1) (n : ℕ) (x : ((bang A).obj n).Carrier) :
+    (Hom.comp (DayTensor.rightUnitor (bang A))
+        (Hom.comp (DayTensor.map (Hom.id (bang A)) (bangCounit A))
+          (bangComultComponent A 1 0))).app n x =
+      (bangInjection A 1).app n (x 1) :=
+  rightCounit_bangComultComponent_zero_of_le_one A hA 1 n x
+
+/-- On the degree-one identity series, left counit of the `(0,1)` component
+recovers the identity Superoperator at degree one — the boundary weight is
+exactly `1`, not `1/2`. -/
+theorem leftCounit_zero_one_identity_coeff_of_le_one (A : ℕ) (hA : A ≤ 1) :
+    (((Hom.comp (DayTensor.leftUnitor (bang A))
+        (Hom.comp (DayTensor.map (bangCounit A) (Hom.id (bang A)))
+          (bangComultComponent A 0 1))).app
+        (tensorPowerDimension A 1) (bangIdentityDegreeOne A)) 1).val =
+      Superoperator.identity (tensorPowerDimension A 1) := by
+  have h :=
+    leftCounit_forces_zero_one_weight_one_of_le_one A hA
+      (tensorPowerDimension A 1) (bangIdentityDegreeOne A)
+  have h1 := congrArg (fun y => y 1) h
+  simp only [bangInjection, countableProductInjection, ↓reduceDIte] at h1
+  change
+      (((Hom.comp (DayTensor.leftUnitor (bang A))
+          (Hom.comp (DayTensor.map (bangCounit A) (Hom.id (bang A)))
+            (bangComultComponent A 0 1))).app
+          (tensorPowerDimension A 1) (bangIdentityDegreeOne A)) 1).val =
+        (bangIdentityDegreeOne A 1).val
+  rw [h1, bangIdentityDegreeOne_coeff]
+
+/-- On the degree-one identity series, right counit of the `(1,0)` component
+likewise recovers the identity Superoperator. -/
+theorem rightCounit_one_zero_identity_coeff_of_le_one (A : ℕ) (hA : A ≤ 1) :
+    (((Hom.comp (DayTensor.rightUnitor (bang A))
+        (Hom.comp (DayTensor.map (Hom.id (bang A)) (bangCounit A))
+          (bangComultComponent A 1 0))).app
+        (tensorPowerDimension A 1) (bangIdentityDegreeOne A)) 1).val =
+      Superoperator.identity (tensorPowerDimension A 1) := by
+  have h :=
+    rightCounit_forces_one_zero_weight_one_of_le_one A hA
+      (tensorPowerDimension A 1) (bangIdentityDegreeOne A)
+  have h1 := congrArg (fun y => y 1) h
+  simp only [bangInjection, countableProductInjection, ↓reduceDIte] at h1
+  change
+      (((Hom.comp (DayTensor.rightUnitor (bang A))
+          (Hom.comp (DayTensor.map (Hom.id (bang A)) (bangCounit A))
+            (bangComultComponent A 1 0))).app
+          (tensorPowerDimension A 1) (bangIdentityDegreeOne A)) 1).val =
+        (bangIdentityDegreeOne A 1).val
+  rw [h1, bangIdentityDegreeOne_coeff]
+
+/-- Uniform `1/2` scaling repairs the `(2,1)` joint-effect matrix bound, but
+is not a counital repair of bang comultiplication: left/right counit force
+the `(0,1)` and `(1,0)` boundary weights to remain `1` (full identity
+recovery), and half of the identity matrix is not the identity. -/
+theorem half_scale_not_counital_bang_repair :
+    bangNormalizedSplitFamilyEffect_two_one =
+        (1 : Matrix (Fin (tensorPowerDimension 2 1))
+          (Fin (tensorPowerDimension 2 1)) ℂ) ∧
+      (∀ (A : ℕ) (hA : A ≤ 1),
+        (((Hom.comp (DayTensor.leftUnitor (bang A))
+            (Hom.comp (DayTensor.map (bangCounit A) (Hom.id (bang A)))
+              (bangComultComponent A 0 1))).app
+            (tensorPowerDimension A 1) (bangIdentityDegreeOne A)) 1).val =
+          Superoperator.identity (tensorPowerDimension A 1)) ∧
+      (∀ (A : ℕ) (hA : A ≤ 1),
+        (((Hom.comp (DayTensor.rightUnitor (bang A))
+            (Hom.comp (DayTensor.map (Hom.id (bang A)) (bangCounit A))
+              (bangComultComponent A 1 0))).app
+            (tensorPowerDimension A 1) (bangIdentityDegreeOne A)) 1).val =
+          Superoperator.identity (tensorPowerDimension A 1)) ∧
+      ((2 : ℕ) : ℂ)⁻¹ •
+          (1 : Matrix (Fin (tensorPowerDimension 2 1))
+            (Fin (tensorPowerDimension 2 1)) ℂ) ≠
+        (1 : Matrix (Fin (tensorPowerDimension 2 1))
+          (Fin (tensorPowerDimension 2 1)) ℂ) :=
+  ⟨bangNormalizedSplitFamilyEffect_two_one_eq_one,
+    fun A hA => leftCounit_zero_one_identity_coeff_of_le_one A hA,
+    fun A hA => rightCounit_one_zero_identity_coeff_of_le_one A hA,
+    half_one_ne_one (Nat.pos_of_ne_zero (by
+      simp [tensorPowerDimension_eq_pow]))⟩
 
 /-- The Day right-counit composite equals the identity for `A ≤ 1`. -/
 theorem bang_right_counit_of_le_one (A : ℕ) (hA : A ≤ 1) :

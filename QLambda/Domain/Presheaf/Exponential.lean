@@ -48,11 +48,12 @@ split assembly*, not the existence of every conceivable alternative bang.
 
 The object named `symmetricFormalTensorSquare` below is an ambient
 coefficientwise product; it is not the genuine Day tensor of two
-symmetric-series modules.  All-dimensional Day admissibility, hereditary or
-normalized alternatives, general Day closure for based modules, double-dual
-classical closure, and a premise-free `LNLModel` remain open.  See
-`QLambda.Domain.Presheaf.Comonoid` for the Day-comonoid interface and the
-`A ≤ 1` positive theory.
+symmetric-series modules.  All-dimensional Day admissibility, alternative
+carriers compatible with counit, general Day closure for based modules,
+double-dual classical closure, and a premise-free `LNLModel` remain open.
+See `QLambda.Domain.Presheaf.Comonoid` for the Day-comonoid interface, the
+`A ≤ 1` positive theory, and the exact claim boundary on Route A /
+`BangSplitEffectAdmissible` / half-scaling.
 -/
 
 namespace QLambda.Domain.Presheaf

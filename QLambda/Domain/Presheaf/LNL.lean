@@ -48,12 +48,14 @@ Fill these before packaging an `LNLModel` record (see
    (`d ≥ 2`); only `CPMapSum.comp_from_dim` / `HasActSumFromDim` on ambient CP
    closed. Route A (canonical bang-split joint effect ≤ effect(coeff)/`I`) is
    **refuted** (`not_bangSplitFamilyEffectLe_two_one`: shared coeff ⇒
-   `(k+1)•effect`). Raw-effect hereditary subobjects exclude the degree-one
-   identity generator (`bangSplitEffectAdmissible_excludes_identity_two`).
-   Normalization repairs the `(2,1)` effect bound but is not a completed
-   all-dimensional bang; Day transfer (`BangComultDayTransferWitness`) and
-   all-A admissibility remain open. Downstream LNL packaging waits on a
-   positive architecture branch.
+   `(k+1)•effect`). `BangSplitEffectAdmissible` is that global universal
+   bound (not a hereditary carrier predicate) and fails at `A = 2`
+   (`bangSplitEffectAdmissible_excludes_identity_two`). Half-scaling repairs
+   the `(2,1)` matrix bound but is not counital
+   (`half_scale_not_counital_bang_repair`); Day transfer
+   (`BangComultDayTransferWitness`) remains open. Downstream LNL packaging
+   waits on a positive architecture branch or on the minimum-fragment Route A
+   direct semantics path.
 
 Until those close, use `presheafLinear` / `presheafNonlinear` as named
 ωCPO-enriched categories and the bang comonad interface in `Comonoid`.
