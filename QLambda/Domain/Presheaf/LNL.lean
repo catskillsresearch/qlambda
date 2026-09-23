@@ -46,7 +46,9 @@ Fill these before packaging an `LNLModel` record (see
    `A ≥ 2`, and digging `!A → !!A` once bang is extended beyond `ℕ`-indexing.
    Path 2's proposed `Module.act_sum_from_dim` is false for TNI representables
    (`d ≥ 2`); only `CPMapSum.comp_from_dim` / `HasActSumFromDim` on ambient CP
-   closed. All-A admissibility remains open.
+   closed. Route A (canonical bang-split joint effect ≤ effect(coeff)/`I`) is
+   **refuted** (`not_bangSplitFamilyEffectLe_two_one`: shared coeff ⇒
+   `(k+1)•effect`). All-A admissibility remains open.
 
 Until those close, use `presheafLinear` / `presheafNonlinear` as named
 ωCPO-enriched categories and the bang comonad interface in `Comonoid`.

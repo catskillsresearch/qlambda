@@ -387,38 +387,34 @@ and finite symmetric powers.  First-order source types (unit, bits, qubits,
 and their tensors) have representable objects, and every source primitive
 agrees with its intrinsic superoperator.  The symmetric series has weakening,
 dereliction, contraction, and promotion along finite basis equivalences.
-That comonoid action is not cofree promotion.  A partition of one fixed
-degree has a common Hilbert dimension, and the tensor of two families that
-are already summable at fixed dimensions is jointly trace-nonincreasing.
-The corresponding bound for a sum of tensors whose factors lie in different
-symmetric-power degrees is still missing, but it is not the only obstruction.
-In particular, an identity channel in every degree is not a counterexample:
-cofreeness over the tensor unit requires that Taylor series, and distinct
-degree splits are coordinates of a Day tensor rather than alternatives to be
-added.  The actual unresolved gate is to construct the general Day tensor for
-based modules and prove that coordinatewise contraction factors through it.
-The current coefficientwise tensor-square object does not establish that
-factorization.  The intended exponential must then satisfy the cofree
-universal property
+
+A stronger fragment is now kernel checked for low dimensions.  For every
+system of dimension $A\le 1$, the formal series exponential carries a genuine
+Day comonoid structure and satisfies the cofree universal property
 $$
-\operatorname{ComonoidHom}(C,!^{\mathrm f}A)
-  \cong \operatorname{Hom}(C,A).
+\operatorname{ComonoidHom}(C,!A)
+  \cong \operatorname{Hom}(C,y(A)),
 $$
-This induces the co-Kleisli promotion
-$\operatorname{Hom}(!B,A)\to\operatorname{Hom}(!B,!A)$; the previously
-considered type
-$\operatorname{Hom}(M,!A)\to\operatorname{Hom}(!M,!A)$ was not the cofree
-universal property.  Tsukada and Asada obtain the abstract cofree object from
-local presentability and an adjoint-functor theorem; their subsequent
-formal-series characterization assumes that object and therefore is not an
-independent direct construction.  General Day closure, the factorization
-theorem, the based double-dual classical subcategory, the exponential
-comonad, and the LNL package remain objectives.
-Consequently unrestricted arrows are not yet interpreted.  The intended
-adequacy boundary is closed terms with first-order observable result:
-denotation should equal the supremum of finite-step subnormalized operational
-instruments.  Adequacy at arbitrary higher-order result types and full
-abstraction are not claimed.
+inducing co-Kleisli promotion $\operatorname{Hom}(!B,A)\to\operatorname{Hom}(!B,!A)$.
+At the same time, two TNI obstructions are checked.  Complementary
+computational-basis effects on a qubit sum to discard, but composition with
+matching isometric preparations yields two copies of $\mathrm{id}_1$, which
+admit no TNI Choi sum; hence generic joint precomposition at fiber dimension
+$d\ge 2$ fails for representable modules.  Separately, every canonical
+homogeneous bang split of total degree $k$ has the same effect as the unsplit
+coefficient, so the joint effect is $(k+1)$ copies of that effect: the
+proposed raw Route~A joint-effect bound already fails at $A=2$, degree $1$.
+These refutations do not by themselves prove failure of every Day-bilinear
+admissibility predicate, nor nonexistence of every alternative all-dimensional
+bang (hereditary subobjects or normalized graded splits remain open).  The
+coefficientwise tensor-square object is still not the genuine Day tensor of
+two series modules.  General Day closure for based modules, an
+all-dimensional cofree exponential, the based double-dual classical
+subcategory, and the LNL package remain objectives.  Consequently unrestricted
+arrows are not yet interpreted for $A\ge 2$.  The intended adequacy boundary
+is closed terms with first-order observable result: denotation should equal
+the supremum of finite-step subnormalized operational instruments.  Adequacy
+at arbitrary higher-order result types and full abstraction are not claimed.
 
 ### 5.1 Target compositional semantics
 
@@ -623,26 +619,24 @@ as a theorem parameter.
 
 ### Semantic objectives
 
-The remaining objective begins with general Day tensor and internal hom on
-based modules, followed by a proof that coordinatewise symmetric-series
-contraction factors through the genuine Day tensor.  Joint trace-nonincrease
-for mixed symmetric-power calculations may be needed inside that proof, but
-cannot by itself establish cofreeness.  The next gate is the cofree
-equivalence
-$\operatorname{ComonoidHom}(C,!^{\mathrm f}A)\cong
-\operatorname{Hom}(C,A)$.  The published existence proof uses local
-presentability; its formal-series image theorem already assumes the abstract
-cofree object.  After that come double-dual classical closure and the
-resulting comonad and LNL package.  Only then can unrestricted arrows, every admissible
-source type including strictly positive recursive types, and a structural
-source denotation be interpreted.  The
-finite CP maps, TNI superoperators, representable Yoneda/Day fragment,
-first-order type objects, and primitive agreement are checked; they are not
-that LNL instance or denotation.  On that basis we aim to prove operational
-soundness,
-first-order-observable adequacy by finite approximants, and source-denotation
-preservation for successful staging.  These remaining statements are goals
-and are not included in the checked theorem list.
+Checked progress now includes the Day bang comonoid and cofree universal
+property for $A\le 1$, together with the fiber-$2$ TNI obstruction and the
+raw Route~A split-family refutation.  The remaining objective begins with a
+kernel-supported all-dimensional architecture decision: either a hereditary
+admissible subobject, a normalized/graded construction in the same category,
+a current-category no-go, or a separately approved category redesign.  Only
+after a positive all-dimensional bang come general Day tensor and internal
+hom on based modules, double-dual classical closure, and the premise-free
+LNL package.  Only then can unrestricted arrows for every dimension, every
+admissible source type including strictly positive recursive types, and a
+structural source denotation be interpreted.  The finite CP maps, TNI
+superoperators, representable Yoneda/Day fragment, first-order type objects,
+$A\le 1$ bang/cofreeness, and primitive agreement are checked; they are not
+that all-dimensional LNL instance or denotation.  On that basis we aim to
+prove operational soundness, first-order-observable adequacy by finite
+approximants, and source-denotation preservation for successful staging.
+These remaining statements are goals and are not included in the checked
+theorem list.
 
 ---
 

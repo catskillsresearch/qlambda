@@ -486,6 +486,12 @@ theorem le_iff_exists_add (Φ Ψ : CPMap n m) :
 def identity (n : ℕ) : CPMap n n :=
   ofKraus (KrausFamily.identity n)
 
+/-- The identity channel is unital: its input effect is `I`. -/
+@[simp]
+theorem effect_identity (n : ℕ) : (identity n).effect = 1 := by
+  rw [identity, effect_ofKraus]
+  simp [KrausFamily.effect, KrausFamily.identity]
+
 @[simp]
 theorem applyMat_identity (ρ : Matrix (Fin n) (Fin n) ℂ) :
     applyMat (identity n) ρ = ρ := by

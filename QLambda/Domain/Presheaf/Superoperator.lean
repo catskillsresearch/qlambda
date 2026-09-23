@@ -407,6 +407,20 @@ theorem choi_comp_ofEquivalence_left {n m ℓ : ℕ}
   · intro h
     exact (h (Finset.mem_univ _)).elim
 
+/-- Left composition with a basis equivalence preserves the input effect
+(unitary postprocessing does not change the Heisenberg effect). -/
+theorem effect_comp_ofEquivalence_left {n m ℓ : ℕ}
+    (e : Fin m ≃ Fin ℓ) (Φ : Superoperator n m) :
+    (comp (ofEquivalence e) Φ).cp.effect = Φ.cp.effect := by
+  ext i j
+  simp only [CPMap.effect]
+  have hterm (a : Fin ℓ) :
+      (comp (ofEquivalence e) Φ).cp.choi (a, j) (a, i) =
+        Φ.cp.choi (e.symm a, j) (e.symm a, i) :=
+    choi_comp_ofEquivalence_left e Φ a a j i
+  simp_rw [hterm]
+  exact Fintype.sum_equiv e.symm _ _ fun _ => rfl
+
 @[simp]
 theorem tensor_ofEquivalence {a a' b b' : ℕ}
     (e : Fin a ≃ Fin a') (f : Fin b ≃ Fin b') :

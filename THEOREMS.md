@@ -117,12 +117,41 @@ LNL instance, a source denotation, or an adequacy theorem.
 
 `symmetricContraction` and `symmetricEquivalencePromotion` are a
 symmetric-series comonoid and an action of finite basis equivalences. They
-are not cofree promotion. The cofree universal property would be
-`ComonoidHom(C, !A) ≃ Hom(C, A)`, inducing
-`Hom(!B, A) → Hom(!B, !A)`. `tensorPowerDimension_mul_add` only identifies the
-Hilbert dimension of a fixed-degree partition.
+are not all-dimensional cofree promotion. `tensorPowerDimension_mul_add`
+only identifies the Hilbert dimension of a fixed-degree partition.
 `tensor_finite_subfamily_cp_sum` is joint trace-nonincrease for the tensor of
 two families already summable at fixed dimensions.
+
+### Bang comonoid and cofree UP for `A ≤ 1`
+
+- `QLambda.Domain.Presheaf.SuperoperatorModule.bangComultComponentsAdmissible_zero`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.bangComultComponentsAdmissible_one`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.bangComultComponentsAdmissible_of_le_one`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.bangComonoid`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.bangCofreeEquiv_of_le_one`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.bangPromote`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.bangMap`
+
+These close the genuine Day comonoid and cofree universal property
+`ComonoidHom(C, !A) ≃ Hom(C, representable A)` for dimensions `A ≤ 1`, with
+induced co-Kleisli promotion. They are not an all-dimensional exponential.
+
+### Kernel-checked TNI / Route A obstructions
+
+- `QLambda.Domain.Presheaf.SigmaMon.ChoiSum.exists_fiber2_comp_without_superoperator_sum`
+- `QLambda.Domain.Presheaf.SigmaMon.ChoiSum.not_exists_hasSum_gate3Composed`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.not_bangSplitFamilyEffectLe_two_one`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.bangSplitFamily_effect_le`
+
+Generic joint TNI precomposition at fiber dimension `d ≥ 2`
+(`act_sum_from_dim` / `ChoiSum.comp_from_dim`) is false for representable
+modules. Separately, the canonical raw bang-split family has joint effect
+`(k+1) • effect(coeff)`, so the proposed Route A joint-effect bound fails
+already at `A = 2`, degree `1`. Ambient CP still admits
+`CPMapSum.comp_from_dim`. These refutations do not by themselves prove
+`¬ BangComultComponentsAdmissible 2`, nor nonexistence of every alternative
+all-dimensional bang.
+
 - `QLambda.Linear.Prim.superoperator_completedCP`
 - `QLambda.Linear.qubitInstrument_zero`
 - `QLambda.Linear.qubitInstrument_one`
@@ -216,22 +245,21 @@ structure is also witnessed by a one-object model with singleton homs.
 
 The following are goals, not existing declarations:
 
-- mixed-partition trace-nonincrease: a joint bound on homogeneous branches
-  does not yet transport to a sum of tensors whose factors lie in different
-  symmetric-power degrees;
-- general Day tensor and internal hom for based modules.  The current
-  coefficientwise `symmetricFormalTensorSquare` is not proved to be the Day
-  tensor of two symmetric-series modules;
-- factorization of coordinatewise contraction through that genuine Day
-  tensor.  The identity-in-every-degree series is required by cofreeness and
-  is not a counterexample: different degree splits are tensor coordinates,
-  not branches to be added;
-- the cofree universal property `ComonoidHom(C, !A) ≃ Hom(C, A)`, its induced
-  co-Kleisli promotion `Hom(!B, A) → Hom(!B, !A)`, and the resulting comonad;
+- all-dimensional `BangComultComponentsAdmissible A` for `A ≥ 2`, and a
+  premise-free all-dimensional Day bang comonoid / cofree UP (Route A for
+  the raw canonical split family is refuted; hereditary-subobject and
+  normalized/graded alternatives remain open research);
+- general Day tensor and internal hom for arbitrary based / biorthogonal
+  modules beyond the representable fragment.  The coefficientwise
+  `symmetricFormalTensorSquare` is not the Day tensor;
+- Day factorization of contraction for `A ≥ 2`
+  (`SymmetricContractionDayFactorization` is proved only for `A ≤ 1`);
+- bang as a functor / comonad on the full linear category (beyond
+  representable dimensions `A ≤ 1`), including digging `!A → !!A`;
 - the based double-dual classical subcategory and its general Day tensor,
   internal hom, additives, and omega-CPO enrichment;
-- a premise-free LNL model whose homs contain allocation, reset, gates, and
-  measurement instruments;
+- a premise-free LNL model `presheafQuantumLNL` whose homs contain
+  allocation, reset, gates, and measurement instruments;
 - interpretation of all source types and strictly positive recursive types;
 - a concrete structural source denotation independent of typing derivations;
 - semantic substitution, operational soundness, and fix/fold equations;

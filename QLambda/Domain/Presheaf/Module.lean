@@ -250,16 +250,242 @@ theorem comp_from_one {ι : Type} [Countable ι] {m ℓ : ℕ}
     exact (Matrix.PosSemidef.one (n := Fin m)).smul (sub_nonneg.mpr hα1)
   exact hsum_le.trans hscale
 
-/-! ## Obstruction note (Gate 3 / Path 2)
+/-! ## Gate 3 / Path 2 obstruction (kernel-checked)
 
 A proposed `ChoiSum.comp_from_dim` / `Module.act_sum_from_dim` (joint TNI
-precomposition at fiber `d ≥ 2`) is mathematically false: complementary
-basis effects `2 → 1` summing to discard, matched against isometric
-preparations `1 → 2` of those basis states, yield two copies of `id₁`,
-whose Choi sum has effect `2 ≰ I`.  The fiber-`1` proof of `comp_from_one`
-relies on scalar effects and does not extend.  Ambient CP still admits
+precomposition at fiber `d ≥ 2`) is false.  The counterexample below
+constructs complementary basis effects `e0, e1 : 2 → 1` summing to discard
+and isometric preparations `p0, p1 : 1 → 2`, so that
+`eᵢ ∘ pᵢ = id₁` and the composed Bool-family has no TNI/`Superoperator`
+Choi sum (`not_exists_hasSum_gate3Composed`,
+`exists_fiber2_comp_without_superoperator_sum`).  Ambient CP still admits
 `CPMapSum.comp_from_dim` below; do not add the false statement as a
 required `Module` field. -/
+
+/-- Computational-basis bra `⟨i|` as a Kraus operator `2 → 1`. -/
+def basisBra (i : Fin 2) : KrausOperator 2 1 :=
+  fun _ j => if j = i then (1 : ℂ) else 0
+
+/-- Computational-basis ket `|i⟩` as a Kraus operator `1 → 2`. -/
+def basisKet (i : Fin 2) : KrausOperator 1 2 :=
+  fun j _ => if j = i then (1 : ℂ) else 0
+
+theorem basisBra_effect (i : Fin 2) :
+    KrausFamily.effect [basisBra i] =
+      fun j k => if j = i ∧ k = i then (1 : ℂ) else 0 := by
+  ext j k
+  simp only [KrausFamily.effect, List.map_cons, List.map_nil, List.sum_cons,
+    List.sum_nil, add_zero, basisBra, Matrix.mul_apply, conjTranspose_apply,
+    Fintype.sum_unique]
+  split_ifs <;> simp_all
+
+theorem basisBra_effect_add :
+    KrausFamily.effect [basisBra 0] + KrausFamily.effect [basisBra 1] =
+      (1 : Matrix (Fin 2) (Fin 2) ℂ) := by
+  ext j k
+  rw [Matrix.add_apply, basisBra_effect, basisBra_effect, Matrix.one_apply]
+  fin_cases j <;> fin_cases k <;> simp
+
+theorem basisBra_effect_le_one (i : Fin 2) :
+    KrausFamily.effect [basisBra i] ≤ 1 := by
+  have hsum := basisBra_effect_add
+  have hother :
+      KrausFamily.effect [basisBra (1 - i)] =
+        (1 : Matrix (Fin 2) (Fin 2) ℂ) - KrausFamily.effect [basisBra i] := by
+    fin_cases i
+    · exact eq_sub_of_add_eq (by simpa [add_comm] using hsum)
+    · exact eq_sub_of_add_eq hsum
+  rw [Matrix.le_iff, ← hother]
+  exact KrausFamily.effect_posSemidef _
+
+theorem basisKet_effect (i : Fin 2) :
+    KrausFamily.effect [basisKet i] = (1 : Matrix (Fin 1) (Fin 1) ℂ) := by
+  ext a b
+  fin_cases a; fin_cases b
+  simp only [KrausFamily.effect, List.map_cons, List.map_nil, List.sum_cons,
+    List.sum_nil, add_zero, basisKet, Matrix.mul_apply, conjTranspose_apply,
+    Matrix.one_apply]
+  classical
+  calc
+    (∑ j : Fin 2, star (if j = i then (1 : ℂ) else 0) *
+        (if j = i then (1 : ℂ) else 0)) =
+        ∑ j : Fin 2, if j = i then (1 : ℂ) else 0 := by
+      refine Finset.sum_congr rfl fun j _ => ?_
+      split_ifs <;> simp
+    _ = 1 := by simp
+
+theorem basisBra_mul_basisKet (i : Fin 2) :
+    basisBra i * basisKet i = (1 : Matrix (Fin 1) (Fin 1) ℂ) := by
+  ext a b
+  fin_cases a; fin_cases b
+  simp only [basisBra, basisKet, Matrix.mul_apply, Matrix.one_apply]
+  classical
+  calc
+    (∑ j : Fin 2, (if j = i then (1 : ℂ) else 0) *
+        (if j = i then (1 : ℂ) else 0)) =
+        ∑ j : Fin 2, if j = i then (1 : ℂ) else 0 := by
+      refine Finset.sum_congr rfl fun j _ => ?_
+      split_ifs <;> simp
+    _ = 1 := by simp
+
+/-- Complementary computational-basis effect `⟨i|−|i⟩ : 2 → 1`. -/
+noncomputable def complementaryBasisEffect (i : Fin 2) : Superoperator 2 1 where
+  cp := CPMap.ofKraus [basisBra i]
+  trace_nonincreasing :=
+    (traceNonincreasing_iff_effect_le_one _).mpr <| by
+      simpa [CPMap.effect_ofKraus] using basisBra_effect_le_one i
+
+/-- Isometric preparation of computational-basis state `|i⟩` as `1 → 2`. -/
+noncomputable def isometricBasisPrep (i : Fin 2) : Superoperator 1 2 where
+  cp := CPMap.ofKraus [basisKet i]
+  trace_nonincreasing :=
+    (traceNonincreasing_iff_effect_le_one _).mpr <| by
+      simp [CPMap.effect_ofKraus, basisKet_effect]
+
+/-- Discard / partial trace `2 → 1` (effect `I₂`). -/
+noncomputable def discardTwo : Superoperator 2 1 where
+  cp := CPMap.ofKraus [basisBra 0, basisBra 1]
+  trace_nonincreasing :=
+    (traceNonincreasing_iff_effect_le_one _).mpr <| by
+      rw [CPMap.effect_ofKraus]
+      have heff :
+          KrausFamily.effect [basisBra 0, basisBra 1] =
+            KrausFamily.effect [basisBra 0] + KrausFamily.effect [basisBra 1] := by
+        simp [KrausFamily.effect]
+      rw [heff, basisBra_effect_add]
+
+noncomputable abbrev e0 : Superoperator 2 1 := complementaryBasisEffect 0
+noncomputable abbrev e1 : Superoperator 2 1 := complementaryBasisEffect 1
+noncomputable abbrev p0 : Superoperator 1 2 := isometricBasisPrep 0
+noncomputable abbrev p1 : Superoperator 1 2 := isometricBasisPrep 1
+
+theorem e0_add_e1_cp_eq_discardTwo :
+    e0.cp + e1.cp = discardTwo.cp := by
+  change CPMap.ofKraus [basisBra 0] + CPMap.ofKraus [basisBra 1] =
+    CPMap.ofKraus [basisBra 0, basisBra 1]
+  simpa using (CPMap.ofKraus_append [basisBra 0] [basisBra 1]).symm
+
+theorem complementaryBasisEffect_comp_isometricBasisPrep (i : Fin 2) :
+    Superoperator.comp (complementaryBasisEffect i) (isometricBasisPrep i) =
+      Superoperator.identity 1 := by
+  apply Superoperator.ext
+  apply CPMap.ext_apply
+  intro ρ
+  simp only [Superoperator.cp_comp, complementaryBasisEffect, isometricBasisPrep,
+    Superoperator.identity, CPMap.applyMat_comp, CPMap.applyMat_ofKraus,
+    CPMap.applyMat_identity, KrausFamily.applyMat_single]
+  calc
+    basisBra i * (basisKet i * ρ * (basisKet i)ᴴ) * (basisBra i)ᴴ
+        = (basisBra i * basisKet i) * ρ *
+            ((basisBra i * basisKet i)ᴴ) := by
+          simp [Matrix.mul_assoc]
+    _ = (1 : Matrix (Fin 1) (Fin 1) ℂ) * ρ * (1 : Matrix (Fin 1) (Fin 1) ℂ)ᴴ := by
+          simp [basisBra_mul_basisKet]
+    _ = ρ := by simp
+
+theorem e0_comp_p0 :
+    Superoperator.comp e0 p0 = Superoperator.identity 1 :=
+  complementaryBasisEffect_comp_isometricBasisPrep 0
+
+theorem e1_comp_p1 :
+    Superoperator.comp e1 p1 = Superoperator.identity 1 :=
+  complementaryBasisEffect_comp_isometricBasisPrep 1
+
+/-- The complementary basis effects are Choi-summable to discard. -/
+theorem complementaryBasisEffects_hasSum_discard :
+    HasSum (fun i : Bool => bif i then e0 else e1) discardTwo := by
+  have hTNI : TraceNonincreasing (e0.cp + e1.cp) := by
+    rw [e0_add_e1_cp_eq_discardTwo]
+    exact discardTwo.trace_nonincreasing
+  have hsum := hasSum_add_of_addable e0 e1 hTNI
+  have heq : (⟨e0.cp + e1.cp, hTNI⟩ : Superoperator 2 1) = discardTwo :=
+    Superoperator.ext e0_add_e1_cp_eq_discardTwo
+  rwa [heq] at hsum
+
+/-- Joint composition of the Gate-3 complementary effects against the matching
+preparations: two copies of `id₁`. -/
+noncomputable def gate3ComposedFamily : Bool → Superoperator 1 1 :=
+  fun i =>
+    Superoperator.comp (bif i then e0 else e1) (bif i then p0 else p1)
+
+theorem gate3ComposedFamily_eq_identity (i : Bool) :
+    gate3ComposedFamily i = Superoperator.identity 1 := by
+  cases i <;> simp [gate3ComposedFamily, e0_comp_p0, e1_comp_p1]
+
+theorem identity_effect (n : ℕ) :
+    (CPMap.identity n).effect = 1 := by
+  rw [CPMap.identity, CPMap.effect_ofKraus]
+  simp [KrausFamily.effect, KrausFamily.identity]
+
+theorem effect_add (Φ Ψ : CPMap n m) :
+    (Φ + Ψ).effect = Φ.effect + Ψ.effect := by
+  ext i j
+  simp only [CPMap.effect, CPMap.choi_add, Matrix.add_apply, Finset.sum_add_distrib]
+
+/-- The CP sum of two copies of `id₁` has effect `2 · I₁`. -/
+theorem two_identity_effect :
+    (CPMap.identity 1 + CPMap.identity 1).effect =
+      (2 : ℂ) • (1 : Matrix (Fin 1) (Fin 1) ℂ) := by
+  rw [effect_add, identity_effect]
+  ext i j
+  fin_cases i; fin_cases j
+  simp only [Matrix.add_apply, Matrix.smul_apply, Matrix.one_apply, smul_eq_mul]
+  norm_num
+
+/-- Hence `id₁ + id₁` is not trace-nonincreasing. -/
+theorem two_identity_not_traceNonincreasing :
+    ¬ TraceNonincreasing (CPMap.identity 1 + CPMap.identity 1) := by
+  rw [traceNonincreasing_iff_effect_le_one, two_identity_effect]
+  intro h
+  have hp : ((1 : Matrix (Fin 1) (Fin 1) ℂ) - (2 : ℂ) • 1).PosSemidef :=
+    Matrix.le_iff.mp h
+  have hdiag := diag_re_nonneg hp (0 : Fin 1)
+  simp only [Matrix.sub_apply, Matrix.smul_apply, Matrix.one_apply, smul_eq_mul,
+    Complex.sub_re] at hdiag
+  norm_num at hdiag
+
+/-- The composed Gate-3 family has no Superoperator (TNI) Choi sum. -/
+theorem not_exists_hasSum_gate3Composed :
+    ¬ ∃ Φ : Superoperator 1 1, HasSum gate3ComposedFamily Φ := by
+  rintro ⟨Φ, hΦ⟩
+  have hΦ' :
+      _root_.HasSum
+        (fun _ : Bool => (CPMap.identity 1).choi) Φ.cp.choi := by
+    refine
+      (show _root_.HasSum (fun i => (gate3ComposedFamily i).cp.choi) Φ.cp.choi
+        from hΦ).congr_fun ?_
+    intro i
+    rw [gate3ComposedFamily_eq_identity i]
+    rfl
+  have hfin :
+      _root_.HasSum
+        (fun _ : Bool => (CPMap.identity 1).choi)
+        (∑ _ : Bool, (CPMap.identity 1).choi) :=
+    hasSum_fintype fun _ : Bool => (CPMap.identity 1).choi
+  have hchoi : Φ.cp.choi = ∑ _ : Bool, (CPMap.identity 1).choi :=
+    hΦ'.unique hfin
+  have hsum :
+      ∑ _ : Bool, (CPMap.identity 1).choi =
+        (CPMap.identity 1 + CPMap.identity 1).choi := by
+    simp only [Fintype.sum_bool, CPMap.choi_add]
+  have hcp : Φ.cp = CPMap.identity 1 + CPMap.identity 1 :=
+    CPMap.ext (hchoi.trans hsum)
+  exact two_identity_not_traceNonincreasing (hcp ▸ Φ.trace_nonincreasing)
+
+/-- Precise Gate-3 negation: there is a Choi-summable TNI family at fiber `2`
+and a TNI family into fiber `2` whose joint compositions admit no
+`Superoperator` Choi sum. -/
+theorem exists_fiber2_comp_without_superoperator_sum :
+    ∃ (f : Bool → Superoperator 2 1) (Ψ : Superoperator 2 1)
+      (g : Bool → Superoperator 1 2),
+      HasSum f Ψ ∧
+        ¬ ∃ Φ : Superoperator 1 1,
+            HasSum (fun i => Superoperator.comp (f i) (g i)) Φ := by
+  refine
+    ⟨fun i => bif i then e0 else e1, discardTwo,
+      fun i => bif i then p0 else p1,
+      complementaryBasisEffects_hasSum_discard, ?_⟩
+  exact not_exists_hasSum_gate3Composed
 
 end SigmaMon.ChoiSum
 
@@ -575,11 +801,11 @@ structure Module where
         ∃ z, (obj m).HasSum (fun i => act (x i) (f i)) z
   ```
 
-  is **false** for TNI/representable modules when `d ≥ 2` (complementary
-  effects at fiber `2` against replacement preparations sum to
-  `discard + discard`).  It holds for unrestricted CP via
-  `CPMapSum.comp_from_dim` / `HasActSumFromDim`.
-  Do not reintroduce it as a required `Module` field. -/
+  is **false** for TNI/representable modules when `d ≥ 2`; see
+  `SigmaMon.ChoiSum.exists_fiber2_comp_without_superoperator_sum`
+  (`e0`/`e1`/`p0`/`p1`, `not_exists_hasSum_gate3Composed`).
+  It holds for unrestricted CP via `CPMapSum.comp_from_dim` /
+  `HasActSumFromDim`.  Do not reintroduce it as a required `Module` field. -/
 
 /-- Joint action at an arbitrary fiber dimension.  Holds for ambient CP
 modules; fails for TNI representables when `d ≥ 2`. -/

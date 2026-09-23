@@ -33,24 +33,26 @@ branch bound
 `countableProductHom_finite_components_tni` across a sum of tensors whose
 factors lie in different symmetric-power degrees.
 
-This does not make the identity-in-every-degree series a counterexample:
-cofreeness over the tensor unit requires precisely that series, and the
-different degree splits are coordinates of a Day tensor rather than branches
-to be added.  The actual unresolved gate is categorical.  The object named
-`symmetricFormalTensorSquare` below is an ambient coefficientwise product; it
-has not been proved to be the genuine Day tensor of two symmetric-series
-modules, and the coordinatewise split has not been proved to factor through
-such a tensor.  The published abstract cofree object exists by local
-presentability and an adjoint-functor theorem; its later formal-series
-description assumes that existence and is not an independent construction.
-General Day closure, hereditary factorization, the cofree universal property,
-double-dual classical closure, and the resulting comonad are all still
-required.  No cofree promotion, comonad multiplication, or `LNLModel`
-instance is defined from the equivalence action.  See
-`QLambda.Domain.Presheaf.Comonoid` for the Day-comonoid interface, the
-series→square comparison, and the ambient obstruction
-`factorPermutationEquiv_swap_ne_refl`; Day factorization of contraction
-remains the open Prop `SymmetricContractionDayFactorization`.
+**Status update.**  For `A ≤ 1`, `Comonoid.lean` now closes Day comultiplication,
+`bangComonoid`, the cofree equivalence `bangCofreeEquiv_of_le_one`, and
+co-Kleisli promotion.  Separately, the canonical raw bang-split family has
+joint effect `(k+1) • effect(coeff)`, so the proposed Route A joint-effect
+bound is **refuted** at `A = 2`, degree `1`
+(`not_bangSplitFamilyEffectLe_two_one` / `bangSplitFamily_effect_le`).
+Generic TNI `act_sum_from_dim` is also false at fiber dimension `2`.
+These results do **not** prove `¬ BangComultComponentsAdmissible 2` by
+themselves: Day evaluation against an arbitrary bilinear map is a stronger
+quantifier than the joint-effect bound.  The identity-in-every-degree series
+remains required by cofreeness; the refutation concerns the *raw homogeneous
+split assembly*, not the existence of every conceivable alternative bang.
+
+The object named `symmetricFormalTensorSquare` below is an ambient
+coefficientwise product; it is not the genuine Day tensor of two
+symmetric-series modules.  All-dimensional Day admissibility, hereditary or
+normalized alternatives, general Day closure for based modules, double-dual
+classical closure, and a premise-free `LNLModel` remain open.  See
+`QLambda.Domain.Presheaf.Comonoid` for the Day-comonoid interface and the
+`A ≤ 1` positive theory.
 -/
 
 namespace QLambda.Domain.Presheaf

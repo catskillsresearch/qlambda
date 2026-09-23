@@ -40,9 +40,11 @@ measurement.  Probability arises only from measurement.  There is no source
   Scott-continuous quantum-function category and continuous projection-chain
   shift/fold isomorphisms.
 - `QLambda/Domain/Presheaf/`: intrinsic Choi CP maps, TNI superoperators,
-  specialized modules, Yoneda, representable Day tensor/internal hom, and
-  finite symmetric powers.  This is the substrate for the remaining
-  CP-enriched source denotation, not that denotation.
+  specialized modules, Yoneda, representable Day tensor/internal hom, finite
+  symmetric powers, the Day bang comonoid and cofree UP for dimensions
+  `A ≤ 1`, and kernel-checked TNI / Route A obstructions at fiber dimension
+  `2`.  This is the substrate for the remaining CP-enriched source
+  denotation, not that denotation.
 - `QLambda/Linear/RegFile.lean`, `Elaboration.lean`: deterministic,
   resource-certified staging of a terminating first-order fragment.
 - `QLambda/Linear/Circuit.lean`, `Quotation.lean`,
@@ -64,14 +66,16 @@ does not yet interpret source `mu`, and quotation CQ equality is inherited
 from the represented command rather than proved from source denotation.
 
 The semantic objective is a typed submodel of the CP-enriched
-superoperator-module presheaf semantics.  Its exponential must satisfy
-`ComonoidHom(C, !ᶠA) ≃ Hom(C, A)` inside the based double-dual classical
-subcategory.  The existing coefficientwise symmetric tensor square is not
-yet a general Day tensor, so its coordinate split does not establish this
-universal property.  Source-type interpretation, a concrete structural
+superoperator-module presheaf semantics.  For `A ≤ 1` the exponential now
+satisfies `ComonoidHom(C, !A) ≃ Hom(C, y(A))` with Day comultiplication and
+co-Kleisli promotion.  At the same time, generic joint TNI precomposition at
+fiber dimension `d ≥ 2` is false, and the raw canonical bang-split
+joint-effect bound (Route A) is refuted at `A = 2`.  An all-dimensional
+cofree bang, general Day closure on based modules, a premise-free
+`presheafQuantumLNL`, source-type interpretation, a concrete structural
 denotation, first-order-observable adequacy, and a source-level staging
-theorem follow that gate.  This release does not claim
-those results, full abstraction, or unrestricted higher-order adequacy.
+theorem remain objectives.  This release does not claim those results, full
+abstraction, or unrestricted higher-order adequacy.
 `docs/NOVELTY_AUDIT.md` records the distinction between published mathematics
 and new Lean proofs.
 

@@ -19,9 +19,16 @@ interface for `A ≤ 1`** (`bangPromote`, `bangMap`, UP laws).
 
 **Path 2 residual (`A ≥ 2`):** proposed `Module.act_sum_from_dim` /
 `ChoiSum.comp_from_dim` is **false** for TNI representables when `d ≥ 2`
-(complementary effects × matching preparations → `id + id`). Ambient CP still
-has `CPMapSum.comp_from_dim` / `HasActSumFromDim (cpmModule A)`. All-A
+(see `ChoiSum.exists_fiber2_comp_without_superoperator_sum`,
+`not_exists_hasSum_gate3Composed`). Ambient CP still has
+`CPMapSum.comp_from_dim` / `HasActSumFromDim (cpmModule A)`. All-A
 `BangComultComponentsAdmissible` / unconditional `bangComult` remain blocked.
+
+**Route A (canonical bang-split joint effect) refuted:**
+`bangSplitComponent_effect` / `bangSplitFamilyEffect_nsmul` show every
+`p+q=k` split has the same effect as the unsplit coeff, so the joint effect is
+`(k+1) • effect(coeff)`. Witness `not_bangSplitFamilyEffectLe_two_one`
+(`A=2`, `k=1`, identity series): `2 I ≰ I`.
 
 ## Fiber support (critical)
 
@@ -61,6 +68,9 @@ Ambient obstruction `factorPermutationEquiv_swap_ne_refl` remains.
 namespace QLambda.Domain.Presheaf
 
 namespace SuperoperatorModule
+
+open Matrix
+open scoped BigOperators ComplexOrder MatrixOrder
 
 /-! ## Abstract commutative comonoids -/
 
@@ -627,6 +637,194 @@ theorem degreePartitionToPair_fst (k : ℕ) (p : DegreePartition k) :
 theorem degreePartitionToPair_snd_add (k : ℕ) (p : DegreePartition k) :
     (degreePartitionToPair k p).1 + (degreePartitionToPair k p).2 = k :=
   Nat.add_sub_of_le (Nat.le_of_lt_succ p.isLt)
+
+/-! ## Route A: joint effect of the canonical bang-split family
+
+Each homogeneous split is `ofEquivalence(tensorSplitEquiv) ∘ coeff`, so by
+`effect_comp_ofEquivalence_left` every partition `p+q=k` has **the same**
+input effect as the unsplit degree-`k` coefficient.  The finite family over
+`DegreePartition k` therefore has Choi/effect sum
+`(k+1) • effect(coeff)`, which is **not** Loewner-below `effect(coeff)`
+(nor below `I`) whenever the coefficient is trace-preserving and `k ≥ 1`.
+The splits are full reindexings of one channel, not complementary instrument
+branches — “instrument completeness” does not apply.
+-/
+
+/-- Effect of a canonical bang split equals the effect of the shared
+homogeneous coefficient (unitary postprocessing). -/
+theorem bangSplitComponent_effect (A p q n : ℕ)
+    (x : ((bang A).obj n).Carrier) :
+    ((bangSplitComponent A p q).app n x).cp.effect =
+      (x (p + q)).val.cp.effect := by
+  change
+      (Superoperator.comp
+          (Superoperator.ofEquivalence (tensorSplitEquiv A p q))
+          (x (p + q)).val).cp.effect =
+        (x (p + q)).val.cp.effect
+  exact Superoperator.effect_comp_ofEquivalence_left
+    (tensorSplitEquiv A p q) (x (p + q)).val
+
+/-- Finite family of split effects on the degree-`k` diagonal. -/
+noncomputable def bangSplitFamilyEffect (A k n : ℕ)
+    (x : ((bang A).obj n).Carrier) :
+    Matrix (Fin n) (Fin n) ℂ :=
+  ∑ p : DegreePartition k,
+    ((bangSplitComponent A
+        (degreePartitionToPair k p).1
+        (degreePartitionToPair k p).2).app n x).cp.effect
+
+/-- Proposed Route A joint TNI bound: the Loewner sum of canonical split
+effects over `p+q=k` lies below the unsplit coefficient effect. -/
+def BangSplitFamilyEffectLe (A k n : ℕ)
+    (x : ((bang A).obj n).Carrier) : Prop :=
+  bangSplitFamilyEffect A k n x ≤ (x k).val.cp.effect
+
+/-- Proposed Route A bound against the identity effect. -/
+def BangSplitFamilyEffectLeOne (A k n : ℕ)
+    (x : ((bang A).obj n).Carrier) : Prop :=
+  bangSplitFamilyEffect A k n x ≤ (1 : Matrix (Fin n) (Fin n) ℂ)
+
+/-- Every diagonal split shares the degree-`k` coefficient's effect. -/
+theorem bangSplitFamilyEffect_eq (A k n : ℕ)
+    (x : ((bang A).obj n).Carrier) :
+    bangSplitFamilyEffect A k n x =
+      ∑ _p : DegreePartition k, (x k).val.cp.effect := by
+  unfold bangSplitFamilyEffect
+  congr 1
+  funext p
+  have hpq := degreePartitionToPair_snd_add k p
+  rw [bangSplitComponent_effect, hpq]
+
+/-- Cardinality form: the joint effect is `(k+1)` copies of the coefficient
+effect. -/
+theorem bangSplitFamilyEffect_nsmul (A k n : ℕ)
+    (x : ((bang A).obj n).Carrier) :
+    bangSplitFamilyEffect A k n x =
+      (k + 1) • (x k).val.cp.effect := by
+  rw [bangSplitFamilyEffect_eq, Finset.sum_const]
+  simp [Fintype.card_fin]
+
+/-- Degree-one identity coefficient (only the trivial factor permutation). -/
+noncomputable def bangIdentitySymmetricOne (A : ℕ) :
+    SymmetricElement A 1 (tensorPowerDimension A 1) where
+  val := Superoperator.identity (tensorPowerDimension A 1)
+  invariant := by
+    intro σ
+    have hσ : σ = Equiv.refl _ := Subsingleton.elim _ _
+    subst hσ
+    change
+        Superoperator.comp (factorPermutation A 1 (Equiv.refl _))
+          (Superoperator.identity _) =
+        Superoperator.identity _
+    have hperm :
+        factorPermutation A 1 (Equiv.refl _) =
+          Superoperator.identity (tensorPowerDimension A 1) := by
+      change Superoperator.ofEquivalence (factorPermutationEquiv A 1 (Equiv.refl _)) =
+        Superoperator.identity _
+      have he :
+          factorPermutationEquiv A 1 (Equiv.refl _) = Equiv.refl _ := by
+        unfold factorPermutationEquiv
+        simp only [Equiv.arrowCongr_refl, Equiv.refl_trans,
+          Equiv.symm_trans_self]
+      rw [he, Superoperator.ofEquivalence_refl]
+    rw [hperm, Superoperator.identity_comp]
+
+/-- Series supported only at degree one, with the identity coefficient. -/
+noncomputable def bangIdentityDegreeOne (A : ℕ) :
+    ((bang A).obj (tensorPowerDimension A 1)).Carrier
+  | 1 => bangIdentitySymmetricOne A
+  | _ => 0
+
+theorem bangIdentityDegreeOne_coeff (A : ℕ) :
+    (bangIdentityDegreeOne A 1).val =
+      Superoperator.identity (tensorPowerDimension A 1) :=
+  rfl
+
+/-- Loewner obstruction: `2 • I ≰ I` on any nonempty system. -/
+theorem two_nsmul_one_not_le_one {n : ℕ} (hn : 0 < n) :
+    ¬ ((2 : ℕ) • (1 : Matrix (Fin n) (Fin n) ℂ) ≤
+        (1 : Matrix (Fin n) (Fin n) ℂ)) := by
+  intro hle
+  have hpsd : (1 - (2 : ℕ) • (1 : Matrix (Fin n) (Fin n) ℂ)).PosSemidef :=
+    Matrix.le_iff.mp hle
+  have hdiag := SigmaMon.ChoiSum.diag_re_nonneg hpsd ⟨0, hn⟩
+  have heq :
+      ((1 : Matrix (Fin n) (Fin n) ℂ) -
+          (2 : ℕ) • (1 : Matrix (Fin n) (Fin n) ℂ)) ⟨0, hn⟩ ⟨0, hn⟩ =
+        (-1 : ℂ) := by
+    simp only [two_nsmul, Matrix.sub_apply, Matrix.add_apply, Matrix.one_apply,
+      ↓reduceIte]
+    norm_num
+  rw [heq] at hdiag
+  norm_num at hdiag
+
+/-- Route A fails already for `A = 2`, degree `1`: two splits of `id₂` have
+joint effect `2 I ≰ I`. -/
+theorem not_bangSplitFamilyEffectLe_two_one :
+    ¬ BangSplitFamilyEffectLe 2 1 (tensorPowerDimension 2 1)
+        (bangIdentityDegreeOne 2) := by
+  intro hle
+  have hdim : tensorPowerDimension 2 1 = 2 := by
+    simp [tensorPowerDimension_eq_pow]
+  have hid_eff :
+      (Superoperator.identity (tensorPowerDimension 2 1)).cp.effect =
+        (1 : Matrix (Fin (tensorPowerDimension 2 1))
+          (Fin (tensorPowerDimension 2 1)) ℂ) := by
+    change (CPMap.identity (tensorPowerDimension 2 1)).effect = 1
+    exact CPMap.effect_identity _
+  have hsum :
+      bangSplitFamilyEffect 2 1 (tensorPowerDimension 2 1)
+          (bangIdentityDegreeOne 2) =
+        (2 : ℕ) • (1 : Matrix (Fin (tensorPowerDimension 2 1))
+          (Fin (tensorPowerDimension 2 1)) ℂ) := by
+    rw [bangSplitFamilyEffect_nsmul, bangIdentityDegreeOne_coeff, hid_eff]
+  have hcoeff :
+      ((bangIdentityDegreeOne 2) 1).val.cp.effect =
+        (1 : Matrix (Fin (tensorPowerDimension 2 1))
+          (Fin (tensorPowerDimension 2 1)) ℂ) := by
+    rw [bangIdentityDegreeOne_coeff, hid_eff]
+  change
+      bangSplitFamilyEffect 2 1 (tensorPowerDimension 2 1)
+          (bangIdentityDegreeOne 2) ≤
+        ((bangIdentityDegreeOne 2) 1).val.cp.effect at hle
+  rw [hsum, hcoeff] at hle
+  exact two_nsmul_one_not_le_one (Nat.pos_of_ne_zero (by
+    rw [hdim]; decide)) hle
+
+/-- Same witness against the `≤ I` packaging of the Route A bound. -/
+theorem not_bangSplitFamilyEffectLeOne_two_one :
+    ¬ BangSplitFamilyEffectLeOne 2 1 (tensorPowerDimension 2 1)
+        (bangIdentityDegreeOne 2) := by
+  intro hle
+  have hdim : tensorPowerDimension 2 1 = 2 := by
+    simp [tensorPowerDimension_eq_pow]
+  have hid_eff :
+      (Superoperator.identity (tensorPowerDimension 2 1)).cp.effect =
+        (1 : Matrix (Fin (tensorPowerDimension 2 1))
+          (Fin (tensorPowerDimension 2 1)) ℂ) := by
+    change (CPMap.identity (tensorPowerDimension 2 1)).effect = 1
+    exact CPMap.effect_identity _
+  have hsum :
+      bangSplitFamilyEffect 2 1 (tensorPowerDimension 2 1)
+          (bangIdentityDegreeOne 2) =
+        (2 : ℕ) • (1 : Matrix (Fin (tensorPowerDimension 2 1))
+          (Fin (tensorPowerDimension 2 1)) ℂ) := by
+    rw [bangSplitFamilyEffect_nsmul, bangIdentityDegreeOne_coeff, hid_eff]
+  change
+      bangSplitFamilyEffect 2 1 (tensorPowerDimension 2 1)
+          (bangIdentityDegreeOne 2) ≤ 1 at hle
+  rw [hsum] at hle
+  exact two_nsmul_one_not_le_one (Nat.pos_of_ne_zero (by
+    rw [hdim]; decide)) hle
+
+/-- Named theorem form requested by the Route A gate: the structured joint
+bound does **not** hold for the canonical bang-split family. -/
+theorem bangSplitFamily_effect_le :
+    ¬ (∀ (A k n : ℕ) (x : ((bang A).obj n).Carrier),
+        BangSplitFamilyEffectLe A k n x) := by
+  intro h
+  exact not_bangSplitFamilyEffectLe_two_one
+    (h 2 1 (tensorPowerDimension 2 1) (bangIdentityDegreeOne 2))
 
 /-- Yoneda unit at homogeneous degree `k`, injected into the series. -/
 noncomputable def bangDegreeUnit (A k : ℕ) :
