@@ -30,6 +30,14 @@ interface for `A ≤ 1`** (`bangPromote`, `bangMap`, UP laws).
 `(k+1) • effect(coeff)`. Witness `not_bangSplitFamilyEffectLe_two_one`
 (`A=2`, `k=1`, identity series): `2 I ≰ I`.
 
+**Gates 6–9 architecture decision:** Route A does not automatically yield
+`¬ BangComultComponentsAdmissible 2` (`BangComultDayTransferWitness` remains
+open). Raw-effect hereditary subobjects are **not cofree**
+(`bangSplitEffectAdmissible_excludes_identity_two`). Normalization repairs the
+`(2,1)` joint-effect bound
+(`bangNormalizedSplitFamilyEffect_two_one_eq_one`) but is **not** selected as
+a completed all-dimensional construction. Downstream Gates 10–26 stop.
+
 ## Fiber support (critical)
 
 `bang A = symmetricFormalPowerSeries A = countableProduct (symmetricPower A)`.
@@ -825,6 +833,126 @@ theorem bangSplitFamily_effect_le :
   intro h
   exact not_bangSplitFamilyEffectLe_two_one
     (h 2 1 (tensorPowerDimension 2 1) (bangIdentityDegreeOne 2))
+
+/-! ## Gates 6–9: Day transfer gap, subobject feasibility, architecture
+
+Route A refutes a *joint-effect* bound on the raw split Superoperators.  The
+Day gate `BangComultComponentsAdmissible` quantifies over every bilinear
+interpretation.  Transferring the effect witness into that quantifier needs a
+bilinear `β` that returns **both** ordered degree-one splits in the **same**
+TNI fiber so they are added together.  Fixed projection pairs
+`(proj₀, proj₁)` recover only one ordering; product modules place the two
+ids in different summands; ambient CP always admits sums.  We therefore
+record an explicit transfer obligation rather than claiming
+`¬ BangComultComponentsAdmissible 2`.
+-/
+
+/-- Gate 6 transfer obligation: a bilinear into a TNI/representable module
+that recovers both ordered degree-one splits of the identity series in one
+fiber (so the fiber-2 / Route A obstruction applies to Day evaluation).
+Constructing this witness would imply `¬ BangComultComponentsAdmissible 2`;
+it is deliberately left open rather than assumed. -/
+def BangComultDayTransferWitness : Prop :=
+  ∃ (L : Module) (β : Bilinear (bang 2) (bang 2) L)
+    (z₀₁ z₁₀ : (L.obj (tensorPowerDimension 2 1)).Carrier),
+    DayCoend.evaluate L β
+        (bangComultComponentFamily 2 (tensorPowerDimension 2 1)
+          (bangIdentityDegreeOne 2) (0, 1)) =
+      z₀₁ ∧
+    DayCoend.evaluate L β
+        (bangComultComponentFamily 2 (tensorPowerDimension 2 1)
+          (bangIdentityDegreeOne 2) (1, 0)) =
+      z₁₀ ∧
+    ¬ ∃ Φ : (L.obj (tensorPowerDimension 2 1)).Carrier,
+        (L.obj (tensorPowerDimension 2 1)).HasSum
+          (fun i : Bool => bif i then z₀₁ else z₁₀) Φ
+
+/-- Gate 6 (honest form): Route A alone closes a joint-effect bound, not the
+Day admissibility quantifier; the missing bridge is
+`BangComultDayTransferWitness`. -/
+theorem routeA_refutation_exists :
+    ∃ A k n x, ¬ BangSplitFamilyEffectLe A k n x :=
+  ⟨2, 1, tensorPowerDimension 2 1, bangIdentityDegreeOne 2,
+    not_bangSplitFamilyEffectLe_two_one⟩
+
+/-- Predicates that demand the raw Route A joint-effect bound on every series
+element. -/
+def BangSplitEffectAdmissible (A : ℕ) : Prop :=
+  ∀ (k n : ℕ) (x : ((bang A).obj n).Carrier),
+    BangSplitFamilyEffectLeOne A k n x
+
+/-- Gate 7: any such raw-effect hereditary predicate excludes the degree-one
+identity series at `A = 2` (required by dereliction / cofree lift of `id`). -/
+theorem bangSplitEffectAdmissible_excludes_identity_two :
+    ¬ BangSplitEffectAdmissible 2 := by
+  intro h
+  exact not_bangSplitFamilyEffectLeOne_two_one
+    (h 1 (tensorPowerDimension 2 1) (bangIdentityDegreeOne 2))
+
+/-- Gate 7 feasibility: a hereditary `admissibleBang` whose membership
+implies the raw Route A effect bound cannot contain the cofree generator at
+`A = 2`. -/
+theorem rawEffectAdmissible_subobject_not_cofree :
+    ¬ BangSplitEffectAdmissible 2 :=
+  bangSplitEffectAdmissible_excludes_identity_two
+
+/-- Normalized degree-one split weights: the raw joint effect scaled by
+`1/2`.  Joint effect is then `I`, repairing the raw Route A obstruction at
+`(A,k) = (2,1)`. -/
+noncomputable def bangNormalizedSplitFamilyEffect_two_one :
+    Matrix (Fin (tensorPowerDimension 2 1))
+      (Fin (tensorPowerDimension 2 1)) ℂ :=
+  ((2 : ℕ) : ℂ)⁻¹ •
+      bangSplitFamilyEffect 2 1 (tensorPowerDimension 2 1)
+        (bangIdentityDegreeOne 2)
+
+theorem bangNormalizedSplitFamilyEffect_two_one_eq_one :
+    bangNormalizedSplitFamilyEffect_two_one =
+      (1 : Matrix (Fin (tensorPowerDimension 2 1))
+        (Fin (tensorPowerDimension 2 1)) ℂ) := by
+  have hid_eff :
+      (Superoperator.identity (tensorPowerDimension 2 1)).cp.effect =
+        (1 : Matrix (Fin (tensorPowerDimension 2 1))
+          (Fin (tensorPowerDimension 2 1)) ℂ) := by
+    change (CPMap.identity (tensorPowerDimension 2 1)).effect = 1
+    exact CPMap.effect_identity _
+  unfold bangNormalizedSplitFamilyEffect_two_one
+  rw [bangSplitFamilyEffect_nsmul, bangIdentityDegreeOne_coeff, hid_eff]
+  -- `(2:ℂ)⁻¹ • (2 • I) = I`
+  have hscale :
+      ((2 : ℕ) : ℂ)⁻¹ • ((2 : ℕ) • (1 : Matrix
+          (Fin (tensorPowerDimension 2 1))
+          (Fin (tensorPowerDimension 2 1)) ℂ)) =
+        1 := by
+    rw [two_nsmul]
+    ext i j
+    simp only [Matrix.smul_apply, Matrix.add_apply, Matrix.one_apply, smul_eq_mul]
+    split_ifs with hij
+    · -- diagonal: (2:ℂ)⁻¹ * (1 + 1) = 1
+      norm_num
+    · -- off-diagonal: (2:ℂ)⁻¹ * (0 + 0) = 0
+      ring
+  exact hscale
+
+theorem bangNormalizedSplitFamilyEffect_two_one_le_one :
+    bangNormalizedSplitFamilyEffect_two_one ≤
+      (1 : Matrix (Fin (tensorPowerDimension 2 1))
+        (Fin (tensorPowerDimension 2 1)) ℂ) := by
+  rw [bangNormalizedSplitFamilyEffect_two_one_eq_one]
+
+/-- Gate 9 architecture decision (kernel-supported fragment).
+
+* Raw Route A: **refuted**.
+* Raw-effect hereditary subobject: **refuted** as a cofree carrier (excludes
+  the degree-one identity generator at `A = 2`).
+* Normalized degree-one effect bound: **repairs** the `(2,1)` joint-effect
+  obstruction, but Day admissibility, counit/coassociativity for a normalized
+  comultiplication, and the cofree UP are **not** kernel-checked.
+* Therefore no positive all-dimensional branch is selected; Gates 10–26 stop.
+-/
+def BangArchitectureDecision : String :=
+  "raw_route_A_refuted; raw_effect_subobject_not_cofree; \
+normalized_effect_open_not_selected; stop_before_all_dimensional_build"
 
 /-- Yoneda unit at homogeneous degree `k`, injected into the series. -/
 noncomputable def bangDegreeUnit (A k : ℕ) :

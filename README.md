@@ -69,15 +69,17 @@ The semantic objective is a typed submodel of the CP-enriched
 superoperator-module presheaf semantics.  For `A ≤ 1` the exponential now
 satisfies `ComonoidHom(C, !A) ≃ Hom(C, y(A))` with Day comultiplication and
 co-Kleisli promotion.  At the same time, generic joint TNI precomposition at
-fiber dimension `d ≥ 2` is false, and the raw canonical bang-split
-joint-effect bound (Route A) is refuted at `A = 2`.  An all-dimensional
-cofree bang, general Day closure on based modules, a premise-free
-`presheafQuantumLNL`, source-type interpretation, a concrete structural
-denotation, first-order-observable adequacy, and a source-level staging
-theorem remain objectives.  This release does not claim those results, full
-abstraction, or unrestricted higher-order adequacy.
-`docs/NOVELTY_AUDIT.md` records the distinction between published mathematics
-and new Lean proofs.
+fiber dimension `d ≥ 2` is false, the raw canonical bang-split joint-effect
+bound (Route A) is refuted at `A = 2`, and raw-effect hereditary subobjects
+exclude the degree-one identity generator required for cofreeness.
+Normalization repairs the `(2,1)` effect bound but is not selected without
+Day+cofree proofs.  An all-dimensional cofree bang, general Day closure on
+based modules, a premise-free `presheafQuantumLNL`, source-type
+interpretation, a concrete structural denotation, first-order-observable
+adequacy, and a source-level staging theorem remain objectives.  This release
+does not claim those results, full abstraction, or unrestricted higher-order
+adequacy.  `docs/NOVELTY_AUDIT.md` records the distinction between published
+mathematics and new Lean proofs.
 
 ## Circuit and OpenQASM boundary
 

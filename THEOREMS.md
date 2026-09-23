@@ -142,15 +142,23 @@ induced co-Kleisli promotion. They are not an all-dimensional exponential.
 - `QLambda.Domain.Presheaf.SigmaMon.ChoiSum.not_exists_hasSum_gate3Composed`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.not_bangSplitFamilyEffectLe_two_one`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.bangSplitFamily_effect_le`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.routeA_refutation_exists`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.bangSplitEffectAdmissible_excludes_identity_two`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.rawEffectAdmissible_subobject_not_cofree`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.bangNormalizedSplitFamilyEffect_two_one_eq_one`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.bangNormalizedSplitFamilyEffect_two_one_le_one`
 
 Generic joint TNI precomposition at fiber dimension `d ≥ 2`
 (`act_sum_from_dim` / `ChoiSum.comp_from_dim`) is false for representable
 modules. Separately, the canonical raw bang-split family has joint effect
 `(k+1) • effect(coeff)`, so the proposed Route A joint-effect bound fails
-already at `A = 2`, degree `1`. Ambient CP still admits
-`CPMapSum.comp_from_dim`. These refutations do not by themselves prove
-`¬ BangComultComponentsAdmissible 2`, nor nonexistence of every alternative
-all-dimensional bang.
+already at `A = 2`, degree `1`. Raw-effect hereditary predicates that impose
+this bound on every series element exclude the degree-one identity generator
+needed for cofreeness. Normalization by `1/2` repairs the `(2,1)` joint
+effect to `I`, but Day admissibility transfer
+(`BangComultDayTransferWitness`) and a normalized comonoid/cofreeness proof
+are not claimed. Ambient CP still admits `CPMapSum.comp_from_dim`. These
+results do not by themselves prove `¬ BangComultComponentsAdmissible 2`.
 
 - `QLambda.Linear.Prim.superoperator_completedCP`
 - `QLambda.Linear.qubitInstrument_zero`
@@ -246,9 +254,10 @@ structure is also witnessed by a one-object model with singleton homs.
 The following are goals, not existing declarations:
 
 - all-dimensional `BangComultComponentsAdmissible A` for `A ≥ 2`, and a
-  premise-free all-dimensional Day bang comonoid / cofree UP (Route A for
-  the raw canonical split family is refuted; hereditary-subobject and
-  normalized/graded alternatives remain open research);
+  premise-free all-dimensional Day bang comonoid / cofree UP (Route A and
+  raw-effect hereditary subobjects are refuted; normalized/graded
+  alternatives repair the `(2,1)` effect bound but are not selected without
+  Day+cofree proofs; `BangComultDayTransferWitness` remains open);
 - general Day tensor and internal hom for arbitrary based / biorthogonal
   modules beyond the representable fragment.  The coefficientwise
   `symmetricFormalTensorSquare` is not the Day tensor;

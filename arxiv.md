@@ -405,10 +405,17 @@ homogeneous bang split of total degree $k$ has the same effect as the unsplit
 coefficient, so the joint effect is $(k+1)$ copies of that effect: the
 proposed raw Route~A joint-effect bound already fails at $A=2$, degree $1$.
 These refutations do not by themselves prove failure of every Day-bilinear
-admissibility predicate, nor nonexistence of every alternative all-dimensional
-bang (hereditary subobjects or normalized graded splits remain open).  The
-coefficientwise tensor-square object is still not the genuine Day tensor of
-two series modules.  General Day closure for based modules, an
+admissibility predicate: transferring the effect witness into
+`BangComultComponentsAdmissible` requires an explicit bilinear that recovers
+both ordered degree-one splits in one TNI fiber
+(`BangComultDayTransferWitness`, still open).  Raw-effect hereditary
+subobjects that impose the Route~A bound on every series element are not
+cofree: they exclude the degree-one identity generator at $A=2$.
+Normalization by $\tfrac12$ repairs the $(A,k)=(2,1)$ joint-effect bound to
+$I$, but Day admissibility, coalgebra laws, and cofreeness for a normalized
+construction are not kernel checked, so no positive all-dimensional branch is
+selected.  The coefficientwise tensor-square object is still not the genuine
+Day tensor of two series modules.  General Day closure for based modules, an
 all-dimensional cofree exponential, the based double-dual classical
 subcategory, and the LNL package remain objectives.  Consequently unrestricted
 arrows are not yet interpreted for $A\ge 2$.  The intended adequacy boundary
@@ -620,23 +627,25 @@ as a theorem parameter.
 ### Semantic objectives
 
 Checked progress now includes the Day bang comonoid and cofree universal
-property for $A\le 1$, together with the fiber-$2$ TNI obstruction and the
-raw Route~A split-family refutation.  The remaining objective begins with a
-kernel-supported all-dimensional architecture decision: either a hereditary
-admissible subobject, a normalized/graded construction in the same category,
-a current-category no-go, or a separately approved category redesign.  Only
-after a positive all-dimensional bang come general Day tensor and internal
+property for $A\le 1$, the fiber-$2$ TNI obstruction, the raw Route~A
+split-family refutation, and the raw-effect subobject non-cofreeness
+theorem.  Normalization repairs the $(2,1)$ joint-effect bound but is not a
+completed all-dimensional construction; the Day-transfer witness remains
+open.  No positive all-dimensional architecture branch is selected in this
+release.  The remaining objective begins only after a kernel-supported
+positive branch (normalized/graded with Day+cofree proofs, or a separately
+approved category redesign).  Only then come general Day tensor and internal
 hom on based modules, double-dual classical closure, and the premise-free
 LNL package.  Only then can unrestricted arrows for every dimension, every
 admissible source type including strictly positive recursive types, and a
 structural source denotation be interpreted.  The finite CP maps, TNI
 superoperators, representable Yoneda/Day fragment, first-order type objects,
-$A\le 1$ bang/cofreeness, and primitive agreement are checked; they are not
-that all-dimensional LNL instance or denotation.  On that basis we aim to
-prove operational soundness, first-order-observable adequacy by finite
-approximants, and source-denotation preservation for successful staging.
-These remaining statements are goals and are not included in the checked
-theorem list.
+$A\le 1$ bang/cofreeness, Route~A/subobject refutations, and primitive
+agreement are checked; they are not that all-dimensional LNL instance or
+denotation.  On that basis we aim to prove operational soundness,
+first-order-observable adequacy by finite approximants, and source-denotation
+preservation for successful staging.  These remaining statements are goals
+and are not included in the checked theorem list.
 
 ---
 
