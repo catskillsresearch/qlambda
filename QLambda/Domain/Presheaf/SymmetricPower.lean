@@ -862,6 +862,83 @@ noncomputable def symmetricPower (A k : ℕ) : Module where
   act_sum_map := by
     intro ι _ m n x f s h
     exact SigmaMon.ChoiSum.comp_left x.val h
+  act_sum_from_one := by
+    intro ι _ m x s f h
+    obtain ⟨Χ, hΧ⟩ := SigmaMon.ChoiSum.comp_from_one f
+      (show SigmaMon.ChoiSum.HasSum (fun i => (x i).val) s.val from h)
+    refine ⟨⟨Χ, ?_⟩, hΧ⟩
+    intro σ
+    have hsymm (j : ι) :
+        Superoperator.comp (factorPermutation A k σ)
+            (Superoperator.comp (x j).val (f j)) =
+          Superoperator.comp (x j).val (f j) := by
+      let xj : SymmetricElement A k 1 := x j
+      have hinvariant :=
+        congrArg (fun Φ => Superoperator.comp Φ (f j))
+          (xj.invariant σ)
+      exact (Superoperator.comp_assoc _ _ _).trans hinvariant
+    have hL :=
+      SigmaMon.ChoiSum.comp_left (factorPermutation A k σ) hΧ
+    have hfam :
+        (fun j =>
+          Superoperator.comp (factorPermutation A k σ)
+            (Superoperator.comp (x j).val (f j))) =
+          fun j => Superoperator.comp (x j).val (f j) :=
+      funext hsymm
+    have hL' :
+        SigmaMon.ChoiSum.HasSum
+          (fun j => Superoperator.comp (x j).val (f j))
+          (Superoperator.comp (factorPermutation A k σ) Χ) := by
+      convert hL using 1
+      exact hfam.symm
+    exact SigmaMon.ChoiSum.unique hL' hΧ
+  act_sum_tensor_from_one := by
+    intro ι _ m B x s f h
+    obtain ⟨Χ, hΧ⟩ :=
+      (representable (tensorPowerDimension A k)).act_sum_tensor_from_one f
+        (show SigmaMon.ChoiSum.HasSum (fun i => (x i).val) s.val from h)
+    refine ⟨⟨Χ, ?_⟩, hΧ⟩
+    intro σ
+    have hsymm (j : ι) :
+        Superoperator.comp (factorPermutation A k σ)
+            (Superoperator.comp (x j).val
+              (Superoperator.tensor (f j)
+                (Superoperator.identity B))) =
+          Superoperator.comp (x j).val
+            (Superoperator.tensor (f j)
+              (Superoperator.identity B)) := by
+      let xj : SymmetricElement A k (1 * B) := x j
+      have hinvariant :=
+        congrArg
+          (fun Φ =>
+            Superoperator.comp Φ
+              (Superoperator.tensor (f j)
+                (Superoperator.identity B)))
+          (xj.invariant σ)
+      exact (Superoperator.comp_assoc _ _ _).trans hinvariant
+    have hL :=
+      SigmaMon.ChoiSum.comp_left (factorPermutation A k σ) hΧ
+    have hfam :
+        (fun j =>
+          Superoperator.comp (factorPermutation A k σ)
+            (Superoperator.comp (x j).val
+              (Superoperator.tensor (f j)
+                (Superoperator.identity B)))) =
+          fun j =>
+            Superoperator.comp (x j).val
+              (Superoperator.tensor (f j)
+                (Superoperator.identity B)) :=
+      funext hsymm
+    have hL' :
+        SigmaMon.ChoiSum.HasSum
+          (fun j =>
+            Superoperator.comp (x j).val
+              (Superoperator.tensor (f j)
+                (Superoperator.identity B)))
+          (Superoperator.comp (factorPermutation A k σ) Χ) := by
+      convert hL using 1
+      exact hfam.symm
+    exact SigmaMon.ChoiSum.unique hL' hΧ
 
 /-- The averaging projection from the full tensor power onto its symmetric
 fixed-point submodule. -/

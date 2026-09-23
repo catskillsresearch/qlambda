@@ -576,6 +576,12 @@ noncomputable def zeroModule : Module where
   act_sum_map := by
     intros
     trivial
+  act_sum_from_one := by
+    intros
+    exact ⟨0, trivial⟩
+  act_sum_tensor_from_one := by
+    intros
+    exact ⟨0, trivial⟩
 
 /-- Negation of a fiberwise subsingleton module is fiberwise subsingleton. -/
 theorem neg_subsingleton (M : Module)
@@ -778,6 +784,16 @@ noncomputable def additiveProduct (M N : Module.{u}) : Module.{u} where
   act_sum_map := by
     intro ι _ m n x f s h
     exact ⟨M.act_sum_map x.1 h, N.act_sum_map x.2 h⟩
+  act_sum_from_one := by
+    intro ι _ m x s f h
+    obtain ⟨zM, hzM⟩ := M.act_sum_from_one f h.1
+    obtain ⟨zN, hzN⟩ := N.act_sum_from_one f h.2
+    exact ⟨(zM, zN), ⟨hzM, hzN⟩⟩
+  act_sum_tensor_from_one := by
+    intro ι _ m B x s f h
+    obtain ⟨zM, hzM⟩ := M.act_sum_tensor_from_one f h.1
+    obtain ⟨zN, hzN⟩ := N.act_sum_tensor_from_one f h.2
+    exact ⟨(zM, zN), ⟨hzM, hzN⟩⟩
 
 /-- First additive projection. -/
 noncomputable def additiveFst (M N : Module.{u}) :

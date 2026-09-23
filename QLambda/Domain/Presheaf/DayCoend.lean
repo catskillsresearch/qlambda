@@ -578,6 +578,51 @@ noncomputable def module (M N : Module) : Module where
     intro L β
     simp only [evaluate_action]
     exact L.act_sum_map (evaluate L β x) h
+  act_sum_from_one := by
+    intro ι _ m x s f hs
+    have hadm :
+        ∀ (L : Module) (β : Bilinear M N L),
+          ∃ z, (L.obj m).HasSum
+            (fun i => evaluate L β (action (x i) (f i))) z := by
+      intro L β
+      obtain ⟨z, hz⟩ := L.act_sum_from_one f (hs L β)
+      exact ⟨z, by simpa [evaluate_action] using hz⟩
+    refine ⟨sumOfAdmissible (fun i => action (x i) (f i)) hadm, ?_⟩
+    intro L β
+    obtain ⟨z, hz⟩ := hadm L β
+    have he := evaluate_sumOfAdmissible
+      (fun i => action (x i) (f i)) hadm L β z hz
+    simpa [he] using hz
+  act_sum_tensor_from_one := by
+    intro ι _ m B x s f hs
+    have hadm :
+        ∀ (L : Module) (β : Bilinear M N L),
+          ∃ z, (L.obj (m * B)).HasSum
+            (fun i =>
+              evaluate L β
+                (action (x i)
+                  (Superoperator.tensor (f i)
+                    (Superoperator.identity B)))) z := by
+      intro L β
+      obtain ⟨z, hz⟩ :=
+        L.act_sum_tensor_from_one f (hs L β)
+      exact ⟨z, by simpa [evaluate_action] using hz⟩
+    refine
+      ⟨sumOfAdmissible
+          (fun i =>
+            action (x i)
+              (Superoperator.tensor (f i) (Superoperator.identity B)))
+          hadm,
+        ?_⟩
+    intro L β
+    obtain ⟨z, hz⟩ := hadm L β
+    have he :=
+      evaluate_sumOfAdmissible
+        (fun i =>
+          action (x i)
+            (Superoperator.tensor (f i) (Superoperator.identity B)))
+        hadm L β z hz
+    simpa [he] using hz
 
 /-- A coend generator. -/
 noncomputable def generator {M N : Module} {n a b : ℕ}
@@ -1460,8 +1505,200 @@ noncomputable def module (A N : Module) : Module where
     intro ι _ m n b f s h
     intro p q x y
     exact b.map_sum_left y (SigmaMon.ChoiSum.comp_right x h)
+  act_sum_from_one := by
+    intro ι _ m bx bs f hs
+    have hadm :
+        ∀ p q (r : Superoperator p m) (y : (A.obj q).Carrier),
+          ∃ z, (N.obj (p * q)).HasSum
+            (fun i =>
+              (precompose (f i) (bx i)).app r y) z := by
+      intro p q r y
+      have h1 :
+          (N.obj (1 * q)).HasSum
+            (fun i =>
+              (bx i).app (Superoperator.identity 1) y)
+            (bs.app (Superoperator.identity 1) y) :=
+        hs 1 q (Superoperator.identity 1) y
+      obtain ⟨z0, hz0⟩ := N.act_sum_tensor_from_one (A := q) f h1
+      have hnat (i : ι) :
+          (bx i).app (Superoperator.comp (f i) r) y =
+            N.act
+              (N.act ((bx i).app (Superoperator.identity 1) y)
+                (Superoperator.tensor (f i)
+                  (Superoperator.identity q)))
+              (Superoperator.tensor r (Superoperator.identity q)) := by
+        have hf :
+            (bx i).app (f i) y =
+              N.act ((bx i).app (Superoperator.identity 1) y)
+                (Superoperator.tensor (f i)
+                  (Superoperator.identity q)) := by
+          simpa [Superoperator.identity_comp, A.act_id] using
+            (bx i).naturality (Superoperator.identity 1) y (f i)
+              (Superoperator.identity q)
+        have hfr :
+            (bx i).app (Superoperator.comp (f i) r) y =
+              N.act ((bx i).app (f i) y)
+                (Superoperator.tensor r
+                  (Superoperator.identity q)) := by
+          simpa [A.act_id] using
+            (bx i).naturality (f i) y r (Superoperator.identity q)
+        rw [hfr, hf, N.act_comp]
+      refine
+        ⟨N.act z0 (Superoperator.tensor r (Superoperator.identity q)),
+          ?_⟩
+      have hz :=
+        N.act_sum_element
+          (Superoperator.tensor r (Superoperator.identity q)) hz0
+      have hfam :
+          (fun i => (precompose (f i) (bx i)).app r y) =
+            fun i =>
+              N.act
+                (N.act ((bx i).app (Superoperator.identity 1) y)
+                  (Superoperator.tensor (f i)
+                    (Superoperator.identity q)))
+                (Superoperator.tensor r (Superoperator.identity q)) := by
+        funext i
+        simpa [precompose] using hnat i
+      rwa [hfam]
+    exact
+      ⟨Bilinear.sumOf (fun i => precompose (f i) (bx i)) hadm,
+        Bilinear.sumOf_hasSum _ hadm⟩
+  act_sum_tensor_from_one := by
+    intro ι _ m B bx bs f hs
+    have hadm :
+        ∀ p q (r : Superoperator p (m * B)) (y : (A.obj q).Carrier),
+          ∃ z, (N.obj (p * q)).HasSum
+            (fun i =>
+              (precompose
+                  (Superoperator.tensor (f i)
+                    (Superoperator.identity B))
+                  (bx i)).app
+                r y) z := by
+      intro p q r y
+      have h1 :
+          (N.obj ((1 * B) * q)).HasSum
+            (fun i =>
+              (bx i).app (Superoperator.identity (1 * B)) y)
+            (bs.app (Superoperator.identity (1 * B)) y) :=
+        hs (1 * B) q (Superoperator.identity (1 * B)) y
+      let α₁ : Superoperator (1 * (B * q)) ((1 * B) * q) :=
+        Superoperator.tensorAssociatorInv 1 B q
+      let α₂ : Superoperator ((m * B) * q) (m * (B * q)) :=
+        Superoperator.tensorAssociator m B q
+      let x' : ι → (N.obj (1 * (B * q))).Carrier :=
+        fun i =>
+          N.act ((bx i).app (Superoperator.identity (1 * B)) y) α₁
+      let s' : (N.obj (1 * (B * q))).Carrier :=
+        N.act (bs.app (Superoperator.identity (1 * B)) y) α₁
+      have hs' : (N.obj (1 * (B * q))).HasSum x' s' :=
+        N.act_sum_element α₁ h1
+      obtain ⟨z0, hz0⟩ :=
+        N.act_sum_tensor_from_one (A := B * q) f hs'
+      have hten (g : Superoperator m 1) :
+          Superoperator.tensor
+              (Superoperator.tensor g (Superoperator.identity B))
+              (Superoperator.identity q) =
+            Superoperator.comp α₁
+              (Superoperator.comp
+                (Superoperator.tensor g
+                  (Superoperator.identity (B * q)))
+                α₂) := by
+        have hnat :=
+          Superoperator.tensorAssociator_naturality g
+            (Superoperator.identity B) (Superoperator.identity q)
+        have h :=
+          congrArg (Superoperator.comp
+            (Superoperator.tensorAssociatorInv 1 B q)) hnat
+        simpa [Superoperator.comp_assoc,
+          Superoperator.tensorAssociator_inv_hom,
+          Superoperator.identity_comp, Superoperator.tensor_identity,
+          α₁, α₂] using h
+      have hnat (i : ι) :
+          (bx i).app
+              (Superoperator.comp
+                (Superoperator.tensor (f i)
+                  (Superoperator.identity B))
+                r)
+              y =
+            N.act
+              (N.act (x' i)
+                (Superoperator.tensor (f i)
+                  (Superoperator.identity (B * q))))
+              (Superoperator.comp α₂
+                (Superoperator.tensor r
+                  (Superoperator.identity q))) := by
+        have hf :
+            (bx i).app
+                (Superoperator.tensor (f i)
+                  (Superoperator.identity B))
+                y =
+              N.act
+                ((bx i).app (Superoperator.identity (1 * B)) y)
+                (Superoperator.tensor
+                  (Superoperator.tensor (f i)
+                    (Superoperator.identity B))
+                  (Superoperator.identity q)) := by
+          simpa [Superoperator.identity_comp, A.act_id] using
+            (bx i).naturality (Superoperator.identity (1 * B)) y
+              (Superoperator.tensor (f i) (Superoperator.identity B))
+              (Superoperator.identity q)
+        have hfr :
+            (bx i).app
+                (Superoperator.comp
+                  (Superoperator.tensor (f i)
+                    (Superoperator.identity B))
+                  r)
+                y =
+              N.act
+                ((bx i).app
+                  (Superoperator.tensor (f i)
+                    (Superoperator.identity B))
+                  y)
+                (Superoperator.tensor r
+                  (Superoperator.identity q)) := by
+          simpa [A.act_id] using
+            (bx i).naturality
+              (Superoperator.tensor (f i) (Superoperator.identity B))
+              y r (Superoperator.identity q)
+        rw [hfr, hf, hten, ← N.act_comp, ← N.act_comp, ← N.act_comp]
+      refine
+        ⟨N.act z0
+            (Superoperator.comp α₂
+              (Superoperator.tensor r (Superoperator.identity q))),
+          ?_⟩
+      have hz :=
+        N.act_sum_element
+          (Superoperator.comp α₂
+            (Superoperator.tensor r (Superoperator.identity q)))
+          hz0
+      have hfam :
+          (fun i =>
+            (precompose
+                (Superoperator.tensor (f i)
+                  (Superoperator.identity B))
+                (bx i)).app
+              r y) =
+            fun i =>
+              N.act
+                (N.act (x' i)
+                  (Superoperator.tensor (f i)
+                    (Superoperator.identity (B * q))))
+                (Superoperator.comp α₂
+                  (Superoperator.tensor r
+                    (Superoperator.identity q))) := by
+        funext i
+        simpa [precompose] using hnat i
+      rwa [hfam]
+    exact
+      ⟨Bilinear.sumOf
+          (fun i =>
+            precompose
+              (Superoperator.tensor (f i) (Superoperator.identity B))
+              (bx i))
+          hadm,
+        Bilinear.sumOf_hasSum _ hadm⟩
 
-/-- Curry a bilinear map into the pointwise internal hom. -/
+
 noncomputable def curry {X A N : Module} (b : Bilinear X A N) :
     Hom X (module A N) where
   app := fun n x =>

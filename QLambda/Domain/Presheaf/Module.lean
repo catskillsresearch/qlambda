@@ -15,6 +15,9 @@ Day closure or a cofree exponential; those require additional constructions.
 
 namespace QLambda.Domain.Presheaf
 
+open Matrix
+open scoped BigOperators ComplexOrder MatrixOrder
+
 namespace SigmaMon.ChoiSum
 
 variable {n m ℓ : ℕ}
@@ -72,13 +75,12 @@ theorem effect_comp_from_one (f : CPMap 1 ℓ) (g : CPMap m 1) :
   change
       (∑ a : Fin ℓ, (CPMap.comp f g).choi (a, j) (a, i)) =
         (f.effect 0 0) * g.effect i j
-  simp only [CPMap.choi_comp_apply, Fintype.sum_unique, Fin.default_eq_zero,
-    CPMap.effect]
+  simp only [CPMap.choi_comp_apply, Fin.default_eq_zero, CPMap.effect]
   have hfactor :
       (∑ a : Fin ℓ, f.choi (a, 0) (a, 0) * g.choi (0, j) (0, i)) =
         (∑ a : Fin ℓ, f.choi (a, 0) (a, 0)) * g.choi (0, j) (0, i) := by
     rw [← Finset.sum_mul]
-  rw [hfactor]
+  simpa [Fintype.sum_unique] using hfactor
 
 /-- Trace bound: `Trace(choi).re ≤ input dimension` for TNI maps. -/
 theorem trace_choi_re_le_input_dim {n m : ℕ} (Φ : Superoperator n m) :
@@ -97,10 +99,10 @@ theorem trace_choi_re_le_input_dim {n m : ℕ} (Φ : Superoperator n m) :
   rw [hte]
   simpa using htre
 
-private noncomputable def effectCLM (n m : ℕ) :
-    ContinuousLinearMap ℂ
-      (Matrix (Fin m × Fin n) (Fin m × Fin n) ℂ)
-      (Matrix (Fin n) (Fin n) ℂ) :=
+/-- Choi → effect as a continuous linear map. -/
+noncomputable def effectCLM (n m : ℕ) :
+    Matrix (Fin m × Fin n) (Fin m × Fin n) ℂ →L[ℂ]
+      Matrix (Fin n) (Fin n) ℂ :=
   LinearMap.toContinuousLinearMap
     { toFun := fun A i j => ∑ a : Fin m, A (a, j) (a, i)
       map_add' := by
@@ -108,8 +110,8 @@ private noncomputable def effectCLM (n m : ℕ) :
         exact Finset.sum_add_distrib
       map_smul' := by
         intro c A; ext i j
-        simp only [RingHom.id_apply, ← Finset.mul_sum]
-        rfl }
+        change (∑ a : Fin m, c * A (a, j) (a, i)) = c * ∑ a : Fin m, A (a, j) (a, i)
+        rw [← Finset.mul_sum] }
 
 /-- Joint precomposition against maps into the unit fiber. -/
 theorem comp_from_one {ι : Type} [Countable ι] {m ℓ : ℕ}
@@ -122,7 +124,7 @@ theorem comp_from_one {ι : Type} [Countable ι] {m ℓ : ℕ}
       (CPMap.comp (f k).cp (g k).cp).choi (a, i) (b, j) =
         (f k).cp.choi (a, 0) (b, 0) *
           (g k).cp.choi (0, i) (0, j) := by
-    simp [CPMap.choi_comp_apply, Fintype.sum_unique, Fin.default_eq_zero]
+    simp [CPMap.choi_comp_apply, Fin.default_eq_zero]
   have hentries (a b : Fin ℓ) (i j : Fin m) :
       Summable fun k : ι =>
         (CPMap.comp (f k).cp (g k).cp).choi (a, i) (b, j) := by
@@ -132,15 +134,17 @@ theorem comp_from_one {ι : Type} [Countable ι] {m ℓ : ℕ}
       (Pi.hasSum.mp
         (Pi.hasSum.mp hf (a, (0 : Fin 1)))
         (b, (0 : Fin 1))).summable
-    refine Summable.of_norm_bounded
-      (ha.norm.mul_const (m : ℝ)) fun k => ?_
+    have haN : Summable fun k : ι =>
+        ‖(f k).cp.choi (a, 0) (b, 0)‖ * (m : ℝ) :=
+      (ha.norm.mul_right (m : ℝ))
+    refine Summable.of_norm_bounded haN fun k => ?_
     rw [norm_mul]
     have hb :=
       entry_norm_le_trace_re (g k).cp.choi_pos (0, i) (0, j)
     have htr := trace_choi_re_le_input_dim (g k)
     exact
-      (mul_le_mul_of_nonneg_left (hb.trans htr) (norm_nonneg _)).trans
-        (by simp [mul_comm])
+      (mul_le_mul_of_nonneg_left (hb.trans htr) (norm_nonneg _)).trans_eq
+        (by ring)
   have hmat :
       Summable fun k : ι =>
         (CPMap.comp (f k).cp (g k).cp).choi := by
@@ -157,9 +161,8 @@ theorem comp_from_one {ι : Type} [Countable ι] {m ℓ : ℕ}
         (fun i => (CPMap.comp (f i).cp (g i).cp).choi) Ψcp.choi :=
     hmat.hasSum
   refine ⟨⟨Ψcp, ?_⟩, hcp⟩
-  intro ρ hρ
-  -- Reduce TNI to a comparison of real traces of effects.
-  rw [CPMap.trace_applyMat_eq_effect]
+  -- TNI via `effect ≤ 1`.
+  rw [traceNonincreasing_iff_effect_le_one]
   have heffect_term (k : ι) :
       (CPMap.comp (f k).cp (g k).cp).effect =
         ((f k).cp.effect 0 0) • (g k).cp.effect :=
@@ -167,86 +170,85 @@ theorem comp_from_one {ι : Type} [Countable ι] {m ℓ : ℕ}
   have heff_sum :
       _root_.HasSum
         (fun k => (CPMap.comp (f k).cp (g k).cp).effect) Ψcp.effect :=
-    hcp.map (effectCLM m ℓ) (effectCLM m ℓ).continuous
+    hcp.map (effectCLM m ℓ) (effectCLM m ℓ).cont
   have heff_sum' :
       _root_.HasSum
         (fun k => ((f k).cp.effect 0 0) • (g k).cp.effect) Ψcp.effect :=
     heff_sum.congr_fun fun k => (heffect_term k).symm
-  -- Pair with ρ.
-  have htrace_sum :
-      _root_.HasSum
-        (fun k =>
-          Matrix.trace
-            ((((f k).cp.effect 0 0) • (g k).cp.effect) * ρ))
-        (Matrix.trace (Ψcp.effect * ρ)) := by
-    have hmul :
-        ContinuousLinearMap ℂ
-          (Matrix (Fin m) (Fin m) ℂ) ℂ :=
-      LinearMap.toContinuousLinearMap (Matrix.traceLinearMap _ ℂ ℂ ∘ₗ
-        Matrix.mulRightLinearMap ρ)
-    exact heff_sum'.map hmul hmul.continuous
   have hα_re (k : ι) : 0 ≤ ((f k).cp.effect 0 0).re :=
     diag_re_nonneg (f k).cp.effect_posSemidef 0
   have hα_im (k : ι) : ((f k).cp.effect 0 0).im = 0 :=
     diag_im_eq_zero (f k).cp.effect_posSemidef 0
-  have hterm_re (k : ι) :
-      (Matrix.trace
-          ((((f k).cp.effect 0 0) • (g k).cp.effect) * ρ)).re =
-        ((f k).cp.effect 0 0).re *
-          (Matrix.trace ((g k).cp.effect * ρ)).re := by
-    have hα : ((f k).cp.effect 0 0).im = 0 := hα_im k
-    simp only [Matrix.smul_mul, Matrix.trace_smul, Complex.smul_re, hα,
-      Complex.mul_re, mul_zero, sub_zero]
-  have hterm_le (k : ι) :
-      (Matrix.trace
-          ((((f k).cp.effect 0 0) • (g k).cp.effect) * ρ)).re ≤
-        ((f k).cp.effect 0 0).re * (Matrix.trace ρ).re := by
-    rw [hterm_re]
-    have hg :=
-      (g k).trace_nonincreasing ρ hρ
-    rw [CPMap.trace_applyMat_eq_effect] at hg
-    exact mul_le_mul_of_nonneg_left hg (hα_re k)
-  -- Summable comparison family.
+  have hα_nn (k : ι) : 0 ≤ (f k).cp.effect 0 0 :=
+    RCLike.nonneg_iff.mpr ⟨hα_re k, hα_im k⟩
   have hα_sum :
       _root_.HasSum (fun k => (f k).cp.effect 0 0) (Ψ.cp.effect 0 0) := by
     have hE :
         _root_.HasSum (fun k => (f k).cp.effect) Ψ.cp.effect :=
-      hf.map (effectCLM 1 ℓ) (effectCLM 1 ℓ).continuous
+      hf.map (effectCLM 1 ℓ) (effectCLM 1 ℓ).cont
     exact Pi.hasSum.mp (Pi.hasSum.mp hE 0) 0
-  have hα_re_sum :
-      _root_.HasSum (fun k => ((f k).cp.effect 0 0).re)
-        (Ψ.cp.effect 0 0).re :=
-    hα_sum.map Complex.reCLM Complex.reCLM.continuous
   have hα_le : (Ψ.cp.effect 0 0).re ≤ 1 := by
     have hΨe :=
       CPMap.effect_le_one_of_trace_nonincreasing Ψ.cp
         Ψ.trace_nonincreasing
     have hpsd : (1 - Ψ.cp.effect).PosSemidef := Matrix.le_iff.mp hΨe
-    have := hpsd.diag_nonneg (0 : Fin 1)
-    have hre := (RCLike.nonneg_iff.mp this).1
-    simp only [Matrix.sub_apply, Matrix.one_apply, if_pos rfl] at hre
+    have hre := diag_re_nonneg hpsd (0 : Fin 1)
+    change 0 ≤ (1 - Ψ.cp.effect 0 0).re at hre
+    rw [Complex.sub_re, Complex.one_re] at hre
     linarith
-  have htrace_re :
+  -- Entrywise: `∑ α_k • I = (∑ α_k) • I`.
+  have hI_sum :
       _root_.HasSum
         (fun k =>
-          (Matrix.trace
-            ((((f k).cp.effect 0 0) • (g k).cp.effect) * ρ)).re)
-        (Matrix.trace (Ψcp.effect * ρ)).re :=
-    htrace_sum.map Complex.reCLM Complex.reCLM.continuous
-  have hbound_sum :
+          ((f k).cp.effect 0 0) • (1 : Matrix (Fin m) (Fin m) ℂ))
+        ((Ψ.cp.effect 0 0) • (1 : Matrix (Fin m) (Fin m) ℂ)) := by
+    apply Pi.hasSum.mpr
+    intro i
+    apply Pi.hasSum.mpr
+    intro j
+    simp only [Matrix.smul_apply, Matrix.one_apply]
+    by_cases hij : i = j
+    · subst hij
+      simpa using hα_sum
+    · simpa [hij] using hasSum_zero
+  -- Difference family `α_k • (I - E_k)` sums to `(∑ α)•I - Ψcp.effect`.
+  have hdiff :
       _root_.HasSum
-        (fun k => ((f k).cp.effect 0 0).re * (Matrix.trace ρ).re)
-        ((Ψ.cp.effect 0 0).re * (Matrix.trace ρ).re) :=
-    hα_re_sum.mul_right (Matrix.trace ρ).re
-  have hle :
-      (Matrix.trace (Ψcp.effect * ρ)).re ≤
-        (Ψ.cp.effect 0 0).re * (Matrix.trace ρ).re :=
-    hasSum_le hterm_le htrace_re hbound_sum
-  have htrρ : 0 ≤ (Matrix.trace ρ).re :=
-    (RCLike.nonneg_iff.mp hρ.trace_nonneg).1
-  exact
-    hle.trans
-      (mul_le_of_le_one_left htrρ hα_le)
+        (fun k =>
+          ((f k).cp.effect 0 0) •
+            ((1 : Matrix (Fin m) (Fin m) ℂ) - (g k).cp.effect))
+        ((Ψ.cp.effect 0 0) • (1 : Matrix (Fin m) (Fin m) ℂ) -
+          Ψcp.effect) := by
+    have hsub := hI_sum.sub heff_sum'
+    refine hsub.congr_fun fun k => ?_
+    simp [smul_sub]
+  have hpsd_term (k : ι) :
+      (((f k).cp.effect 0 0) •
+          ((1 : Matrix (Fin m) (Fin m) ℂ) -
+            (g k).cp.effect)).PosSemidef := by
+    have hg :=
+      CPMap.effect_le_one_of_trace_nonincreasing (g k).cp
+        (g k).trace_nonincreasing
+    exact (Matrix.le_iff.mp hg).smul (hα_nn k)
+  have hsum_le :
+      Ψcp.effect ≤
+        (Ψ.cp.effect 0 0) • (1 : Matrix (Fin m) (Fin m) ℂ) :=
+    Matrix.le_iff.mpr (hasSum_posSemidef hdiff hpsd_term)
+  have hscale :
+      (Ψ.cp.effect 0 0) • (1 : Matrix (Fin m) (Fin m) ℂ) ≤
+        (1 : Matrix (Fin m) (Fin m) ℂ) := by
+    have hα1 : Ψ.cp.effect 0 0 ≤ (1 : ℂ) := by
+      rw [← sub_nonneg]
+      refine RCLike.nonneg_iff.mpr ⟨?_, ?_⟩
+      · simpa [Complex.sub_re, Complex.one_re] using sub_nonneg.mpr hα_le
+      · simp [Complex.sub_im, diag_im_eq_zero Ψ.cp.effect_posSemidef 0]
+    have : (1 : Matrix (Fin m) (Fin m) ℂ) -
+        (Ψ.cp.effect 0 0) • 1 =
+          (1 - Ψ.cp.effect 0 0) • 1 := by
+      simp [sub_smul, one_smul]
+    rw [Matrix.le_iff, this]
+    exact (Matrix.PosSemidef.one (n := Fin m)).smul (sub_nonneg.mpr hα1)
+  exact hsum_le.trans hscale
 
 end SigmaMon.ChoiSum
 
@@ -294,6 +296,46 @@ theorem comp_right {ι : Type} [Countable ι]
     ((Pi.hasSum.mp (Pi.hasSum.mp h (a, x)) (b, y)).mul_right
       (Φ.choi (x, i) (y, j)))
 
+
+/-- Joint precomposition of ambient CP maps against TNI maps into the unit
+fiber.  No TNI obligation is placed on the result. -/
+theorem comp_from_one {ι : Type} [Countable ι] {m ℓ : ℕ}
+    {f : ι → CPMap 1 ℓ} {Ψ : CPMap 1 ℓ}
+    (g : ι → Superoperator m 1) (hf : HasSum f Ψ) :
+    ∃ Χ : CPMap m ℓ,
+      HasSum (fun i => CPMap.comp (f i) (g i).cp) Χ := by
+  classical
+  have hfin (k : ι) (a b : Fin ℓ) (i j : Fin m) :
+      (CPMap.comp (f k) (g k).cp).choi (a, i) (b, j) =
+        (f k).choi (a, 0) (b, 0) * (g k).cp.choi (0, i) (0, j) := by
+    simp [CPMap.choi_comp_apply, Fin.default_eq_zero]
+  have hentries (a b : Fin ℓ) (i j : Fin m) :
+      Summable fun k : ι =>
+        (CPMap.comp (f k) (g k).cp).choi (a, i) (b, j) := by
+    simp_rw [hfin]
+    have ha : Summable fun k : ι => (f k).choi (a, 0) (b, 0) :=
+      (Pi.hasSum.mp (Pi.hasSum.mp hf (a, (0 : Fin 1)))
+        (b, (0 : Fin 1))).summable
+    have haN : Summable fun k : ι =>
+        ‖(f k).choi (a, 0) (b, 0)‖ * (m : ℝ) :=
+      ha.norm.mul_right (m : ℝ)
+    refine Summable.of_norm_bounded haN fun k => ?_
+    rw [norm_mul]
+    have hb :=
+      ChoiSum.entry_norm_le_trace_re (g k).cp.choi_pos (0, i) (0, j)
+    have htr := ChoiSum.trace_choi_re_le_input_dim (g k)
+    exact
+      (mul_le_mul_of_nonneg_left (hb.trans htr) (norm_nonneg _)).trans_eq
+        (by ring)
+  have hmat :
+      Summable fun k : ι => (CPMap.comp (f k) (g k).cp).choi := by
+    refine Pi.summable.mpr fun ai => Pi.summable.mpr fun bj => ?_
+    rcases ai with ⟨a, i⟩; rcases bj with ⟨b, j⟩
+    exact hentries a b i j
+  exact ⟨⟨∑' k, (CPMap.comp (f k) (g k).cp).choi,
+    ChoiSum.hasSum_posSemidef hmat.hasSum fun k =>
+      (CPMap.comp (f k) (g k).cp).choi_pos⟩, hmat.hasSum⟩
+
 end SigmaMon.CPMapSum
 
 namespace SuperoperatorModule
@@ -313,6 +355,27 @@ fiber. -/
 abbrev Fiber.HasSum (X : Fiber) {ι : Type} [Countable ι]
     (f : ι → X.Carrier) (x : X.Carrier) : Prop :=
   X.summation.HasSum f x
+
+/-- The constantly-zero family has a sum over every countable index type. -/
+theorem Fiber.hasSum_zero (X : Fiber.{u}) {ι : Type} [Countable ι] :
+    X.HasSum (fun _ : ι => 0) 0 := by
+  have hEmpty :
+      X.HasSum (fun i : (∅ : Set ι) => 0) 0 := by
+    convert ((X.summation.reindex (Equiv.Set.empty ι)
+      (fun i : Empty => nomatch i) 0).mpr
+        X.summation.empty) using 1
+    funext i
+    exact i.property.elim
+  exact (X.summation.remove_zero
+    (fun _ : ι => 0) ∅ 0 (by simp)).mp hEmpty
+
+theorem Fiber.hasSum_congr (X : Fiber.{u}) {ι : Type} [Countable ι]
+    {f g : ι → X.Carrier} {x : X.Carrier}
+    (h : ∀ i, f i = g i) :
+    X.HasSum f x ↔ X.HasSum g x := by
+  have hfg : f = g := funext h
+  subst g
+  rfl
 
 /-- A specialized right module over finite-dimensional trace-nonincreasing
 superoperators.  The two sum laws are exactly enriched functoriality in the
@@ -340,6 +403,26 @@ structure Module where
       {f : ι → Superoperator m n} {s : Superoperator m n},
       SigmaMon.ChoiSum.HasSum f s →
         (obj m).HasSum (fun i => act x (f i)) (act x s)
+  /-- Joint action of a summable family at the unit fiber against an
+  arbitrary family of maps into the unit fiber. -/
+  act_sum_from_one :
+    ∀ {ι : Type} [Countable ι] {m} {x : ι → (obj 1).Carrier}
+      {s : (obj 1).Carrier} (f : ι → Superoperator m 1),
+      (obj 1).HasSum x s →
+        ∃ z : (obj m).Carrier,
+          (obj m).HasSum (fun i => act (x i) (f i)) z
+  /-- Joint action of a summable family at fiber `1 * A` against maps
+  `f i ⊗ id_A`. -/
+  act_sum_tensor_from_one :
+    ∀ {ι : Type} [Countable ι] {m A} {x : ι → (obj (1 * A)).Carrier}
+      {s : (obj (1 * A)).Carrier} (f : ι → Superoperator m 1),
+      (obj (1 * A)).HasSum x s →
+        ∃ z : (obj (m * A)).Carrier,
+          (obj (m * A)).HasSum
+            (fun i =>
+              act (x i)
+                (Superoperator.tensor (f i) (Superoperator.identity A)))
+            z
 
 /-- The ambient module `CPM(-, A)` of unrestricted completely positive maps.
 It is distinct from the representable `Q(-, A)`, whose elements are TNI. -/
@@ -369,6 +452,58 @@ noncomputable def cpmModule (A : ℕ) : Module where
   act_sum_map := by
     intro ι _ m n x f s h
     exact SigmaMon.CPMapSum.comp_left x h
+  act_sum_from_one := by
+    intro ι _ m x s f h
+    obtain ⟨Χ, hΧ⟩ := SigmaMon.CPMapSum.comp_from_one f h
+    exact ⟨Χ, hΧ⟩
+  act_sum_tensor_from_one := by
+    intro ι _ m B x s f h
+    have hmat :
+        Summable fun k : ι =>
+          (CPMap.comp (x k)
+              (Superoperator.tensor (f k)
+                (Superoperator.identity B)).cp).choi := by
+      refine Pi.summable.mpr fun ai => Pi.summable.mpr fun bj => ?_
+      rcases ai with ⟨a, i⟩; rcases bj with ⟨b, j⟩
+      have ha :
+          Summable fun k : ι =>
+            ∑ u : Fin (1 * B), ∑ v : Fin (1 * B),
+              ‖(x k).choi (a, u) (b, v)‖ * ((m * B : ℕ) : ℝ) := by
+        apply summable_sum
+        intro u _
+        apply summable_sum
+        intro v _
+        exact
+          ((((Pi.hasSum.mp (Pi.hasSum.mp h (a, u)) (b, v))).summable.norm).mul_right
+            ((m * B : ℕ) : ℝ))
+      refine Summable.of_norm_bounded ha fun k => ?_
+      simp only [CPMap.choi_comp_apply]
+      refine (norm_sum_le _ _).trans ?_
+      apply Finset.sum_le_sum
+      intro u _
+      refine (norm_sum_le _ _).trans ?_
+      apply Finset.sum_le_sum
+      intro v _
+      rw [norm_mul]
+      have hb :=
+        SigmaMon.ChoiSum.entry_norm_le_trace_re
+          (Superoperator.tensor (f k)
+            (Superoperator.identity B)).cp.choi_pos
+          (u, i) (v, j)
+      have htr :=
+        SigmaMon.ChoiSum.trace_choi_re_le_input_dim
+          (Superoperator.tensor (f k) (Superoperator.identity B))
+      exact mul_le_mul_of_nonneg_left (hb.trans htr) (norm_nonneg _)
+    exact
+      ⟨⟨∑' k,
+          (CPMap.comp (x k)
+              (Superoperator.tensor (f k)
+                (Superoperator.identity B)).cp).choi,
+        SigmaMon.ChoiSum.hasSum_posSemidef hmat.hasSum fun k =>
+          (CPMap.comp (x k)
+              (Superoperator.tensor (f k)
+                (Superoperator.identity B)).cp).choi_pos⟩,
+        hmat.hasSum⟩
 
 @[simp]
 theorem cpmModule_obj (A n : ℕ) :

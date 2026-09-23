@@ -9,7 +9,13 @@ import QLambda.Domain.Presheaf.DayCoend
 /-!
 # Commutative comonoids over the genuine Day tensor (plan gate 3)
 
-Gate progress (`cofree-exponential`): **blocked at `BangComultComponentsAdmissible` for `A ≥ 1`**.
+Gate progress (`cofree-exponential`): **`BangComultComponentsAdmissible` closed for `A = 0` and `A = 1`**;
+unconditional `bangComult` on those fibers; **`SymmetricContractionDayFactorization`
+for `A ≤ 1`**; **`bangComonoid A` for `A ≤ 1`** (counit/comult/cocomm/coassoc);
+**cofree UP `bangCofreeEquiv_zero` / `comonoidHomEquiv_zero` closed for `A = 0`**;
+`A = 1` lift `bangCofreeLiftOne` with counit, forget, and
+`bangCofreeCoeffOne_comult` (packaged `ComonoidHom` / `comonoidHomEquiv_one`
+needs comult glue). `A ≥ 2` admissibility remains.
 
 ## Fiber support (critical)
 
@@ -39,13 +45,9 @@ components may be nonzero.
 family `bangComultComponentFamily` must admit a joint sum.  This is the
 Day-side form of the mixed-partition TNI gate recorded in `Exponential.lean`.
 
-**Proved for `A = 0`** (only the `(0,0)` slot survives).
-
-**Degree reindexing (`A ≥ 1`):** evaluate identity and the `A = 1` degree-unit
-rectangle are in place.  Homogeneous diagonal rows reduce to flatten of that
-rectangle acted by a single channel; the residual outer gate is
-`BangComultSeriesActHasSum` (joint `L.act d_k Φ_k` with summable `(d_k)`).
-Assembly of unconditional `bangComult` / `Comonoid` waits on that gate.
+**Proved for `A = 0`** (only the `(0,0)` slot survives) and **`A = 1`**
+(`bangComultSeriesActHasSum_holds` via `Module.act_sum_from_one`, rectangle
+flatten through `degreePartitionEquiv`, `bangComultComponent_evaluate_one`).
 
 Ambient obstruction `factorPermutationEquiv_swap_ne_refl` remains.
 -/
@@ -272,9 +274,8 @@ theorem factorPermutationEquiv_swap_ne_refl
   change z1 = z0 at h01
   exact (Nat.zero_ne_one (congrArg Fin.val h01.symm))
 
-/-- Open residual: existence of a Day-valued comultiplication factoring the
-coefficientwise `symmetricContraction` through `symmetricSeriesDayCompare`.
-Not claimed. -/
+/-- Existence of a Day-valued comultiplication factoring the coefficientwise
+`symmetricContraction` through `symmetricSeriesDayCompare`. Closed for `A ≤ 1`. -/
 def SymmetricContractionDayFactorization (A : ℕ) : Prop :=
   ∃ δ : Hom (bang A) (dayTensor (bang A) (bang A)),
     Hom.comp (symmetricSeriesDayCompare A) δ = symmetricContraction A
@@ -791,15 +792,15 @@ theorem bangComultComponent_eq_of_injection (A p q n : ℕ)
   exact ((dayTensor (bang A) (bang A)).obj n).summation.unique
     hx' hsingle
 
-/-- Cast of an `A = 1` homogeneous coefficient to fiber dimension `1`. -/
-noncomputable def bangOneCoeff (n k : ℕ)
-    (x : SymmetricElement 1 k n) : Superoperator n 1 :=
-  cast (by rw [tensorPowerDimension_eq_pow, one_pow]) x.val
-
 /-- For `A = 1` every tensor-power dimension is `1`. -/
 theorem tensorPowerDimension_one_eq (k : ℕ) :
     tensorPowerDimension 1 k = 1 := by
   simp [tensorPowerDimension_eq_pow, one_pow]
+
+/-- Cast of an `A = 1` homogeneous coefficient to fiber dimension `1`. -/
+noncomputable def bangOneCoeff (n k : ℕ)
+    (x : SymmetricElement 1 k n) : Superoperator n 1 :=
+  (tensorPowerDimension_one_eq k) ▸ x.val
 
 /-- The `A = 1` series with identity in every homogeneous degree (fiber `1`). -/
 noncomputable def bangOneDegreeUnits :
@@ -850,14 +851,143 @@ theorem bangOne_degreeUnit_rectangle_hasSum
         β.app (bangDegreeUnitOne pq.1) (bangDegreeUnitOne pq.2))
       (β.app bangOneDegreeUnits bangOneDegreeUnits)).mp hflat
 
-/-- Outer series gate for assembling general `A = 1` admissibility from
-homogeneous diagonal rows: joint `L.act d_k Φ_k` with summable `(d_k)`. -/
+/-- Outer series gate for assembling `A = 1` admissibility from homogeneous
+diagonal rows: joint `L.act d_k Φ_k` with summable `(d_k)`. -/
 def BangComultSeriesActHasSum : Prop :=
   ∀ (n : ℕ) (x : ((bang 1).obj n).Carrier)
     (L : Module.{0}) (d : ℕ → (L.obj 1).Carrier) (D : (L.obj 1).Carrier),
     (L.obj 1).HasSum d D →
       ∃ z : (L.obj n).Carrier,
         (L.obj n).HasSum (fun k => L.act (d k) (bangOneCoeff n k (x k))) z
+
+/-- The outer series gate is `Module.act_sum_from_one` (fiber `1 = 1 * 1`). -/
+theorem bangComultSeriesActHasSum_holds : BangComultSeriesActHasSum := by
+  intro n x L d D hD
+  exact L.act_sum_from_one (fun k => bangOneCoeff n k (x k)) hD
+
+/-- Identity cast along a dimension equality as a basis equivalence. -/
+theorem cast_identity_eq_ofEquivalence {a b : ℕ} (h : a = b) :
+    cast (congrArg (Superoperator a) h) (Superoperator.identity a) =
+      Superoperator.ofEquivalence (finCongr h) := by
+  cases h
+  exact (Superoperator.ofEquivalence_refl a).symm
+
+/-- `A = 1` Yoneda degree unit is the fiber-`1` unit acted by the dimension cast. -/
+theorem bangDegreeUnit_eq_act (k : ℕ) :
+    bangDegreeUnit 1 k =
+      (bang 1).act (bangDegreeUnitOne k)
+        (Superoperator.ofEquivalence
+          (finCongr (tensorPowerDimension_one_eq k))) := by
+  let h := tensorPowerDimension_one_eq k
+  change
+    (bangInjection 1 k).app (tensorPowerDimension 1 k)
+        ((symmetricPowerProjection 1 k).app (tensorPowerDimension 1 k)
+          (Superoperator.identity (tensorPowerDimension 1 k))) =
+      (bang 1).act
+        ((bangInjection 1 k).app 1 (bangOneDegreeUnits k))
+        (Superoperator.ofEquivalence (finCongr h))
+  have hn :=
+    (bangInjection 1 k).naturality (bangOneDegreeUnits k)
+      (Superoperator.ofEquivalence (finCongr h))
+  refine Eq.trans ?_ hn
+  congr 1
+  change
+    (symmetricPowerProjection 1 k).app (tensorPowerDimension 1 k)
+        (Superoperator.identity (tensorPowerDimension 1 k)) =
+      (symmetricPower 1 k).act
+        ((symmetricPowerProjection 1 k).app 1
+          (cast (congrArg (Superoperator 1) h.symm)
+            (Superoperator.identity 1)))
+        (Superoperator.ofEquivalence (finCongr h))
+  have hp :=
+    (symmetricPowerProjection 1 k).naturality
+      (cast (congrArg (Superoperator 1) h.symm)
+        (Superoperator.identity 1))
+      (Superoperator.ofEquivalence (finCongr h))
+  refine Eq.trans ?_ hp
+  congr 1
+  show Superoperator.identity (tensorPowerDimension 1 k) =
+    Superoperator.comp
+      (cast (congrArg (Superoperator 1) h.symm) (Superoperator.identity 1))
+      (Superoperator.ofEquivalence (finCongr h))
+  rw [cast_identity_eq_ofEquivalence h.symm, Superoperator.ofEquivalence_comp]
+  have : (finCongr h).trans (finCongr h.symm) = Equiv.refl _ := by
+    apply Equiv.ext
+    intro i
+    apply Fin.ext
+    simp
+  rw [this, Superoperator.ofEquivalence_refl]
+
+/-- Every index of a one-element `Fin` is zero. -/
+theorem fin_val_eq_zero_of_card_one {d : ℕ} (hd : d = 1) (i : Fin d) :
+    (i : ℕ) = 0 := by
+  have : (i : ℕ) < 1 := hd ▸ i.isLt
+  exact Nat.lt_one_iff.mp this
+
+/-- Split channel for `A = 1`, after tensoring dimension casts, equals `bangOneCoeff`. -/
+theorem bangSplit_tensor_cast_eq_oneCoeff (p q n : ℕ)
+    (x : ((bang 1).obj n).Carrier) :
+    Superoperator.comp
+      (Superoperator.tensor
+        (Superoperator.ofEquivalence (finCongr (tensorPowerDimension_one_eq p)))
+        (Superoperator.ofEquivalence (finCongr (tensorPowerDimension_one_eq q))))
+      ((bangSplitComponent 1 p q).app n x) =
+      bangOneCoeff n (p + q) (x (p + q)) := by
+  simp only [bangSplitComponent, bangOneCoeff]
+  rw [Superoperator.comp_assoc]
+  let hp := tensorPowerDimension_one_eq p
+  let hq := tensorPowerDimension_one_eq q
+  let hk := tensorPowerDimension_one_eq (p + q)
+  have htarget :
+      Superoperator.comp
+          (Superoperator.tensor
+            (Superoperator.ofEquivalence (finCongr hp))
+            (Superoperator.ofEquivalence (finCongr hq)))
+          (Superoperator.ofEquivalence (tensorSplitEquiv 1 p q)) =
+        Superoperator.ofEquivalence (finCongr hk) := by
+    rw [Superoperator.tensor_ofEquivalence, Superoperator.ofEquivalence_comp]
+    congr 1
+    apply Equiv.ext
+    intro i
+    apply Fin.ext
+    have hL :
+        ((((tensorSplitEquiv 1 p q).trans
+          (Superoperator.tensorEquiv (finCongr hp) (finCongr hq))) i :
+            Fin (1 * 1)) : ℕ) = 0 :=
+      fin_val_eq_zero_of_card_one (by rfl) _
+    have hR : (((finCongr hk) i : Fin 1) : ℕ) = 0 :=
+      fin_val_eq_zero_of_card_one rfl _
+    exact hL.trans hR.symm
+  have hΦ :=
+    congrArg (fun Φ => Superoperator.comp Φ (x (p + q)).val) htarget
+  exact hΦ.trans (Superoperator.comp_ofEquivalence_finCongr hk (x (p + q)).val)
+
+/-- Equivalence between pairs and ordered partitions of their total degree. -/
+def degreePartitionEquiv : ℕ × ℕ ≃ (Σ t : ℕ, DegreePartition t) where
+  toFun := pairToDegreePartition
+  invFun := fun p => degreePartitionToPair p.1 p.2
+  left_inv := pairToDegreePartition_toPair
+  right_inv := by
+    rintro ⟨t, part⟩
+    dsimp [pairToDegreePartition, degreePartitionToPair]
+    have hs : part.val + (t - part.val) = t :=
+      Nat.add_sub_of_le (Nat.le_of_lt_succ part.isLt)
+    refine Sigma.ext hs ?_
+    let lhs : Fin (part.val + (t - part.val) + 1) :=
+      ⟨part.val, Nat.lt_succ_of_le (Nat.le_add_right _ _)⟩
+    let hs' : part.val + (t - part.val) + 1 = t + 1 :=
+      congrArg (· + 1) hs
+    have hEq : Fin.cast hs' lhs = part := by
+      apply Fin.ext
+      exact Fin.val_cast hs' lhs
+    refine HEq.trans (b := Fin.cast hs' lhs) ?_ (heq_of_eq hEq)
+    have hfun : (Fin.cast hs' : Fin _ → Fin _) =
+        cast (congrArg Fin hs') :=
+      Fin.cast_eq_cast hs'
+    show lhs ≍ Fin.cast hs' lhs
+    rw [show Fin.cast hs' lhs = cast (congrArg Fin hs') lhs from
+      congrFun hfun lhs]
+    exact (cast_heq (congrArg Fin hs') lhs).symm
 
 /-- Homogeneous `A = 1` family vanishes off the diagonal `p + q = k`. -/
 theorem bangComultComponent_evaluate_injection_eq_zero
@@ -870,6 +1000,105 @@ theorem bangComultComponent_evaluate_injection_eq_zero
       0 := by
   rw [bangComultComponent_comp_injection_eq_zero 1 p q k n hk y]
   exact DayCoend.evaluate_zero β
+
+/-- Evaluation at `A = 1`: Day component equals rectangle coefficient acted by
+the total-degree series channel. -/
+theorem bangComultComponent_evaluate_one (p q n : ℕ)
+    (x : ((bang 1).obj n).Carrier)
+    (L : Module) (β : Bilinear (bang 1) (bang 1) L) :
+    DayCoend.evaluate L β ((bangComultComponent 1 p q).app n x) =
+      L.act (β.app (bangDegreeUnitOne p) (bangDegreeUnitOne q))
+        (bangOneCoeff n (p + q) (x (p + q))) := by
+  have he := bangComultComponent_evaluate 1 p q n x L β
+  rw [he, bangDegreeUnit_eq_act p, bangDegreeUnit_eq_act q, β.naturality]
+  have hact := L.act_comp
+    (β.app (bangDegreeUnitOne p) (bangDegreeUnitOne q))
+    (Superoperator.tensor
+      (Superoperator.ofEquivalence (finCongr (tensorPowerDimension_one_eq p)))
+      (Superoperator.ofEquivalence (finCongr (tensorPowerDimension_one_eq q))))
+    ((bangSplitComponent 1 p q).app n x)
+  rw [hact, bangSplit_tensor_cast_eq_oneCoeff]
+
+/-- Mixed-partition admissibility for `A = 1`. -/
+theorem bangComultComponentsAdmissible_one :
+    BangComultComponentsAdmissible 1 := by
+  intro n x L β
+  have hrect := bangOne_degreeUnit_rectangle_hasSum L β
+  have hre :
+      (L.obj (1 * 1)).HasSum
+        (fun p : Σ t : ℕ, DegreePartition t =>
+          β.app (bangDegreeUnitOne (degreePartitionToPair p.1 p.2).1)
+            (bangDegreeUnitOne (degreePartitionToPair p.1 p.2).2))
+        (β.app bangOneDegreeUnits bangOneDegreeUnits) :=
+    ((L.obj (1 * 1)).summation.reindex degreePartitionEquiv.symm
+      (fun pq =>
+        β.app (bangDegreeUnitOne pq.1) (bangDegreeUnitOne pq.2))
+      (β.app bangOneDegreeUnits bangOneDegreeUnits)).mpr hrect
+  obtain ⟨row, hrows, hrowSum⟩ :=
+    ((L.obj (1 * 1)).summation.flatten
+      (fun t (part : DegreePartition t) =>
+        β.app (bangDegreeUnitOne (degreePartitionToPair t part).1)
+          (bangDegreeUnitOne (degreePartitionToPair t part).2))
+      (β.app bangOneDegreeUnits bangOneDegreeUnits)).mp hre
+  obtain ⟨Z, hZ⟩ :=
+    bangComultSeriesActHasSum_holds n x L
+      (fun k => row k) (β.app bangOneDegreeUnits bangOneDegreeUnits) hrowSum
+  refine ⟨Z, ?_⟩
+  have hfam :
+      (fun pq : ℕ × ℕ =>
+          DayCoend.evaluate L β (bangComultComponentFamily 1 n x pq)) =
+        fun pq : ℕ × ℕ =>
+          L.act (β.app (bangDegreeUnitOne pq.1) (bangDegreeUnitOne pq.2))
+            (bangOneCoeff n (pq.1 + pq.2) (x (pq.1 + pq.2))) := by
+    funext pq
+    simpa [bangComultComponentFamily] using
+      bangComultComponent_evaluate_one pq.1 pq.2 n x L β
+  rw [hfam]
+  have hflat :
+      (L.obj n).HasSum
+        (fun p : Σ t : ℕ, DegreePartition t =>
+          L.act
+            (β.app (bangDegreeUnitOne (degreePartitionToPair p.1 p.2).1)
+              (bangDegreeUnitOne (degreePartitionToPair p.1 p.2).2))
+            (bangOneCoeff n p.1 (x p.1)))
+        Z :=
+    ((L.obj n).summation.flatten
+        (fun t (part : DegreePartition t) =>
+          L.act
+            (β.app (bangDegreeUnitOne (degreePartitionToPair t part).1)
+              (bangDegreeUnitOne (degreePartitionToPair t part).2))
+            (bangOneCoeff n t (x t)))
+        Z).mpr
+      ⟨fun t => L.act (row t) (bangOneCoeff n t (x t)),
+        fun t => L.act_sum_element (bangOneCoeff n t (x t)) (hrows t),
+        hZ⟩
+  have hflat' :
+      (L.obj n).HasSum
+        (fun p : Σ t : ℕ, DegreePartition t =>
+          L.act
+            (β.app (bangDegreeUnitOne (degreePartitionToPair p.1 p.2).1)
+              (bangDegreeUnitOne (degreePartitionToPair p.1 p.2).2))
+            (bangOneCoeff n
+              ((degreePartitionToPair p.1 p.2).1 +
+                (degreePartitionToPair p.1 p.2).2)
+              (x
+                ((degreePartitionToPair p.1 p.2).1 +
+                  (degreePartitionToPair p.1 p.2).2))))
+        Z := by
+    convert hflat using 1
+    funext p
+    rw [degreePartitionToPair_snd_add]
+  exact
+    ((L.obj n).summation.reindex degreePartitionEquiv.symm
+      (fun pq =>
+        L.act (β.app (bangDegreeUnitOne pq.1) (bangDegreeUnitOne pq.2))
+          (bangOneCoeff n (pq.1 + pq.2) (x (pq.1 + pq.2))))
+      Z).mp hflat'
+
+/-- Unconditional Day comultiplication for the one-dimensional exponential. -/
+noncomputable def bangComult_one :
+    Hom (bang 1) (dayTensor (bang 1) (bang 1)) :=
+  bangComult 1 bangComultComponentsAdmissible_one
 
 /-! ## Special case `A = 0`: only degree 0 survives -/
 
@@ -984,6 +1213,3598 @@ theorem bangComult_zero_eq_component (n : ℕ)
     exact Fiber.hasSum_singleAt (L.obj n) (0, 0) _
   exact ((dayTensor (bang 0) (bang 0)).obj n).summation.unique
     (bangComultApp_hasSum 0 bangComultComponentsAdmissible_zero n x) hsum
+
+
+/-- Admissibility for the two fibers where the acted outer series lands in
+fiber `1` (so `Module.act_sum_from_one` applies). -/
+theorem bangComultComponentsAdmissible_of_le_one (A : ℕ) (hA : A ≤ 1) :
+    BangComultComponentsAdmissible A := by
+  interval_cases A
+  · exact bangComultComponentsAdmissible_zero
+  · exact bangComultComponentsAdmissible_one
+
+/-- Unconditional Day comultiplication when `A ≤ 1`. -/
+noncomputable def bangComult_of_le_one (A : ℕ) (hA : A ≤ 1) :
+    Hom (bang A) (dayTensor (bang A) (bang A)) :=
+  bangComult A (bangComultComponentsAdmissible_of_le_one A hA)
+
+/-! ## Day factorization of contraction for `A ≤ 1` -/
+
+/-- For `A = 1`, every tensor-factor permutation is the identity equivalence. -/
+theorem factorPermutationEquiv_one (k : ℕ) (σ : Equiv.Perm (Fin k)) :
+    factorPermutationEquiv 1 k σ = Equiv.refl _ := by
+  apply Equiv.ext
+  intro i
+  apply Fin.ext
+  have hd := tensorPowerDimension_one_eq k
+  exact (fin_val_eq_zero_of_card_one hd _).trans
+    (fin_val_eq_zero_of_card_one hd _).symm
+
+/-- For `A = 1`, every tensor-factor permutation channel is the identity. -/
+theorem factorPermutation_one (k : ℕ) (σ : Equiv.Perm (Fin k)) :
+    factorPermutation 1 k σ =
+      Superoperator.identity (tensorPowerDimension 1 k) := by
+  change Superoperator.ofEquivalence (factorPermutationEquiv 1 k σ) = _
+  rw [factorPermutationEquiv_one, Superoperator.ofEquivalence_refl]
+
+/-- Symmetric averaging is trivial on one-dimensional tensor powers. -/
+theorem symmetricAverage_one (k : ℕ) :
+    symmetricAverage 1 k =
+      Superoperator.identity (tensorPowerDimension 1 k) := by
+  apply Superoperator.ext
+  apply CPMap.ext_apply
+  intro ρ
+  rw [symmetricAverage_applyMat]
+  simp_rw [factorPermutation_one]
+  have hid :
+      (Superoperator.identity (tensorPowerDimension 1 k)).cp.applyMat ρ = ρ := by
+    change (CPMap.identity _).applyMat ρ = ρ
+    exact CPMap.applyMat_identity ρ
+  simp_rw [hid]
+  rw [Finset.sum_const]
+  have hcard :
+      (Finset.univ : Finset (Equiv.Perm (Fin k))).card = Nat.factorial k := by
+    simp [Fintype.card_perm]
+  rw [hcard, ← Nat.cast_smul_eq_nsmul ℂ, smul_smul]
+  have hk : ((Nat.factorial k : ℝ)⁻¹ : ℂ) * (Nat.factorial k : ℂ) = 1 := by
+    rw [← Complex.ofReal_natCast (Nat.factorial k), ← Complex.ofReal_inv,
+      ← Complex.ofReal_mul,
+      inv_mul_cancel₀ (Nat.cast_ne_zero.mpr (Nat.factorial_ne_zero k)),
+      Complex.ofReal_one]
+  rw [hk, one_smul]
+
+/-- Symmetric averaging is trivial on the unique degree-zero zero-dimensional
+fiber. -/
+theorem symmetricAverage_zero_zero :
+    symmetricAverage 0 0 = Superoperator.identity (tensorPowerDimension 0 0) := by
+  have hdim : tensorPowerDimension 0 0 = 1 := by simp [tensorPowerDimension]
+  apply Superoperator.ext
+  apply CPMap.ext_apply
+  intro ρ
+  rw [symmetricAverage_applyMat]
+  have hperm (σ : Equiv.Perm (Fin 0)) :
+      factorPermutation 0 0 σ =
+        Superoperator.identity (tensorPowerDimension 0 0) := by
+    change Superoperator.ofEquivalence (factorPermutationEquiv 0 0 σ) = _
+    have : factorPermutationEquiv 0 0 σ = Equiv.refl _ := by
+      apply Equiv.ext
+      intro i
+      apply Fin.ext
+      exact (fin_val_eq_zero_of_card_one hdim _).trans
+        (fin_val_eq_zero_of_card_one hdim _).symm
+    rw [this, Superoperator.ofEquivalence_refl]
+  simp_rw [hperm]
+  have hid :
+      (Superoperator.identity (tensorPowerDimension 0 0)).cp.applyMat ρ = ρ := by
+    change (CPMap.identity _).applyMat ρ = ρ
+    exact CPMap.applyMat_identity ρ
+  simp_rw [hid]
+  rw [Finset.sum_const]
+  have hcard : (Finset.univ : Finset (Equiv.Perm (Fin 0))).card = 1 := by decide
+  rw [hcard, ← Nat.cast_smul_eq_nsmul ℂ, smul_smul]
+  norm_num
+
+/-- For `A ≤ 1`, symmetric averaging coincides with the identity channel. -/
+theorem symmetricAverage_of_le_one (A k : ℕ) (hA : A ≤ 1) :
+    symmetricAverage A k =
+      Superoperator.identity (tensorPowerDimension A k) := by
+  interval_cases A
+  · cases k with
+    | zero => exact symmetricAverage_zero_zero
+    | succ k =>
+      apply Superoperator.ext
+      apply CPMap.ext
+      ext a b
+      have : IsEmpty (Fin (tensorPowerDimension 0 (k + 1))) := by
+        simp [tensorPowerDimension]; infer_instance
+      exact isEmptyElim a.1
+  · exact symmetricAverage_one k
+
+/-- Coordinate form of the Yoneda degree unit in the series. -/
+theorem bangDegreeUnit_apply (A k j : ℕ) :
+    bangDegreeUnit A k j =
+      if h : j = k then
+        h.symm ▸
+          (symmetricPowerProjection A k).app
+            (tensorPowerDimension A k)
+            (Superoperator.identity (tensorPowerDimension A k))
+      else 0 :=
+  rfl
+
+/-- Diagonal slot of a square injection recovers the injected channel. -/
+theorem injection_square_eq_slot (A p q n : ℕ)
+    (Φ : Superoperator n
+      (tensorPowerDimension A p * tensorPowerDimension A q)) :
+    (countableRepresentableDayTensorInjection
+        (tensorPowerDimension A) (tensorPowerDimension A) p q).app n Φ p q =
+      Φ := by
+  dsimp [countableRepresentableDayTensorInjection, Hom.comp,
+    countableProductInjection]
+  simp only [↓reduceDIte]
+
+/-- Off-row slots of a square injection vanish. -/
+theorem injection_square_eq_zero_left (A p q n i j : ℕ) (hi : i ≠ p)
+    (Φ : Superoperator n
+      (tensorPowerDimension A p * tensorPowerDimension A q)) :
+    (countableRepresentableDayTensorInjection
+        (tensorPowerDimension A) (tensorPowerDimension A) p q).app n Φ i j =
+      0 := by
+  dsimp [countableRepresentableDayTensorInjection, Hom.comp,
+    countableProductInjection]
+  simp only [hi, ↓reduceDIte]
+  rfl
+
+/-- Off-column slots of a square injection vanish. -/
+theorem injection_square_eq_zero_right (A p q n j : ℕ) (hj : j ≠ q)
+    (Φ : Superoperator n
+      (tensorPowerDimension A p * tensorPowerDimension A q)) :
+    (countableRepresentableDayTensorInjection
+        (tensorPowerDimension A) (tensorPowerDimension A) p q).app n Φ p j =
+      0 := by
+  dsimp [countableRepresentableDayTensorInjection, Hom.comp,
+    countableProductInjection]
+  simp only [↓reduceDIte, hj]
+  rfl
+
+/-- For `A ≤ 1`, Day compare on a homogeneous comult component is the
+corresponding square injection of the contraction slot. -/
+theorem compare_bangComultComponent_of_le_one (A : ℕ) (hA : A ≤ 1)
+    (p q n : ℕ) (x : ((bang A).obj n).Carrier) :
+    (symmetricSeriesDayCompare A).app n
+        ((bangComultComponent A p q).app n x) =
+      (countableRepresentableDayTensorInjection
+          (tensorPowerDimension A) (tensorPowerDimension A) p q).app n
+        ((bangSplitComponent A p q).app n x) := by
+  have he :=
+    bangComultComponent_evaluate A p q n x
+      (symmetricFormalTensorSquare A) (symmetricSeriesDayBilinear A)
+  have he' :
+      (symmetricSeriesDayCompare A).app n
+          ((bangComultComponent A p q).app n x) =
+        (symmetricFormalTensorSquare A).act
+          ((symmetricSeriesDayBilinear A).app
+            (bangDegreeUnit A p) (bangDegreeUnit A q))
+          ((bangSplitComponent A p q).app n x) := by
+    simpa [symmetricSeriesDayCompare, DayCoend.lift] using he
+  rw [he']
+  funext i j
+  change
+      Superoperator.comp
+          (Superoperator.tensor
+            (bangDegreeUnit A p i).val
+            (bangDegreeUnit A q j).val)
+          ((bangSplitComponent A p q).app n x) =
+        (countableRepresentableDayTensorInjection
+            (tensorPowerDimension A) (tensorPowerDimension A) p q).app n
+          ((bangSplitComponent A p q).app n x) i j
+  let Φ : Superoperator n
+      (tensorPowerDimension A p * tensorPowerDimension A q) :=
+    (bangSplitComponent A p q).app n x
+  by_cases hi : i = p
+  · subst i
+    by_cases hj : j = q
+    · subst j
+      have hup :
+          bangDegreeUnit A p p =
+            (symmetricPowerProjection A p).app
+              (tensorPowerDimension A p)
+              (Superoperator.identity (tensorPowerDimension A p)) := by
+        simp [bangDegreeUnit_apply]
+      have huq :
+          bangDegreeUnit A q q =
+            (symmetricPowerProjection A q).app
+              (tensorPowerDimension A q)
+              (Superoperator.identity (tensorPowerDimension A q)) := by
+        simp [bangDegreeUnit_apply]
+      rw [hup, huq]
+      change Superoperator.comp
+          (Superoperator.tensor
+            (Superoperator.comp (symmetricAverage A p)
+              (Superoperator.identity _))
+            (Superoperator.comp (symmetricAverage A q)
+              (Superoperator.identity _)))
+          Φ =
+        (countableRepresentableDayTensorInjection
+            (tensorPowerDimension A) (tensorPowerDimension A) p q).app n Φ p q
+      rw [Superoperator.comp_identity, Superoperator.comp_identity,
+        symmetricAverage_of_le_one A p hA,
+        symmetricAverage_of_le_one A q hA,
+        Superoperator.tensor_identity, Superoperator.identity_comp,
+        injection_square_eq_slot]
+    · have huq : bangDegreeUnit A q j =
+          (0 : SymmetricElement A j (tensorPowerDimension A q)) := by
+        simp [bangDegreeUnit_apply, hj]; rfl
+      have hten :
+          Superoperator.tensor (bangDegreeUnit A p p).val
+              (bangDegreeUnit A q j).val =
+            (0 : Superoperator
+              (tensorPowerDimension A p * tensorPowerDimension A q)
+              (tensorPowerDimension A p * tensorPowerDimension A j)) := by
+        have hz : (bangDegreeUnit A q j).val =
+            (0 : Superoperator (tensorPowerDimension A q)
+              (tensorPowerDimension A j)) := by
+          rw [huq, SymmetricElement.zero_val]
+        rw [hz]
+        exact Superoperator.tensor_zero_right _
+      have hL :
+          Superoperator.comp
+            (Superoperator.tensor (bangDegreeUnit A p p).val
+              (bangDegreeUnit A q j).val) Φ =
+          (0 : Superoperator n
+            (tensorPowerDimension A p * tensorPowerDimension A j)) := by
+        rw [hten]
+        exact Superoperator.comp_zero_left
+          (ℓ := tensorPowerDimension A p * tensorPowerDimension A j) Φ
+      have hR :
+          (countableRepresentableDayTensorInjection
+              (tensorPowerDimension A) (tensorPowerDimension A) p q).app n Φ p j =
+          (0 : Superoperator n
+            (tensorPowerDimension A p * tensorPowerDimension A j)) :=
+        injection_square_eq_zero_right A p q n j hj Φ
+      exact hL.trans hR.symm
+  · have hup : bangDegreeUnit A p i =
+        (0 : SymmetricElement A i (tensorPowerDimension A p)) := by
+      simp [bangDegreeUnit_apply, hi]; rfl
+    have hten :
+        Superoperator.tensor (bangDegreeUnit A p i).val
+            (bangDegreeUnit A q j).val =
+          (0 : Superoperator
+            (tensorPowerDimension A p * tensorPowerDimension A q)
+            (tensorPowerDimension A i * tensorPowerDimension A j)) := by
+      have hz : (bangDegreeUnit A p i).val =
+          (0 : Superoperator (tensorPowerDimension A p)
+            (tensorPowerDimension A i)) := by
+        rw [hup, SymmetricElement.zero_val]
+      rw [hz]
+      exact Superoperator.tensor_zero_left _
+    have hL :
+        Superoperator.comp
+          (Superoperator.tensor (bangDegreeUnit A p i).val
+            (bangDegreeUnit A q j).val) Φ =
+        (0 : Superoperator n
+          (tensorPowerDimension A i * tensorPowerDimension A j)) := by
+      rw [hten]
+      exact Superoperator.comp_zero_left
+        (ℓ := tensorPowerDimension A i * tensorPowerDimension A j) Φ
+    have hR :
+        (countableRepresentableDayTensorInjection
+            (tensorPowerDimension A) (tensorPowerDimension A) p q).app n Φ i j =
+        (0 : Superoperator n
+          (tensorPowerDimension A i * tensorPowerDimension A j)) :=
+      injection_square_eq_zero_left A p q n i j hi Φ
+    exact hL.trans hR.symm
+
+/-- For `A ≤ 1`, Day comultiplication factors coefficientwise contraction
+through the Day comparison. -/
+theorem bangComult_factors_contraction_of_le_one (A : ℕ) (hA : A ≤ 1)
+    (h : BangComultComponentsAdmissible A) :
+    Hom.comp (symmetricSeriesDayCompare A) (bangComult A h) =
+      symmetricContraction A := by
+  ext n x
+  have hsum :
+      (symmetricFormalTensorSquare A).obj n |>.HasSum
+        (fun pq : ℕ × ℕ =>
+          (countableRepresentableDayTensorInjection
+              (tensorPowerDimension A) (tensorPowerDimension A)
+              pq.1 pq.2).app n
+            ((symmetricContraction A).app n x pq.1 pq.2))
+        ((symmetricContraction A).app n x) :=
+    countableRepresentableDayTensor_hasSum_coordinates
+      (tensorPowerDimension A) (tensorPowerDimension A) n
+      ((symmetricContraction A).app n x)
+  have hfam :
+      (fun pq : ℕ × ℕ =>
+          (symmetricSeriesDayCompare A).app n
+            (bangComultComponentFamily A n x pq)) =
+        fun pq : ℕ × ℕ =>
+          (countableRepresentableDayTensorInjection
+              (tensorPowerDimension A) (tensorPowerDimension A)
+              pq.1 pq.2).app n
+            ((symmetricContraction A).app n x pq.1 pq.2) := by
+    funext pq
+    simpa [bangComultComponentFamily, bangSplitComponent_eq_contraction_slot]
+      using compare_bangComultComponent_of_le_one A hA pq.1 pq.2 n x
+  have hcmp :
+      (symmetricFormalTensorSquare A).obj n |>.HasSum
+        (fun pq : ℕ × ℕ =>
+          (symmetricSeriesDayCompare A).app n
+            (bangComultComponentFamily A n x pq))
+        ((symmetricSeriesDayCompare A).app n (bangComultApp A h n x)) := by
+    simpa [symmetricSeriesDayCompare, DayCoend.lift] using
+      bangComultApp_hasSum A h n x
+        (symmetricFormalTensorSquare A) (symmetricSeriesDayBilinear A)
+  rw [hfam] at hcmp
+  exact
+    ((symmetricFormalTensorSquare A).obj n).summation.unique hcmp hsum
+
+/-- Unconditional Day factorization of contraction when `A ≤ 1`. -/
+theorem bangComult_factors_contraction_le_one (A : ℕ) (hA : A ≤ 1) :
+    Hom.comp (symmetricSeriesDayCompare A) (bangComult_of_le_one A hA) =
+      symmetricContraction A :=
+  bangComult_factors_contraction_of_le_one A hA
+    (bangComultComponentsAdmissible_of_le_one A hA)
+
+/-- Day factorization residual closed for `A ≤ 1`. -/
+theorem symmetricContractionDayFactorization_of_le_one (A : ℕ) (hA : A ≤ 1) :
+    SymmetricContractionDayFactorization A :=
+  ⟨bangComult_of_le_one A hA, bangComult_factors_contraction_le_one A hA⟩
+
+/-- Day comonoid package for `A ≤ 1`: admissibility plus factorization. -/
+theorem bangDayComonoid_of_le_one (A : ℕ) (hA : A ≤ 1) :
+    BangDayComonoid A :=
+  ⟨bangComultComponentsAdmissible_of_le_one A hA,
+    symmetricContractionDayFactorization_of_le_one A hA⟩
+
+/-! ## Day left-counit ingredients for `A ≤ 1` -/
+
+theorem ofEquivalence_dim_one {m n : ℕ} (_hm : m = 1) (hn : n = 1)
+    (e f : Fin m ≃ Fin n) :
+    Superoperator.ofEquivalence e = Superoperator.ofEquivalence f := by
+  congr 1
+  apply Equiv.ext
+  intro i
+  apply Fin.ext
+  exact (fin_val_eq_zero_of_card_one hn (e i)).trans
+    (fin_val_eq_zero_of_card_one hn (f i)).symm
+
+theorem tensorLeftUnitor_comp_split_one (q : ℕ) :
+    Superoperator.comp
+        (Superoperator.tensorLeftUnitor (tensorPowerDimension 1 q))
+        (Superoperator.ofEquivalence (tensorSplitEquiv 1 0 q)) =
+      Superoperator.comp
+        (Superoperator.ofEquivalence (homogeneousLeftUnitorEquiv 1 q))
+        (Superoperator.ofEquivalence (tensorSplitEquiv 1 0 q)) := by
+  have hsrc : tensorPowerDimension 1 (0 + q) = 1 := by
+    rw [Nat.zero_add]; exact tensorPowerDimension_one_eq q
+  have htgt : tensorPowerDimension 1 q = 1 := tensorPowerDimension_one_eq q
+  have hmid : tensorPowerDimension 1 0 * tensorPowerDimension 1 q = 1 := by
+    simp [tensorPowerDimension]
+  have hR :
+      Superoperator.comp
+          (Superoperator.ofEquivalence (homogeneousLeftUnitorEquiv 1 q))
+          (Superoperator.ofEquivalence (tensorSplitEquiv 1 0 q)) =
+        Superoperator.ofEquivalence
+          ((tensorSplitEquiv 1 0 q).trans (homogeneousLeftUnitorEquiv 1 q)) :=
+    Superoperator.ofEquivalence_comp _ _
+  let eU : Fin (tensorPowerDimension 1 0 * tensorPowerDimension 1 q) ≃
+      Fin (tensorPowerDimension 1 q) :=
+    finCongr (hmid.trans htgt.symm)
+  have hU :
+      Superoperator.tensorLeftUnitor (tensorPowerDimension 1 q) =
+        Superoperator.ofEquivalence eU := by
+    change Superoperator.ofEquivalence
+        (Superoperator.tensorLeftUnitorEquiv (tensorPowerDimension 1 q)) =
+      Superoperator.ofEquivalence eU
+    refine ofEquivalence_dim_one (by simp [Nat.one_mul, htgt]) htgt _ _
+  have hL :
+      Superoperator.comp
+          (Superoperator.tensorLeftUnitor (tensorPowerDimension 1 q))
+          (Superoperator.ofEquivalence (tensorSplitEquiv 1 0 q)) =
+        Superoperator.ofEquivalence ((tensorSplitEquiv 1 0 q).trans eU) := by
+    rw [hU]
+    exact Superoperator.ofEquivalence_comp (tensorSplitEquiv 1 0 q) eU
+  rw [hL, hR]
+  exact ofEquivalence_dim_one hsrc htgt _ _
+
+theorem tensorLeftUnitor_comp_split_zero :
+    Superoperator.comp
+        (Superoperator.tensorLeftUnitor (tensorPowerDimension 0 0))
+        (Superoperator.ofEquivalence (tensorSplitEquiv 0 0 0)) =
+      Superoperator.comp
+        (Superoperator.ofEquivalence (homogeneousLeftUnitorEquiv 0 0))
+        (Superoperator.ofEquivalence (tensorSplitEquiv 0 0 0)) := by
+  have h1 : tensorPowerDimension 0 0 = 1 := rfl
+  have hmid : tensorPowerDimension 0 0 * tensorPowerDimension 0 0 = 1 := by
+    simp [tensorPowerDimension]
+  have hR :
+      Superoperator.comp
+          (Superoperator.ofEquivalence (homogeneousLeftUnitorEquiv 0 0))
+          (Superoperator.ofEquivalence (tensorSplitEquiv 0 0 0)) =
+        Superoperator.ofEquivalence
+          ((tensorSplitEquiv 0 0 0).trans (homogeneousLeftUnitorEquiv 0 0)) :=
+    Superoperator.ofEquivalence_comp _ _
+  let eU : Fin (tensorPowerDimension 0 0 * tensorPowerDimension 0 0) ≃
+      Fin (tensorPowerDimension 0 0) :=
+    finCongr (hmid.trans h1.symm)
+  have hU :
+      Superoperator.tensorLeftUnitor (tensorPowerDimension 0 0) =
+        Superoperator.ofEquivalence eU := by
+    change Superoperator.ofEquivalence
+        (Superoperator.tensorLeftUnitorEquiv (tensorPowerDimension 0 0)) =
+      Superoperator.ofEquivalence eU
+    exact ofEquivalence_dim_one (by simp [Nat.one_mul, h1]) h1 _ _
+  have hL :
+      Superoperator.comp
+          (Superoperator.tensorLeftUnitor (tensorPowerDimension 0 0))
+          (Superoperator.ofEquivalence (tensorSplitEquiv 0 0 0)) =
+        Superoperator.ofEquivalence ((tensorSplitEquiv 0 0 0).trans eU) := by
+    rw [hU]
+    exact Superoperator.ofEquivalence_comp (tensorSplitEquiv 0 0 0) eU
+  rw [hL, hR]
+  exact ofEquivalence_dim_one h1 h1 _ _
+
+theorem tensorLeftUnitor_comp_split_of_le_one (A : ℕ) (hA : A ≤ 1) (q : ℕ) :
+    Superoperator.comp
+        (Superoperator.tensorLeftUnitor (tensorPowerDimension A q))
+        (Superoperator.ofEquivalence (tensorSplitEquiv A 0 q)) =
+      Superoperator.comp
+        (Superoperator.ofEquivalence (homogeneousLeftUnitorEquiv A q))
+        (Superoperator.ofEquivalence (tensorSplitEquiv A 0 q)) := by
+  interval_cases A
+  · cases q with
+    | zero => exact tensorLeftUnitor_comp_split_zero
+    | succ q =>
+      apply Superoperator.ext
+      apply CPMap.ext
+      ext a b
+      have hdim : tensorPowerDimension 0 (q + 1) = 0 := by
+        simp [tensorPowerDimension]
+      exact isEmptyElim (show Fin 0 from hdim ▸ a.1)
+  · exact tensorLeftUnitor_comp_split_one q
+
+
+theorem dayLeftUnitor_tensor_id_comp_split_of_le_one (A : ℕ) (hA : A ≤ 1) (q : ℕ) :
+    Superoperator.comp
+        (Superoperator.comp
+          (Superoperator.tensorLeftUnitor (tensorPowerDimension A q))
+          (Superoperator.tensor
+            (Superoperator.identity 1 :
+              Superoperator (tensorPowerDimension A 0) 1)
+            (Superoperator.identity (tensorPowerDimension A q))))
+        (Superoperator.ofEquivalence (tensorSplitEquiv A 0 q)) =
+      Superoperator.comp
+        (Superoperator.ofEquivalence (homogeneousLeftUnitorEquiv A q))
+        (Superoperator.ofEquivalence (tensorSplitEquiv A 0 q)) := by
+  have hten :
+      Superoperator.tensor
+          (Superoperator.identity 1 :
+            Superoperator (tensorPowerDimension A 0) 1)
+          (Superoperator.identity (tensorPowerDimension A q)) =
+        Superoperator.identity
+          (tensorPowerDimension A 0 * tensorPowerDimension A q) := by
+    convert Superoperator.tensor_identity (n := 1)
+      (ℓ := tensorPowerDimension A q)
+    · rfl
+  have hmid :
+      Superoperator.comp
+          (Superoperator.comp
+            (Superoperator.tensorLeftUnitor (tensorPowerDimension A q))
+            (Superoperator.tensor
+              (Superoperator.identity 1 :
+                Superoperator (tensorPowerDimension A 0) 1)
+              (Superoperator.identity (tensorPowerDimension A q))))
+          (Superoperator.ofEquivalence (tensorSplitEquiv A 0 q)) =
+        Superoperator.comp
+          (Superoperator.comp
+            (Superoperator.tensorLeftUnitor (tensorPowerDimension A q))
+            (Superoperator.identity
+              (tensorPowerDimension A 0 * tensorPowerDimension A q)))
+          (Superoperator.ofEquivalence (tensorSplitEquiv A 0 q)) :=
+    congrArg
+      (fun t => Superoperator.comp
+        (Superoperator.comp
+          (Superoperator.tensorLeftUnitor (tensorPowerDimension A q)) t)
+        (Superoperator.ofEquivalence (tensorSplitEquiv A 0 q)))
+      hten
+  refine hmid.trans ?_
+  have hid :
+      Superoperator.comp
+          (Superoperator.tensorLeftUnitor (tensorPowerDimension A q))
+          (Superoperator.identity
+            (tensorPowerDimension A 0 * tensorPowerDimension A q)) =
+        Superoperator.tensorLeftUnitor (tensorPowerDimension A q) := by
+    convert Superoperator.comp_identity
+      (Superoperator.tensorLeftUnitor (tensorPowerDimension A q))
+    simp [tensorPowerDimension]
+  have houter := congrArg
+    (fun t => Superoperator.comp t
+      (Superoperator.ofEquivalence (tensorSplitEquiv A 0 q)))
+    hid
+  exact houter.trans (tensorLeftUnitor_comp_split_of_le_one A hA q)
+
+
+theorem bangCounit_degreeUnit_of_pos (A p : ℕ) (hp : p ≠ 0) :
+    (bangCounit A).app (tensorPowerDimension A p) (bangDegreeUnit A p) =
+      (0 : Superoperator (tensorPowerDimension A p) 1) := by
+  change (bangDegreeUnit A p 0).val =
+    (0 : Superoperator (tensorPowerDimension A p) 1)
+  have h0 : bangDegreeUnit A p 0 =
+      (0 : SymmetricElement A 0 (tensorPowerDimension A p)) := by
+    rw [bangDegreeUnit_apply]
+    simp only [show ¬(0 = p) from fun h => hp h.symm, ↓reduceDIte]
+    rfl
+  rw [h0]
+  exact SymmetricElement.zero_val A 0 (tensorPowerDimension A p)
+
+theorem bangCounit_degreeUnit_zero (A : ℕ) :
+    (bangCounit A).app (tensorPowerDimension A 0) (bangDegreeUnit A 0) =
+      (Superoperator.identity 1 :
+        Superoperator (tensorPowerDimension A 0) 1) := by
+  change (bangDegreeUnit A 0 0).val =
+    (Superoperator.identity 1 : Superoperator (tensorPowerDimension A 0) 1)
+  have h :
+      bangDegreeUnit A 0 0 =
+        (symmetricPowerProjection A 0).app
+          (tensorPowerDimension A 0)
+          (Superoperator.identity (tensorPowerDimension A 0)) := by
+    simp [bangDegreeUnit_apply]
+  rw [h]
+  change Superoperator.comp (symmetricAverage A 0)
+      (Superoperator.identity (tensorPowerDimension A 0)) =
+    (Superoperator.identity 1 : Superoperator (tensorPowerDimension A 0) 1)
+  rw [Superoperator.comp_identity]
+  apply Superoperator.ext
+  apply CPMap.ext_apply
+  intro ρ
+  rw [symmetricAverage_applyMat]
+  have hperm (σ : Equiv.Perm (Fin 0)) :
+      factorPermutation A 0 σ =
+        Superoperator.identity (tensorPowerDimension A 0) := by
+    change Superoperator.ofEquivalence (factorPermutationEquiv A 0 σ) = _
+    have : factorPermutationEquiv A 0 σ = Equiv.refl _ := by
+      apply Equiv.ext
+      intro i
+      apply Fin.ext
+      exact (fin_val_eq_zero_of_card_one (rfl : tensorPowerDimension A 0 = 1) _).trans
+        (fin_val_eq_zero_of_card_one rfl _).symm
+    rw [this, Superoperator.ofEquivalence_refl]
+  simp_rw [hperm]
+  have hid :
+      (Superoperator.identity (tensorPowerDimension A 0)).cp.applyMat ρ = ρ := by
+    change (CPMap.identity _).applyMat ρ = ρ
+    exact CPMap.applyMat_identity ρ
+  simp_rw [hid]
+  rw [Finset.sum_const]
+  have hcard : (Finset.univ : Finset (Equiv.Perm (Fin 0))).card = 1 := by decide
+  rw [hcard, ← Nat.cast_smul_eq_nsmul ℂ, smul_smul]
+  norm_num
+  change ρ = (CPMap.identity 1).applyMat ρ
+  exact (CPMap.applyMat_identity ρ).symm
+
+theorem leftCounit_bangComultComponent (A p q n : ℕ)
+    (x : ((bang A).obj n).Carrier) :
+    (Hom.comp (DayTensor.leftUnitor (bang A))
+        (Hom.comp (DayTensor.map (bangCounit A) (Hom.id (bang A)))
+          (bangComultComponent A p q))).app n x =
+      (bang A).act (bangDegreeUnit A q)
+        (Superoperator.comp
+          (Superoperator.comp
+            (Superoperator.tensorLeftUnitor (tensorPowerDimension A q))
+            (Superoperator.tensor
+              ((bangCounit A).app (tensorPowerDimension A p) (bangDegreeUnit A p))
+              (Superoperator.identity (tensorPowerDimension A q))))
+          ((bangSplitComponent A p q).app n x)) := by
+  have he := bangComultComponent_evaluate A p q n x
+      (dayTensor dayTensorUnit (bang A))
+      (DayTensor.mapBilinear (bangCounit A) (Hom.id (bang A)))
+  have hmap :
+      (DayTensor.map (bangCounit A) (Hom.id (bang A))).app n
+          ((bangComultComponent A p q).app n x) =
+        (dayTensor dayTensorUnit (bang A)).act
+          ((DayTensor.mapBilinear (bangCounit A) (Hom.id (bang A))).app
+            (bangDegreeUnit A p) (bangDegreeUnit A q))
+          ((bangSplitComponent A p q).app n x) := by
+    simpa [DayTensor.map, DayCoend.lift] using he
+  let Φ : Superoperator n
+      (tensorPowerDimension A p * tensorPowerDimension A q) :=
+    (bangSplitComponent A p q).app n x
+  let q0 : Superoperator (tensorPowerDimension A p) 1 :=
+    (bangCounit A).app (tensorPowerDimension A p) (bangDegreeUnit A p)
+  let uq := bangDegreeUnit A q
+  have hmap' :
+      (DayTensor.map (bangCounit A) (Hom.id (bang A))).app n
+          ((bangComultComponent A p q).app n x) =
+        (dayTensor dayTensorUnit (bang A)).act
+          ((DayCoend.intro dayTensorUnit (bang A)).app q0 uq) Φ := by
+    simpa [DayTensor.mapBilinear, Hom.id_app] using hmap
+  change
+    (DayTensor.leftUnitor (bang A)).app n
+        ((DayTensor.map (bangCounit A) (Hom.id (bang A))).app n
+          ((bangComultComponent A p q).app n x)) =
+      (bang A).act uq
+        (Superoperator.comp
+          (Superoperator.comp
+            (Superoperator.tensorLeftUnitor (tensorPowerDimension A q))
+            (Superoperator.tensor q0
+              (Superoperator.identity (tensorPowerDimension A q))))
+          Φ)
+  rw [hmap']
+  have hnat :=
+    (DayTensor.leftUnitor (bang A)).naturality
+      ((DayCoend.intro dayTensorUnit (bang A)).app q0 uq) Φ
+  rw [hnat, DayTensor.leftUnitor_intro q0 uq, (bang A).act_comp]
+
+theorem leftCounit_bangComultComponent_zero_of_le_one (A : ℕ) (hA : A ≤ 1)
+    (q n : ℕ) (x : ((bang A).obj n).Carrier) :
+    (Hom.comp (DayTensor.leftUnitor (bang A))
+        (Hom.comp (DayTensor.map (bangCounit A) (Hom.id (bang A)))
+          (bangComultComponent A 0 q))).app n x =
+      (bangInjection A q).app n (x q) := by
+  rw [leftCounit_bangComultComponent, bangCounit_degreeUnit_zero]
+  funext j
+  by_cases hj : j = q
+  · subst j
+    apply SymmetricElement.ext
+    have hu :
+        bangDegreeUnit A q q =
+          (symmetricPowerProjection A q).app
+            (tensorPowerDimension A q)
+            (Superoperator.identity (tensorPowerDimension A q)) := by
+      simp [bangDegreeUnit_apply]
+    simp only [bangInjection, countableProductInjection, ↓reduceDIte]
+    let U : Superoperator (1 * tensorPowerDimension A q)
+        (tensorPowerDimension A q) :=
+      Superoperator.tensorLeftUnitor (tensorPowerDimension A q)
+    let T : Superoperator
+        (tensorPowerDimension A 0 * tensorPowerDimension A q)
+        (1 * tensorPowerDimension A q) :=
+      Superoperator.tensor
+        (Superoperator.identity 1 :
+          Superoperator (tensorPowerDimension A 0) 1)
+        (Superoperator.identity (tensorPowerDimension A q))
+    let S : Superoperator (tensorPowerDimension A (0 + q))
+        (tensorPowerDimension A 0 * tensorPowerDimension A q) :=
+      Superoperator.ofEquivalence (tensorSplitEquiv A 0 q)
+    change Superoperator.comp (bangDegreeUnit A q q).val
+        (Superoperator.comp (Superoperator.comp U T)
+          ((bangSplitComponent A 0 q).app n x)) =
+      (x q).val
+    rw [hu]
+    change Superoperator.comp
+        (Superoperator.comp (symmetricAverage A q) (Superoperator.identity _))
+        (Superoperator.comp (Superoperator.comp U T)
+          (Superoperator.comp S (x (0 + q)).val)) =
+      (x q).val
+    rw [Superoperator.comp_identity, symmetricAverage_of_le_one A q hA,
+      Superoperator.identity_comp]
+    -- After the above, goal is (U.comp T).comp (S.comp x.val) = (x q).val
+    let H := Superoperator.ofEquivalence (homogeneousLeftUnitorEquiv A q)
+    calc
+      Superoperator.comp (Superoperator.comp U T)
+          (Superoperator.comp S (x (0 + q)).val) =
+          Superoperator.comp
+            (Superoperator.comp (Superoperator.comp U T) S)
+            (x (0 + q)).val :=
+        Superoperator.comp_assoc (Superoperator.comp U T) S (x (0 + q)).val
+      _ = Superoperator.comp (Superoperator.comp H S) (x (0 + q)).val :=
+        congrArg (fun t => Superoperator.comp t (x (0 + q)).val)
+          (dayLeftUnitor_tensor_id_comp_split_of_le_one A hA q)
+      _ = Superoperator.comp H (Superoperator.comp S (x (0 + q)).val) :=
+        (Superoperator.comp_assoc H S (x (0 + q)).val).symm
+      _ = (x q).val :=
+        SymmetricElement.left_counit x
+  · apply SymmetricElement.ext
+    have hu : bangDegreeUnit A q j =
+        (0 : SymmetricElement A j (tensorPowerDimension A q)) := by
+      rw [bangDegreeUnit_apply]
+      simp only [show ¬(j = q) from hj, ↓reduceDIte]
+      rfl
+    have hz : (bangDegreeUnit A q j).val =
+        (0 : Superoperator (tensorPowerDimension A q)
+          (tensorPowerDimension A j)) := by
+      rw [hu, SymmetricElement.zero_val]
+    change Superoperator.comp (bangDegreeUnit A q j).val _ =
+      ((bangInjection A q).app n (x q) j).val
+    rw [hz, Superoperator.comp_zero_left]
+    simp only [bangInjection, countableProductInjection, hj, ↓reduceDIte]
+    rfl
+
+
+theorem leftCounit_bangComultComponent_of_pos (A p q n : ℕ) (hp : p ≠ 0)
+    (x : ((bang A).obj n).Carrier) :
+    (Hom.comp (DayTensor.leftUnitor (bang A))
+        (Hom.comp (DayTensor.map (bangCounit A) (Hom.id (bang A)))
+          (bangComultComponent A p q))).app n x = 0 := by
+  rw [leftCounit_bangComultComponent, bangCounit_degreeUnit_of_pos A p hp]
+  let Φ : Superoperator n
+      (tensorPowerDimension A p * tensorPowerDimension A q) :=
+    (bangSplitComponent A p q).app n x
+  change
+    (bang A).act (bangDegreeUnit A q)
+      (Superoperator.comp
+        (Superoperator.comp
+          (Superoperator.tensorLeftUnitor (tensorPowerDimension A q))
+          (Superoperator.tensor
+            (0 : Superoperator (tensorPowerDimension A p) 1)
+            (Superoperator.identity (tensorPowerDimension A q))))
+        Φ) = 0
+  rw [Superoperator.tensor_zero_left, Superoperator.comp_zero_right,
+    Superoperator.comp_zero_left, (bang A).act_zero_map]
+
+/-- The Day left-counit composite equals the identity for `A ≤ 1`. -/
+theorem bang_left_counit_of_le_one (A : ℕ) (hA : A ≤ 1) :
+    Hom.comp (DayTensor.leftUnitor (bang A))
+        (Hom.comp (DayTensor.map (bangCounit A) (Hom.id (bang A)))
+          (bangComult_of_le_one A hA)) =
+      Hom.id (bang A) := by
+  ext n x
+  let hAd := bangComultComponentsAdmissible_of_le_one A hA
+  change
+    (DayTensor.leftUnitor (bang A)).app n
+      ((DayTensor.map (bangCounit A) (Hom.id (bang A))).app n
+        (bangComultApp A hAd n x)) =
+      x
+  have hmap_sum :
+      ((dayTensor dayTensorUnit (bang A)).obj n).HasSum
+        (fun pq : ℕ × ℕ =>
+          (DayTensor.map (bangCounit A) (Hom.id (bang A))).app n
+            (bangComultComponentFamily A n x pq))
+        ((DayTensor.map (bangCounit A) (Hom.id (bang A))).app n
+          (bangComultApp A hAd n x)) := by
+    simpa [DayTensor.map, DayCoend.lift] using
+      bangComultApp_hasSum A hAd n x
+        (dayTensor dayTensorUnit (bang A))
+        (DayTensor.mapBilinear (bangCounit A) (Hom.id (bang A)))
+  have hsum' :
+      ((bang A).obj n).HasSum
+        (fun pq : ℕ × ℕ =>
+          (Hom.comp (DayTensor.leftUnitor (bang A))
+            (Hom.comp (DayTensor.map (bangCounit A) (Hom.id (bang A)))
+              (bangComultComponent A pq.1 pq.2))).app n x)
+        ((DayTensor.leftUnitor (bang A)).app n
+          ((DayTensor.map (bangCounit A) (Hom.id (bang A))).app n
+            (bangComultApp A hAd n x))) :=
+    (DayTensor.leftUnitor (bang A)).map_sum hmap_sum
+  have hfam :
+      (fun pq : ℕ × ℕ =>
+          (Hom.comp (DayTensor.leftUnitor (bang A))
+            (Hom.comp (DayTensor.map (bangCounit A) (Hom.id (bang A)))
+              (bangComultComponent A pq.1 pq.2))).app n x) =
+        fun pq : ℕ × ℕ =>
+          if h : pq.1 = 0 then
+            (bangInjection A pq.2).app n (x pq.2)
+          else 0 := by
+    funext pq
+    by_cases hp : pq.1 = 0
+    · simp only [hp, ↓reduceDIte]
+      exact leftCounit_bangComultComponent_zero_of_le_one A hA pq.2 n x
+    · simp only [hp, ↓reduceDIte]
+      exact leftCounit_bangComultComponent_of_pos A pq.1 pq.2 n hp x
+  rw [hfam] at hsum'
+  have hcoord :=
+    countableProduct_hasSum_coordinates
+      (fun j => symmetricPower A j) n x
+  have hid :
+      ((bang A).obj n).HasSum
+        (fun pq : ℕ × ℕ =>
+          if h : pq.1 = 0 then (bangInjection A pq.2).app n (x pq.2) else 0)
+        x := by
+    have hflat :
+        ((bang A).obj n).HasSum
+          (fun p : Σ _ : ℕ, ℕ =>
+            if h : p.1 = 0 then (bangInjection A p.2).app n (x p.2) else 0)
+          x := by
+      refine
+        ((bang A).obj n).summation.flatten
+          (fun p q =>
+            if h : p = 0 then (bangInjection A q).app n (x q) else 0)
+          x |>.mpr ⟨fun p => if h : p = 0 then x else 0, ?_, ?_⟩
+      · intro p
+        by_cases hp : p = 0
+        · simp only [hp, ↓reduceDIte]
+          exact hcoord
+        · simp only [hp, ↓reduceDIte]
+          exact Fiber.hasSum_zero _
+      · convert Fiber.hasSum_singleAt ((bang A).obj n) (0 : ℕ) x using 1
+        funext p
+        by_cases hp : p = 0 <;> simp [hp]
+    exact
+      ((bang A).obj n).summation.reindex (Equiv.sigmaEquivProd ℕ ℕ)
+        (fun pq =>
+          if h : pq.1 = 0 then (bangInjection A pq.2).app n (x pq.2) else 0)
+        x |>.mp hflat
+  exact ((bang A).obj n).summation.unique hsum' hid
+
+
+/-! ## Day right-counit ingredients for `A ≤ 1` -/
+
+theorem tensorRightUnitor_comp_split_one (p : ℕ) :
+    Superoperator.comp
+        (Superoperator.tensorRightUnitor (tensorPowerDimension 1 p))
+        (Superoperator.ofEquivalence (tensorSplitEquiv 1 p 0)) =
+      Superoperator.comp
+        (Superoperator.ofEquivalence (homogeneousRightUnitorEquiv 1 p))
+        (Superoperator.ofEquivalence (tensorSplitEquiv 1 p 0)) := by
+  have hsrc : tensorPowerDimension 1 (p + 0) = 1 := by
+    rw [Nat.add_zero]; exact tensorPowerDimension_one_eq p
+  have htgt : tensorPowerDimension 1 p = 1 := tensorPowerDimension_one_eq p
+  have hmid : tensorPowerDimension 1 p * tensorPowerDimension 1 0 = 1 := by
+    simp [tensorPowerDimension]
+  have hR :
+      Superoperator.comp
+          (Superoperator.ofEquivalence (homogeneousRightUnitorEquiv 1 p))
+          (Superoperator.ofEquivalence (tensorSplitEquiv 1 p 0)) =
+        Superoperator.ofEquivalence
+          ((tensorSplitEquiv 1 p 0).trans (homogeneousRightUnitorEquiv 1 p)) :=
+    Superoperator.ofEquivalence_comp _ _
+  let eU : Fin (tensorPowerDimension 1 p * tensorPowerDimension 1 0) ≃
+      Fin (tensorPowerDimension 1 p) :=
+    finCongr (hmid.trans htgt.symm)
+  have hU :
+      Superoperator.tensorRightUnitor (tensorPowerDimension 1 p) =
+        Superoperator.ofEquivalence eU := by
+    change Superoperator.ofEquivalence
+        (Superoperator.tensorRightUnitorEquiv (tensorPowerDimension 1 p)) =
+      Superoperator.ofEquivalence eU
+    refine ofEquivalence_dim_one ?_ htgt _ _
+    simp [tensorPowerDimension, htgt]
+  have hL :
+      Superoperator.comp
+          (Superoperator.tensorRightUnitor (tensorPowerDimension 1 p))
+          (Superoperator.ofEquivalence (tensorSplitEquiv 1 p 0)) =
+        Superoperator.ofEquivalence ((tensorSplitEquiv 1 p 0).trans eU) := by
+    rw [hU]
+    exact Superoperator.ofEquivalence_comp (tensorSplitEquiv 1 p 0) eU
+  rw [hL, hR]
+  exact ofEquivalence_dim_one hsrc htgt _ _
+
+theorem tensorRightUnitor_comp_split_zero :
+    Superoperator.comp
+        (Superoperator.tensorRightUnitor (tensorPowerDimension 0 0))
+        (Superoperator.ofEquivalence (tensorSplitEquiv 0 0 0)) =
+      Superoperator.comp
+        (Superoperator.ofEquivalence (homogeneousRightUnitorEquiv 0 0))
+        (Superoperator.ofEquivalence (tensorSplitEquiv 0 0 0)) := by
+  have h1 : tensorPowerDimension 0 0 = 1 := rfl
+  have hmid : tensorPowerDimension 0 0 * tensorPowerDimension 0 0 = 1 := by
+    simp [tensorPowerDimension]
+  have hR :
+      Superoperator.comp
+          (Superoperator.ofEquivalence (homogeneousRightUnitorEquiv 0 0))
+          (Superoperator.ofEquivalence (tensorSplitEquiv 0 0 0)) =
+        Superoperator.ofEquivalence
+          ((tensorSplitEquiv 0 0 0).trans (homogeneousRightUnitorEquiv 0 0)) :=
+    Superoperator.ofEquivalence_comp _ _
+  let eU : Fin (tensorPowerDimension 0 0 * tensorPowerDimension 0 0) ≃
+      Fin (tensorPowerDimension 0 0) :=
+    finCongr (hmid.trans h1.symm)
+  have hU :
+      Superoperator.tensorRightUnitor (tensorPowerDimension 0 0) =
+        Superoperator.ofEquivalence eU := by
+    change Superoperator.ofEquivalence
+        (Superoperator.tensorRightUnitorEquiv (tensorPowerDimension 0 0)) =
+      Superoperator.ofEquivalence eU
+    exact ofEquivalence_dim_one (by simp [Nat.mul_one, h1]) h1 _ _
+  have hL :
+      Superoperator.comp
+          (Superoperator.tensorRightUnitor (tensorPowerDimension 0 0))
+          (Superoperator.ofEquivalence (tensorSplitEquiv 0 0 0)) =
+        Superoperator.ofEquivalence ((tensorSplitEquiv 0 0 0).trans eU) := by
+    rw [hU]
+    exact Superoperator.ofEquivalence_comp (tensorSplitEquiv 0 0 0) eU
+  rw [hL, hR]
+  exact ofEquivalence_dim_one h1 h1 _ _
+
+theorem tensorRightUnitor_comp_split_of_le_one (A : ℕ) (hA : A ≤ 1) (p : ℕ) :
+    Superoperator.comp
+        (Superoperator.tensorRightUnitor (tensorPowerDimension A p))
+        (Superoperator.ofEquivalence (tensorSplitEquiv A p 0)) =
+      Superoperator.comp
+        (Superoperator.ofEquivalence (homogeneousRightUnitorEquiv A p))
+        (Superoperator.ofEquivalence (tensorSplitEquiv A p 0)) := by
+  interval_cases A
+  · cases p with
+    | zero => exact tensorRightUnitor_comp_split_zero
+    | succ p =>
+      apply Superoperator.ext
+      apply CPMap.ext
+      ext a b
+      have hdim : tensorPowerDimension 0 (p + 1) = 0 := by
+        simp [tensorPowerDimension]
+      exact isEmptyElim (show Fin 0 from hdim ▸ a.1)
+  · exact tensorRightUnitor_comp_split_one p
+
+theorem dayRightUnitor_id_tensor_comp_split_of_le_one (A : ℕ) (hA : A ≤ 1) (p : ℕ) :
+    Superoperator.comp
+        (Superoperator.comp
+          (Superoperator.tensorRightUnitor (tensorPowerDimension A p))
+          (Superoperator.tensor
+            (Superoperator.identity (tensorPowerDimension A p))
+            (Superoperator.identity 1 :
+              Superoperator (tensorPowerDimension A 0) 1)))
+        (Superoperator.ofEquivalence (tensorSplitEquiv A p 0)) =
+      Superoperator.comp
+        (Superoperator.ofEquivalence (homogeneousRightUnitorEquiv A p))
+        (Superoperator.ofEquivalence (tensorSplitEquiv A p 0)) := by
+  have hten :
+      Superoperator.tensor
+          (Superoperator.identity (tensorPowerDimension A p))
+          (Superoperator.identity 1 :
+            Superoperator (tensorPowerDimension A 0) 1) =
+        Superoperator.identity
+          (tensorPowerDimension A p * tensorPowerDimension A 0) := by
+    convert Superoperator.tensor_identity
+      (n := tensorPowerDimension A p) (ℓ := 1) using 1
+    · simp [tensorPowerDimension]
+  have hmid :
+      Superoperator.comp
+          (Superoperator.comp
+            (Superoperator.tensorRightUnitor (tensorPowerDimension A p))
+            (Superoperator.tensor
+              (Superoperator.identity (tensorPowerDimension A p))
+              (Superoperator.identity 1 :
+                Superoperator (tensorPowerDimension A 0) 1)))
+          (Superoperator.ofEquivalence (tensorSplitEquiv A p 0)) =
+        Superoperator.comp
+          (Superoperator.comp
+            (Superoperator.tensorRightUnitor (tensorPowerDimension A p))
+            (Superoperator.identity
+              (tensorPowerDimension A p * tensorPowerDimension A 0)))
+          (Superoperator.ofEquivalence (tensorSplitEquiv A p 0)) :=
+    congrArg
+      (fun t => Superoperator.comp
+        (Superoperator.comp
+          (Superoperator.tensorRightUnitor (tensorPowerDimension A p)) t)
+        (Superoperator.ofEquivalence (tensorSplitEquiv A p 0)))
+      hten
+  refine hmid.trans ?_
+  have hid :
+      Superoperator.comp
+          (Superoperator.tensorRightUnitor (tensorPowerDimension A p))
+          (Superoperator.identity
+            (tensorPowerDimension A p * tensorPowerDimension A 0)) =
+        Superoperator.tensorRightUnitor (tensorPowerDimension A p) := by
+    convert Superoperator.comp_identity
+      (Superoperator.tensorRightUnitor (tensorPowerDimension A p))
+    simp [tensorPowerDimension]
+  have houter := congrArg
+    (fun t => Superoperator.comp t
+      (Superoperator.ofEquivalence (tensorSplitEquiv A p 0)))
+    hid
+  exact houter.trans (tensorRightUnitor_comp_split_of_le_one A hA p)
+
+theorem rightCounit_bangComultComponent (A p q n : ℕ)
+    (x : ((bang A).obj n).Carrier) :
+    (Hom.comp (DayTensor.rightUnitor (bang A))
+        (Hom.comp (DayTensor.map (Hom.id (bang A)) (bangCounit A))
+          (bangComultComponent A p q))).app n x =
+      (bang A).act (bangDegreeUnit A p)
+        (Superoperator.comp
+          (Superoperator.comp
+            (Superoperator.tensorRightUnitor (tensorPowerDimension A p))
+            (Superoperator.tensor
+              (Superoperator.identity (tensorPowerDimension A p))
+              ((bangCounit A).app (tensorPowerDimension A q) (bangDegreeUnit A q))))
+          ((bangSplitComponent A p q).app n x)) := by
+  have he := bangComultComponent_evaluate A p q n x
+      (dayTensor (bang A) dayTensorUnit)
+      (DayTensor.mapBilinear (Hom.id (bang A)) (bangCounit A))
+  have hmap :
+      (DayTensor.map (Hom.id (bang A)) (bangCounit A)).app n
+          ((bangComultComponent A p q).app n x) =
+        (dayTensor (bang A) dayTensorUnit).act
+          ((DayTensor.mapBilinear (Hom.id (bang A)) (bangCounit A)).app
+            (bangDegreeUnit A p) (bangDegreeUnit A q))
+          ((bangSplitComponent A p q).app n x) := by
+    simpa [DayTensor.map, DayCoend.lift] using he
+  let Φ : Superoperator n
+      (tensorPowerDimension A p * tensorPowerDimension A q) :=
+    (bangSplitComponent A p q).app n x
+  let q0 : Superoperator (tensorPowerDimension A q) 1 :=
+    (bangCounit A).app (tensorPowerDimension A q) (bangDegreeUnit A q)
+  let up := bangDegreeUnit A p
+  have hmap' :
+      (DayTensor.map (Hom.id (bang A)) (bangCounit A)).app n
+          ((bangComultComponent A p q).app n x) =
+        (dayTensor (bang A) dayTensorUnit).act
+          ((DayCoend.intro (bang A) dayTensorUnit).app up q0) Φ := by
+    simpa [DayTensor.mapBilinear, Hom.id_app] using hmap
+  change
+    (DayTensor.rightUnitor (bang A)).app n
+        ((DayTensor.map (Hom.id (bang A)) (bangCounit A)).app n
+          ((bangComultComponent A p q).app n x)) =
+      (bang A).act up
+        (Superoperator.comp
+          (Superoperator.comp
+            (Superoperator.tensorRightUnitor (tensorPowerDimension A p))
+            (Superoperator.tensor
+              (Superoperator.identity (tensorPowerDimension A p)) q0))
+          Φ)
+  rw [hmap']
+  have hnat :=
+    (DayTensor.rightUnitor (bang A)).naturality
+      ((DayCoend.intro (bang A) dayTensorUnit).app up q0) Φ
+  rw [hnat, DayTensor.rightUnitor_intro up q0, (bang A).act_comp]
+
+theorem rightCounit_bangComultComponent_zero_of_le_one (A : ℕ) (hA : A ≤ 1)
+    (p n : ℕ) (x : ((bang A).obj n).Carrier) :
+    (Hom.comp (DayTensor.rightUnitor (bang A))
+        (Hom.comp (DayTensor.map (Hom.id (bang A)) (bangCounit A))
+          (bangComultComponent A p 0))).app n x =
+      (bangInjection A p).app n (x p) := by
+  rw [rightCounit_bangComultComponent, bangCounit_degreeUnit_zero]
+  funext j
+  by_cases hj : j = p
+  · subst j
+    apply SymmetricElement.ext
+    have hu :
+        bangDegreeUnit A p p =
+          (symmetricPowerProjection A p).app
+            (tensorPowerDimension A p)
+            (Superoperator.identity (tensorPowerDimension A p)) := by
+      simp [bangDegreeUnit_apply]
+    simp only [bangInjection, countableProductInjection, ↓reduceDIte]
+    let U : Superoperator (tensorPowerDimension A p * 1)
+        (tensorPowerDimension A p) :=
+      Superoperator.tensorRightUnitor (tensorPowerDimension A p)
+    let T : Superoperator
+        (tensorPowerDimension A p * tensorPowerDimension A 0)
+        (tensorPowerDimension A p * 1) :=
+      Superoperator.tensor
+        (Superoperator.identity (tensorPowerDimension A p))
+        (Superoperator.identity 1 :
+          Superoperator (tensorPowerDimension A 0) 1)
+    let S : Superoperator (tensorPowerDimension A (p + 0))
+        (tensorPowerDimension A p * tensorPowerDimension A 0) :=
+      Superoperator.ofEquivalence (tensorSplitEquiv A p 0)
+    change Superoperator.comp (bangDegreeUnit A p p).val
+        (Superoperator.comp (Superoperator.comp U T)
+          ((bangSplitComponent A p 0).app n x)) =
+      (x p).val
+    rw [hu]
+    change Superoperator.comp
+        (Superoperator.comp (symmetricAverage A p) (Superoperator.identity _))
+        (Superoperator.comp (Superoperator.comp U T)
+          (Superoperator.comp S (x (p + 0)).val)) =
+      (x p).val
+    rw [Superoperator.comp_identity, symmetricAverage_of_le_one A p hA,
+      Superoperator.identity_comp]
+    let H := Superoperator.ofEquivalence (homogeneousRightUnitorEquiv A p)
+    calc
+      Superoperator.comp (Superoperator.comp U T)
+          (Superoperator.comp S (x (p + 0)).val) =
+          Superoperator.comp
+            (Superoperator.comp (Superoperator.comp U T) S)
+            (x (p + 0)).val :=
+        Superoperator.comp_assoc (Superoperator.comp U T) S (x (p + 0)).val
+      _ = Superoperator.comp (Superoperator.comp H S) (x (p + 0)).val :=
+        congrArg (fun t => Superoperator.comp t (x (p + 0)).val)
+          (dayRightUnitor_id_tensor_comp_split_of_le_one A hA p)
+      _ = Superoperator.comp H (Superoperator.comp S (x (p + 0)).val) :=
+        (Superoperator.comp_assoc H S (x (p + 0)).val).symm
+      _ = (x p).val :=
+        SymmetricElement.right_counit x
+  · apply SymmetricElement.ext
+    have hu : bangDegreeUnit A p j =
+        (0 : SymmetricElement A j (tensorPowerDimension A p)) := by
+      rw [bangDegreeUnit_apply]
+      simp only [show ¬(j = p) from hj, ↓reduceDIte]
+      rfl
+    have hz : (bangDegreeUnit A p j).val =
+        (0 : Superoperator (tensorPowerDimension A p)
+          (tensorPowerDimension A j)) := by
+      rw [hu, SymmetricElement.zero_val]
+    change Superoperator.comp (bangDegreeUnit A p j).val _ =
+      ((bangInjection A p).app n (x p) j).val
+    rw [hz, Superoperator.comp_zero_left]
+    simp only [bangInjection, countableProductInjection, hj, ↓reduceDIte]
+    rfl
+
+theorem rightCounit_bangComultComponent_of_pos (A p q n : ℕ) (hq : q ≠ 0)
+    (x : ((bang A).obj n).Carrier) :
+    (Hom.comp (DayTensor.rightUnitor (bang A))
+        (Hom.comp (DayTensor.map (Hom.id (bang A)) (bangCounit A))
+          (bangComultComponent A p q))).app n x = 0 := by
+  rw [rightCounit_bangComultComponent, bangCounit_degreeUnit_of_pos A q hq]
+  let Φ : Superoperator n
+      (tensorPowerDimension A p * tensorPowerDimension A q) :=
+    (bangSplitComponent A p q).app n x
+  change
+    (bang A).act (bangDegreeUnit A p)
+      (Superoperator.comp
+        (Superoperator.comp
+          (Superoperator.tensorRightUnitor (tensorPowerDimension A p))
+          (Superoperator.tensor
+            (Superoperator.identity (tensorPowerDimension A p))
+            (0 : Superoperator (tensorPowerDimension A q) 1)))
+        Φ) = 0
+  rw [Superoperator.tensor_zero_right, Superoperator.comp_zero_right,
+    Superoperator.comp_zero_left, (bang A).act_zero_map]
+
+/-- The Day right-counit composite equals the identity for `A ≤ 1`. -/
+theorem bang_right_counit_of_le_one (A : ℕ) (hA : A ≤ 1) :
+    Hom.comp (DayTensor.rightUnitor (bang A))
+        (Hom.comp (DayTensor.map (Hom.id (bang A)) (bangCounit A))
+          (bangComult_of_le_one A hA)) =
+      Hom.id (bang A) := by
+  ext n x
+  let hAd := bangComultComponentsAdmissible_of_le_one A hA
+  change
+    (DayTensor.rightUnitor (bang A)).app n
+      ((DayTensor.map (Hom.id (bang A)) (bangCounit A)).app n
+        (bangComultApp A hAd n x)) =
+      x
+  have hmap_sum :
+      ((dayTensor (bang A) dayTensorUnit).obj n).HasSum
+        (fun pq : ℕ × ℕ =>
+          (DayTensor.map (Hom.id (bang A)) (bangCounit A)).app n
+            (bangComultComponentFamily A n x pq))
+        ((DayTensor.map (Hom.id (bang A)) (bangCounit A)).app n
+          (bangComultApp A hAd n x)) := by
+    simpa [DayTensor.map, DayCoend.lift] using
+      bangComultApp_hasSum A hAd n x
+        (dayTensor (bang A) dayTensorUnit)
+        (DayTensor.mapBilinear (Hom.id (bang A)) (bangCounit A))
+  have hsum' :
+      ((bang A).obj n).HasSum
+        (fun pq : ℕ × ℕ =>
+          (Hom.comp (DayTensor.rightUnitor (bang A))
+            (Hom.comp (DayTensor.map (Hom.id (bang A)) (bangCounit A))
+              (bangComultComponent A pq.1 pq.2))).app n x)
+        ((DayTensor.rightUnitor (bang A)).app n
+          ((DayTensor.map (Hom.id (bang A)) (bangCounit A)).app n
+            (bangComultApp A hAd n x))) :=
+    (DayTensor.rightUnitor (bang A)).map_sum hmap_sum
+  have hfam :
+      (fun pq : ℕ × ℕ =>
+          (Hom.comp (DayTensor.rightUnitor (bang A))
+            (Hom.comp (DayTensor.map (Hom.id (bang A)) (bangCounit A))
+              (bangComultComponent A pq.1 pq.2))).app n x) =
+        fun pq : ℕ × ℕ =>
+          if h : pq.2 = 0 then
+            (bangInjection A pq.1).app n (x pq.1)
+          else 0 := by
+    funext pq
+    by_cases hq : pq.2 = 0
+    · simp only [hq, ↓reduceDIte]
+      exact rightCounit_bangComultComponent_zero_of_le_one A hA pq.1 n x
+    · simp only [hq, ↓reduceDIte]
+      exact rightCounit_bangComultComponent_of_pos A pq.1 pq.2 n hq x
+  rw [hfam] at hsum'
+  have hcoord :=
+    countableProduct_hasSum_coordinates
+      (fun j => symmetricPower A j) n x
+  have hid :
+      ((bang A).obj n).HasSum
+        (fun pq : ℕ × ℕ =>
+          if h : pq.2 = 0 then (bangInjection A pq.1).app n (x pq.1) else 0)
+        x := by
+    have hflat :
+        ((bang A).obj n).HasSum
+          (fun s : Σ _ : ℕ, ℕ =>
+            if h : s.2 = 0 then (bangInjection A s.1).app n (x s.1) else 0)
+          x := by
+      refine
+        ((bang A).obj n).summation.flatten
+          (fun p q =>
+            if h : q = 0 then (bangInjection A p).app n (x p) else 0)
+          x |>.mpr ⟨fun p => (bangInjection A p).app n (x p), ?_, ?_⟩
+      · intro p
+        convert Fiber.hasSum_singleAt ((bang A).obj n) (0 : ℕ)
+          ((bangInjection A p).app n (x p)) using 1
+        funext q
+        by_cases hq : q = 0 <;> simp [hq]
+      · exact hcoord
+    exact
+      ((bang A).obj n).summation.reindex (Equiv.sigmaEquivProd ℕ ℕ)
+        (fun pq =>
+          if h : pq.2 = 0 then (bangInjection A pq.1).app n (x pq.1) else 0)
+        x |>.mp hflat
+  exact ((bang A).obj n).summation.unique hsum' hid
+
+
+/-! ## Day braiding / cocommutativity for `A ≤ 1` -/
+
+theorem bangComultComponent_eq_act (A p q n : ℕ)
+    (x : ((bang A).obj n).Carrier) :
+    (bangComultComponent A p q).app n x =
+      (dayTensor (bang A) (bang A)).act
+        ((DayCoend.intro (bang A) (bang A)).app
+          (bangDegreeUnit A p) (bangDegreeUnit A q))
+        ((bangSplitComponent A p q).app n x :
+          Superoperator n
+            (tensorPowerDimension A p * tensorPowerDimension A q)) := by
+  have h := bangComultComponent_evaluate A p q n x
+    (dayTensor (bang A) (bang A)) (DayCoend.intro (bang A) (bang A))
+  have hs := DayCoend.evaluate_self
+    ((bangComultComponent A p q).app n x)
+  change DayCoend.evaluate (DayCoend.module (bang A) (bang A))
+      (DayCoend.intro (bang A) (bang A))
+      ((bangComultComponent A p q).app n x) =
+    _ at h
+  rw [hs] at h
+  exact h
+
+theorem braiding_bangComultComponent (A p q n : ℕ)
+    (x : ((bang A).obj n).Carrier) :
+    (DayTensor.braiding (bang A) (bang A)).app n
+        ((bangComultComponent A p q).app n x) =
+      (dayTensor (bang A) (bang A)).act
+        ((DayCoend.intro (bang A) (bang A)).app
+          (bangDegreeUnit A q) (bangDegreeUnit A p))
+        (Superoperator.comp
+          (Superoperator.tensorSwap
+            (tensorPowerDimension A p) (tensorPowerDimension A q))
+          ((bangSplitComponent A p q).app n x :
+            Superoperator n
+              (tensorPowerDimension A p * tensorPowerDimension A q))) := by
+  rw [bangComultComponent_eq_act]
+  set Φ : Superoperator n
+      (tensorPowerDimension A p * tensorPowerDimension A q) :=
+    (bangSplitComponent A p q).app n x
+  set gen := (DayCoend.intro (bang A) (bang A)).app
+    (bangDegreeUnit A p) (bangDegreeUnit A q)
+  rw [(DayTensor.braiding (bang A) (bang A)).naturality gen Φ,
+    DayTensor.braiding_intro, (dayTensor (bang A) (bang A)).act_comp]
+
+theorem tensorSwap_eq_ofEquivalence_of_dims_one {a b : ℕ}
+    (ha : a = 1) (hb : b = 1) :
+    Superoperator.tensorSwap a b =
+      Superoperator.ofEquivalence
+        (finCongr (by rw [ha, hb]) :
+          Fin (a * b) ≃ Fin (b * a)) := by
+  change Superoperator.ofEquivalence (Superoperator.tensorSwapEquiv a b) =
+    Superoperator.ofEquivalence _
+  refine ofEquivalence_dim_one (by simp [ha, hb]) (by simp [ha, hb]) _ _
+
+theorem Superoperator.eq_of_codim_zero {n m : ℕ} (hm : m = 0)
+    (f g : Superoperator n m) : f = g := by
+  apply Superoperator.ext
+  apply CPMap.ext
+  ext a b
+  exact isEmptyElim (show Fin 0 from hm ▸ a.1)
+
+theorem dim_eq_one_of_le_one_ne_zero (A : ℕ) (hA : A ≤ 1) (k : ℕ)
+    (h : ¬tensorPowerDimension A k = 0) :
+    tensorPowerDimension A k = 1 := by
+  interval_cases A
+  · cases k with
+    | zero => rfl
+    | succ k => simp [tensorPowerDimension] at h
+  · exact tensorPowerDimension_one_eq k
+
+theorem bangSplit_swap_of_le_one (A : ℕ) (hA : A ≤ 1) (p q n : ℕ)
+    (x : ((bang A).obj n).Carrier) :
+    Superoperator.comp
+        (Superoperator.tensorSwap
+          (tensorPowerDimension A p) (tensorPowerDimension A q))
+        ((bangSplitComponent A p q).app n x :
+          Superoperator n
+            (tensorPowerDimension A p * tensorPowerDimension A q)) =
+      ((bangSplitComponent A q p).app n x :
+        Superoperator n
+          (tensorPowerDimension A q * tensorPowerDimension A p)) := by
+  by_cases hzero :
+      tensorPowerDimension A q * tensorPowerDimension A p = 0
+  · exact Superoperator.eq_of_codim_zero hzero _ _
+  have hp0 : tensorPowerDimension A p ≠ 0 := fun h => hzero (by rw [h, Nat.mul_zero])
+  have hq0 : tensorPowerDimension A q ≠ 0 := fun h => hzero (by rw [h, Nat.zero_mul])
+  have hp := dim_eq_one_of_le_one_ne_zero A hA p hp0
+  have hq := dim_eq_one_of_le_one_ne_zero A hA q hq0
+  have hsw := tensorSwap_eq_ofEquivalence_of_dims_one hp hq
+  have hsrc : tensorPowerDimension A (p + q) = 1 := by
+    rw [tensorPowerDimension_eq_pow, pow_add, ← tensorPowerDimension_eq_pow,
+      ← tensorPowerDimension_eq_pow, hp, hq, one_mul]
+  have htgt : tensorPowerDimension A q * tensorPowerDimension A p = 1 := by
+    rw [hp, hq, one_mul]
+  have hcomm : p + q = q + p := Nat.add_comm p q
+  let eDeg := finCongr (congrArg (tensorPowerDimension A) hcomm)
+  have hx :
+      (x (p + q)).val =
+        Superoperator.comp
+          (Superoperator.ofEquivalence eDeg.symm)
+          (x (q + p)).val := by
+    have hfwd :
+        Superoperator.comp
+            (Superoperator.ofEquivalence eDeg)
+            (x (p + q)).val =
+          (x (q + p)).val :=
+      (SymmetricElement.val_degreeCast hcomm (x (p + q))).trans
+        (congrArg SymmetricElement.val
+          (SymmetricElement.family_degreeCast x hcomm))
+    have hcancel :
+        Superoperator.comp
+            (Superoperator.ofEquivalence eDeg.symm)
+            (Superoperator.ofEquivalence eDeg) =
+          Superoperator.identity (tensorPowerDimension A (p + q)) := by
+      rw [Superoperator.ofEquivalence_comp]
+      convert Superoperator.ofEquivalence_refl _
+      exact Equiv.symm_trans_self _
+    calc
+      (x (p + q)).val =
+          Superoperator.comp
+            (Superoperator.identity (tensorPowerDimension A (p + q)))
+            (x (p + q)).val :=
+        (Superoperator.identity_comp _).symm
+      _ = Superoperator.comp
+            (Superoperator.comp
+              (Superoperator.ofEquivalence eDeg.symm)
+              (Superoperator.ofEquivalence eDeg))
+            (x (p + q)).val := by rw [← hcancel]
+      _ = Superoperator.comp
+            (Superoperator.ofEquivalence eDeg.symm)
+            (Superoperator.comp
+              (Superoperator.ofEquivalence eDeg)
+              (x (p + q)).val) :=
+        (Superoperator.comp_assoc _ _ _).symm
+      _ = Superoperator.comp
+            (Superoperator.ofEquivalence eDeg.symm)
+            (x (q + p)).val :=
+        congrArg _ hfwd
+  let eMul : Fin (tensorPowerDimension A p * tensorPowerDimension A q) ≃
+      Fin (tensorPowerDimension A q * tensorPowerDimension A p) :=
+    finCongr (by rw [hp, hq])
+  simp only [bangSplitComponent]
+  rw [hsw, hx]
+  change
+    Superoperator.comp (Superoperator.ofEquivalence eMul)
+        (Superoperator.comp
+          (Superoperator.ofEquivalence (tensorSplitEquiv A p q))
+          (Superoperator.comp
+            (Superoperator.ofEquivalence eDeg.symm)
+            (x (q + p)).val)) =
+      Superoperator.comp
+        (Superoperator.ofEquivalence (tensorSplitEquiv A q p))
+        (x (q + p)).val
+  -- Target: eMul ∘ split ∘ eDeg⁻¹ ∘ x(q+p) = split(q,p) ∘ x(q+p)
+  -- Collapse the three ofEquivalences, then use Fin-1 uniqueness.
+  have hcollapse :
+      Superoperator.comp (Superoperator.ofEquivalence eMul)
+          (Superoperator.comp
+            (Superoperator.ofEquivalence (tensorSplitEquiv A p q))
+            (Superoperator.ofEquivalence eDeg.symm)) =
+        Superoperator.ofEquivalence
+          ((eDeg.symm.trans (tensorSplitEquiv A p q)).trans eMul) := by
+    rw [Superoperator.ofEquivalence_comp, Superoperator.ofEquivalence_comp]
+  -- Reassociate the application onto x
+  have hreassoc :
+      Superoperator.comp (Superoperator.ofEquivalence eMul)
+          (Superoperator.comp
+            (Superoperator.ofEquivalence (tensorSplitEquiv A p q))
+            (Superoperator.comp
+              (Superoperator.ofEquivalence eDeg.symm)
+              (x (q + p)).val)) =
+        Superoperator.comp
+          (Superoperator.comp (Superoperator.ofEquivalence eMul)
+            (Superoperator.comp
+              (Superoperator.ofEquivalence (tensorSplitEquiv A p q))
+              (Superoperator.ofEquivalence eDeg.symm)))
+          (x (q + p)).val := by
+    rw [Superoperator.comp_assoc
+      (Ψ := Superoperator.ofEquivalence eDeg.symm)]
+    rw [Superoperator.comp_assoc]
+  rw [hreassoc, hcollapse]
+  exact congrArg (fun t => Superoperator.comp t (x (q + p)).val)
+    (ofEquivalence_dim_one (by rw [← hcomm]; exact hsrc) htgt _ _)
+
+theorem braiding_bangComultComponent_eq_of_le_one
+    (A : ℕ) (hA : A ≤ 1) (p q n : ℕ)
+    (x : ((bang A).obj n).Carrier) :
+    (DayTensor.braiding (bang A) (bang A)).app n
+        ((bangComultComponent A p q).app n x) =
+      (bangComultComponent A q p).app n x := by
+  rw [braiding_bangComultComponent, bangSplit_swap_of_le_one A hA p q n x,
+    ← bangComultComponent_eq_act]
+
+
+theorem bang_cocommutative_of_le_one (A : ℕ) (hA : A ≤ 1) :
+    Hom.comp (DayTensor.braiding (bang A) (bang A))
+        (bangComult_of_le_one A hA) =
+      bangComult_of_le_one A hA := by
+  ext n x
+  let hAd := bangComultComponentsAdmissible_of_le_one A hA
+  change
+    (DayTensor.braiding (bang A) (bang A)).app n
+      (bangComultApp A hAd n x) =
+      bangComultApp A hAd n x
+  have hfib :
+      ((dayTensor (bang A) (bang A)).obj n).HasSum
+        (bangComultComponentFamily A n x)
+        (bangComultApp A hAd n x) := by
+    have h := bangComultApp_hasSum A hAd n x
+      (dayTensor (bang A) (bang A)) (DayCoend.intro (bang A) (bang A))
+    have hfun :
+        (fun pq : ℕ × ℕ =>
+            DayCoend.evaluate (dayTensor (bang A) (bang A))
+              (DayCoend.intro (bang A) (bang A))
+              (bangComultComponentFamily A n x pq)) =
+          bangComultComponentFamily A n x := by
+      funext pq
+      exact DayCoend.evaluate_self _
+    have hs := DayCoend.evaluate_self (bangComultApp A hAd n x)
+    change ((dayTensor (bang A) (bang A)).obj n).HasSum
+        (fun pq => DayCoend.evaluate (DayCoend.module (bang A) (bang A))
+          (DayCoend.intro (bang A) (bang A))
+          (bangComultComponentFamily A n x pq))
+        (DayCoend.evaluate (DayCoend.module (bang A) (bang A))
+          (DayCoend.intro (bang A) (bang A))
+          (bangComultApp A hAd n x)) at h
+    rwa [hfun, hs] at h
+  have hbraid :
+      ((dayTensor (bang A) (bang A)).obj n).HasSum
+        (fun pq : ℕ × ℕ =>
+          (DayTensor.braiding (bang A) (bang A)).app n
+            (bangComultComponentFamily A n x pq))
+        ((DayTensor.braiding (bang A) (bang A)).app n
+          (bangComultApp A hAd n x)) :=
+    (DayTensor.braiding (bang A) (bang A)).map_sum hfib
+  have hfam :
+      (fun pq : ℕ × ℕ =>
+          (DayTensor.braiding (bang A) (bang A)).app n
+            (bangComultComponentFamily A n x pq)) =
+        fun pq : ℕ × ℕ =>
+          bangComultComponentFamily A n x (pq.2, pq.1) := by
+    funext pq
+    exact braiding_bangComultComponent_eq_of_le_one A hA pq.1 pq.2 n x
+  rw [hfam] at hbraid
+  have hswap :
+      ((dayTensor (bang A) (bang A)).obj n).HasSum
+        (fun pq : ℕ × ℕ =>
+          bangComultComponentFamily A n x (pq.2, pq.1))
+        (bangComultApp A hAd n x) := by
+    exact
+      (((dayTensor (bang A) (bang A)).obj n).summation.reindex
+        (Equiv.prodComm ℕ ℕ)
+        (bangComultComponentFamily A n x)
+        (bangComultApp A hAd n x)).mpr hfib
+  exact ((dayTensor (bang A) (bang A)).obj n).summation.unique hbraid hswap
+
+
+
+/-! ## Day coassociativity for `A = 0` -/
+
+theorem bangDegreeUnit_zero_zero_val :
+    (bangDegreeUnit 0 0 0).val =
+      Superoperator.identity (tensorPowerDimension 0 0) := by
+  simp only [bangDegreeUnit_apply, ↓reduceDIte]
+  change Superoperator.comp (symmetricAverage 0 0)
+      (Superoperator.identity (tensorPowerDimension 0 0)) =
+    Superoperator.identity (tensorPowerDimension 0 0)
+  rw [Superoperator.comp_identity, symmetricAverage_of_le_one 0 0 (by decide)]
+
+theorem bangComult_degreeUnit_zero :
+    bangComult_zero.app (tensorPowerDimension 0 0) (bangDegreeUnit 0 0) =
+      (DayCoend.intro (bang 0) (bang 0)).app
+        (bangDegreeUnit 0 0) (bangDegreeUnit 0 0) := by
+  rw [bangComult_zero_eq_component, bangComultComponent_eq_act]
+  simp only [bangSplitComponent]
+  rw [bangDegreeUnit_zero_zero_val, Superoperator.comp_identity]
+  have hsplit :
+      Superoperator.ofEquivalence (tensorSplitEquiv 0 0 0) =
+        Superoperator.ofEquivalence
+          (Equiv.refl (Fin (tensorPowerDimension 0 0 * tensorPowerDimension 0 0))) :=
+    ofEquivalence_dim_one rfl rfl _ _
+  rw [hsplit, Superoperator.ofEquivalence_refl]
+  exact (dayTensor (bang 0) (bang 0)).act_id _
+
+theorem bang_coassociative_zero :
+    Hom.comp (DayTensor.associator (bang 0) (bang 0) (bang 0))
+        (Hom.comp (DayTensor.map bangComult_zero (Hom.id (bang 0)))
+          bangComult_zero) =
+      Hom.comp (DayTensor.map (Hom.id (bang 0)) bangComult_zero)
+        bangComult_zero := by
+  ext n x
+  set Φ : Superoperator n
+      (tensorPowerDimension 0 0 * tensorPowerDimension 0 0) :=
+    (bangSplitComponent 0 0 0).app n x with hΦ
+  have hδx : bangComult_zero.app n x =
+      (dayTensor (bang 0) (bang 0)).act
+        ((DayCoend.intro (bang 0) (bang 0)).app
+          (bangDegreeUnit 0 0) (bangDegreeUnit 0 0)) Φ := by
+    rw [bangComult_zero_eq_component, bangComultComponent_eq_act]
+  have hR :
+      (DayTensor.map (Hom.id (bang 0)) bangComult_zero).app n
+          (bangComult_zero.app n x) =
+        (dayTensor (bang 0) (dayTensor (bang 0) (bang 0))).act
+          ((DayCoend.intro (bang 0) (dayTensor (bang 0) (bang 0))).app
+            (bangDegreeUnit 0 0)
+            ((DayCoend.intro (bang 0) (bang 0)).app
+              (bangDegreeUnit 0 0) (bangDegreeUnit 0 0))) Φ := by
+    rw [hδx,
+      (DayTensor.map (Hom.id (bang 0)) bangComult_zero).naturality]
+    change
+      (dayTensor (bang 0) (dayTensor (bang 0) (bang 0))).act
+          ((DayTensor.map (Hom.id (bang 0)) bangComult_zero).app _
+            ((DayCoend.intro (bang 0) (bang 0)).app
+              (bangDegreeUnit 0 0) (bangDegreeUnit 0 0))) Φ =
+        _
+    rw [DayTensor.map_intro, Hom.id_app, bangComult_degreeUnit_zero]
+    rfl
+  have hL_map :
+      (DayTensor.map bangComult_zero (Hom.id (bang 0))).app n
+          (bangComult_zero.app n x) =
+        (dayTensor (dayTensor (bang 0) (bang 0)) (bang 0)).act
+          ((DayCoend.intro (dayTensor (bang 0) (bang 0)) (bang 0)).app
+            ((DayCoend.intro (bang 0) (bang 0)).app
+              (bangDegreeUnit 0 0) (bangDegreeUnit 0 0))
+            (bangDegreeUnit 0 0)) Φ := by
+    rw [hδx,
+      (DayTensor.map bangComult_zero (Hom.id (bang 0))).naturality]
+    change
+      (dayTensor (dayTensor (bang 0) (bang 0)) (bang 0)).act
+          ((DayTensor.map bangComult_zero (Hom.id (bang 0))).app _
+            ((DayCoend.intro (bang 0) (bang 0)).app
+              (bangDegreeUnit 0 0) (bangDegreeUnit 0 0))) Φ =
+        _
+    rw [DayTensor.map_intro, Hom.id_app, bangComult_degreeUnit_zero]
+    rfl
+  have hL :
+      (DayTensor.associator (bang 0) (bang 0) (bang 0)).app n
+          ((DayTensor.map bangComult_zero (Hom.id (bang 0))).app n
+            (bangComult_zero.app n x)) =
+        (dayTensor (bang 0) (dayTensor (bang 0) (bang 0))).act
+          ((DayCoend.intro (bang 0) (dayTensor (bang 0) (bang 0))).app
+            (bangDegreeUnit 0 0)
+            ((DayCoend.intro (bang 0) (bang 0)).app
+              (bangDegreeUnit 0 0) (bangDegreeUnit 0 0)))
+          (Superoperator.comp
+            (Superoperator.tensorAssociator
+              (tensorPowerDimension 0 0) (tensorPowerDimension 0 0)
+              (tensorPowerDimension 0 0)) Φ) := by
+    rw [hL_map]
+    set gen :=
+      (DayCoend.intro (dayTensor (bang 0) (bang 0)) (bang 0)).app
+        ((DayCoend.intro (bang 0) (bang 0)).app
+          (bangDegreeUnit 0 0) (bangDegreeUnit 0 0))
+        (bangDegreeUnit 0 0)
+    change
+      (DayTensor.associator (bang 0) (bang 0) (bang 0)).app n
+          ((dayTensor (dayTensor (bang 0) (bang 0)) (bang 0)).act gen Φ) =
+        _
+    rw [(DayTensor.associator (bang 0) (bang 0) (bang 0)).naturality gen Φ]
+    rw [DayTensor.associator_intro_intro]
+    exact (dayTensor (bang 0) (dayTensor (bang 0) (bang 0))).act_comp _ _ _
+  change
+    (DayTensor.associator (bang 0) (bang 0) (bang 0)).app n
+        ((DayTensor.map bangComult_zero (Hom.id (bang 0))).app n
+          (bangComult_zero.app n x)) =
+      (DayTensor.map (Hom.id (bang 0)) bangComult_zero).app n
+        (bangComult_zero.app n x)
+  rw [hL, hR]
+  congr 1
+  have hA :
+      Superoperator.tensorAssociator
+          (tensorPowerDimension 0 0) (tensorPowerDimension 0 0)
+          (tensorPowerDimension 0 0) =
+        Superoperator.ofEquivalence
+          (Equiv.refl
+            (Fin (tensorPowerDimension 0 0 * tensorPowerDimension 0 0))) :=
+    ofEquivalence_dim_one rfl rfl _ _
+  rw [hA, Superoperator.ofEquivalence_refl]
+  exact Superoperator.identity_comp Φ
+
+
+/-! ## Day coassociativity for `A = 1` -/
+
+theorem eq_rec_act_ofEquivalence {M : Module} {a b : ℕ}
+    (h : a = b) (x : (M.obj a).Carrier) :
+    (h ▸ x : (M.obj b).Carrier) =
+      M.act x (Superoperator.ofEquivalence (finCongr h.symm)) := by
+  induction h
+  change x = M.act x (Superoperator.ofEquivalence (finCongr (Eq.refl a)).symm)
+  rw [finCongr_refl, Equiv.refl_symm, Superoperator.ofEquivalence_refl,
+    M.act_id]
+
+theorem bangComultComponent_degreeUnit_one (p q : ℕ) :
+    (bangComultComponent 1 p q).app (tensorPowerDimension 1 (p + q))
+        (bangDegreeUnit 1 (p + q)) =
+      (tensorPowerDimension_mul_add 1 p q) ▸
+        ((DayCoend.intro (bang 1) (bang 1)).app
+          (bangDegreeUnit 1 p) (bangDegreeUnit 1 q)) := by
+  have hp := tensorPowerDimension_one_eq p
+  have hq := tensorPowerDimension_one_eq q
+  have hpq := tensorPowerDimension_one_eq (p + q)
+  have hmul := tensorPowerDimension_mul_add 1 p q
+  rw [eq_rec_act_ofEquivalence, bangComultComponent_eq_act]
+  simp only [bangSplitComponent]
+  have hval :
+      (bangDegreeUnit 1 (p + q) (p + q)).val =
+        Superoperator.identity (tensorPowerDimension 1 (p + q)) := by
+    simp only [bangDegreeUnit_apply, ↓reduceDIte]
+    change Superoperator.comp (symmetricAverage 1 (p + q))
+        (Superoperator.identity _) = Superoperator.identity _
+    rw [Superoperator.comp_identity,
+      symmetricAverage_of_le_one 1 (p + q) (by decide)]
+  rw [hval, Superoperator.comp_identity]
+  have hsplit :
+      Superoperator.ofEquivalence (tensorSplitEquiv 1 p q) =
+        Superoperator.ofEquivalence (finCongr hmul.symm) :=
+    ofEquivalence_dim_one hpq (by simp [hp, hq]) _ _
+  rw [hsplit]
+
+theorem bangSplit_coassoc_channel_one (p q r n : ℕ)
+    (x : ((bang 1).obj n).Carrier) :
+    Superoperator.comp
+        (Superoperator.tensorAssociator
+          (tensorPowerDimension 1 p) (tensorPowerDimension 1 q)
+          (tensorPowerDimension 1 r))
+        (Superoperator.comp
+          (Superoperator.tensor
+            (Superoperator.ofEquivalence
+              (finCongr (tensorPowerDimension_mul_add 1 p q).symm))
+            (Superoperator.identity (tensorPowerDimension 1 r)))
+          ((bangSplitComponent 1 (p + q) r).app n x)) =
+      Superoperator.comp
+        (Superoperator.tensor
+          (Superoperator.identity (tensorPowerDimension 1 p))
+          (Superoperator.ofEquivalence
+            (finCongr (tensorPowerDimension_mul_add 1 q r).symm)))
+        ((bangSplitComponent 1 p (q + r)).app n x) := by
+  have hp := tensorPowerDimension_one_eq p
+  have hq := tensorPowerDimension_one_eq q
+  have hr := tensorPowerDimension_one_eq r
+  have hsrc : tensorPowerDimension 1 (p + (q + r)) = 1 :=
+    tensorPowerDimension_one_eq _
+  have htgt : tensorPowerDimension 1 p *
+      (tensorPowerDimension 1 q * tensorPowerDimension 1 r) = 1 := by
+    simp [hp, hq, hr]
+  have hassoc : (p + q) + r = p + (q + r) := Nat.add_assoc p q r
+  let eDeg := finCongr (congrArg (tensorPowerDimension 1) hassoc)
+  have hx :
+      (x ((p + q) + r)).val =
+        Superoperator.comp
+          (Superoperator.ofEquivalence eDeg.symm)
+          (x (p + (q + r))).val := by
+    have hfwd :
+        Superoperator.comp
+            (Superoperator.ofEquivalence eDeg)
+            (x ((p + q) + r)).val =
+          (x (p + (q + r))).val :=
+      (SymmetricElement.val_degreeCast hassoc (x ((p + q) + r))).trans
+        (congrArg SymmetricElement.val
+          (SymmetricElement.family_degreeCast x hassoc))
+    have hcancel :
+        Superoperator.comp
+            (Superoperator.ofEquivalence eDeg.symm)
+            (Superoperator.ofEquivalence eDeg) =
+          Superoperator.identity (tensorPowerDimension 1 ((p + q) + r)) := by
+      rw [Superoperator.ofEquivalence_comp]
+      convert Superoperator.ofEquivalence_refl _
+      exact Equiv.symm_trans_self _
+    calc
+      (x ((p + q) + r)).val =
+          Superoperator.comp
+            (Superoperator.identity (tensorPowerDimension 1 ((p + q) + r)))
+            (x ((p + q) + r)).val :=
+        (Superoperator.identity_comp _).symm
+      _ = Superoperator.comp
+            (Superoperator.comp
+              (Superoperator.ofEquivalence eDeg.symm)
+              (Superoperator.ofEquivalence eDeg))
+            (x ((p + q) + r)).val := by rw [← hcancel]
+      _ = Superoperator.comp
+            (Superoperator.ofEquivalence eDeg.symm)
+            (Superoperator.comp
+              (Superoperator.ofEquivalence eDeg)
+              (x ((p + q) + r)).val) :=
+        (Superoperator.comp_assoc _ _ _).symm
+      _ = Superoperator.comp
+            (Superoperator.ofEquivalence eDeg.symm)
+            (x (p + (q + r))).val :=
+        congrArg _ hfwd
+  let e_pq := finCongr (tensorPowerDimension_mul_add 1 p q).symm
+  let e_qr := finCongr (tensorPowerDimension_mul_add 1 q r).symm
+  let e_splitL := tensorSplitEquiv 1 (p + q) r
+  let e_splitR := tensorSplitEquiv 1 p (q + r)
+  let e_Assoc := Superoperator.tensorAssociatorEquiv
+    (tensorPowerDimension 1 p) (tensorPowerDimension 1 q)
+    (tensorPowerDimension 1 r)
+  simp only [bangSplitComponent]
+  rw [hx]
+  have hidr :
+      Superoperator.identity (tensorPowerDimension 1 r) =
+        Superoperator.ofEquivalence (Equiv.refl _) :=
+    (Superoperator.ofEquivalence_refl _).symm
+  have hidp :
+      Superoperator.identity (tensorPowerDimension 1 p) =
+        Superoperator.ofEquivalence (Equiv.refl _) :=
+    (Superoperator.ofEquivalence_refl _).symm
+  have htenL :
+      Superoperator.tensor
+          (Superoperator.ofEquivalence e_pq)
+          (Superoperator.identity (tensorPowerDimension 1 r)) =
+        Superoperator.ofEquivalence
+          (Superoperator.tensorEquiv e_pq (Equiv.refl _)) := by
+    rw [hidr, Superoperator.tensor_ofEquivalence]
+  have htenR :
+      Superoperator.tensor
+          (Superoperator.identity (tensorPowerDimension 1 p))
+          (Superoperator.ofEquivalence e_qr) =
+        Superoperator.ofEquivalence
+          (Superoperator.tensorEquiv (Equiv.refl _) e_qr) := by
+    rw [hidp, Superoperator.tensor_ofEquivalence]
+  rw [htenL, htenR]
+  change
+    Superoperator.comp (Superoperator.ofEquivalence e_Assoc)
+        (Superoperator.comp
+          (Superoperator.ofEquivalence
+            (Superoperator.tensorEquiv e_pq (Equiv.refl _)))
+          (Superoperator.comp
+            (Superoperator.ofEquivalence e_splitL)
+            (Superoperator.comp
+              (Superoperator.ofEquivalence eDeg.symm)
+              (x (p + (q + r))).val))) =
+      Superoperator.comp
+        (Superoperator.ofEquivalence
+          (Superoperator.tensorEquiv (Equiv.refl _) e_qr))
+        (Superoperator.comp
+          (Superoperator.ofEquivalence e_splitR)
+          (x (p + (q + r))).val)
+  have hcollapseL :
+      Superoperator.comp (Superoperator.ofEquivalence e_Assoc)
+          (Superoperator.comp
+            (Superoperator.ofEquivalence
+              (Superoperator.tensorEquiv e_pq (Equiv.refl _)))
+            (Superoperator.comp
+              (Superoperator.ofEquivalence e_splitL)
+              (Superoperator.ofEquivalence eDeg.symm))) =
+        Superoperator.ofEquivalence
+          ((((eDeg.symm.trans e_splitL).trans
+              (Superoperator.tensorEquiv e_pq (Equiv.refl _))).trans
+            e_Assoc)) := by
+    rw [Superoperator.ofEquivalence_comp, Superoperator.ofEquivalence_comp,
+      Superoperator.ofEquivalence_comp]
+  have hcollapseR :
+      Superoperator.comp
+          (Superoperator.ofEquivalence
+            (Superoperator.tensorEquiv (Equiv.refl _) e_qr))
+          (Superoperator.ofEquivalence e_splitR) =
+        Superoperator.ofEquivalence
+          (e_splitR.trans
+            (Superoperator.tensorEquiv (Equiv.refl _) e_qr)) :=
+    Superoperator.ofEquivalence_comp _ _
+  have hreL :
+      Superoperator.comp (Superoperator.ofEquivalence e_Assoc)
+          (Superoperator.comp
+            (Superoperator.ofEquivalence
+              (Superoperator.tensorEquiv e_pq (Equiv.refl _)))
+            (Superoperator.comp
+              (Superoperator.ofEquivalence e_splitL)
+              (Superoperator.comp
+                (Superoperator.ofEquivalence eDeg.symm)
+                (x (p + (q + r))).val))) =
+        Superoperator.comp
+          (Superoperator.comp (Superoperator.ofEquivalence e_Assoc)
+            (Superoperator.comp
+              (Superoperator.ofEquivalence
+                (Superoperator.tensorEquiv e_pq (Equiv.refl _)))
+              (Superoperator.comp
+                (Superoperator.ofEquivalence e_splitL)
+                (Superoperator.ofEquivalence eDeg.symm))))
+          (x (p + (q + r))).val := by
+    simp only [Superoperator.comp_assoc]
+  have hreR :
+      Superoperator.comp
+          (Superoperator.ofEquivalence
+            (Superoperator.tensorEquiv (Equiv.refl _) e_qr))
+          (Superoperator.comp
+            (Superoperator.ofEquivalence e_splitR)
+            (x (p + (q + r))).val) =
+        Superoperator.comp
+          (Superoperator.comp
+            (Superoperator.ofEquivalence
+              (Superoperator.tensorEquiv (Equiv.refl _) e_qr))
+            (Superoperator.ofEquivalence e_splitR))
+          (x (p + (q + r))).val := by
+    simp only [Superoperator.comp_assoc]
+  rw [hreL, hreR, hcollapseL, hcollapseR]
+  exact congrArg (fun t => Superoperator.comp t (x (p + (q + r))).val)
+    (ofEquivalence_dim_one hsrc htgt _ _)
+
+theorem bangComultComponent_coassoc_one (p q r n : ℕ)
+    (x : ((bang 1).obj n).Carrier) :
+    (DayTensor.associator (bang 1) (bang 1) (bang 1)).app n
+        ((DayTensor.map (bangComultComponent 1 p q) (Hom.id (bang 1))).app n
+          ((bangComultComponent 1 (p + q) r).app n x)) =
+      (DayTensor.map (Hom.id (bang 1)) (bangComultComponent 1 q r)).app n
+        ((bangComultComponent 1 p (q + r)).app n x) := by
+  set up := bangDegreeUnit 1 p
+  set uq := bangDegreeUnit 1 q
+  set ur := bangDegreeUnit 1 r
+  set upq := bangDegreeUnit 1 (p + q)
+  set uqr := bangDegreeUnit 1 (q + r)
+  set gen_pq := (DayCoend.intro (bang 1) (bang 1)).app up uq
+  set gen_qr := (DayCoend.intro (bang 1) (bang 1)).app uq ur
+  set gen_final :=
+    (DayCoend.intro (bang 1) (dayTensor (bang 1) (bang 1))).app up gen_qr
+  set e_pq := Superoperator.ofEquivalence
+    (finCongr (tensorPowerDimension_mul_add 1 p q).symm)
+  set e_qr := Superoperator.ofEquivalence
+    (finCongr (tensorPowerDimension_mul_add 1 q r).symm)
+  set Assoc := Superoperator.tensorAssociator
+    (tensorPowerDimension 1 p) (tensorPowerDimension 1 q)
+    (tensorPowerDimension 1 r)
+  set ΦL : Superoperator n
+      (tensorPowerDimension 1 (p + q) * tensorPowerDimension 1 r) :=
+    (bangSplitComponent 1 (p + q) r).app n x
+  set ΦR : Superoperator n
+      (tensorPowerDimension 1 p * tensorPowerDimension 1 (q + r)) :=
+    (bangSplitComponent 1 p (q + r)).app n x
+  set ΦL' := Superoperator.comp
+    (Superoperator.tensor e_pq
+      (Superoperator.identity (tensorPowerDimension 1 r))) ΦL
+  set ΦR' := Superoperator.comp
+    (Superoperator.tensor
+      (Superoperator.identity (tensorPowerDimension 1 p)) e_qr) ΦR
+  have hch : Superoperator.comp Assoc ΦL' = ΦR' :=
+    bangSplit_coassoc_channel_one p q r n x
+  have hL :
+      (DayTensor.associator (bang 1) (bang 1) (bang 1)).app n
+          ((DayTensor.map (bangComultComponent 1 p q) (Hom.id (bang 1))).app n
+            ((bangComultComponent 1 (p + q) r).app n x)) =
+        (dayTensor (bang 1) (dayTensor (bang 1) (bang 1))).act gen_final
+          (Superoperator.comp Assoc ΦL') := by
+    rw [bangComultComponent_eq_act 1 (p + q) r n x]
+    change
+      (DayTensor.associator (bang 1) (bang 1) (bang 1)).app n
+          ((DayTensor.map (bangComultComponent 1 p q) (Hom.id (bang 1))).app n
+            ((dayTensor (bang 1) (bang 1)).act
+              ((DayCoend.intro (bang 1) (bang 1)).app upq ur) ΦL)) =
+        _
+    rw [(DayTensor.map (bangComultComponent 1 p q) (Hom.id (bang 1))).naturality
+      ((DayCoend.intro (bang 1) (bang 1)).app upq ur) ΦL]
+    rw [DayTensor.map_intro, Hom.id_app]
+    have hdu := bangComultComponent_degreeUnit_one p q
+    change
+      (DayTensor.associator (bang 1) (bang 1) (bang 1)).app n
+          ((dayTensor (dayTensor (bang 1) (bang 1)) (bang 1)).act
+            ((DayCoend.intro (dayTensor (bang 1) (bang 1)) (bang 1)).app
+              ((bangComultComponent 1 p q).app
+                (tensorPowerDimension 1 (p + q))
+                (bangDegreeUnit 1 (p + q)))
+              ur) ΦL) =
+        _
+    rw [hdu, eq_rec_act_ofEquivalence]
+    rw [show ur = (bang 1).act ur (Superoperator.identity _)
+      from ((bang 1).act_id _).symm]
+    rw [(DayCoend.intro (dayTensor (bang 1) (bang 1)) (bang 1)).naturality
+      gen_pq ur e_pq (Superoperator.identity _)]
+    rw [(dayTensor (dayTensor (bang 1) (bang 1)) (bang 1)).act_comp]
+    set gen3 :=
+      (DayCoend.intro (dayTensor (bang 1) (bang 1)) (bang 1)).app gen_pq ur
+    change
+      (DayTensor.associator (bang 1) (bang 1) (bang 1)).app n
+          ((dayTensor (dayTensor (bang 1) (bang 1)) (bang 1)).act gen3 ΦL') =
+        _
+    rw [(DayTensor.associator (bang 1) (bang 1) (bang 1)).naturality gen3 ΦL']
+    rw [DayTensor.associator_intro_intro]
+    exact (dayTensor (bang 1) (dayTensor (bang 1) (bang 1))).act_comp _ _ _
+  have hR :
+      (DayTensor.map (Hom.id (bang 1)) (bangComultComponent 1 q r)).app n
+          ((bangComultComponent 1 p (q + r)).app n x) =
+        (dayTensor (bang 1) (dayTensor (bang 1) (bang 1))).act gen_final
+          ΦR' := by
+    rw [bangComultComponent_eq_act 1 p (q + r) n x]
+    change
+      (DayTensor.map (Hom.id (bang 1)) (bangComultComponent 1 q r)).app n
+          ((dayTensor (bang 1) (bang 1)).act
+            ((DayCoend.intro (bang 1) (bang 1)).app up uqr) ΦR) =
+        _
+    rw [(DayTensor.map (Hom.id (bang 1)) (bangComultComponent 1 q r)).naturality
+      ((DayCoend.intro (bang 1) (bang 1)).app up uqr) ΦR]
+    rw [DayTensor.map_intro, Hom.id_app]
+    have hdu := bangComultComponent_degreeUnit_one q r
+    change
+      (dayTensor (bang 1) (dayTensor (bang 1) (bang 1))).act
+          ((DayCoend.intro (bang 1) (dayTensor (bang 1) (bang 1))).app
+            up
+            ((bangComultComponent 1 q r).app
+              (tensorPowerDimension 1 (q + r))
+              (bangDegreeUnit 1 (q + r)))) ΦR =
+        _
+    rw [hdu, eq_rec_act_ofEquivalence]
+    rw [show up = (bang 1).act up (Superoperator.identity _)
+      from ((bang 1).act_id _).symm]
+    rw [(DayCoend.intro (bang 1) (dayTensor (bang 1) (bang 1))).naturality
+      up gen_qr (Superoperator.identity _) e_qr]
+    exact (dayTensor (bang 1) (dayTensor (bang 1) (bang 1))).act_comp _ _ _
+  rw [hL, hR, hch]
+
+
+theorem bangComult_hasSum_components (n : ℕ)
+    (x : ((bang 1).obj n).Carrier) :
+    ((dayTensor (bang 1) (bang 1)).obj n).HasSum
+      (bangComultComponentFamily 1 n x)
+      (bangComult_one.app n x) := by
+  have h := bangComultApp_hasSum 1 bangComultComponentsAdmissible_one n x
+    (dayTensor (bang 1) (bang 1)) (DayCoend.intro (bang 1) (bang 1))
+  have hfun :
+      (fun pq : ℕ × ℕ =>
+          DayCoend.evaluate (dayTensor (bang 1) (bang 1))
+            (DayCoend.intro (bang 1) (bang 1))
+            (bangComultComponentFamily 1 n x pq)) =
+        bangComultComponentFamily 1 n x := by
+    funext pq; exact DayCoend.evaluate_self _
+  have hs := DayCoend.evaluate_self (bangComultApp 1 bangComultComponentsAdmissible_one n x)
+  change ((dayTensor (bang 1) (bang 1)).obj n).HasSum
+      (fun pq => DayCoend.evaluate (DayCoend.module (bang 1) (bang 1))
+        (DayCoend.intro (bang 1) (bang 1))
+        (bangComultComponentFamily 1 n x pq))
+      (DayCoend.evaluate (DayCoend.module (bang 1) (bang 1))
+        (DayCoend.intro (bang 1) (bang 1))
+        (bangComultApp 1 bangComultComponentsAdmissible_one n x)) at h
+  rw [hfun, hs] at h
+  exact h
+
+theorem bangComultComponent_degreeUnit_of_ne (p q a : ℕ) (hne : p + q ≠ a) :
+    (bangComultComponent 1 p q).app (tensorPowerDimension 1 a)
+        (bangDegreeUnit 1 a) = 0 := by
+  rw [bangComultComponent_eq_act]
+  simp only [bangSplitComponent]
+  have hval : (bangDegreeUnit 1 a (p + q)).val = 0 := by
+    simp only [bangDegreeUnit_apply, dif_neg hne]
+    rfl
+  rw [hval, Superoperator.comp_zero_right]
+  exact (dayTensor (bang 1) (bang 1)).act_zero_map _
+
+theorem bangComult_degreeUnit_partition_hasSum (a : ℕ) :
+    ((dayTensor (bang 1) (bang 1)).obj (tensorPowerDimension 1 a)).HasSum
+      (fun part : DegreePartition a =>
+        (bangComultComponent 1
+            (degreePartitionToPair a part).1
+            (degreePartitionToPair a part).2).app
+          (tensorPowerDimension 1 a) (bangDegreeUnit 1 a))
+      (bangComult_one.app (tensorPowerDimension 1 a) (bangDegreeUnit 1 a)) := by
+  have hall := bangComult_hasSum_components
+    (tensorPowerDimension 1 a) (bangDegreeUnit 1 a)
+  have hσ :
+      ((dayTensor (bang 1) (bang 1)).obj (tensorPowerDimension 1 a)).HasSum
+        (fun s : Σ t : ℕ, DegreePartition t =>
+          (bangComultComponent 1
+              (degreePartitionToPair s.1 s.2).1
+              (degreePartitionToPair s.1 s.2).2).app
+            (tensorPowerDimension 1 a) (bangDegreeUnit 1 a))
+        (bangComult_one.app (tensorPowerDimension 1 a) (bangDegreeUnit 1 a)) :=
+    (((dayTensor (bang 1) (bang 1)).obj (tensorPowerDimension 1 a)).summation.reindex
+      degreePartitionEquiv.symm
+      (bangComultComponentFamily 1 (tensorPowerDimension 1 a) (bangDegreeUnit 1 a))
+      (bangComult_one.app (tensorPowerDimension 1 a) (bangDegreeUnit 1 a))).mpr hall
+  obtain ⟨row, hrows, hcol⟩ :=
+    ((dayTensor (bang 1) (bang 1)).obj (tensorPowerDimension 1 a)).summation.flatten
+      (fun t (part : DegreePartition t) =>
+        (bangComultComponent 1
+            (degreePartitionToPair t part).1
+            (degreePartitionToPair t part).2).app
+          (tensorPowerDimension 1 a) (bangDegreeUnit 1 a))
+      (bangComult_one.app (tensorPowerDimension 1 a) (bangDegreeUnit 1 a)) |>.mp hσ
+  have hrow0 (t : ℕ) (hne : t ≠ a) : row t = 0 := by
+    have hz :
+        ((dayTensor (bang 1) (bang 1)).obj (tensorPowerDimension 1 a)).HasSum
+          (fun part : DegreePartition t =>
+            (bangComultComponent 1
+                (degreePartitionToPair t part).1
+                (degreePartitionToPair t part).2).app
+              (tensorPowerDimension 1 a) (bangDegreeUnit 1 a))
+          0 := by
+      have hfam0 :
+          (fun part : DegreePartition t =>
+              (bangComultComponent 1
+                  (degreePartitionToPair t part).1
+                  (degreePartitionToPair t part).2).app
+                (tensorPowerDimension 1 a) (bangDegreeUnit 1 a)) =
+            fun _ => 0 := by
+        funext part
+        have : (degreePartitionToPair t part).1 +
+            (degreePartitionToPair t part).2 ≠ a := by
+          rw [degreePartitionToPair_snd_add]; exact hne
+        exact bangComultComponent_degreeUnit_of_ne _ _ a this
+      rw [hfam0]
+      exact Fiber.hasSum_zero _
+    exact ((dayTensor (bang 1) (bang 1)).obj _).summation.unique (hrows t) hz
+  have hfam :
+      (fun t : ℕ => row t) =
+        fun t : ℕ => if h : t = a then row a else (0 : _) := by
+    funext t
+    by_cases ht : t = a <;> simp [ht, hrow0]
+  have hcol' :
+      ((dayTensor (bang 1) (bang 1)).obj (tensorPowerDimension 1 a)).HasSum
+        (fun t : ℕ => if h : t = a then row a else 0)
+        (bangComult_one.app (tensorPowerDimension 1 a) (bangDegreeUnit 1 a)) := by
+    rwa [← hfam]
+  have hsingle :=
+    Fiber.hasSum_singleAt
+      ((dayTensor (bang 1) (bang 1)).obj (tensorPowerDimension 1 a))
+      (a : ℕ) (row a)
+  have hsum :=
+    ((dayTensor (bang 1) (bang 1)).obj _).summation.unique hcol' hsingle
+  rw [hsum]
+  exact hrows a
+
+
+
+theorem bang_map_comult_id_partition_hasSum (a b n : ℕ)
+    (x : ((bang 1).obj n).Carrier) :
+    ((dayTensor (dayTensor (bang 1) (bang 1)) (bang 1)).obj n).HasSum
+      (fun part : DegreePartition a =>
+        (DayTensor.map
+            (bangComultComponent 1
+              (degreePartitionToPair a part).1
+              (degreePartitionToPair a part).2)
+            (Hom.id (bang 1))).app n
+          ((bangComultComponent 1 a b).app n x))
+      ((DayTensor.map bangComult_one (Hom.id (bang 1))).app n
+        ((bangComultComponent 1 a b).app n x)) := by
+  set Φ : Superoperator n
+      (tensorPowerDimension 1 a * tensorPowerDimension 1 b) :=
+    (bangSplitComponent 1 a b).app n x
+  set gen := (DayCoend.intro (bang 1) (bang 1)).app
+    (bangDegreeUnit 1 a) (bangDegreeUnit 1 b)
+  have hx := bangComultComponent_eq_act 1 a b n x
+  have hδua := bangComult_degreeUnit_partition_hasSum a
+  have hintro :=
+    (DayCoend.intro (dayTensor (bang 1) (bang 1)) (bang 1)).map_sum_left
+      (bangDegreeUnit 1 b) hδua
+  have hact :=
+    (dayTensor (dayTensor (bang 1) (bang 1)) (bang 1)).act_sum_element Φ hintro
+  have hfam :
+      (fun part : DegreePartition a =>
+          (dayTensor (dayTensor (bang 1) (bang 1)) (bang 1)).act
+            ((DayCoend.intro (dayTensor (bang 1) (bang 1)) (bang 1)).app
+              ((bangComultComponent 1
+                  (degreePartitionToPair a part).1
+                  (degreePartitionToPair a part).2).app
+                (tensorPowerDimension 1 a) (bangDegreeUnit 1 a))
+              (bangDegreeUnit 1 b)) Φ) =
+        fun part : DegreePartition a =>
+          (DayTensor.map
+              (bangComultComponent 1
+                (degreePartitionToPair a part).1
+                (degreePartitionToPair a part).2)
+              (Hom.id (bang 1))).app n
+            ((bangComultComponent 1 a b).app n x) := by
+    funext part
+    rw [hx]; symm
+    rw [(DayTensor.map
+        (bangComultComponent 1
+          (degreePartitionToPair a part).1
+          (degreePartitionToPair a part).2)
+        (Hom.id (bang 1))).naturality gen Φ,
+      DayTensor.map_intro, Hom.id_app]
+  have hsum :
+      (DayTensor.map bangComult_one (Hom.id (bang 1))).app n
+          ((bangComultComponent 1 a b).app n x) =
+        (dayTensor (dayTensor (bang 1) (bang 1)) (bang 1)).act
+          ((DayCoend.intro (dayTensor (bang 1) (bang 1)) (bang 1)).app
+            (bangComult_one.app (tensorPowerDimension 1 a) (bangDegreeUnit 1 a))
+            (bangDegreeUnit 1 b)) Φ := by
+    rw [hx, (DayTensor.map bangComult_one (Hom.id (bang 1))).naturality gen Φ,
+      DayTensor.map_intro, Hom.id_app]
+  rw [hfam] at hact
+  rwa [← hsum] at hact
+
+theorem bang_map_id_comult_partition_hasSum (a b n : ℕ)
+    (x : ((bang 1).obj n).Carrier) :
+    ((dayTensor (bang 1) (dayTensor (bang 1) (bang 1))).obj n).HasSum
+      (fun part : DegreePartition b =>
+        (DayTensor.map (Hom.id (bang 1))
+            (bangComultComponent 1
+              (degreePartitionToPair b part).1
+              (degreePartitionToPair b part).2)).app n
+          ((bangComultComponent 1 a b).app n x))
+      ((DayTensor.map (Hom.id (bang 1)) bangComult_one).app n
+        ((bangComultComponent 1 a b).app n x)) := by
+  set Φ : Superoperator n
+      (tensorPowerDimension 1 a * tensorPowerDimension 1 b) :=
+    (bangSplitComponent 1 a b).app n x
+  set gen := (DayCoend.intro (bang 1) (bang 1)).app
+    (bangDegreeUnit 1 a) (bangDegreeUnit 1 b)
+  have hx := bangComultComponent_eq_act 1 a b n x
+  have hδub := bangComult_degreeUnit_partition_hasSum b
+  have hintro :=
+    (DayCoend.intro (bang 1) (dayTensor (bang 1) (bang 1))).map_sum_right
+      (bangDegreeUnit 1 a) hδub
+  have hact :=
+    (dayTensor (bang 1) (dayTensor (bang 1) (bang 1))).act_sum_element Φ hintro
+  have hfam :
+      (fun part : DegreePartition b =>
+          (dayTensor (bang 1) (dayTensor (bang 1) (bang 1))).act
+            ((DayCoend.intro (bang 1) (dayTensor (bang 1) (bang 1))).app
+              (bangDegreeUnit 1 a)
+              ((bangComultComponent 1
+                  (degreePartitionToPair b part).1
+                  (degreePartitionToPair b part).2).app
+                (tensorPowerDimension 1 b) (bangDegreeUnit 1 b))) Φ) =
+        fun part : DegreePartition b =>
+          (DayTensor.map (Hom.id (bang 1))
+              (bangComultComponent 1
+                (degreePartitionToPair b part).1
+                (degreePartitionToPair b part).2)).app n
+            ((bangComultComponent 1 a b).app n x) := by
+    funext part
+    rw [hx]; symm
+    rw [(DayTensor.map (Hom.id (bang 1))
+        (bangComultComponent 1
+          (degreePartitionToPair b part).1
+          (degreePartitionToPair b part).2)).naturality gen Φ,
+      DayTensor.map_intro, Hom.id_app]
+  have hsum :
+      (DayTensor.map (Hom.id (bang 1)) bangComult_one).app n
+          ((bangComultComponent 1 a b).app n x) =
+        (dayTensor (bang 1) (dayTensor (bang 1) (bang 1))).act
+          ((DayCoend.intro (bang 1) (dayTensor (bang 1) (bang 1))).app
+            (bangDegreeUnit 1 a)
+            (bangComult_one.app (tensorPowerDimension 1 b) (bangDegreeUnit 1 b))) Φ := by
+    rw [hx, (DayTensor.map (Hom.id (bang 1)) bangComult_one).naturality gen Φ,
+      DayTensor.map_intro, Hom.id_app]
+  rw [hfam] at hact
+  rwa [← hsum] at hact
+
+
+
+
+
+def leftCoassocIndexEquiv :
+    (Σ ab : ℕ × ℕ, DegreePartition ab.1) ≃ ℕ × ℕ × ℕ where
+  toFun s :=
+    ((degreePartitionToPair s.1.1 s.2).1,
+      (degreePartitionToPair s.1.1 s.2).2, s.1.2)
+  invFun pqr :=
+    ⟨(pqr.1 + pqr.2.1, pqr.2.2), (pairToDegreePartition (pqr.1, pqr.2.1)).2⟩
+  left_inv := by
+    intro s
+    rcases s with ⟨⟨a, b⟩, part⟩
+    have hr := degreePartitionEquiv.right_inv ⟨a, part⟩
+    -- hr : pairToDegreePartition (toPair a part) = ⟨a, part⟩
+    refine Eq.trans ?_ (congrArg (fun σ : (t : ℕ) × DegreePartition t =>
+      (⟨(σ.1, b), σ.2⟩ : (Σ ab : ℕ × ℕ, DegreePartition ab.1))) hr)
+    -- LHS after toFun∘invFun vs ⟨((p+q),b), part'⟩ where part' = pair....2
+    -- and middle is ⟨(a,b), part⟩ from hr
+    -- Need: invFun(toFun s) = ⟨(p+q, b), pair(toPair).2⟩ equal to
+    --        ⟨((pair toPair).1, b), (pair toPair).2⟩
+    apply Sigma.ext
+    · apply Prod.ext
+      · -- p+q = (pairToDegreePartition (p,q)).1
+        rfl
+      · rfl
+    · rfl
+  right_inv := by
+    intro pqr
+    rcases pqr with ⟨p, q, r⟩
+    have hl := pairToDegreePartition_toPair (p, q)
+    exact congrArg (fun pq : ℕ × ℕ => (pq.1, pq.2, r)) hl
+
+def rightCoassocIndexEquiv :
+    (Σ ab : ℕ × ℕ, DegreePartition ab.2) ≃ ℕ × ℕ × ℕ where
+  toFun s :=
+    (s.1.1, (degreePartitionToPair s.1.2 s.2).1,
+      (degreePartitionToPair s.1.2 s.2).2)
+  invFun pqr :=
+    ⟨(pqr.1, pqr.2.1 + pqr.2.2), (pairToDegreePartition (pqr.2.1, pqr.2.2)).2⟩
+  left_inv := by
+    intro s
+    rcases s with ⟨⟨a, b⟩, part⟩
+    have hr := degreePartitionEquiv.right_inv ⟨b, part⟩
+    refine Eq.trans ?_ (congrArg (fun σ : (t : ℕ) × DegreePartition t =>
+      (⟨(a, σ.1), σ.2⟩ : (Σ ab : ℕ × ℕ, DegreePartition ab.2))) hr)
+    apply Sigma.ext
+    · apply Prod.ext <;> rfl
+    · rfl
+  right_inv := by
+    intro pqr
+    rcases pqr with ⟨p, q, r⟩
+    have hl := pairToDegreePartition_toPair (q, r)
+    exact congrArg (fun qr : ℕ × ℕ => (p, qr.1, qr.2)) hl
+
+
+
+
+theorem leftCoassocIndexEquiv_symm_apply (p q r : ℕ) :
+    leftCoassocIndexEquiv.symm (p, q, r) =
+      ⟨(p + q, r), (pairToDegreePartition (p, q)).2⟩ :=
+  rfl
+
+theorem rightCoassocIndexEquiv_symm_apply (p q r : ℕ) :
+    rightCoassocIndexEquiv.symm (p, q, r) =
+      ⟨(p, q + r), (pairToDegreePartition (q, r)).2⟩ :=
+  rfl
+
+theorem degreePartitionToPair_pairToDegreePartition (p q : ℕ) :
+    degreePartitionToPair (p + q) (pairToDegreePartition (p, q)).2 = (p, q) := by
+  have h := pairToDegreePartition_toPair (p, q)
+  -- h : toPair (pair (p,q)).1 (pair (p,q)).2 = (p,q)
+  -- (pair (p,q)).1 = p+q definitionally
+  exact h
+
+
+theorem bang_coassociative_one :
+    Hom.comp (DayTensor.associator (bang 1) (bang 1) (bang 1))
+        (Hom.comp (DayTensor.map bangComult_one (Hom.id (bang 1)))
+          bangComult_one) =
+      Hom.comp (DayTensor.map (Hom.id (bang 1)) bangComult_one)
+        bangComult_one := by
+  ext n x
+  let Assoc := DayTensor.associator (bang 1) (bang 1) (bang 1)
+  let M3 := dayTensor (bang 1) (dayTensor (bang 1) (bang 1))
+  have hδ := bangComult_hasSum_components n x
+  have hmapL := (DayTensor.map bangComult_one (Hom.id (bang 1))).map_sum hδ
+  have hAssocL := Assoc.map_sum hmapL
+  have hmapR := (DayTensor.map (Hom.id (bang 1)) bangComult_one).map_sum hδ
+  have hinnerL (a b : ℕ) :=
+    Assoc.map_sum (bang_map_comult_id_partition_hasSum a b n x)
+  let flatL : (Σ ab : ℕ × ℕ, DegreePartition ab.1) → (M3.obj n).Carrier :=
+    fun s =>
+      Assoc.app n
+        ((DayTensor.map
+            (bangComultComponent 1
+              (degreePartitionToPair s.1.1 s.2).1
+              (degreePartitionToPair s.1.1 s.2).2)
+            (Hom.id (bang 1))).app n
+          ((bangComultComponent 1 s.1.1 s.1.2).app n x))
+  have hflatL : (M3.obj n).HasSum flatL
+      (Assoc.app n
+        ((DayTensor.map bangComult_one (Hom.id (bang 1))).app n
+          (bangComult_one.app n x))) := by
+    refine (M3.obj n).summation.flatten
+      (fun (ab : ℕ × ℕ) (part : DegreePartition ab.1) =>
+        Assoc.app n
+          ((DayTensor.map
+              (bangComultComponent 1
+                (degreePartitionToPair ab.1 part).1
+                (degreePartitionToPair ab.1 part).2)
+              (Hom.id (bang 1))).app n
+            ((bangComultComponent 1 ab.1 ab.2).app n x)))
+      _ |>.mpr ⟨?_, ?_, ?_⟩
+    · exact fun ab =>
+        Assoc.app n
+          ((DayTensor.map bangComult_one (Hom.id (bang 1))).app n
+            (bangComultComponentFamily 1 n x ab))
+    · intro ab; exact hinnerL ab.1 ab.2
+    · exact hAssocL
+  let flatR : (Σ ab : ℕ × ℕ, DegreePartition ab.2) → (M3.obj n).Carrier :=
+    fun s =>
+      (DayTensor.map (Hom.id (bang 1))
+          (bangComultComponent 1
+            (degreePartitionToPair s.1.2 s.2).1
+            (degreePartitionToPair s.1.2 s.2).2)).app n
+        ((bangComultComponent 1 s.1.1 s.1.2).app n x)
+  have hinnerR (a b : ℕ) := bang_map_id_comult_partition_hasSum a b n x
+  have hflatR : (M3.obj n).HasSum flatR
+      ((DayTensor.map (Hom.id (bang 1)) bangComult_one).app n
+        (bangComult_one.app n x)) := by
+    refine (M3.obj n).summation.flatten
+      (fun (ab : ℕ × ℕ) (part : DegreePartition ab.2) =>
+        (DayTensor.map (Hom.id (bang 1))
+            (bangComultComponent 1
+              (degreePartitionToPair ab.2 part).1
+              (degreePartitionToPair ab.2 part).2)).app n
+          ((bangComultComponent 1 ab.1 ab.2).app n x))
+      _ |>.mpr ⟨?_, ?_, ?_⟩
+    · exact fun ab =>
+        (DayTensor.map (Hom.id (bang 1)) bangComult_one).app n
+          (bangComultComponentFamily 1 n x ab)
+    · intro ab; exact hinnerR ab.1 ab.2
+    · exact hmapR
+  have hL_comp :
+      (M3.obj n).HasSum (flatL ∘ leftCoassocIndexEquiv.symm)
+        (Assoc.app n
+          ((DayTensor.map bangComult_one (Hom.id (bang 1))).app n
+            (bangComult_one.app n x))) :=
+    ((M3.obj n).summation.reindex leftCoassocIndexEquiv.symm flatL _).mpr hflatL
+  have hL :
+      (M3.obj n).HasSum
+        (fun pqr : ℕ × ℕ × ℕ =>
+          Assoc.app n
+            ((DayTensor.map (bangComultComponent 1 pqr.1 pqr.2.1)
+                (Hom.id (bang 1))).app n
+              ((bangComultComponent 1 (pqr.1 + pqr.2.1) pqr.2.2).app n x)))
+        (Assoc.app n
+          ((DayTensor.map bangComult_one (Hom.id (bang 1))).app n
+            (bangComult_one.app n x))) := by
+    convert hL_comp using 1
+    funext pqr
+    rcases pqr with ⟨p, q, r⟩
+    rw [Function.comp_apply, leftCoassocIndexEquiv_symm_apply]
+    dsimp only [flatL]
+    rw [degreePartitionToPair_pairToDegreePartition]
+  have hR_comp :
+      (M3.obj n).HasSum (flatR ∘ rightCoassocIndexEquiv.symm)
+        ((DayTensor.map (Hom.id (bang 1)) bangComult_one).app n
+          (bangComult_one.app n x)) :=
+    ((M3.obj n).summation.reindex rightCoassocIndexEquiv.symm flatR _).mpr hflatR
+  have hR :
+      (M3.obj n).HasSum
+        (fun pqr : ℕ × ℕ × ℕ =>
+          (DayTensor.map (Hom.id (bang 1))
+              (bangComultComponent 1 pqr.2.1 pqr.2.2)).app n
+            ((bangComultComponent 1 pqr.1 (pqr.2.1 + pqr.2.2)).app n x))
+        ((DayTensor.map (Hom.id (bang 1)) bangComult_one).app n
+          (bangComult_one.app n x)) := by
+    convert hR_comp using 1
+    funext pqr
+    rcases pqr with ⟨p, q, r⟩
+    rw [Function.comp_apply, rightCoassocIndexEquiv_symm_apply]
+    dsimp only [flatR]
+    rw [degreePartitionToPair_pairToDegreePartition]
+  have heq :
+      (fun pqr : ℕ × ℕ × ℕ =>
+          Assoc.app n
+            ((DayTensor.map (bangComultComponent 1 pqr.1 pqr.2.1)
+                (Hom.id (bang 1))).app n
+              ((bangComultComponent 1 (pqr.1 + pqr.2.1) pqr.2.2).app n x))) =
+        fun pqr : ℕ × ℕ × ℕ =>
+          (DayTensor.map (Hom.id (bang 1))
+              (bangComultComponent 1 pqr.2.1 pqr.2.2)).app n
+            ((bangComultComponent 1 pqr.1 (pqr.2.1 + pqr.2.2)).app n x) := by
+    funext pqr
+    exact bangComultComponent_coassoc_one pqr.1 pqr.2.1 pqr.2.2 n x
+  rw [heq] at hL
+  exact (M3.obj n).summation.unique hL hR
+
+
+
+theorem bang_coassociative_of_le_one (A : ℕ) (hA : A ≤ 1) :
+    Hom.comp (DayTensor.associator (bang A) (bang A) (bang A))
+        (Hom.comp (DayTensor.map (bangComult_of_le_one A hA) (Hom.id (bang A)))
+          (bangComult_of_le_one A hA)) =
+      Hom.comp (DayTensor.map (Hom.id (bang A)) (bangComult_of_le_one A hA))
+        (bangComult_of_le_one A hA) := by
+  interval_cases A
+  · -- Reduce to bang_coassociative_zero via bangComult_zero_eq
+    have h0 : bangComult_of_le_one 0 (by decide) = bangComult_zero := rfl
+    simpa [h0] using bang_coassociative_zero
+  · have h1 : bangComult_of_le_one 1 (by decide) = bangComult_one := rfl
+    simpa [h1] using bang_coassociative_one
+
+/-- Day comonoid structure on `bang A` for `A ≤ 1`. -/
+noncomputable def bangComonoid (A : ℕ) (hA : A ≤ 1) : Comonoid where
+  carrier := bang A
+  counit := bangCounit A
+  comult := bangComult_of_le_one A hA
+  left_counit := bang_left_counit_of_le_one A hA
+  right_counit := bang_right_counit_of_le_one A hA
+  coassociative := bang_coassociative_of_le_one A hA
+  cocommutative := bang_cocommutative_of_le_one A hA
+
+/-- Dereliction direction of the prospective cofree UP. -/
+noncomputable def bangCofreeForget (A : ℕ) (C : Module)
+    (f : Hom C (bang A)) : Hom C (representable A) :=
+  Hom.comp (bangDereliction A) f
+
+/-! ## Cofree UP for `A ≤ 1` (forgetful direction) -/
+
+/-- Forgetful map from comonoid homs into `bangComonoid` to module homs into
+the representable. -/
+noncomputable def bangCofreeForgetComonoid (A : ℕ) (hA : A ≤ 1)
+    (C : Comonoid)
+    (f : ComonoidHom C (bangComonoid A hA)) :
+    Hom C.carrier (representable A) :=
+  bangCofreeForget A C.carrier f.hom
+
+
+/-! ## Cofree UP for `A = 0`
+
+The forgetful map `bangCofreeForgetComonoid` has an inverse for `A = 0`:
+every comonoid admits a unique comonoid morphism into `bangComonoid 0`,
+given by promoting the counit along `representableToBang 0 0`.  Hom-sets into
+`representable 0` are fiberwise unique, so the cofree equivalence is a
+propositional equivalence of singletons.
+-/
+
+/-- There is only one CP map into the zero-dimensional output. -/
+theorem cpMap_to_zero_subsingleton (n : ℕ) :
+    Subsingleton (CPMap n 0) where
+  allEq _Φ _Ψ := by
+    apply CPMap.ext
+    ext i
+    exact Fin.elim0 i.1
+
+/-- Consequently every superoperator into dimension zero is the zero map. -/
+theorem superoperator_to_zero_subsingleton (n : ℕ) :
+    Subsingleton (Superoperator n 0) where
+  allEq _Φ _Ψ :=
+    Superoperator.ext ((cpMap_to_zero_subsingleton n).allEq _ _)
+
+/-- Every fiber of the zero-dimensional representable is a singleton. -/
+theorem representableZero_subsingleton (n : ℕ) :
+    Subsingleton (((representable 0).obj n).Carrier) :=
+  superoperator_to_zero_subsingleton n
+
+theorem hom_to_representable_zero_unique (M : Module)
+    (f g : Hom M (representable 0)) : f = g := by
+  ext n x
+  exact (representableZero_subsingleton n).allEq _ _
+
+theorem comonoid_map_counit_id_comult (C : Comonoid) :
+    Hom.comp (DayTensor.map C.counit (Hom.id C.carrier)) C.comult =
+      DayTensor.leftUnitorInv C.carrier := by
+  have hinv := (DayTensor.leftUnitorIso C.carrier).inv_hom
+  have h := C.left_counit
+  refine Eq.trans ?_ (Eq.trans (congrArg
+    (fun g => Hom.comp (DayTensor.leftUnitorInv C.carrier) g) h)
+    (Hom.comp_id _))
+  refine Eq.trans (Eq.symm (Hom.id_comp _)) ?_
+  refine Eq.trans (congrArg (fun g => Hom.comp g
+    (Hom.comp (DayTensor.map C.counit (Hom.id C.carrier)) C.comult))
+    hinv.symm) ?_
+  ext n x; rfl
+
+theorem leftUnitor_natural {M N : Module} (f : Hom M N) :
+    Hom.comp (DayTensor.leftUnitor N)
+        (DayTensor.map (Hom.id dayTensorUnit) f) =
+      Hom.comp f (DayTensor.leftUnitor M) := by
+  apply DayTensor.hom_ext
+  intro m n q x
+  simp only [DayTensor.map_intro, Hom.comp_app, Hom.id_app]
+  have hL := DayTensor.leftUnitor_intro (M := N) q (f.app n x)
+  have hR := DayTensor.leftUnitor_intro (M := M) q x
+  change
+    (DayTensor.leftUnitor N).app (m * n)
+        ((DayCoend.intro dayTensorUnit N).app q (f.app n x)) =
+      f.app (m * n)
+        ((DayTensor.leftUnitor M).app (m * n)
+          ((DayCoend.intro dayTensorUnit M).app q x))
+  rw [hL, hR, f.naturality]
+
+theorem leftUnitorInv_natural {M N : Module} (f : Hom M N) :
+    Hom.comp (DayTensor.map (Hom.id dayTensorUnit) f)
+        (DayTensor.leftUnitorInv M) =
+      Hom.comp (DayTensor.leftUnitorInv N) f := by
+  have hcancel :
+      Hom.comp (DayTensor.leftUnitor N)
+          (Hom.comp (DayTensor.map (Hom.id dayTensorUnit) f)
+            (DayTensor.leftUnitorInv M)) =
+        f := by
+    refine Eq.trans ?_ (Hom.comp_id f)
+    refine Eq.trans ?_
+      (congrArg (fun g => Hom.comp f g)
+        (DayTensor.leftUnitorIso M).hom_inv)
+    have hnat := leftUnitor_natural f
+    refine Eq.trans (Eq.symm (by ext; rfl :
+        Hom.comp (DayTensor.leftUnitor N)
+            (Hom.comp (DayTensor.map (Hom.id dayTensorUnit) f)
+              (DayTensor.leftUnitorInv M)) =
+          Hom.comp
+            (Hom.comp (DayTensor.leftUnitor N)
+              (DayTensor.map (Hom.id dayTensorUnit) f))
+            (DayTensor.leftUnitorInv M))) ?_
+    refine Eq.trans (congrArg (fun g => Hom.comp g
+        (DayTensor.leftUnitorInv M)) hnat) ?_
+    ext; rfl
+  refine Eq.trans ?_ (congrArg
+    (fun g => Hom.comp (DayTensor.leftUnitorInv N) g) hcancel)
+  have hinv := (DayTensor.leftUnitorIso N).inv_hom
+  refine Eq.trans (Eq.symm (Hom.id_comp _)) ?_
+  refine Eq.trans (congrArg (fun g => Hom.comp g
+      (Hom.comp (DayTensor.map (Hom.id dayTensorUnit) f)
+        (DayTensor.leftUnitorInv M))) hinv.symm) ?_
+  ext; rfl
+
+/-- Any Day comonoid satisfies `(ε ⊗ ε) ∘ Δ = λ_I⁻¹ ∘ ε`. -/
+theorem comonoid_counit_tensor (C : Comonoid) :
+    Hom.comp (DayTensor.map C.counit C.counit) C.comult =
+      Hom.comp (DayTensor.leftUnitorInv dayTensorUnit) C.counit := by
+  have hfactor :
+      DayTensor.map C.counit C.counit =
+        Hom.comp (DayTensor.map (Hom.id dayTensorUnit) C.counit)
+          (DayTensor.map C.counit (Hom.id C.carrier)) := by
+    have h :=
+      DayTensor.map_comp (Hom.id dayTensorUnit) C.counit
+        C.counit (Hom.id C.carrier)
+    simp only [Hom.id_comp, Hom.comp_id] at h
+    exact h
+  refine Eq.trans (congrArg (fun g => Hom.comp g C.comult) hfactor) ?_
+  refine Eq.trans (by ext; rfl :
+      Hom.comp
+          (Hom.comp (DayTensor.map (Hom.id dayTensorUnit) C.counit)
+            (DayTensor.map C.counit (Hom.id C.carrier)))
+          C.comult =
+        Hom.comp (DayTensor.map (Hom.id dayTensorUnit) C.counit)
+          (Hom.comp (DayTensor.map C.counit (Hom.id C.carrier))
+            C.comult)) ?_
+  rw [comonoid_map_counit_id_comult C, leftUnitorInv_natural C.counit]
+
+theorem bangCounit_comp_representableToBang_zero :
+    Hom.comp (bangCounit 0) (representableToBang 0 0) =
+      Hom.id dayTensorUnit := by
+  ext n Φ
+  change ((representableToBang 0 0).app n Φ 0).val = Φ
+  change ((symmetricPowerProjection 0 0).app n Φ).val = Φ
+  show Superoperator.comp (symmetricAverage 0 0)
+      (Φ : Superoperator n (tensorPowerDimension 0 0)) = Φ
+  rw [symmetricAverage_of_le_one 0 0 (by decide)]
+  exact Superoperator.identity_comp _
+
+theorem symmetricElement_zero_of_pos_subsingleton (k n : ℕ) (hk : k ≠ 0) :
+    Subsingleton (SymmetricElement 0 k n) where
+  allEq x y := by
+    apply SymmetricElement.ext
+    have hdim : tensorPowerDimension 0 k = 0 := by
+      cases k with
+      | zero => exact (hk rfl).elim
+      | succ k => simp [tensorPowerDimension]
+    have : Subsingleton (Superoperator n (tensorPowerDimension 0 k)) := by
+      rw [hdim]; exact superoperator_to_zero_subsingleton n
+    exact Subsingleton.elim _ _
+
+theorem bang_zero_eq_of_counit (n : ℕ)
+    (x : ((bang 0).obj n).Carrier) :
+    (representableToBang 0 0).app n ((bangCounit 0).app n x) = x := by
+  funext k
+  by_cases hk : k = 0
+  · subst hk
+    apply SymmetricElement.ext
+    change Superoperator.comp (symmetricAverage 0 0) (x 0).val = (x 0).val
+    rw [symmetricAverage_of_le_one 0 0 (by decide)]
+    exact Superoperator.identity_comp _
+  · exact (symmetricElement_zero_of_pos_subsingleton k n hk).allEq _ _
+
+theorem representableToBang_comp_bangCounit_zero :
+    Hom.comp (representableToBang 0 0) (bangCounit 0) =
+      Hom.id (bang 0) := by
+  ext n x; exact bang_zero_eq_of_counit n x
+
+theorem bangSplit_representableToBang_zero (n : ℕ)
+    (Φ : ((representable (tensorPowerDimension 0 0)).obj n).Carrier) :
+    (bangSplitComponent 0 0 0).app n
+        ((representableToBang 0 0).app n Φ) =
+      (Φ : Superoperator n
+        (tensorPowerDimension 0 0 * tensorPowerDimension 0 0)) := by
+  unfold bangSplitComponent representableToBang
+  simp only [Hom.comp_app]
+  change Superoperator.comp
+      (Superoperator.ofEquivalence (tensorSplitEquiv 0 0 0))
+      ((countableProductInjection (fun j => symmetricPower 0 j) 0).app n
+        ((symmetricPowerProjection 0 0).app n Φ) 0).val = _
+  change Superoperator.comp
+      (Superoperator.ofEquivalence (tensorSplitEquiv 0 0 0))
+      ((symmetricPowerProjection 0 0).app n Φ).val = _
+  change Superoperator.comp
+      (Superoperator.ofEquivalence (tensorSplitEquiv 0 0 0))
+      (Superoperator.comp (symmetricAverage 0 0)
+        (Φ : Superoperator n (tensorPowerDimension 0 0))) = _
+  have havg := symmetricAverage_of_le_one 0 0 (Nat.zero_le 1)
+  rw [havg]
+  have hΦ :
+      Superoperator.comp
+          (Superoperator.identity (tensorPowerDimension 0 0))
+          (Φ : Superoperator n (tensorPowerDimension 0 0)) =
+        (Φ : Superoperator n (tensorPowerDimension 0 0)) :=
+    Superoperator.identity_comp _
+  rw [hΦ]
+  have hsplit :
+      Superoperator.ofEquivalence (tensorSplitEquiv 0 0 0) =
+        Superoperator.ofEquivalence
+          (Equiv.refl
+            (Fin (tensorPowerDimension 0 0 * tensorPowerDimension 0 0))) :=
+    ofEquivalence_dim_one rfl rfl _ _
+  rw [hsplit, Superoperator.ofEquivalence_refl]
+  exact Superoperator.identity_comp _
+
+theorem tensorLeftUnitorInv_one :
+    Superoperator.tensorLeftUnitorInv 1 =
+      Superoperator.identity (1 * 1) := by
+  change Superoperator.ofEquivalence
+      (Superoperator.tensorLeftUnitorEquiv 1).symm =
+    Superoperator.identity (1 * 1)
+  have h :
+      Superoperator.tensorLeftUnitorEquiv 1 =
+        Equiv.refl (Fin (1 * 1)) := by
+    apply Equiv.ext
+    intro i
+    apply Fin.ext
+    exact (fin_val_eq_zero_of_card_one (rfl : 1 * 1 = 1)
+        (Superoperator.tensorLeftUnitorEquiv 1 i)).trans
+      (fin_val_eq_zero_of_card_one (rfl : 1 * 1 = 1)
+        ((Equiv.refl (Fin (1 * 1))) i)).symm
+  rw [h, Equiv.refl_symm, Superoperator.ofEquivalence_refl]
+
+theorem bangSplitToRepDay_eq_leftUnitorInv (n : ℕ)
+    (Φ : ((representable
+        (tensorPowerDimension 0 0 * tensorPowerDimension 0 0)).obj n).Carrier) :
+    (bangSplitToRepDay 0 0 0).app n Φ =
+      (DayTensor.leftUnitorInv dayTensorUnit).app n
+        (Φ : (dayTensorUnit.obj n).Carrier) := by
+  rw [bangSplitToRepDay_app]
+  set Φ1 : Superoperator n 1 := Φ
+  set id1 : (dayTensorUnit.obj 1).Carrier := Superoperator.identity 1
+  have hnat :=
+    (DayCoend.intro dayTensorUnit dayTensorUnit).naturality
+      id1 id1 (Superoperator.identity 1) Φ1
+  have hid : dayTensorUnit.act id1 (Superoperator.identity 1) = id1 :=
+    dayTensorUnit.act_id id1
+  have hΦact : dayTensorUnit.act id1 Φ1 = Φ1 := by
+    change Superoperator.comp (id1 : Superoperator 1 1) Φ1 = Φ1
+    exact Superoperator.identity_comp Φ1
+  have hnat' :
+      (DayCoend.intro dayTensorUnit dayTensorUnit).app id1 Φ1 =
+        (dayTensor dayTensorUnit dayTensorUnit).act
+          ((DayCoend.intro dayTensorUnit dayTensorUnit).app id1 id1)
+          (Superoperator.tensor (Superoperator.identity 1) Φ1) := by
+    rw [hid, hΦact] at hnat; exact hnat
+  have hcomp :
+      Superoperator.comp
+          (Superoperator.tensor (Superoperator.identity 1) Φ1)
+          (Superoperator.tensorLeftUnitorInv n) =
+        Φ1 := by
+    rw [Superoperator.tensorLeftUnitorInv_naturality Φ1,
+      tensorLeftUnitorInv_one]
+    exact Superoperator.identity_comp Φ1
+  have hEq :
+      (dayTensor dayTensorUnit dayTensorUnit).act
+          ((DayCoend.intro dayTensorUnit dayTensorUnit).app id1 Φ1)
+          (Superoperator.tensorLeftUnitorInv n) =
+        (dayTensor dayTensorUnit dayTensorUnit).act
+          ((DayCoend.intro dayTensorUnit dayTensorUnit).app id1 id1) Φ1 := by
+    rw [hnat', (dayTensor dayTensorUnit dayTensorUnit).act_comp, hcomp]
+  change
+    (dayTensor
+        (representable (tensorPowerDimension 0 0))
+        (representable (tensorPowerDimension 0 0))).act
+      ((DayCoend.intro
+          (representable (tensorPowerDimension 0 0))
+          (representable (tensorPowerDimension 0 0))).app
+        (Superoperator.identity (tensorPowerDimension 0 0))
+        (Superoperator.identity (tensorPowerDimension 0 0)))
+      Φ =
+    (DayTensor.leftUnitorInv dayTensorUnit).app n
+      (Φ1 : (dayTensorUnit.obj n).Carrier)
+  change _ =
+    (dayTensor dayTensorUnit dayTensorUnit).act
+      ((DayCoend.intro dayTensorUnit dayTensorUnit).app id1 Φ1)
+      (Superoperator.tensorLeftUnitorInv n)
+  rw [hEq]; rfl
+
+/-- Typed left-unitor inverse at the Mid fiber `tensorPowerDimension 0 0`. -/
+noncomputable abbrev leftUnitorInv0 :
+    Hom dayTensorUnit
+      (dayTensor (representable (tensorPowerDimension 0 0))
+        (representable (tensorPowerDimension 0 0))) :=
+  DayTensor.leftUnitorInv dayTensorUnit
+
+theorem bangComult_zero_comp_representableToBang :
+    Hom.comp bangComult_zero (representableToBang 0 0) =
+      Hom.comp
+        (DayTensor.map (representableToBang 0 0) (representableToBang 0 0))
+        leftUnitorInv0 := by
+  apply Hom.ext
+  intro n Φ
+  have hL := bangComult_zero_eq_component n
+    ((representableToBang 0 0).app n Φ)
+  have hs := bangSplit_representableToBang_zero n Φ
+  change
+    bangComult_zero.app n ((representableToBang 0 0).app n Φ) =
+      (DayTensor.map (representableToBang 0 0)
+          (representableToBang 0 0)).app n
+        ((DayTensor.leftUnitorInv dayTensorUnit).app n Φ)
+  rw [hL]
+  change
+    (DayTensor.map (representableToBang 0 0)
+        (representableToBang 0 0)).app n
+      ((bangSplitToRepDay 0 0 0).app n
+        ((bangSplitComponent 0 0 0).app n
+          ((representableToBang 0 0).app n Φ))) = _
+  rw [hs]
+  exact congrArg
+    ((DayTensor.map (representableToBang 0 0)
+        (representableToBang 0 0)).app n)
+    (bangSplitToRepDay_eq_leftUnitorInv n
+      (Φ : Superoperator n
+        (tensorPowerDimension 0 0 * tensorPowerDimension 0 0)))
+
+/-- Cofree lift of the unique map into `representable 0`. -/
+noncomputable def bangCofreeLiftZero (C : Comonoid) :
+    Hom C.carrier (bang 0) :=
+  Hom.comp (representableToBang 0 0) C.counit
+
+theorem bangCofreeLiftZero_preserves_counit (C : Comonoid) :
+    Hom.comp (bangCounit 0) (bangCofreeLiftZero C) = C.counit := by
+  ext n x
+  change (bangCounit 0).app n
+      ((representableToBang 0 0).app n (C.counit.app n x)) =
+    C.counit.app n x
+  have h :=
+    congrArg (fun (f : Hom dayTensorUnit dayTensorUnit) =>
+      f.app n (C.counit.app n x))
+      bangCounit_comp_representableToBang_zero
+  change (bangCounit 0).app n
+      ((representableToBang 0 0).app n (C.counit.app n x)) = _ at h
+  simpa [Hom.id_app] using h
+
+theorem bangCofreeLiftZero_preserves_comult (C : Comonoid) :
+    Hom.comp bangComult_zero (bangCofreeLiftZero C) =
+      Hom.comp (DayTensor.map (bangCofreeLiftZero C) (bangCofreeLiftZero C))
+        C.comult := by
+  have hL :
+      Hom.comp bangComult_zero (bangCofreeLiftZero C) =
+        Hom.comp
+          (DayTensor.map (representableToBang 0 0) (representableToBang 0 0))
+          (Hom.comp leftUnitorInv0 C.counit) := by
+    change Hom.comp bangComult_zero
+        (Hom.comp (representableToBang 0 0) C.counit) = _
+    refine Eq.trans (by ext; rfl :
+        Hom.comp bangComult_zero
+            (Hom.comp (representableToBang 0 0) C.counit) =
+          Hom.comp
+            (Hom.comp bangComult_zero (representableToBang 0 0)) C.counit) ?_
+    refine Eq.trans (congrArg (fun g => Hom.comp g C.counit)
+      bangComult_zero_comp_representableToBang) ?_
+    ext; rfl
+  have hCT :
+      Hom.comp leftUnitorInv0 C.counit =
+        Hom.comp (DayTensor.map C.counit C.counit) C.comult := by
+    have h := comonoid_counit_tensor C
+    refine Eq.trans ?_ h.symm
+    rfl
+  have hR :
+      Hom.comp (DayTensor.map (bangCofreeLiftZero C) (bangCofreeLiftZero C))
+          C.comult =
+        Hom.comp
+          (DayTensor.map (representableToBang 0 0) (representableToBang 0 0))
+          (Hom.comp (DayTensor.map C.counit C.counit) C.comult) := by
+    have hmap := DayTensor.map_comp (representableToBang 0 0) C.counit
+      (representableToBang 0 0) C.counit
+    change Hom.comp
+        (DayTensor.map
+          (Hom.comp (representableToBang 0 0) C.counit)
+          (Hom.comp (representableToBang 0 0) C.counit))
+        C.comult = _
+    refine Eq.trans (congrArg (fun g => Hom.comp g C.comult) hmap) ?_
+    ext; rfl
+  rw [hL, hCT]; exact hR.symm
+
+noncomputable def bangCofreeLiftZeroComonoidHom (C : Comonoid) :
+    ComonoidHom C (bangComonoid 0 (by decide)) where
+  hom := bangCofreeLiftZero C
+  preserves_counit := bangCofreeLiftZero_preserves_counit C
+  preserves_comult := by
+    change Hom.comp (bangComult_of_le_one 0 (by decide)) (bangCofreeLiftZero C) = _
+    have h0 : bangComult_of_le_one 0 (by decide) = bangComult_zero := rfl
+    rw [h0]
+    exact bangCofreeLiftZero_preserves_comult C
+
+theorem bangCofreeLiftZero_unique (C : Comonoid)
+    (f : ComonoidHom C (bangComonoid 0 (by decide))) :
+    f = bangCofreeLiftZeroComonoidHom C := by
+  apply ComonoidHom.ext
+  ext n x
+  have hε :
+      (bangCounit 0).app n (f.hom.app n x) = C.counit.app n x := by
+    have h := congrArg (fun g : Hom C.carrier dayTensorUnit => g.app n x)
+      f.preserves_counit
+    simpa [bangComonoid, Hom.comp_app] using h
+  have hret := bang_zero_eq_of_counit n (f.hom.app n x)
+  -- f.hom x = repToBang (bangCounit (f.hom x)) = repToBang (C.counit x)
+  change f.hom.app n x = (representableToBang 0 0).app n (C.counit.app n x)
+  rw [← hret, hε]
+
+/-- Cofree UP equivalence for `A = 0`. -/
+noncomputable def bangCofreeEquiv_zero (C : Comonoid) :
+    Hom C.carrier (representable 0) ≃
+      ComonoidHom C (bangComonoid 0 (by decide)) where
+  toFun _ := bangCofreeLiftZeroComonoidHom C
+  invFun f := bangCofreeForgetComonoid 0 (by decide) C f
+  left_inv f := hom_to_representable_zero_unique _ _ _
+  right_inv f := (bangCofreeLiftZero_unique C f).symm
+
+/-- Alias matching the gate-3 naming for the `A = 0` case of the prospective
+`comonoidHomEquiv`. -/
+noncomputable def comonoidHomEquiv_zero (C : Comonoid) :=
+  bangCofreeEquiv_zero C
+
+
+/-! ## Cofree UP for `A = 1`
+
+Homogeneous coefficients `φ₀ = ε`, `φₙ₊₁ = λ ∘ (φₙ ⊗ f) ∘ Δ` assemble by
+`countableProductLift` into `bang 1`.  The tensor-power law
+`(φ_p ⊗ φ_q) ∘ Δ = λ⁻¹ ∘ φ_{p+q}` is proved by induction on `q`.
+-/
+
+/-- Day tensor elements are determined by all bilinear evaluations. -/
+theorem dayTensor_ext {M N : Module} {n : ℕ}
+    {x y : ((dayTensor M N).obj n).Carrier}
+    (h : ∀ (L : Module) (β : Bilinear M N L),
+      DayCoend.evaluate L β x = DayCoend.evaluate L β y) : x = y :=
+  (DayCoend.evaluate_self x).symm.trans
+    ((h (dayTensor M N) (DayCoend.intro M N)).trans (DayCoend.evaluate_self y))
+
+/-- Transport `ofEquivalence (finCongr h.symm) ∘ ψ` along `h : d = 1`. -/
+theorem ofEquiv_comp_eq_rec {n d : ℕ} (hd : d = 1)
+    (ψ : Superoperator n 1) :
+    Superoperator.comp
+        (Superoperator.ofEquivalence (finCongr hd.symm))
+        ψ =
+      hd.symm ▸ ψ := by
+  subst hd
+  change Superoperator.comp
+      (Superoperator.ofEquivalence (finCongr (Eq.symm rfl))) ψ =
+    (Eq.symm (rfl : (1:ℕ)=1)) ▸ ψ
+  have he : finCongr (Eq.symm (rfl : (1:ℕ)=1)) = Equiv.refl (Fin 1) := by
+    apply Equiv.ext; intro; apply Fin.ext; rfl
+  rw [he, Superoperator.ofEquivalence_refl, Superoperator.identity_comp]
+
+theorem ofEquiv_comp_tpd {n k : ℕ} (ψ : Superoperator n 1) :
+    Superoperator.comp
+        (Superoperator.ofEquivalence
+          (finCongr (tensorPowerDimension_one_eq k).symm))
+        ψ =
+      (tensorPowerDimension_one_eq k).symm ▸ ψ :=
+  ofEquiv_comp_eq_rec (tensorPowerDimension_one_eq k) ψ
+
+/-!
+`PartialCountableSum` axioms (empty / singleton / remove_zero / reindex /
+flatten) do **not** give free finite HasSum of arbitrary multi-term families:
+flatten only regroups.  `Fiber.hasSum_singleAt` covers one-supported families.
+Thus the finite inner sum over `p+q=k` is **not** automatic for a general
+`Module` fiber — A≥2 `BangDegreeUnitRectangleHasSum` remains blocked without
+additional structure (e.g. landing in ChoiSum fibers, or `act_sum_tensor_from_one`
+after transporting all partition terms to a common `1 * A^k` fiber).
+-/
+
+/-- Precompose a bilinear map along a pair of module morphisms. -/
+noncomputable def Bilinear.precomp
+    {M M' N N' L : Module}
+    (β : Bilinear M' N' L) (f : Hom M M') (g : Hom N N') :
+    Bilinear M N L where
+  app := fun x y => β.app (f.app _ x) (g.app _ y)
+  map_zero_left := by
+    intro m n y
+    rw [f.map_zero, β.map_zero_left]
+  map_zero_right := by
+    intro m n x
+    rw [g.map_zero, β.map_zero_right]
+  map_sum_left := by
+    intro ι _ m n xs s y h
+    exact β.map_sum_left (g.app _ y) (f.map_sum h)
+  map_sum_right := by
+    intro ι _ m n x ys s h
+    exact β.map_sum_right (f.app _ x) (g.map_sum h)
+  naturality := by
+    intro m' m n' n x y p q
+    rw [f.naturality, g.naturality, β.naturality]
+
+theorem DayTensor.evaluate_map {M M' N N' L : Module}
+    (β : Bilinear M' N' L) (f : Hom M M') (g : Hom N N')
+    {n : ℕ} (z : ((dayTensor M N).obj n).Carrier) :
+    DayCoend.evaluate L β ((DayTensor.map f g).app n z) =
+      DayCoend.evaluate L (Bilinear.precomp β f g) z := by
+  have h :
+      Hom.comp (DayCoend.lift β) (DayTensor.map f g) =
+        DayCoend.lift (Bilinear.precomp β f g) := by
+    apply DayTensor.hom_ext
+    intro m k x y
+    simp only [Hom.comp_app, DayTensor.map_intro]
+    change DayCoend.evaluate L β
+        ((DayCoend.intro M' N').app (f.app m x) (g.app k y)) =
+      DayCoend.evaluate L (Bilinear.precomp β f g)
+        ((DayCoend.intro M N).app x y)
+    rw [DayCoend.evaluate_intro, DayCoend.evaluate_intro]
+    rfl
+  exact congrArg (fun η : Hom (dayTensor M N) L => η.app n z) h
+
+theorem DayCoend.raw_value_hasSum_bilinear
+    {M N L : Module} {n : ℕ} {ι : Type} [Countable ι]
+    (βs : ι → Bilinear M N L) (γ : Bilinear M N L)
+    (hpt : ∀ {m k : ℕ} (x : (M.obj m).Carrier) (y : (N.obj k).Carrier),
+      (L.obj (m * k)).HasSum (fun i => (βs i).app x y) (γ.app x y))
+    (t : DayCoend.Raw M N n) (ht : t.Admissible) (hh : t.Hereditary) :
+    (L.obj n).HasSum
+      (fun i => DayCoend.Raw.value t ht L (βs i))
+      (DayCoend.Raw.value t ht L γ) := by
+  induction t with
+  | zero =>
+    have h0 : DayCoend.Raw.value (.zero : DayCoend.Raw M N n) ht L γ = 0 :=
+      (DayCoend.Raw.eval_unique _ ht L γ DayCoend.Raw.Eval.zero).symm
+    have hi (i : ι) :
+        DayCoend.Raw.value (.zero : DayCoend.Raw M N n) ht L (βs i) = 0 :=
+      (DayCoend.Raw.eval_unique _ ht L (βs i) DayCoend.Raw.Eval.zero).symm
+    have hfun :
+        (fun i => DayCoend.Raw.value (.zero : DayCoend.Raw M N n) ht L (βs i)) =
+          fun _ => (0 : (L.obj n).Carrier) := funext hi
+    rw [h0, hfun]
+    exact Fiber.hasSum_zero (L.obj n)
+  | generator x y f =>
+    have hγ : DayCoend.Raw.value (.generator x y f) ht L γ =
+        L.act (γ.app x y) f :=
+      (DayCoend.Raw.eval_unique _ ht L γ (DayCoend.Raw.Eval.generator x y f)).symm
+    have hi (i : ι) :
+        DayCoend.Raw.value (.generator x y f) ht L (βs i) =
+          L.act ((βs i).app x y) f :=
+      (DayCoend.Raw.eval_unique _ ht L (βs i)
+        (DayCoend.Raw.Eval.generator x y f)).symm
+    have hfun :
+        (fun i => DayCoend.Raw.value (.generator x y f) ht L (βs i)) =
+          fun i => L.act ((βs i).app x y) f := funext hi
+    rw [hγ, hfun]
+    exact L.act_sum_element f (hpt x y)
+  | sum f ih =>
+    have hγeval := DayCoend.Raw.eval_value (.sum f) ht L γ
+    obtain ⟨vγ, hvγ, hsγ⟩ := DayCoend.Raw.eval_sum_cases γ f hγeval
+    have hγval : vγ = fun j =>
+        DayCoend.Raw.value (f j) (hh j).2 L γ := by
+      funext j
+      exact DayCoend.Raw.eval_unique (f j) (hh j).2 L γ (hvγ j)
+    have hsumγ :
+        (L.obj n).HasSum
+          (fun j => DayCoend.Raw.value (f j) (hh j).2 L γ)
+          (DayCoend.Raw.value (.sum f) ht L γ) := by
+      rwa [hγval] at hsγ
+    have hrow (j : ℕ) :
+        (L.obj n).HasSum
+          (fun i => DayCoend.Raw.value (f j) (hh j).2 L (βs i))
+          (DayCoend.Raw.value (f j) (hh j).2 L γ) :=
+      ih j (hh j).2 (hh j).1
+    let φ : ℕ → ι → (L.obj n).Carrier :=
+      fun j i => DayCoend.Raw.value (f j) (hh j).2 L (βs i)
+    have hflat :
+        (L.obj n).HasSum
+          (fun p : Σ _ : ℕ, ι => φ p.1 p.2)
+          (DayCoend.Raw.value (.sum f) ht L γ) :=
+      ((L.obj n).summation.flatten φ
+        (DayCoend.Raw.value (.sum f) ht L γ)).mpr
+        ⟨fun j => DayCoend.Raw.value (f j) (hh j).2 L γ, hrow, hsumγ⟩
+    have hswap :
+        (L.obj n).HasSum
+          (fun p : Σ _ : ι, ℕ => φ p.2 p.1)
+          (DayCoend.Raw.value (.sum f) ht L γ) :=
+      ((L.obj n).summation.reindex (sigmaSwapEquiv ι ℕ)
+        (fun p : Σ _ : ℕ, ι => φ p.1 p.2)
+        (DayCoend.Raw.value (.sum f) ht L γ)).mpr hflat
+    obtain ⟨g, hrows, hsumg⟩ :=
+      ((L.obj n).summation.flatten
+        (fun i j => φ j i)
+        (DayCoend.Raw.value (.sum f) ht L γ)).mp hswap
+    have hg : g = fun i => DayCoend.Raw.value (.sum f) ht L (βs i) := by
+      funext i
+      have he := DayCoend.Raw.eval_value (.sum f) ht L (βs i)
+      obtain ⟨vi, hvi, hsi⟩ := DayCoend.Raw.eval_sum_cases (βs i) f he
+      have : vi = fun j => DayCoend.Raw.value (f j) (hh j).2 L (βs i) := by
+        funext j
+        exact DayCoend.Raw.eval_unique (f j) (hh j).2 L (βs i) (hvi j)
+      have : (L.obj n).HasSum
+          (fun j => DayCoend.Raw.value (f j) (hh j).2 L (βs i))
+          (DayCoend.Raw.value (.sum f) ht L (βs i)) := by
+        rwa [this] at hsi
+      exact (L.obj n).summation.unique (hrows i) this
+    rwa [hg] at hsumg
+
+theorem DayCoend.evaluate_hasSum_bilinear
+    {M N L : Module} {n : ℕ} {ι : Type} [Countable ι]
+    (βs : ι → Bilinear M N L) (γ : Bilinear M N L)
+    (hpt : ∀ {m k : ℕ} (x : (M.obj m).Carrier) (y : (N.obj k).Carrier),
+      (L.obj (m * k)).HasSum (fun i => (βs i).app x y) (γ.app x y))
+    (z : DayCoend.Carrier M N n) :
+    (L.obj n).HasSum
+      (fun i => DayCoend.evaluate L (βs i) z)
+      (DayCoend.evaluate L γ z) := by
+  induction z using Quotient.inductionOn with
+  | _ t =>
+    change (L.obj n).HasSum
+      (fun i => DayCoend.Term.value t L (βs i))
+      (DayCoend.Term.value t L γ)
+    exact DayCoend.raw_value_hasSum_bilinear βs γ hpt t.1 t.2.1 t.2.2
+
+
+theorem tensorRightUnitorInv_one :
+    Superoperator.tensorRightUnitorInv 1 =
+      Superoperator.identity (1 * 1) := by
+  change Superoperator.ofEquivalence
+      (Superoperator.tensorRightUnitorEquiv 1).symm =
+    Superoperator.identity (1 * 1)
+  have h :
+      Superoperator.tensorRightUnitorEquiv 1 =
+        Equiv.refl (Fin (1 * 1)) := by
+    apply Equiv.ext
+    intro i
+    apply Fin.ext
+    exact (fin_val_eq_zero_of_card_one (rfl : 1 * 1 = 1)
+        (Superoperator.tensorRightUnitorEquiv 1 i)).trans
+      (fin_val_eq_zero_of_card_one (rfl : 1 * 1 = 1)
+        ((Equiv.refl (Fin (1 * 1))) i)).symm
+  rw [h, Equiv.refl_symm, Superoperator.ofEquivalence_refl]
+
+theorem leftUnitorInv_unit_eq_rightUnitorInv_unit :
+    DayTensor.leftUnitorInv dayTensorUnit =
+      DayTensor.rightUnitorInv dayTensorUnit := by
+  apply Hom.ext
+  intro n x
+  change
+    (dayTensor dayTensorUnit dayTensorUnit).act
+      ((DayCoend.intro dayTensorUnit dayTensorUnit).app
+        (Superoperator.identity 1) x)
+      (Superoperator.tensorLeftUnitorInv n) =
+    (dayTensor dayTensorUnit dayTensorUnit).act
+      ((DayCoend.intro dayTensorUnit dayTensorUnit).app
+        x (Superoperator.identity 1))
+      (Superoperator.tensorRightUnitorInv n)
+  have hid1 : dayTensorUnit.act (Superoperator.identity 1) (Superoperator.identity 1) =
+      (Superoperator.identity 1 : (dayTensorUnit.obj 1).Carrier) :=
+    dayTensorUnit.act_id _
+  have hx : dayTensorUnit.act (Superoperator.identity 1) x = x := by
+    change Superoperator.comp (Superoperator.identity 1) x = x
+    exact Superoperator.identity_comp x
+  have hL :
+      (DayCoend.intro dayTensorUnit dayTensorUnit).app
+        (Superoperator.identity 1) x =
+      (dayTensor dayTensorUnit dayTensorUnit).act
+        ((DayCoend.intro dayTensorUnit dayTensorUnit).app
+          (Superoperator.identity 1) (Superoperator.identity 1))
+        (Superoperator.tensor (Superoperator.identity 1) x) := by
+    have h := (DayCoend.intro dayTensorUnit dayTensorUnit).naturality
+      (Superoperator.identity 1) (Superoperator.identity 1)
+      (Superoperator.identity 1) x
+    simpa [hid1, hx] using h
+  have hR :
+      (DayCoend.intro dayTensorUnit dayTensorUnit).app
+        x (Superoperator.identity 1) =
+      (dayTensor dayTensorUnit dayTensorUnit).act
+        ((DayCoend.intro dayTensorUnit dayTensorUnit).app
+          (Superoperator.identity 1) (Superoperator.identity 1))
+        (Superoperator.tensor x (Superoperator.identity 1)) := by
+    have h := (DayCoend.intro dayTensorUnit dayTensorUnit).naturality
+      (Superoperator.identity 1) (Superoperator.identity 1)
+      x (Superoperator.identity 1)
+    simpa [hid1, hx] using h
+  rw [hL, hR, (dayTensor dayTensorUnit dayTensorUnit).act_comp,
+    (dayTensor dayTensorUnit dayTensorUnit).act_comp]
+  have hEq :
+      Superoperator.comp
+          (Superoperator.tensor (Superoperator.identity 1) x)
+          (Superoperator.tensorLeftUnitorInv n) =
+        Superoperator.comp
+          (Superoperator.tensor x (Superoperator.identity 1))
+          (Superoperator.tensorRightUnitorInv n) := by
+    rw [Superoperator.tensorLeftUnitorInv_naturality x,
+      Superoperator.tensorRightUnitorInv_naturality x,
+      tensorLeftUnitorInv_one, tensorRightUnitorInv_one]
+  exact congrArg
+    ((dayTensor dayTensorUnit dayTensorUnit).act
+      ((DayCoend.intro dayTensorUnit dayTensorUnit).app
+        (Superoperator.identity 1) (Superoperator.identity 1)))
+    hEq
+
+theorem leftUnitor_unit_eq_rightUnitor_unit :
+    DayTensor.leftUnitor dayTensorUnit =
+      DayTensor.rightUnitor dayTensorUnit := by
+  have hinv := leftUnitorInv_unit_eq_rightUnitorInv_unit
+  -- λ ∘ λ⁻¹ = ρ ∘ λ⁻¹, then cancel λ⁻¹ by composing with λ on the right
+  have hcomp :
+      Hom.comp (DayTensor.leftUnitor dayTensorUnit)
+          (DayTensor.leftUnitorInv dayTensorUnit) =
+        Hom.comp (DayTensor.rightUnitor dayTensorUnit)
+          (DayTensor.leftUnitorInv dayTensorUnit) := by
+    have hl := (DayTensor.leftUnitorIso dayTensorUnit).hom_inv
+    have hr := (DayTensor.rightUnitorIso dayTensorUnit).hom_inv
+    -- λ∘λ⁻¹ = id = ρ∘ρ⁻¹ = ρ∘λ⁻¹
+    refine Eq.trans hl ?_
+    refine Eq.trans hr.symm ?_
+    exact congrArg (Hom.comp (DayTensor.rightUnitor dayTensorUnit)) hinv.symm
+  -- compose both sides on the right with λ
+  have h := congrArg (fun g => Hom.comp g (DayTensor.leftUnitor dayTensorUnit)) hcomp
+  -- (λ∘λ⁻¹)∘λ = (ρ∘λ⁻¹)∘λ
+  have hL : Hom.comp
+      (Hom.comp (DayTensor.leftUnitor dayTensorUnit)
+        (DayTensor.leftUnitorInv dayTensorUnit))
+      (DayTensor.leftUnitor dayTensorUnit) =
+      DayTensor.leftUnitor dayTensorUnit := by
+    have hl := (DayTensor.leftUnitorIso dayTensorUnit).hom_inv
+    refine Eq.trans (congrArg (fun g => Hom.comp g
+        (DayTensor.leftUnitor dayTensorUnit)) hl) ?_
+    exact Hom.id_comp _
+  have hR : Hom.comp
+      (Hom.comp (DayTensor.rightUnitor dayTensorUnit)
+        (DayTensor.leftUnitorInv dayTensorUnit))
+      (DayTensor.leftUnitor dayTensorUnit) =
+      DayTensor.rightUnitor dayTensorUnit := by
+    -- (ρ ∘ λ⁻¹) ∘ λ = ρ ∘ (λ⁻¹ ∘ λ) = ρ ∘ id = ρ
+    refine Eq.trans (by ext; rfl) ?_
+    refine Eq.trans (congrArg (Hom.comp (DayTensor.rightUnitor dayTensorUnit))
+      (DayTensor.leftUnitorIso dayTensorUnit).inv_hom) ?_
+    exact Hom.comp_id _
+  exact Eq.trans hL.symm (Eq.trans h hR)
+
+/-- Coherence: (id ⊗ λ) ∘ α ∘ (λ⁻¹ ⊗ id) = id on I⊗I. -/
+theorem leftUnitor_associator_coherence :
+    Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+      (Hom.comp (DayTensor.associator dayTensorUnit dayTensorUnit dayTensorUnit)
+        (DayTensor.map (DayTensor.leftUnitorInv dayTensorUnit) (Hom.id dayTensorUnit))) =
+      Hom.id (dayTensor dayTensorUnit dayTensorUnit) := by
+  -- triangle: map(id,λ)∘α = map(ρ,id)
+  have htri := DayTensor.triangle dayTensorUnit dayTensorUnit
+  refine Eq.trans (congrArg (fun g => Hom.comp g
+      (DayTensor.map (DayTensor.leftUnitorInv dayTensorUnit)
+        (Hom.id dayTensorUnit))) htri) ?_
+  -- map(ρ,id) ∘ map(λ⁻¹,id) = map(ρ∘λ⁻¹, id)
+  have hmap := DayTensor.map_comp (DayTensor.rightUnitor dayTensorUnit)
+      (DayTensor.leftUnitorInv dayTensorUnit)
+      (Hom.id dayTensorUnit) (Hom.id dayTensorUnit)
+  refine Eq.trans hmap.symm ?_
+  -- ρ ∘ λ⁻¹ = ρ ∘ ρ⁻¹ = id (using λ⁻¹=ρ⁻¹)
+  have hcancel :
+      Hom.comp (DayTensor.rightUnitor dayTensorUnit)
+          (DayTensor.leftUnitorInv dayTensorUnit) =
+        Hom.id dayTensorUnit := by
+    rw [leftUnitorInv_unit_eq_rightUnitorInv_unit]
+    exact (DayTensor.rightUnitorIso dayTensorUnit).hom_inv
+  refine Eq.trans (congrArg (fun g => DayTensor.map g (Hom.comp (Hom.id dayTensorUnit) (Hom.id dayTensorUnit)))
+      hcancel) ?_
+  simp only [Hom.id_comp, DayTensor.map_id]
+
+theorem comonoid_map_id_counit_comult (C : Comonoid) :
+    Hom.comp (DayTensor.map (Hom.id C.carrier) C.counit) C.comult =
+      DayTensor.rightUnitorInv C.carrier := by
+  have hinv := (DayTensor.rightUnitorIso C.carrier).inv_hom
+  have h := C.right_counit
+  refine Eq.trans ?_ (Eq.trans (congrArg
+    (fun g => Hom.comp (DayTensor.rightUnitorInv C.carrier) g) h)
+    (Hom.comp_id _))
+  refine Eq.trans (Eq.symm (Hom.id_comp _)) ?_
+  refine Eq.trans (congrArg (fun g => Hom.comp g
+    (Hom.comp (DayTensor.map (Hom.id C.carrier) C.counit) C.comult))
+    hinv.symm) ?_
+  ext n x; rfl
+
+theorem rightUnitor_natural {M N : Module} (f : Hom M N) :
+    Hom.comp (DayTensor.rightUnitor N)
+        (DayTensor.map f (Hom.id dayTensorUnit)) =
+      Hom.comp f (DayTensor.rightUnitor M) := by
+  apply DayTensor.hom_ext
+  intro m n x y
+  simp only [DayTensor.map_intro, Hom.comp_app, Hom.id_app]
+  have hL := DayTensor.rightUnitor_intro (M := N) (f.app m x) y
+  have hR := DayTensor.rightUnitor_intro (M := M) x y
+  change
+    (DayTensor.rightUnitor N).app (m * n)
+        ((DayCoend.intro N dayTensorUnit).app (f.app m x) y) =
+      f.app (m * n)
+        ((DayTensor.rightUnitor M).app (m * n)
+          ((DayCoend.intro M dayTensorUnit).app x y))
+  rw [hL, hR, f.naturality]
+
+theorem rightUnitorInv_natural {M N : Module} (f : Hom M N) :
+    Hom.comp (DayTensor.map f (Hom.id dayTensorUnit))
+        (DayTensor.rightUnitorInv M) =
+      Hom.comp (DayTensor.rightUnitorInv N) f := by
+  have hcancel :
+      Hom.comp (DayTensor.rightUnitor N)
+          (Hom.comp (DayTensor.map f (Hom.id dayTensorUnit))
+            (DayTensor.rightUnitorInv M)) =
+        f := by
+    refine Eq.trans ?_ (Hom.comp_id f)
+    refine Eq.trans ?_
+      (congrArg (fun g => Hom.comp f g)
+        (DayTensor.rightUnitorIso M).hom_inv)
+    have hnat := rightUnitor_natural f
+    refine Eq.trans (Eq.symm (by ext; rfl :
+        Hom.comp (DayTensor.rightUnitor N)
+            (Hom.comp (DayTensor.map f (Hom.id dayTensorUnit))
+              (DayTensor.rightUnitorInv M)) =
+          Hom.comp
+            (Hom.comp (DayTensor.rightUnitor N)
+              (DayTensor.map f (Hom.id dayTensorUnit)))
+            (DayTensor.rightUnitorInv M))) ?_
+    refine Eq.trans (congrArg (fun g => Hom.comp g
+        (DayTensor.rightUnitorInv M)) hnat) ?_
+    ext; rfl
+  refine Eq.trans ?_ (congrArg
+    (fun g => Hom.comp (DayTensor.rightUnitorInv N) g) hcancel)
+  have hinv := (DayTensor.rightUnitorIso N).inv_hom
+  refine Eq.trans (Eq.symm (Hom.id_comp _)) ?_
+  refine Eq.trans (congrArg (fun g => Hom.comp g
+      (Hom.comp (DayTensor.map f (Hom.id dayTensorUnit))
+        (DayTensor.rightUnitorInv M))) hinv.symm) ?_
+  ext; rfl
+
+noncomputable def bangCofreeCoeffOne (C : Comonoid)
+    (f : Hom C.carrier dayTensorUnit) :
+    ℕ → Hom C.carrier dayTensorUnit
+  | 0 => C.counit
+  | n + 1 =>
+      Hom.comp (DayTensor.leftUnitor dayTensorUnit)
+        (Hom.comp (DayTensor.map (bangCofreeCoeffOne C f n) f) C.comult)
+
+theorem bangCofreeCoeffOne_one (C : Comonoid)
+    (f : Hom C.carrier dayTensorUnit) :
+    bangCofreeCoeffOne C f 1 = f := by
+  change Hom.comp (DayTensor.leftUnitor dayTensorUnit)
+      (Hom.comp (DayTensor.map C.counit f) C.comult) = f
+  have hfactor :
+      DayTensor.map C.counit f =
+        Hom.comp (DayTensor.map (Hom.id dayTensorUnit) f)
+          (DayTensor.map C.counit (Hom.id C.carrier)) := by
+    have h := DayTensor.map_comp (Hom.id dayTensorUnit) C.counit
+      f (Hom.id C.carrier)
+    simp only [Hom.id_comp, Hom.comp_id] at h
+    exact h
+  have hleft := comonoid_map_counit_id_comult C
+  refine Eq.trans (congrArg (fun g => Hom.comp (DayTensor.leftUnitor dayTensorUnit)
+      (Hom.comp g C.comult)) hfactor) ?_
+  refine Eq.trans (by ext; rfl :
+      Hom.comp (DayTensor.leftUnitor dayTensorUnit)
+          (Hom.comp
+            (Hom.comp (DayTensor.map (Hom.id dayTensorUnit) f)
+              (DayTensor.map C.counit (Hom.id C.carrier)))
+            C.comult) =
+        Hom.comp (DayTensor.leftUnitor dayTensorUnit)
+          (Hom.comp (DayTensor.map (Hom.id dayTensorUnit) f)
+            (Hom.comp (DayTensor.map C.counit (Hom.id C.carrier))
+              C.comult))) ?_
+  rw [hleft]
+  have hnatU := leftUnitor_natural f
+  refine Eq.trans (by ext; rfl :
+      Hom.comp (DayTensor.leftUnitor dayTensorUnit)
+          (Hom.comp (DayTensor.map (Hom.id dayTensorUnit) f)
+            (DayTensor.leftUnitorInv C.carrier)) =
+        Hom.comp
+          (Hom.comp (DayTensor.leftUnitor dayTensorUnit)
+            (DayTensor.map (Hom.id dayTensorUnit) f))
+          (DayTensor.leftUnitorInv C.carrier)) ?_
+  refine Eq.trans (congrArg (fun g => Hom.comp g
+      (DayTensor.leftUnitorInv C.carrier)) hnatU) ?_
+  refine Eq.trans (by ext; rfl :
+      Hom.comp (Hom.comp f (DayTensor.leftUnitor C.carrier))
+          (DayTensor.leftUnitorInv C.carrier) =
+        Hom.comp f (Hom.comp (DayTensor.leftUnitor C.carrier)
+          (DayTensor.leftUnitorInv C.carrier))) ?_
+  refine Eq.trans (congrArg (Hom.comp f)
+      (DayTensor.leftUnitorIso C.carrier).hom_inv) ?_
+  exact Hom.comp_id f
+
+theorem bangCofreeCoeffOne_comult (C : Comonoid)
+    (f : Hom C.carrier dayTensorUnit) (p q : ℕ) :
+    Hom.comp
+        (DayTensor.map (bangCofreeCoeffOne C f p) (bangCofreeCoeffOne C f q))
+        C.comult =
+      Hom.comp (DayTensor.leftUnitorInv dayTensorUnit)
+        (bangCofreeCoeffOne C f (p + q)) := by
+  induction q generalizing p with
+  | zero =>
+    change Hom.comp (DayTensor.map (bangCofreeCoeffOne C f p) C.counit) C.comult =
+      Hom.comp (DayTensor.leftUnitorInv dayTensorUnit) (bangCofreeCoeffOne C f (p + 0))
+    rw [Nat.add_zero]
+    have hfactor :
+        DayTensor.map (bangCofreeCoeffOne C f p) C.counit =
+          Hom.comp (DayTensor.map (bangCofreeCoeffOne C f p) (Hom.id dayTensorUnit))
+            (DayTensor.map (Hom.id C.carrier) C.counit) := by
+      have h := DayTensor.map_comp (bangCofreeCoeffOne C f p) (Hom.id C.carrier)
+        (Hom.id dayTensorUnit) C.counit
+      simp only [Hom.comp_id, Hom.id_comp] at h
+      exact h
+    refine Eq.trans (congrArg (fun g => Hom.comp g C.comult) hfactor) ?_
+    refine Eq.trans (by ext; rfl :
+        Hom.comp
+            (Hom.comp (DayTensor.map (bangCofreeCoeffOne C f p) (Hom.id dayTensorUnit))
+              (DayTensor.map (Hom.id C.carrier) C.counit))
+            C.comult =
+          Hom.comp (DayTensor.map (bangCofreeCoeffOne C f p) (Hom.id dayTensorUnit))
+            (Hom.comp (DayTensor.map (Hom.id C.carrier) C.counit) C.comult)) ?_
+    rw [comonoid_map_id_counit_comult C]
+    refine Eq.trans (rightUnitorInv_natural (bangCofreeCoeffOne C f p)) ?_
+    exact congrArg (fun g => Hom.comp g (bangCofreeCoeffOne C f p))
+      leftUnitorInv_unit_eq_rightUnitorInv_unit.symm
+  | succ q ih =>
+    let φ := bangCofreeCoeffOne C f
+    let Δ := C.comult
+    -- Unfold φ(q+1)
+    have hφq1 : φ (q + 1) =
+        Hom.comp (DayTensor.leftUnitor dayTensorUnit)
+          (Hom.comp (DayTensor.map (φ q) f) Δ) := rfl
+    -- LHS rewrite chain
+    have hL :
+        Hom.comp (DayTensor.map (φ p) (φ (q + 1))) Δ =
+          Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+            (Hom.comp (DayTensor.associator dayTensorUnit dayTensorUnit dayTensorUnit)
+              (Hom.comp
+                (DayTensor.map (DayTensor.leftUnitorInv dayTensorUnit) (Hom.id dayTensorUnit))
+                (Hom.comp (DayTensor.map (φ (p + q)) f) Δ))) := by
+      -- Step through the calculation
+      rw [hφq1]
+      -- map(φp, λ ∘ mid) = map(id,λ) ∘ map(φp, mid)
+      have hf1 :
+          DayTensor.map (φ p)
+              (Hom.comp (DayTensor.leftUnitor dayTensorUnit)
+                (Hom.comp (DayTensor.map (φ q) f) Δ)) =
+            Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+              (DayTensor.map (φ p) (Hom.comp (DayTensor.map (φ q) f) Δ)) := by
+        have h := DayTensor.map_comp (Hom.id dayTensorUnit) (φ p)
+          (DayTensor.leftUnitor dayTensorUnit)
+          (Hom.comp (DayTensor.map (φ q) f) Δ)
+        simpa only [Hom.id_comp] using h
+      refine Eq.trans (congrArg (fun g => Hom.comp g Δ) hf1) ?_
+      refine Eq.trans (by ext; rfl) ?_
+      -- map(φp, map(φq,f)∘Δ) = map(id, map(φq,f)) ∘ map(φp, Δ)
+      have hf2 :
+          DayTensor.map (φ p) (Hom.comp (DayTensor.map (φ q) f) Δ) =
+            Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.map (φ q) f))
+              (DayTensor.map (φ p) Δ) := by
+        have h := DayTensor.map_comp (Hom.id dayTensorUnit) (φ p)
+          (DayTensor.map (φ q) f) Δ
+        simpa only [Hom.id_comp] using h
+      refine Eq.trans (congrArg (fun g =>
+          Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+            (Hom.comp g Δ)) hf2) ?_
+      refine Eq.trans (by ext; rfl) ?_
+      -- map(φp, Δ) = map(φp, id) ∘ map(id, Δ)
+      have hf3 :
+          DayTensor.map (φ p) Δ =
+            Hom.comp (DayTensor.map (φ p) (Hom.id (dayTensor C.carrier C.carrier)))
+              (DayTensor.map (Hom.id C.carrier) Δ) := by
+        have h := DayTensor.map_comp (φ p) (Hom.id C.carrier)
+          (Hom.id (dayTensor C.carrier C.carrier)) Δ
+        simpa only [Hom.comp_id, Hom.id_comp] using h
+      refine Eq.trans (congrArg (fun g =>
+          Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+            (Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.map (φ q) f))
+              (Hom.comp g Δ))) hf3) ?_
+      refine Eq.trans (by ext; rfl) ?_
+      -- coassoc: map(id,Δ)∘Δ = α ∘ map(Δ,id)∘Δ
+      have hco := C.coassociative.symm
+      refine Eq.trans (congrArg (fun g =>
+          Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+            (Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.map (φ q) f))
+              (Hom.comp (DayTensor.map (φ p) (Hom.id (dayTensor C.carrier C.carrier))) g)))
+        hco) ?_
+      refine Eq.trans (by ext; rfl) ?_
+      -- map(id, map(φq,f)) ∘ map(φp, id) = map(φp, map(φq,f))
+      have hf4 :
+          Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.map (φ q) f))
+              (DayTensor.map (φ p) (Hom.id (dayTensor C.carrier C.carrier))) =
+            DayTensor.map (φ p) (DayTensor.map (φ q) f) := by
+        have h := DayTensor.map_comp (Hom.id dayTensorUnit) (φ p)
+          (DayTensor.map (φ q) f) (Hom.id (dayTensor C.carrier C.carrier))
+        simpa only [Hom.comp_id, Hom.id_comp] using h.symm
+      -- Reassociate to apply hf4 before α
+      refine Eq.trans (by ext; rfl :
+          Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+              (Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.map (φ q) f))
+                (Hom.comp (DayTensor.map (φ p) (Hom.id (dayTensor C.carrier C.carrier)))
+                  (Hom.comp (DayTensor.associator C.carrier C.carrier C.carrier)
+                    (Hom.comp (DayTensor.map Δ (Hom.id C.carrier)) Δ)))) =
+            Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+              (Hom.comp
+                (Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.map (φ q) f))
+                  (DayTensor.map (φ p) (Hom.id (dayTensor C.carrier C.carrier))))
+                (Hom.comp (DayTensor.associator C.carrier C.carrier C.carrier)
+                  (Hom.comp (DayTensor.map Δ (Hom.id C.carrier)) Δ)))) ?_
+      refine Eq.trans (congrArg (fun g =>
+          Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+            (Hom.comp g
+              (Hom.comp (DayTensor.associator C.carrier C.carrier C.carrier)
+                (Hom.comp (DayTensor.map Δ (Hom.id C.carrier)) Δ)))) hf4) ?_
+      -- associator naturality: map(φp, map(φq,f)) ∘ α = α' ∘ map(map(φp,φq), f)
+      have hnat := DayTensor.associator_naturality (φ p) (φ q) f
+      -- hnat: α' ∘ map(map φp φq, f) = map(φp, map(φq,f)) ∘ α
+      -- so map(φp, map(φq,f)) ∘ α = α' ∘ map(map(φp,φq), f)
+      refine Eq.trans (by ext; rfl :
+          Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+              (Hom.comp (DayTensor.map (φ p) (DayTensor.map (φ q) f))
+                (Hom.comp (DayTensor.associator C.carrier C.carrier C.carrier)
+                  (Hom.comp (DayTensor.map Δ (Hom.id C.carrier)) Δ))) =
+            Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+              (Hom.comp
+                (Hom.comp (DayTensor.map (φ p) (DayTensor.map (φ q) f))
+                  (DayTensor.associator C.carrier C.carrier C.carrier))
+                (Hom.comp (DayTensor.map Δ (Hom.id C.carrier)) Δ))) ?_
+      refine Eq.trans (congrArg (fun g =>
+          Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+            (Hom.comp g (Hom.comp (DayTensor.map Δ (Hom.id C.carrier)) Δ)))
+        hnat.symm) ?_
+      refine Eq.trans (by ext; rfl) ?_
+      -- map(map(φp,φq), f) ∘ map(Δ, id) = map(map(φp,φq)∘Δ, f)
+      have hf5 :
+          Hom.comp (DayTensor.map (DayTensor.map (φ p) (φ q)) f)
+              (DayTensor.map Δ (Hom.id C.carrier)) =
+            DayTensor.map (Hom.comp (DayTensor.map (φ p) (φ q)) Δ) f := by
+        have h := DayTensor.map_comp (DayTensor.map (φ p) (φ q)) Δ
+          f (Hom.id C.carrier)
+        simpa only [Hom.comp_id] using h.symm
+      refine Eq.trans (congrArg (fun g =>
+          Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+            (Hom.comp (DayTensor.associator dayTensorUnit dayTensorUnit dayTensorUnit)
+              (Hom.comp g Δ))) hf5) ?_
+      -- IH: map(φp,φq)∘Δ = λ⁻¹ ∘ φ(p+q)
+      have hih := ih p
+      -- hih: map(φp, φq)∘Δ = λ⁻¹ ∘ φ(p+q)
+      refine Eq.trans (congrArg (fun g =>
+          Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+            (Hom.comp (DayTensor.associator dayTensorUnit dayTensorUnit dayTensorUnit)
+              (Hom.comp (DayTensor.map g f) Δ))) hih) ?_
+      -- map(λ⁻¹ ∘ φ(p+q), f) = map(λ⁻¹, id) ∘ map(φ(p+q), f)
+      have hf6 :
+          DayTensor.map
+              (Hom.comp (DayTensor.leftUnitorInv dayTensorUnit) (φ (p + q))) f =
+            Hom.comp
+              (DayTensor.map (DayTensor.leftUnitorInv dayTensorUnit) (Hom.id dayTensorUnit))
+              (DayTensor.map (φ (p + q)) f) := by
+        have h := DayTensor.map_comp (DayTensor.leftUnitorInv dayTensorUnit) (φ (p + q))
+          (Hom.id dayTensorUnit) f
+        simpa only [Hom.id_comp] using h
+      refine Eq.trans (congrArg (fun g =>
+          Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+            (Hom.comp (DayTensor.associator dayTensorUnit dayTensorUnit dayTensorUnit)
+              (Hom.comp g Δ))) hf6) ?_
+      ext; rfl
+    -- Now apply coherence to collapse (id⊗λ)∘α∘(λ⁻¹⊗id)
+    have hcoh := leftUnitor_associator_coherence
+    have hL2 :
+        Hom.comp (DayTensor.map (φ p) (φ (q + 1))) Δ =
+          Hom.comp (DayTensor.map (φ (p + q)) f) Δ := by
+      refine Eq.trans hL ?_
+      refine Eq.trans (by ext; rfl :
+          Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+              (Hom.comp (DayTensor.associator dayTensorUnit dayTensorUnit dayTensorUnit)
+                (Hom.comp
+                  (DayTensor.map (DayTensor.leftUnitorInv dayTensorUnit) (Hom.id dayTensorUnit))
+                  (Hom.comp (DayTensor.map (φ (p + q)) f) Δ))) =
+            Hom.comp
+              (Hom.comp (DayTensor.map (Hom.id dayTensorUnit) (DayTensor.leftUnitor dayTensorUnit))
+                (Hom.comp (DayTensor.associator dayTensorUnit dayTensorUnit dayTensorUnit)
+                  (DayTensor.map (DayTensor.leftUnitorInv dayTensorUnit) (Hom.id dayTensorUnit))))
+              (Hom.comp (DayTensor.map (φ (p + q)) f) Δ)) ?_
+      refine Eq.trans (congrArg (fun g => Hom.comp g
+          (Hom.comp (DayTensor.map (φ (p + q)) f) Δ)) hcoh) ?_
+      exact Hom.id_comp _
+    -- RHS: λ⁻¹ ∘ φ(p+q+1) = λ⁻¹ ∘ λ ∘ map(φ(p+q), f) ∘ Δ = map(φ(p+q), f) ∘ Δ
+    have hR :
+        Hom.comp (DayTensor.leftUnitorInv dayTensorUnit) (φ (p + (q + 1))) =
+          Hom.comp (DayTensor.map (φ (p + q)) f) Δ := by
+      have hadd : p + (q + 1) = (p + q) + 1 := by omega
+      rw [hadd]
+      change Hom.comp (DayTensor.leftUnitorInv dayTensorUnit)
+          (Hom.comp (DayTensor.leftUnitor dayTensorUnit)
+            (Hom.comp (DayTensor.map (φ (p + q)) f) Δ)) = _
+      refine Eq.trans (by ext; rfl) ?_
+      refine Eq.trans (congrArg (fun g => Hom.comp g
+          (Hom.comp (DayTensor.map (φ (p + q)) f) Δ))
+        (DayTensor.leftUnitorIso dayTensorUnit).inv_hom) ?_
+      exact Hom.id_comp _
+    exact Eq.trans hL2 hR.symm
+
+noncomputable def bangCofreeLiftOne (C : Comonoid)
+    (f : Hom C.carrier (representable 1)) :
+    Hom C.carrier (bang 1) :=
+  countableProductLift (fun j => symmetricPower 1 j)
+    (fun k =>
+      Hom.comp (symmetricPowerProjection 1 k)
+        (Hom.comp
+          (yonedaMap
+            (Superoperator.ofEquivalence
+              (finCongr (tensorPowerDimension_one_eq k).symm)))
+          (bangCofreeCoeffOne C f k)))
+
+private theorem ofEquiv_cast_one_zero :
+    Superoperator.ofEquivalence
+        (finCongr (tensorPowerDimension_one_eq 0).symm) =
+      Superoperator.identity 1 := by
+  have h := ofEquivalence_dim_one
+    (show 1 = 1 from rfl)
+    (show tensorPowerDimension 1 0 = 1 from rfl)
+    (finCongr (tensorPowerDimension_one_eq 0).symm)
+    (Equiv.refl (Fin 1))
+  exact h.trans (Superoperator.ofEquivalence_refl 1)
+
+private theorem ofEquiv_cast_one_one_fwd :
+    Superoperator.ofEquivalence
+        (finCongr (tensorPowerDimension_one 1)) =
+      Superoperator.identity 1 := by
+  have h := ofEquivalence_dim_one
+    (show tensorPowerDimension 1 1 = 1 from rfl)
+    (show 1 = 1 from rfl)
+    (finCongr (tensorPowerDimension_one 1))
+    (Equiv.refl (Fin 1))
+  exact h.trans (Superoperator.ofEquivalence_refl 1)
+
+private theorem ofEquiv_cast_one_one_bwd :
+    Superoperator.ofEquivalence
+        (finCongr (tensorPowerDimension_one_eq 1).symm) =
+      Superoperator.identity 1 := by
+  have h := ofEquivalence_dim_one
+    (show 1 = 1 from rfl)
+    (show tensorPowerDimension 1 1 = 1 from rfl)
+    (finCongr (tensorPowerDimension_one_eq 1).symm)
+    (Equiv.refl (Fin 1))
+  exact h.trans (Superoperator.ofEquivalence_refl 1)
+
+theorem bangCofreeLiftOne_preserves_counit (C : Comonoid)
+    (f : Hom C.carrier (representable 1)) :
+    Hom.comp (bangCounit 1) (bangCofreeLiftOne C f) = C.counit := by
+  ext n x
+  change
+    Superoperator.comp (symmetricAverage 1 0)
+      (Superoperator.comp
+        (Superoperator.ofEquivalence
+          (finCongr (tensorPowerDimension_one_eq 0).symm))
+        (C.counit.app n x)) =
+      C.counit.app n x
+  have havg := symmetricAverage_of_le_one 1 0 (Nat.le_refl 1)
+  -- Rewrite both to identity 1 explicitly
+  rw [havg, ofEquiv_cast_one_zero]
+  -- goal: identity(tpd).comp (identity 1 .comp counit) = counit
+  -- tpd = 1 defeq, so identity(tpd) = identity 1
+  change Superoperator.comp (Superoperator.identity 1)
+      (Superoperator.comp (Superoperator.identity 1)
+        (C.counit.app n x)) = C.counit.app n x
+  simp only [Superoperator.identity_comp]
+  exact Superoperator.identity_comp _
+
+theorem bangCofreeLiftOne_forget (C : Comonoid)
+    (f : Hom C.carrier (representable 1)) :
+    Hom.comp (bangDereliction 1) (bangCofreeLiftOne C f) = f := by
+  ext n x
+  change Superoperator.comp
+      (Superoperator.ofEquivalence
+        (finCongr (tensorPowerDimension_one 1)))
+      (Superoperator.comp (symmetricAverage 1 1)
+        (Superoperator.comp
+          (Superoperator.ofEquivalence
+            (finCongr (tensorPowerDimension_one_eq 1).symm))
+          ((bangCofreeCoeffOne C f 1).app n x))) =
+    f.app n x
+  rw [bangCofreeCoeffOne_one, symmetricAverage_of_le_one 1 1 (Nat.le_refl 1),
+    ofEquiv_cast_one_one_fwd, ofEquiv_cast_one_one_bwd]
+  change Superoperator.comp (Superoperator.identity 1)
+      (Superoperator.comp (Superoperator.identity 1)
+        (Superoperator.comp (Superoperator.identity 1)
+          (f.app n x))) = f.app n x
+  simp only [Superoperator.identity_comp]
+  exact Superoperator.identity_comp _
+
+/-! ## Remaining gate-3 obligations -/
+
+/-- Degree-unit rectangle HasSum at the acted fiber `A^p * A^q`.
+This is the evaluate-unfolded form of `BangComultComponentsAdmissible`
+(via `bangComultComponent_evaluate`).  For `A ≤ 1` it holds; for `A ≥ 2`
+it is the remaining admissibility gate.  Available
+`Module.act_sum_tensor_from_one` (all ancillary fibers on representable and
+propagated Modules) does not by itself assemble this joint `(p,q)`-sum when
+degree units live at varying fibers `A^k`. -/
+def BangDegreeUnitRectangleHasSum (A : ℕ) : Prop :=
+  ∀ (n : ℕ) (x : ((bang A).obj n).Carrier)
+    (L : Module.{0}) (β : Bilinear (bang A) (bang A) L),
+    ∃ z : (L.obj n).Carrier,
+      (L.obj n).HasSum
+        (fun pq : ℕ × ℕ =>
+          L.act (β.app (bangDegreeUnit A pq.1) (bangDegreeUnit A pq.2))
+            ((bangSplitComponent A pq.1 pq.2).app n x :
+              Superoperator n
+                (tensorPowerDimension A pq.1 * tensorPowerDimension A pq.2)))
+        z
+
+theorem BangDegreeUnitRectangleHasSum_iff_admissible (A : ℕ) :
+    BangDegreeUnitRectangleHasSum A ↔ BangComultComponentsAdmissible A := by
+  constructor
+  · intro h n x L β
+    obtain ⟨z, hz⟩ := h n x L β
+    refine ⟨z, ?_⟩
+    convert hz using 1
+    funext pq
+    exact bangComultComponent_evaluate A pq.1 pq.2 n x L β
+  · intro h n x L β
+    obtain ⟨z, hz⟩ := h n x L β
+    refine ⟨z, ?_⟩
+    convert hz using 1
+    funext pq
+    exact (bangComultComponent_evaluate A pq.1 pq.2 n x L β).symm
+
+/-
+Remaining (precise):
+
+1. **`A = 1` cofree UP.** Lift, counit, forget, `bangCofreeCoeffOne_comult`,
+   and glue lemmas (`dayTensor_ext`, `DayTensor.evaluate_map`,
+   `DayCoend.evaluate_hasSum_bilinear`, `ofEquiv_comp_tpd`) are in.
+   Remaining Hom law:
+   `bangComult_one ∘ bangCofreeLiftOne f = DayTensor.map (lift f) (lift f) ∘ C.comult`
+   (dim-`1`/`A^k` cast alignment between `yonedaMap` and `bangSplit`), then
+   `bangCofreeLiftOneComonoid` / `comonoidHomEquiv_one`.  A=0 is closed.
+
+2. **`A ≥ 2` admissibility.** `BangDegreeUnitRectangleHasSum A` remains.
+   Fiber API check: `PartialCountableSum` has empty/singleton/flatten only —
+   **no free Fin/Finset HasSum** of arbitrary multi-term families.  Inner
+   `p+q=k` sums are therefore not automatic; need ChoiSum landing or
+   `act_sum_tensor_from_one` after moving partitions to a common `1*A^k` fiber.
+
+3. **Comonad on `bang`.** Follows from the full `A ≤ 1` (or all-`A`) cofree UP
+   by the standard cofree-comonad construction.
+-/
 
 end SuperoperatorModule
 

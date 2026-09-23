@@ -257,27 +257,6 @@ theorem Fiber.hasSum_singleAt (X : Fiber.{u}) {ι : Type}
       simp only [Set.mem_singleton_iff] at hi
       simp [hi])).mp hs
 
-/-- The constantly-zero family has a sum over every countable index type. -/
-theorem Fiber.hasSum_zero (X : Fiber.{u}) {ι : Type} [Countable ι] :
-    X.HasSum (fun _ : ι => 0) 0 := by
-  have hEmpty :
-      X.HasSum (fun i : (∅ : Set ι) => 0) 0 := by
-    convert ((X.summation.reindex (Equiv.Set.empty ι)
-      (fun i : Empty => nomatch i) 0).mpr
-        X.summation.empty) using 1
-    funext i
-    exact i.property.elim
-  exact (X.summation.remove_zero
-    (fun _ : ι => 0) ∅ 0 (by simp)).mp hEmpty
-
-theorem Fiber.hasSum_congr (X : Fiber.{u}) {ι : Type} [Countable ι]
-    {f g : ι → X.Carrier} {x : X.Carrier}
-    (h : ∀ i, f i = g i) :
-    X.HasSum f x ↔ X.HasSum g x := by
-  have hfg : f = g := funext h
-  subst g
-  rfl
-
 /-- The countable product of modules.  Both the base action and all partial
 sums are pointwise in the coefficient index. -/
 noncomputable def countableProduct
@@ -306,6 +285,23 @@ noncomputable def countableProduct
   act_sum_map := by
     intro ι _ m n x f s h k
     exact (F k).act_sum_map (x k) h
+  act_sum_from_one := by
+    intro ι _ m x s f h
+    have hk : ∀ k, ∃ z, ((F k).obj m).HasSum
+        (fun i => (F k).act (x i k) (f i)) z :=
+      fun k => (F k).act_sum_from_one f (h k)
+    choose z hz using hk
+    exact ⟨z, hz⟩
+  act_sum_tensor_from_one := by
+    intro ι _ m B x s f h
+    have hk : ∀ k, ∃ z, ((F k).obj (m * B)).HasSum
+        (fun i =>
+          (F k).act (x i k)
+            (Superoperator.tensor (f i)
+              (Superoperator.identity B))) z :=
+      fun k => (F k).act_sum_tensor_from_one f (h k)
+    choose z hz using hk
+    exact ⟨z, hz⟩
 
 /-- Projection from a countable product to one coefficient. -/
 noncomputable def countableProductProjection
