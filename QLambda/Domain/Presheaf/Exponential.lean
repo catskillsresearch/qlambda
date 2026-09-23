@@ -46,7 +46,11 @@ description assumes that existence and is not an independent construction.
 General Day closure, hereditary factorization, the cofree universal property,
 double-dual classical closure, and the resulting comonad are all still
 required.  No cofree promotion, comonad multiplication, or `LNLModel`
-instance is defined from the equivalence action.
+instance is defined from the equivalence action.  See
+`QLambda.Domain.Presheaf.Comonoid` for the Day-comonoid interface, the
+series→square comparison, and the ambient obstruction
+`factorPermutationEquiv_swap_ne_refl`; Day factorization of contraction
+remains the open Prop `SymmetricContractionDayFactorization`.
 -/
 
 namespace QLambda.Domain.Presheaf

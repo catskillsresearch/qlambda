@@ -374,7 +374,9 @@ private theorem sumTerm_admissible {M N : Module} {ι : Type} [Countable ι]
     (sumTerm f).Admissible :=
   sumTerm_admissible_of f fun L β => ⟨evaluate L β s, h L β⟩
 
-private noncomputable def sumElementOf {M N : Module}
+/-- Form the Day-coend sum of a family that admits a sum under every
+bilinear interpretation. -/
+noncomputable def sumOfAdmissible {M N : Module}
     {ι : Type} [Countable ι] {n : ℕ}
     (f : ι → Carrier M N n)
     (h : ∀ (L : Module) (β : Bilinear M N L),
@@ -384,7 +386,7 @@ private noncomputable def sumElementOf {M N : Module}
   Quotient.mk _ ⟨sumTerm f, sumTerm_admissible_of f h,
     sumTerm_hereditary f⟩
 
-private theorem evaluate_sumElementOf {M N : Module}
+theorem evaluate_sumOfAdmissible {M N : Module}
     {ι : Type} [Countable ι] {n : ℕ}
     (f : ι → Carrier M N n)
     (h : ∀ (L : Module) (β : Bilinear M N L),
@@ -392,7 +394,7 @@ private theorem evaluate_sumElementOf {M N : Module}
         (fun i => evaluate L β (f i)) z)
     (L : Module) (β : Bilinear M N L) (z : (L.obj n).Carrier)
     (hz : (L.obj n).HasSum (fun i => evaluate L β (f i)) z) :
-    evaluate L β (sumElementOf f h) = z := by
+    evaluate L β (sumOfAdmissible f h) = z := by
   change Term.value
     (⟨sumTerm f, sumTerm_admissible_of f h,
       sumTerm_hereditary f⟩ : Term M N n) L β = z
@@ -404,18 +406,20 @@ private theorem evaluate_sumElementOf {M N : Module}
   exact (Raw.eval_unique (sumTerm f) (sumTerm_admissible_of f h)
     L β he).symm
 
-private noncomputable def sumElement {M N : Module}
+/-- Specialization: the sum of a family that already has a coend `HasSum`
+witness. -/
+noncomputable def sumElement {M N : Module}
     {ι : Type} [Countable ι] {n : ℕ}
     {f : ι → Carrier M N n} {s : Carrier M N n}
     (h : HasSum f s) : Carrier M N n :=
-  sumElementOf f fun L β => ⟨evaluate L β s, h L β⟩
+  sumOfAdmissible f fun L β => ⟨evaluate L β s, h L β⟩
 
-private theorem evaluate_sumElement {M N : Module}
+theorem evaluate_sumElement {M N : Module}
     {ι : Type} [Countable ι] {n : ℕ}
     {f : ι → Carrier M N n} {s : Carrier M N n}
     (h : HasSum f s) (L : Module) (β : Bilinear M N L) :
     evaluate L β (sumElement h) = evaluate L β s :=
-  evaluate_sumElementOf f
+  evaluate_sumOfAdmissible f
     (fun L β => ⟨evaluate L β s, h L β⟩)
     L β (evaluate L β s) (h L β)
 
@@ -480,7 +484,7 @@ noncomputable def partialCountableSum (M N : Module) (n : ℕ) :
             (evaluate L β a)).mp (hflat L β)
         exact ⟨v i, hv i⟩
       let g : ι → Carrier M N n :=
-        fun i => sumElementOf (f i) (hexists i)
+        fun i => sumOfAdmissible (f i) (hexists i)
       have hrows : ∀ i, HasSum (f i) (g i) := by
         intro i L β
         obtain ⟨v, hv, _⟩ :=
@@ -488,7 +492,7 @@ noncomputable def partialCountableSum (M N : Module) (n : ℕ) :
             (fun i j => evaluate L β (f i j))
             (evaluate L β a)).mp (hflat L β)
         rw [show evaluate L β (g i) = v i from
-          evaluate_sumElementOf (f i) (hexists i) L β (v i) (hv i)]
+          evaluate_sumOfAdmissible (f i) (hexists i) L β (v i) (hv i)]
         exact hv i
       refine ⟨g, hrows, ?_⟩
       intro L β
@@ -498,7 +502,7 @@ noncomputable def partialCountableSum (M N : Module) (n : ℕ) :
           (evaluate L β a)).mp (hflat L β)
       convert hva using 1
       funext i
-      exact (evaluate_sumElementOf (f i) (hexists i)
+      exact (evaluate_sumOfAdmissible (f i) (hexists i)
         L β (v i) (hv i))
     · rintro ⟨g, hrows, hg⟩ L β
       exact ((L.obj n).summation.flatten

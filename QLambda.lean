@@ -37,12 +37,14 @@ import QLambda.Domain.Presheaf.PseudoRepresentable
 import QLambda.Domain.Presheaf.Classical
 import QLambda.Domain.Presheaf.ClassicalCategory
 import QLambda.Domain.Presheaf.RepresentableBipolar
+import QLambda.Domain.Presheaf.ClassicalMonoidal
 import QLambda.Domain.Presheaf.Monoidal
 import QLambda.Domain.Presheaf.DayCoend
 import QLambda.Domain.Presheaf.OmegaEnriched
 import QLambda.Domain.Presheaf.SymmetricPower
 import QLambda.Domain.Presheaf.ClosedGenerated
 import QLambda.Domain.Presheaf.Exponential
+import QLambda.Domain.Presheaf.Comonoid
 
 import QLambda.Linear.Syntax
 import QLambda.Linear.Context

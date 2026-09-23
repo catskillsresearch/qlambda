@@ -11,7 +11,9 @@ summable, and closedness of the finite-dimensional positive cone preserves
 trace non-increase at the limit.  Composition is Scott-continuous in both
 arguments by its finite Choi-coordinate formula.  The same order, taken
 pointwise, makes maps into the Day tensor unit a pointed ωCPO, with
-precomposition Scott-continuous.
+precomposition and postcomposition Scott-continuous.  The Day closed
+pairing `Hom(M,N) ≃ Hom(M ⊗ ¬N, I)` transports that enrichment to
+biorthogonal classical homs, yielding `biorthogonalOmegaCategory`.
 -/
 
 namespace QLambda.Domain.Presheaf
@@ -677,8 +679,539 @@ theorem unitHom_precomp_omegaSup {P Q : Module}
   intro n x
   rfl
 
-end SuperoperatorModule
+set_option maxHeartbeats 800000
 
+/-! ## Postcomposition continuity on maps into the tensor unit
+
+Postcomposition by `v : Hom(I,I)` acts fiberwise as left Superoperator
+composition with `v.app 1 id`, by naturality of `v` on the representable
+unit.  Continuity then follows from `Superoperator.comp_omegaSup_right`.
+-/
+
+/-- On the Day unit, every endomorphism acts by ordinary superoperator
+composition with its value at the identity. -/
+theorem unitHom_app_eq_comp
+    (v : Hom dayTensorUnit dayTensorUnit) {n : ℕ}
+    (z : Superoperator n 1) :
+    (v.app n z : Superoperator n 1) =
+      Superoperator.comp
+        (v.app 1 (Superoperator.identity 1) : Superoperator 1 1) z := by
+  have hnat :
+      (v.app n (Superoperator.comp (Superoperator.identity 1) z) :
+          Superoperator n 1) =
+        Superoperator.comp
+          (v.app 1 (Superoperator.identity 1) : Superoperator 1 1) z :=
+    v.naturality (Superoperator.identity 1) z
+  rwa [Superoperator.identity_comp] at hnat
+
+/-- Postcomposition by a fixed map of the tensor unit is monotone. -/
+theorem unitHom_postcomp_mono {P : Module}
+    (v : Hom dayTensorUnit dayTensorUnit) :
+    Monotone (fun f : Hom P dayTensorUnit => Hom.comp v f) := by
+  intro f g hfg n x
+  change
+    (show Superoperator n 1 from v.app n (f.app n x)) ≤
+      (show Superoperator n 1 from v.app n (g.app n x))
+  rw [unitHom_app_eq_comp v (show Superoperator n 1 from f.app n x),
+    unitHom_app_eq_comp v (show Superoperator n 1 from g.app n x)]
+  exact Superoperator.comp_mono_right _ (hfg n x)
+
+/-- Postcomposition preserves pointwise increasing suprema into the unit. -/
+theorem unitHom_postcomp_omegaSup {P : Module}
+    (v : Hom dayTensorUnit dayTensorUnit)
+    (c : ℕ → Hom P dayTensorUnit) (hc : Monotone c) :
+    Hom.comp v (QLambda.Domain.OmegaComplete.ωSup c hc) =
+      QLambda.Domain.OmegaComplete.ωSup
+        (fun k => Hom.comp v (c k))
+        ((unitHom_postcomp_mono v).comp hc) := by
+  apply Hom.ext
+  intro n x
+  let φ : Superoperator 1 1 := v.app 1 (Superoperator.identity 1)
+  let d : ℕ → Superoperator n 1 := fun k => (c k).app n x
+  have hd : Monotone d := fun _ _ h => hc h n x
+  let z : Superoperator n 1 :=
+    (QLambda.Domain.OmegaComplete.ωSup c hc).app n x
+  have hz : z = Superoperator.omegaSup d hd := rfl
+  let e : ℕ → Superoperator n 1 :=
+    fun k => v.app n ((c k).app n x)
+  have he : Monotone e := fun _ _ h =>
+    (unitHom_postcomp_mono v).comp hc h n x
+  have hL : (v.app n z : Superoperator n 1) =
+      Superoperator.comp φ (Superoperator.omegaSup d hd) := by
+    rw [← hz]
+    exact unitHom_app_eq_comp v z
+  have hMid :
+      Superoperator.comp φ (Superoperator.omegaSup d hd) =
+        Superoperator.omegaSup (fun k => Superoperator.comp φ (d k))
+          ((Superoperator.comp_mono_right φ).comp hd) :=
+    Superoperator.comp_omegaSup_right φ d hd
+  have hR :
+      Superoperator.omegaSup (fun k => Superoperator.comp φ (d k))
+          ((Superoperator.comp_mono_right φ).comp hd) =
+        Superoperator.omegaSup e he := by
+    apply le_antisymm
+    · apply Superoperator.omegaSup_le
+      intro k
+      have hk : Superoperator.comp φ (d k) = e k :=
+        (unitHom_app_eq_comp v (d k)).symm
+      rw [hk]
+      exact Superoperator.le_omegaSup e he k
+    · apply Superoperator.omegaSup_le
+      intro k
+      have hk : e k = Superoperator.comp φ (d k) :=
+        unitHom_app_eq_comp v (d k)
+      rw [hk]
+      exact Superoperator.le_omegaSup
+        (fun r => Superoperator.comp φ (d r)) _ k
+  -- Both sides of the Hom.ext goal are the Carrier (= Superoperator) values.
+  exact (hL.trans (hMid.trans hR))
+
+/-! ## Closed pairing and classical hom enrichment
+
+Transport the pointed ωCPO on `Hom(-, I)` across the Day closed pairing
+`Hom(M, N) ≃ Hom(M ⊗ ¬N, I)` for biorthogonal `N`.  Precomposition lifts from
+`unitHom_precomp_*`; postcomposition lifts via right naturality of the pairing
+along Day negation, reducing to `unitHom_precomp_*` on the unit side.
+-/
+
+/-- Postcomposition by an isomorphism of codomains. -/
+noncomputable def Hom.postcompEquiv {M N P : Module} (ρ : Iso N P) :
+    Hom M N ≃ Hom M P where
+  toFun f := Hom.comp ρ.hom f
+  invFun g := Hom.comp ρ.inv g
+  left_inv f := by
+    change Hom.comp ρ.inv (Hom.comp ρ.hom f) = f
+    rw [Hom.comp_assoc, ρ.inv_hom, Hom.id_comp]
+  right_inv g := by
+    change Hom.comp ρ.hom (Hom.comp ρ.inv g) = g
+    rw [Hom.comp_assoc, ρ.hom_inv, Hom.id_comp]
+
+/-- Day closedness specialized to maps into the tensor unit:
+`Hom(M, ¬¬N) ≃ Hom(M ⊗ ¬N, I)`. -/
+noncomputable def closedPairingDoubleDual (M N : Module) :
+    Hom M (DayNegation.neg (DayNegation.neg N)) ≃
+      Hom (dayTensor M (DayNegation.neg N)) dayTensorUnit :=
+  (dayClosedPresentation.closed M (DayNegation.neg N)
+    dayTensorUnit).symm
+
+/-- Closed pairing for an exhibited double-dual isomorphism. -/
+noncomputable def closedPairingEquivOfIso (M N : Module)
+    (ρ : Iso N (DayNegation.neg (DayNegation.neg N))) :
+    Hom M N ≃
+      Hom (dayTensor M (DayNegation.neg N)) dayTensorUnit :=
+  (Hom.postcompEquiv ρ).trans (closedPairingDoubleDual M N)
+
+/-- Closed pairing for a Day-biorthogonal classical object:
+`Hom(M,N) ≃ Hom(M ⊗ ¬N, I)`. -/
+noncomputable def closedPairingEquiv (M : Module)
+    (N : BiorthogonalObject) :
+    Hom M N.module ≃
+      Hom (dayTensor M (DayNegation.neg N.module)) dayTensorUnit :=
+  closedPairingEquivOfIso M N.module N.reflexive
+
+/-- Evaluation of the closed adjunction on generators. -/
+theorem dayClosed_app {X A L : Module}
+    (φ : Hom (dayTensor X A) L) {n p q : ℕ}
+    (x : (X.obj n).Carrier) (r : Superoperator p n)
+    (y : (A.obj q).Carrier) :
+    ((dayClosedPresentation.closed X A L φ).app n x).app r y =
+      φ.app (p * q) ((DayCoend.intro X A).app (X.act x r) y) := by
+  dsimp [dayClosedPresentation, DayClosedPresentation.closed]
+  rfl
+
+/-- Left naturality of Day closedness. -/
+theorem dayClosed_comp_left {X X' A L : Module}
+    (u : Hom X' X) (φ : Hom (dayTensor X A) L) :
+    Hom.comp (dayClosedPresentation.closed X A L φ) u =
+      dayClosedPresentation.closed X' A L
+        (Hom.comp φ (DayTensor.map u (Hom.id A))) := by
+  apply Hom.ext
+  intro n x
+  apply Bilinear.ext
+  intro p q r y
+  change Superoperator p n at r
+  have hL := dayClosed_app φ (u.app n x) r y
+  have hR :=
+    dayClosed_app (Hom.comp φ (DayTensor.map u (Hom.id A))) x r y
+  refine hL.trans (Eq.trans ?_ hR.symm)
+  rw [Hom.comp_app, DayTensor.map_intro, Hom.id_app, u.naturality]
+
+/-- Inverse form of left naturality used by the closed pairing. -/
+theorem closedPairingDoubleDual_comp_left {M M' N : Module}
+    (u : Hom M' M)
+    (φ : Hom M (DayNegation.neg (DayNegation.neg N))) :
+    closedPairingDoubleDual M' N (Hom.comp φ u) =
+      Hom.comp (closedPairingDoubleDual M N φ)
+        (DayTensor.map u (Hom.id (DayNegation.neg N))) := by
+  let e :=
+    dayClosedPresentation.closed M' (DayNegation.neg N) dayTensorUnit
+  let e₀ :=
+    dayClosedPresentation.closed M (DayNegation.neg N) dayTensorUnit
+  have h := dayClosed_comp_left u (closedPairingDoubleDual M N φ)
+  have hφ : e₀ (closedPairingDoubleDual M N φ) = φ :=
+    Equiv.apply_symm_apply e₀ φ
+  rw [hφ] at h
+  have h' := congrArg e.symm h
+  rw [Equiv.symm_apply_apply] at h'
+  exact h'
+
+theorem closedPairingEquivOfIso_comp_left {M M' N : Module}
+    (ρ : Iso N (DayNegation.neg (DayNegation.neg N)))
+    (u : Hom M' M) (f : Hom M N) :
+    closedPairingEquivOfIso M' N ρ (Hom.comp f u) =
+      Hom.comp (closedPairingEquivOfIso M N ρ f)
+        (DayTensor.map u (Hom.id (DayNegation.neg N))) := by
+  change closedPairingDoubleDual M' N
+      (Hom.comp ρ.hom (Hom.comp f u)) =
+    Hom.comp (closedPairingDoubleDual M N (Hom.comp ρ.hom f))
+      (DayTensor.map u (Hom.id (DayNegation.neg N)))
+  rw [Hom.comp_assoc]
+  exact closedPairingDoubleDual_comp_left u (Hom.comp ρ.hom f)
+
+theorem closedPairingEquiv_comp_left {M M' : Module}
+    (N : BiorthogonalObject) (u : Hom M' M)
+    (f : Hom M N.module) :
+    closedPairingEquiv M' N (Hom.comp f u) =
+      Hom.comp (closedPairingEquiv M N f)
+        (DayTensor.map u (Hom.id (DayNegation.neg N.module))) :=
+  closedPairingEquivOfIso_comp_left N.reflexive u f
+
+/-- Right naturality of Day closedness into the tensor unit. -/
+theorem dayClosed_comp_right_unit {X A A' : Module}
+    (h : Hom A' A) (φ : Hom (dayTensor X A) dayTensorUnit) :
+    Hom.comp (DayNegation.map h)
+      (dayClosedPresentation.closed X A dayTensorUnit φ) =
+      dayClosedPresentation.closed X A' dayTensorUnit
+        (Hom.comp φ (DayTensor.map (Hom.id X) h)) := by
+  apply Hom.ext
+  intro n x
+  apply Bilinear.ext
+  intro p q r y
+  change Superoperator p n at r
+  have hL := dayClosed_app φ x r (h.app q y)
+  have hR :=
+    dayClosed_app (Hom.comp φ (DayTensor.map (Hom.id X) h)) x r y
+  change
+    ((dayClosedPresentation.closed X A dayTensorUnit φ).app n x).app r
+        (h.app q y) =
+      ((dayClosedPresentation.closed X A' dayTensorUnit
+          (Hom.comp φ (DayTensor.map (Hom.id X) h))).app n x).app r y
+  refine hL.trans (Eq.trans ?_ hR.symm)
+  rw [Hom.comp_app, DayTensor.map_intro, Hom.id_app]
+
+/-- Inverse form of right naturality for the closed pairing. -/
+theorem closedPairingDoubleDual_comp_right {M N N' : Module}
+    (v : Hom N N')
+    (φ : Hom M (DayNegation.neg (DayNegation.neg N))) :
+    closedPairingDoubleDual M N'
+        (Hom.comp (DayNegation.map (DayNegation.map v)) φ) =
+      Hom.comp (closedPairingDoubleDual M N φ)
+        (DayTensor.map (Hom.id M) (DayNegation.map v)) := by
+  let e' :=
+    dayClosedPresentation.closed M (DayNegation.neg N') dayTensorUnit
+  let e :=
+    dayClosedPresentation.closed M (DayNegation.neg N) dayTensorUnit
+  have h :=
+    dayClosed_comp_right_unit (DayNegation.map v)
+      (closedPairingDoubleDual M N φ)
+  have hφ : e (closedPairingDoubleDual M N φ) = φ :=
+    Equiv.apply_symm_apply e φ
+  rw [hφ] at h
+  have h' := congrArg e'.symm h
+  rw [Equiv.symm_apply_apply] at h'
+  exact h'
+
+theorem closedPairingEquivOfIso_comp_right {M N N' : Module}
+    (ρ : Iso N (DayNegation.neg (DayNegation.neg N)))
+    (ρ' : Iso N' (DayNegation.neg (DayNegation.neg N')))
+    (hunit : ∀ v : Hom N N',
+      Hom.comp ρ'.hom v =
+        Hom.comp (DayNegation.map (DayNegation.map v)) ρ.hom)
+    (v : Hom N N') (f : Hom M N) :
+    closedPairingEquivOfIso M N' ρ' (Hom.comp v f) =
+      Hom.comp (closedPairingEquivOfIso M N ρ f)
+        (DayTensor.map (Hom.id M) (DayNegation.map v)) := by
+  change closedPairingDoubleDual M N'
+      (Hom.comp ρ'.hom (Hom.comp v f)) =
+    Hom.comp (closedPairingDoubleDual M N (Hom.comp ρ.hom f))
+      (DayTensor.map (Hom.id M) (DayNegation.map v))
+  rw [Hom.comp_assoc, hunit v, ← Hom.comp_assoc]
+  exact closedPairingDoubleDual_comp_right v (Hom.comp ρ.hom f)
+
+theorem closedPairingEquiv_comp_right {M : Module}
+    {N N' : BiorthogonalObject} (v : Hom N.module N'.module)
+    (f : Hom M N.module) :
+    closedPairingEquiv M N' (Hom.comp v f) =
+      Hom.comp (closedPairingEquiv M N f)
+        (DayTensor.map (Hom.id M) (DayNegation.map v)) := by
+  refine closedPairingEquivOfIso_comp_right
+      N.reflexive N'.reflexive ?_ v f
+  intro w
+  have hN' : N'.reflexive.hom = DayNegation.unit N'.module := by
+    simpa [DayNegation.data] using N'.canonical
+  have hN : N.reflexive.hom = DayNegation.unit N.module := by
+    simpa [DayNegation.data] using N.canonical
+  rw [hN', hN]
+  exact DayNegation.unit_natural w
+
+theorem dayClosed_zero (X A L : Module) :
+    dayClosedPresentation.closed X A L 0 = 0 := by
+  apply Hom.ext
+  intro n x
+  apply Bilinear.ext
+  intro p q r y
+  dsimp [dayClosedPresentation, DayClosedPresentation.closed]
+  rfl
+
+theorem closedPairingDoubleDual_zero (M N : Module) :
+    closedPairingDoubleDual M N 0 = 0 := by
+  let e :=
+    dayClosedPresentation.closed M (DayNegation.neg N) dayTensorUnit
+  apply e.injective
+  change e (e.symm 0) = e 0
+  rw [Equiv.apply_symm_apply, dayClosed_zero]
+
+theorem closedPairingEquivOfIso_zero {M N : Module}
+    (ρ : Iso N (DayNegation.neg (DayNegation.neg N))) :
+    closedPairingEquivOfIso M N ρ 0 = 0 := by
+  change closedPairingDoubleDual M N (Hom.comp ρ.hom 0) = 0
+  have h0 : Hom.comp ρ.hom (0 : Hom M N) = 0 := by
+    ext n x
+    exact ρ.hom.map_zero n
+  rw [h0, closedPairingDoubleDual_zero]
+
+theorem closedPairingEquiv_zero (M : Module) (N : BiorthogonalObject) :
+    closedPairingEquiv M N 0 = 0 :=
+  closedPairingEquivOfIso_zero N.reflexive
+
+/-- Pointwise Choi order transported along the closed pairing. -/
+def ClassicalHomLE (M : Module) (N : BiorthogonalObject)
+    (f g : Hom M N.module) : Prop :=
+  UnitHomLE (dayTensor M (DayNegation.neg N.module))
+    (closedPairingEquiv M N f) (closedPairingEquiv M N g)
+
+noncomputable instance classicalHomPartialOrder
+    (M : Module) (N : BiorthogonalObject) :
+    PartialOrder (Hom M N.module) where
+  le := ClassicalHomLE M N
+  le_refl f := by
+    intro n x
+    exact le_rfl
+  le_trans f g h hfg hgh := by
+    intro n x
+    exact (hfg n x).trans (hgh n x)
+  le_antisymm f g hfg hgf := by
+    apply (closedPairingEquiv M N).injective
+    apply Hom.ext
+    intro n x
+    change
+      (show Superoperator n 1 from
+        (closedPairingEquiv M N f).app n x) =
+        (show Superoperator n 1 from
+          (closedPairingEquiv M N g).app n x)
+    exact le_antisymm (hfg n x) (hgf n x)
+
+noncomputable instance classicalHomOrderBot
+    (M : Module) (N : BiorthogonalObject) :
+    OrderBot (Hom M N.module) where
+  bot := 0
+  bot_le f := by
+    intro n x
+    have hz := closedPairingEquiv_zero M N
+    change
+      (show Superoperator n 1 from
+        (closedPairingEquiv M N 0).app n x) ≤
+        (show Superoperator n 1 from
+          (closedPairingEquiv M N f).app n x)
+    rw [hz]
+    exact bot_le
+
+private theorem classicalHom_paired_mono {M : Module}
+    {N : BiorthogonalObject}
+    {c : ℕ → Hom M N.module} (hc : Monotone c) :
+    Monotone (fun k => closedPairingEquiv M N (c k)) :=
+  fun _ _ h n x => hc h n x
+
+/-- ω-suprema of classical homs, transported from maps into the unit. -/
+noncomputable def classicalHomOmegaSup (M : Module)
+    (N : BiorthogonalObject)
+    (c : ℕ → Hom M N.module) (hc : Monotone c) :
+    Hom M N.module :=
+  (closedPairingEquiv M N).symm
+    (QLambda.Domain.OmegaComplete.ωSup
+      (fun k => closedPairingEquiv M N (c k))
+      (classicalHom_paired_mono hc))
+
+noncomputable instance classicalHomOmegaComplete
+    (M : Module) (N : BiorthogonalObject) :
+    QLambda.Domain.OmegaComplete (Hom M N.module) where
+  ωSup := classicalHomOmegaSup M N
+  le_ωSup c hc k := by
+    intro n x
+    have h :=
+      QLambda.Domain.OmegaComplete.le_ωSup
+        (fun r => closedPairingEquiv M N (c r))
+        (classicalHom_paired_mono hc) k
+    change
+      (show Superoperator n 1 from
+        (closedPairingEquiv M N (c k)).app n x) ≤
+        (show Superoperator n 1 from
+          (closedPairingEquiv M N
+            (classicalHomOmegaSup M N c hc)).app n x)
+    simp only [classicalHomOmegaSup, Equiv.apply_symm_apply]
+    exact h n x
+  ωSup_le c hc f hf := by
+    intro n x
+    have h :=
+      QLambda.Domain.OmegaComplete.ωSup_le
+        (fun r => closedPairingEquiv M N (c r))
+        (classicalHom_paired_mono hc)
+        (closedPairingEquiv M N f)
+        (fun k => show ClassicalHomLE M N (c k) f from hf k)
+    change
+      (show Superoperator n 1 from
+        (closedPairingEquiv M N
+          (classicalHomOmegaSup M N c hc)).app n x) ≤
+        (show Superoperator n 1 from
+          (closedPairingEquiv M N f).app n x)
+    simp only [classicalHomOmegaSup, Equiv.apply_symm_apply]
+    exact h n x
+
+theorem classicalHom_precomp_mono {M M' : Module}
+    (N : BiorthogonalObject) (u : Hom M' M) :
+    Monotone (fun f : Hom M N.module => Hom.comp f u) := by
+  intro f g hfg
+  change
+    UnitHomLE (dayTensor M' (DayNegation.neg N.module))
+      (closedPairingEquiv M' N (Hom.comp f u))
+      (closedPairingEquiv M' N (Hom.comp g u))
+  rw [closedPairingEquiv_comp_left, closedPairingEquiv_comp_left]
+  exact unitHom_precomp_mono
+    (DayTensor.map u (Hom.id (DayNegation.neg N.module))) hfg
+
+theorem classicalHom_precomp_omegaSup {M M' : Module}
+    (N : BiorthogonalObject)
+    (c : ℕ → Hom M N.module) (hc : Monotone c) (u : Hom M' M) :
+    Hom.comp (QLambda.Domain.OmegaComplete.ωSup c hc) u =
+      QLambda.Domain.OmegaComplete.ωSup
+        (fun k => Hom.comp (c k) u)
+        ((classicalHom_precomp_mono N u).comp hc) := by
+  apply (closedPairingEquiv M' N).injective
+  have hpair :
+      closedPairingEquiv M N
+          (QLambda.Domain.OmegaComplete.ωSup c hc) =
+        QLambda.Domain.OmegaComplete.ωSup
+          (fun k => closedPairingEquiv M N (c k))
+          (classicalHom_paired_mono hc) :=
+    Equiv.apply_symm_apply (closedPairingEquiv M N) _
+  have hpair' :
+      closedPairingEquiv M' N
+          (QLambda.Domain.OmegaComplete.ωSup
+            (fun k => Hom.comp (c k) u)
+            ((classicalHom_precomp_mono N u).comp hc)) =
+        QLambda.Domain.OmegaComplete.ωSup
+          (fun k => closedPairingEquiv M' N (Hom.comp (c k) u))
+          (classicalHom_paired_mono
+            ((classicalHom_precomp_mono N u).comp hc)) :=
+    Equiv.apply_symm_apply (closedPairingEquiv M' N) _
+  rw [closedPairingEquiv_comp_left, hpair, hpair']
+  refine (unitHom_precomp_omegaSup
+      (fun k => closedPairingEquiv M N (c k))
+      (classicalHom_paired_mono hc)
+      (DayTensor.map u (Hom.id (DayNegation.neg N.module)))).trans ?_
+  congr 1
+  funext k
+  exact (closedPairingEquiv_comp_left N u (c k)).symm
+
+/-- Postcomposition is monotone for the transported classical order.
+Right naturality of the closed pairing reduces this to precomposition
+continuity on maps into the tensor unit. -/
+theorem classicalHom_postcomp_mono {M : Module}
+    {N N' : BiorthogonalObject} (v : Hom N.module N'.module) :
+    Monotone (fun f : Hom M N.module => Hom.comp v f) := by
+  intro f g hfg
+  change
+    UnitHomLE (dayTensor M (DayNegation.neg N'.module))
+      (closedPairingEquiv M N' (Hom.comp v f))
+      (closedPairingEquiv M N' (Hom.comp v g))
+  rw [closedPairingEquiv_comp_right, closedPairingEquiv_comp_right]
+  exact unitHom_precomp_mono
+    (DayTensor.map (Hom.id M) (DayNegation.map v)) hfg
+
+/-- Postcomposition preserves ω-suprema of classical homs. -/
+theorem classicalHom_postcomp_omegaSup {M : Module}
+    {N N' : BiorthogonalObject} (v : Hom N.module N'.module)
+    (c : ℕ → Hom M N.module) (hc : Monotone c) :
+    Hom.comp v (QLambda.Domain.OmegaComplete.ωSup c hc) =
+      QLambda.Domain.OmegaComplete.ωSup
+        (fun k => Hom.comp v (c k))
+        ((classicalHom_postcomp_mono (N := N) (N' := N') v).comp hc) := by
+  apply (closedPairingEquiv M N').injective
+  have hpair :
+      closedPairingEquiv M N
+          (QLambda.Domain.OmegaComplete.ωSup c hc) =
+        QLambda.Domain.OmegaComplete.ωSup
+          (fun k => closedPairingEquiv M N (c k))
+          (classicalHom_paired_mono hc) :=
+    Equiv.apply_symm_apply (closedPairingEquiv M N) _
+  have hpair' :
+      closedPairingEquiv M N'
+          (QLambda.Domain.OmegaComplete.ωSup
+            (fun k => Hom.comp v (c k))
+            ((classicalHom_postcomp_mono (N := N) (N' := N') v).comp hc)) =
+        QLambda.Domain.OmegaComplete.ωSup
+          (fun k => closedPairingEquiv M N' (Hom.comp v (c k)))
+          (classicalHom_paired_mono
+            ((classicalHom_postcomp_mono (N := N) (N' := N') v).comp
+              hc)) :=
+    Equiv.apply_symm_apply (closedPairingEquiv M N') _
+  rw [closedPairingEquiv_comp_right, hpair, hpair']
+  refine (unitHom_precomp_omegaSup
+      (fun k => closedPairingEquiv M N (c k))
+      (classicalHom_paired_mono hc)
+      (DayTensor.map (Hom.id M) (DayNegation.map v))).trans ?_
+  congr 1
+  funext k
+  exact (closedPairingEquiv_comp_right v (c k)).symm
+
+noncomputable instance biorthogonalHomPartialOrder
+    (A B : BiorthogonalObject) :
+    PartialOrder (ClassicalObject.Hom A B) :=
+  classicalHomPartialOrder A.module B
+
+noncomputable instance biorthogonalHomOrderBot
+    (A B : BiorthogonalObject) :
+    OrderBot (ClassicalObject.Hom A B) :=
+  classicalHomOrderBot A.module B
+
+noncomputable instance biorthogonalHomOmegaComplete
+    (A B : BiorthogonalObject) :
+    QLambda.Domain.OmegaComplete (ClassicalObject.Hom A B) :=
+  classicalHomOmegaComplete A.module B
+
+/-- Day-biorthogonal classical objects form an ωCPO-enriched category. -/
+noncomputable def biorthogonalOmegaCategory :
+    QLambda.Domain.OmegaCategory where
+  Obj := ClassicalObject DayNegation.data
+  hom A B :=
+    { Carrier := ClassicalObject.Hom A B
+      partialOrder := biorthogonalHomPartialOrder A B
+      omegaComplete := biorthogonalHomOmegaComplete A B }
+  id := ClassicalObject.id _
+  comp := ClassicalObject.comp
+  comp_mono_left := fun {_ _ C} g =>
+    classicalHom_precomp_mono C g
+  comp_mono_right := fun {_ B C} f =>
+    classicalHom_postcomp_mono (N := B) (N' := C) f
+  comp_ωSup_left := fun {_ _ C} c hc g =>
+    classicalHom_precomp_omegaSup C c hc g
+  comp_ωSup_right := fun {_ B C} f c hc =>
+    classicalHom_postcomp_omegaSup (N := B) (N' := C) f c hc
+  id_comp := ClassicalObject.id_comp
+  comp_id := ClassicalObject.comp_id
+  assoc := fun h g f => (ClassicalObject.comp_assoc h g f).symm
+
+end SuperoperatorModule
 
 /-- Finite dimensions and TNI superoperators, enriched over pointed ωCPOs
 by Choi refinement. -/
