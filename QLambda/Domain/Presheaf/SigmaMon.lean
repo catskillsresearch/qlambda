@@ -727,7 +727,37 @@ theorem tensor_finite_subfamily_cp_sum
           (Superoperator.tensor (f p.1) (g p.2)).cp :=
   finite_subfamily_cp_sum (tensor_hasSum hf hg) s
 
+/-- Binary Choi sum when the CP aggregate remains TNI. -/
+theorem hasSum_add_of_addable (a b : Superoperator n m)
+    (h : TraceNonincreasing (a.cp + b.cp)) :
+    HasSum (fun i : Bool => bif i then a else b)
+      ⟨a.cp + b.cp, h⟩ := by
+  change _root_.HasSum
+    (fun i : Bool => (bif i then a else b).cp.choi)
+    (a.cp + b.cp).choi
+  have hfin :=
+    hasSum_fintype (fun i : Bool => (bif i then a else b).cp.choi)
+  have htot :
+      (∑ i : Bool, (bif i then a else b).cp.choi) = (a.cp + b.cp).choi := by
+    simp [CPMap.choi_add]
+  exact htot ▸ hfin
+
 end ChoiSum
+
+namespace CPMapSum
+
+/-- Unrestricted CP maps always admit Bool-split sums. -/
+theorem hasSum_add {n m : ℕ} (a b : CPMap n m) :
+    HasSum (fun i : Bool => bif i then a else b) (a + b) := by
+  change _root_.HasSum
+    (fun i : Bool => (bif i then a else b).choi) (a + b).choi
+  have hfin := hasSum_fintype (fun i : Bool => (bif i then a else b).choi)
+  have htot :
+      (∑ i : Bool, (bif i then a else b).choi) = (a + b).choi := by
+    simp [CPMap.choi_add]
+  exact htot ▸ hfin
+
+end CPMapSum
 
 namespace FiniteSupport
 

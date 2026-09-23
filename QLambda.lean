@@ -45,6 +45,7 @@ import QLambda.Domain.Presheaf.SymmetricPower
 import QLambda.Domain.Presheaf.ClosedGenerated
 import QLambda.Domain.Presheaf.Exponential
 import QLambda.Domain.Presheaf.Comonoid
+import QLambda.Domain.Presheaf.LNL
 
 import QLambda.Linear.Syntax
 import QLambda.Linear.Context

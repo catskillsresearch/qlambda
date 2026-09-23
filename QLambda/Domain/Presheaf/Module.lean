@@ -250,6 +250,17 @@ theorem comp_from_one {ι : Type} [Countable ι] {m ℓ : ℕ}
     exact (Matrix.PosSemidef.one (n := Fin m)).smul (sub_nonneg.mpr hα1)
   exact hsum_le.trans hscale
 
+/-! ## Obstruction note (Gate 3 / Path 2)
+
+A proposed `ChoiSum.comp_from_dim` / `Module.act_sum_from_dim` (joint TNI
+precomposition at fiber `d ≥ 2`) is mathematically false: complementary
+basis effects `2 → 1` summing to discard, matched against isometric
+preparations `1 → 2` of those basis states, yield two copies of `id₁`,
+whose Choi sum has effect `2 ≰ I`.  The fiber-`1` proof of `comp_from_one`
+relies on scalar effects and does not extend.  Ambient CP still admits
+`CPMapSum.comp_from_dim` below; do not add the false statement as a
+required `Module` field. -/
+
 end SigmaMon.ChoiSum
 
 namespace SigmaMon.CPMapSum
@@ -336,6 +347,51 @@ theorem comp_from_one {ι : Type} [Countable ι] {m ℓ : ℕ}
     ChoiSum.hasSum_posSemidef hmat.hasSum fun k =>
       (CPMap.comp (f k) (g k).cp).choi_pos⟩, hmat.hasSum⟩
 
+/-- Joint precomposition of ambient CP maps against TNI maps into an
+arbitrary fiber dimension `d`.  No TNI obligation is placed on the result
+(unlike `ChoiSum.comp_from_one`, which is fiber-`1` only). -/
+theorem comp_from_dim {ι : Type} [Countable ι] {m d ℓ : ℕ}
+    {f : ι → CPMap d ℓ} {Ψ : CPMap d ℓ}
+    (g : ι → Superoperator m d) (hf : HasSum f Ψ) :
+    ∃ Χ : CPMap m ℓ,
+      HasSum (fun i => CPMap.comp (f i) (g i).cp) Χ := by
+  classical
+  have hentries (a b : Fin ℓ) (i j : Fin m) :
+      Summable fun k : ι =>
+        (CPMap.comp (f k) (g k).cp).choi (a, i) (b, j) := by
+    have hsum :
+        Summable fun k : ι =>
+          ∑ x : Fin d, ∑ y : Fin d,
+            ‖(f k).choi (a, x) (b, y)‖ * ((m : ℕ) : ℝ) := by
+      apply summable_sum
+      intro x _
+      apply summable_sum
+      intro y _
+      exact
+        ((((Pi.hasSum.mp (Pi.hasSum.mp hf (a, x)) (b, y))).summable.norm).mul_right
+          ((m : ℕ) : ℝ))
+    refine Summable.of_norm_bounded hsum fun k => ?_
+    simp only [CPMap.choi_comp_apply]
+    refine (norm_sum_le _ _).trans ?_
+    apply Finset.sum_le_sum
+    intro x _
+    refine (norm_sum_le _ _).trans ?_
+    apply Finset.sum_le_sum
+    intro y _
+    rw [norm_mul]
+    have hb :=
+      ChoiSum.entry_norm_le_trace_re (g k).cp.choi_pos (x, i) (y, j)
+    have htr := ChoiSum.trace_choi_re_le_input_dim (g k)
+    exact mul_le_mul_of_nonneg_left (hb.trans htr) (norm_nonneg _)
+  have hmat :
+      Summable fun k : ι => (CPMap.comp (f k) (g k).cp).choi := by
+    refine Pi.summable.mpr fun ai => Pi.summable.mpr fun bj => ?_
+    rcases ai with ⟨a, i⟩; rcases bj with ⟨b, j⟩
+    exact hentries a b i j
+  exact ⟨⟨∑' k, (CPMap.comp (f k) (g k).cp).choi,
+    ChoiSum.hasSum_posSemidef hmat.hasSum fun k =>
+      (CPMap.comp (f k) (g k).cp).choi_pos⟩, hmat.hasSum⟩
+
 end SigmaMon.CPMapSum
 
 namespace SuperoperatorModule
@@ -376,6 +432,92 @@ theorem Fiber.hasSum_congr (X : Fiber.{u}) {ι : Type} [Countable ι]
   have hfg : f = g := funext h
   subst g
   rfl
+
+/-- Binary (Bool-split) sums: any two carriers admit a joint sum.  Together with
+`empty` / `singleton` / `flatten` this yields `hasSum_fin` / `hasSum_fintype`. -/
+def Fiber.HasSumAdd (X : Fiber.{u}) : Prop :=
+  ∀ (a b : X.Carrier),
+    ∃ c, X.HasSum (fun i : Bool => bif i then a else b) c
+
+theorem Fiber.hasSum_fin_zero (X : Fiber.{u}) (f : Fin 0 → X.Carrier) :
+    X.HasSum f 0 := by
+  have h :=
+    (X.summation.reindex (Equiv.equivEmpty (Fin 0))
+      (fun i : Empty => nomatch i) 0).mpr X.summation.empty
+  refine (Fiber.hasSum_congr X ?_).mpr h
+  intro i; exact (isEmptyElim i : False).elim
+
+theorem Fiber.hasSum_fin_one (X : Fiber.{u}) (f : Fin 1 → X.Carrier) :
+    X.HasSum f (f 0) := by
+  have h :=
+    (X.summation.reindex (Equiv.ofUnique (Fin 1) PUnit)
+      (fun _ : PUnit => f 0) (f 0)).mpr (X.summation.singleton (f 0))
+  refine (Fiber.hasSum_congr X ?_).mpr h
+  intro i; exact congrArg f (Subsingleton.elim _ _)
+
+/-- Glue a summable `α`-family with a value at `none` via Bool-add + flatten. -/
+theorem Fiber.hasSum_option_of_add (X : Fiber.{u}) (hadd : Fiber.HasSumAdd X)
+    {α : Type} [Countable α]
+    {g : Option α → X.Carrier} {sα : X.Carrier}
+    (hα : X.HasSum (fun a : α => g (some a)) sα) :
+    ∃ s, X.HasSum g s := by
+  obtain ⟨s, hs⟩ := hadd sα (g none)
+  let κ : Bool → Type := fun b => match b with | true => α | false => PUnit
+  have : ∀ b : Bool, Countable (κ b) := fun b => by cases b <;> infer_instance
+  let row : (b : Bool) → κ b → X.Carrier := fun b j =>
+    match b, j with
+    | true, a => g (some a)
+    | false, _ => g none
+  have hrows (b : Bool) : X.HasSum (row b) (bif b then sα else g none) := by
+    cases b with
+    | true => exact hα
+    | false => exact X.summation.singleton (g none)
+  have hflat :
+      X.HasSum (fun p : (b : Bool) × κ b => row p.1 p.2) s :=
+    (X.summation.flatten row s).mpr
+      ⟨fun b => bif b then sα else g none, hrows, hs⟩
+  let e : ((b : Bool) × κ b) ≃ Option α :=
+    { toFun := fun | ⟨true, a⟩ => some a | ⟨false, _⟩ => none
+      invFun := fun | some a => ⟨true, a⟩ | none => ⟨false, ⟨⟩⟩
+      left_inv := fun | ⟨true, _⟩ => rfl | ⟨false, ⟨⟩⟩ => rfl
+      right_inv := fun | some _ => rfl | none => rfl }
+  have hge : (fun p : (b : Bool) × κ b => g (e p)) =
+      (fun p => row p.1 p.2) := by
+    funext p; rcases p with ⟨b, j⟩; cases b <;> rfl
+  have hrow : X.HasSum (fun p => g (e p)) s := hge ▸ hflat
+  exact ⟨s, (X.summation.reindex e g s).mp hrow⟩
+
+/-- Finite `Fin n` families admit sums under Bool-add (induction + flatten). -/
+theorem Fiber.hasSum_fin (X : Fiber.{u}) (hadd : Fiber.HasSumAdd X)
+    (n : ℕ) (f : Fin n → X.Carrier) : ∃ s, X.HasSum f s := by
+  induction n with
+  | zero => exact ⟨0, Fiber.hasSum_fin_zero X f⟩
+  | succ n ih =>
+    let e : Fin (n + 1) ≃ Option (Fin n) := finSuccEquivLast
+    obtain ⟨s_n, hs_n⟩ := ih (fun i => f (e.symm (some i)))
+    obtain ⟨s, hs⟩ :=
+      Fiber.hasSum_option_of_add X hadd (g := fun o => f (e.symm o)) hs_n
+    refine ⟨s, ?_⟩
+    have h := (X.summation.reindex e (fun o => f (e.symm o)) s).mpr hs
+    refine (Fiber.hasSum_congr X ?_).mpr h
+    intro i; simp
+
+/-- Fintype-indexed families admit sums under Bool-add. -/
+theorem Fiber.hasSum_fintype (X : Fiber.{u}) (hadd : Fiber.HasSumAdd X)
+    {ι : Type} [Fintype ι] (f : ι → X.Carrier) : ∃ s, X.HasSum f s := by
+  classical
+  let e : ι ≃ Fin (Fintype.card ι) := Fintype.equivFin ι
+  obtain ⟨s, hs⟩ := Fiber.hasSum_fin X hadd _ (fun i => f (e.symm i))
+  refine ⟨s, ?_⟩
+  have h := (X.summation.reindex e (fun i => f (e.symm i)) s).mpr hs
+  refine (Fiber.hasSum_congr X ?_).mpr h
+  intro i; simp
+
+/-- Finset-indexed families admit sums under Bool-add. -/
+theorem Fiber.hasSum_finset (X : Fiber.{u}) (hadd : Fiber.HasSumAdd X)
+    {ι : Type} [DecidableEq ι] (f : ι → X.Carrier) (t : Finset ι) :
+    ∃ s, X.HasSum (fun i : t => f (i : ι)) s :=
+  Fiber.hasSum_fintype X hadd _
 
 /-- A specialized right module over finite-dimensional trace-nonincreasing
 superoperators.  The two sum laws are exactly enriched functoriality in the
@@ -423,6 +565,32 @@ structure Module where
               act (x i)
                 (Superoperator.tensor (f i) (Superoperator.identity A)))
             z
+  /- NOTE (Gate 3 / Path 2): a proposed field
+
+  ```
+  act_sum_from_dim :
+    ∀ {ι} [Countable ι] {m d} {x : ι → (obj d).Carrier} {s}
+      (f : ι → Superoperator m d),
+      (obj d).HasSum x s →
+        ∃ z, (obj m).HasSum (fun i => act (x i) (f i)) z
+  ```
+
+  is **false** for TNI/representable modules when `d ≥ 2` (complementary
+  effects at fiber `2` against replacement preparations sum to
+  `discard + discard`).  It holds for unrestricted CP via
+  `CPMapSum.comp_from_dim` / `HasActSumFromDim`.
+  Do not reintroduce it as a required `Module` field. -/
+
+/-- Joint action at an arbitrary fiber dimension.  Holds for ambient CP
+modules; fails for TNI representables when `d ≥ 2`. -/
+class HasActSumFromDim (M : Module.{u}) : Prop where
+  act_sum_from_dim :
+    ∀ {ι : Type} [Countable ι] {m d : ℕ}
+      {x : ι → (M.obj d).Carrier} {s : (M.obj d).Carrier}
+      (f : ι → Superoperator m d),
+      (M.obj d).HasSum x s →
+        ∃ z : (M.obj m).Carrier,
+          (M.obj m).HasSum (fun i => M.act (x i) (f i)) z
 
 /-- The ambient module `CPM(-, A)` of unrestricted completely positive maps.
 It is distinct from the representable `Q(-, A)`, whose elements are TNI. -/
@@ -515,6 +683,21 @@ theorem cpmModule_act {A m n : ℕ}
     (x : CPMap n A) (f : Superoperator m n) :
     (cpmModule A).act x f = CPMap.comp x f.cp :=
   rfl
+
+/-- CPM fibers admit Bool-split sums (unrestricted CP addition). -/
+theorem Fiber.HasSumAdd.cpmModule (A n : ℕ) :
+    Fiber.HasSumAdd ((cpmModule A).obj n) := by
+  intro a b
+  change CPMap n A at a b
+  exact ⟨a + b, SigmaMon.CPMapSum.hasSum_add a b⟩
+
+/-- Unrestricted CP modules admit joint action at every fiber dimension. -/
+instance HasActSumFromDim.cpmModule (A : ℕ) :
+    HasActSumFromDim (cpmModule A) where
+  act_sum_from_dim := by
+    intro ι _ m d x s f h
+    obtain ⟨Χ, hΧ⟩ := SigmaMon.CPMapSum.comp_from_dim f h
+    exact ⟨Χ, hΧ⟩
 
 /-- A sum-preserving natural transformation of specialized modules. -/
 structure Hom (M : Module.{u}) (N : Module.{v}) where
