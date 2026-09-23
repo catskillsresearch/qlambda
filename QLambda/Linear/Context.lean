@@ -44,6 +44,12 @@ inductive OSplit :
   | right {A Δ Δ₁ Δ₂} :
       OSplit Δ Δ₁ Δ₂ → OSplit (some A :: Δ) (none :: Δ₁) (some A :: Δ₂)
 
+theorem Lookup.mem {α : Type} {xs : List α} {n : Nat} {a : α}
+    (h : Lookup xs n a) : a ∈ xs := by
+  induction h with
+  | zero => exact List.Mem.head _
+  | succ _ ih => exact List.Mem.tail _ ih
+
 theorem Lookup.lt_length {α : Type} {xs : List α} {n : Nat} {a : α}
     (h : Lookup xs n a) : n < xs.length := by
   induction h with
@@ -116,6 +122,36 @@ theorem allNone_replicate_none (n : Nat) :
   induction n with
   | zero => trivial
   | succ n ih => simpa [List.replicate_succ, AllNone]
+
+theorem OSplit.mem_left {Δ Δ₁ Δ₂ : List (Option Ty)} (h : OSplit Δ Δ₁ Δ₂)
+    {A : Ty} (hm : some A ∈ Δ₁) : some A ∈ Δ := by
+  induction h with
+  | nil => cases hm
+  | none _ ih =>
+      cases hm with
+      | tail _ hm => exact List.Mem.tail _ (ih hm)
+  | left _ ih =>
+      cases hm with
+      | head => exact List.Mem.head _
+      | tail _ hm => exact List.Mem.tail _ (ih hm)
+  | right h ih =>
+      cases hm with
+      | tail _ hm => exact List.Mem.tail _ (ih hm)
+
+theorem OSplit.mem_right {Δ Δ₁ Δ₂ : List (Option Ty)} (h : OSplit Δ Δ₁ Δ₂)
+    {A : Ty} (hm : some A ∈ Δ₂) : some A ∈ Δ := by
+  induction h with
+  | nil => cases hm
+  | none _ ih =>
+      cases hm with
+      | tail _ hm => exact List.Mem.tail _ (ih hm)
+  | left h ih =>
+      cases hm with
+      | tail _ hm => exact List.Mem.tail _ (ih hm)
+  | right _ ih =>
+      cases hm with
+      | head => exact List.Mem.head _
+      | tail _ hm => exact List.Mem.tail _ (ih hm)
 
 theorem OSplit.self_of_allNone {Δ : List (Option Ty)} (hn : AllNone Δ) :
     OSplit Δ Δ Δ := by

@@ -96,9 +96,127 @@ theorem primTy_fragment (p : Prim) : SemanticFragment (primTy p) := by
   | cx =>
       exact .arrowLin .qubit (.arrowLin .qubit (tensor .qubit .qubit))
 
+theorem arrow_unres_eq {A B : Ty} (h : SemanticFragment (.arrow .unres A B)) :
+    A = .bit := by
+  cases h with
+  | ofFirstOrder hFO => cases hFO
+  | arrowUnresBit _ => rfl
+
+theorem not_arrow_unres_non_bit {A B : Ty} (hne : A ≠ .bit) :
+    ¬ SemanticFragment (.arrow .unres A B) := by
+  intro h
+  exact hne (arrow_unres_eq h)
+
+theorem not_arrow_unres_unit (cod : Ty) :
+    ¬ SemanticFragment (.arrow .unres .unit cod) := by
+  intro h
+  exact not_arrow_unres_non_bit (by intro h'; cases h') h
+
+theorem arrow_unres_cod {A B : Ty} (h : SemanticFragment (.arrow .unres A B)) :
+    SemanticFragment B := by
+  cases h with
+  | ofFirstOrder hFO => cases hFO
+  | arrowUnresBit hB => exact hB
+
+theorem arrow_lin_inv {A B : Ty} (h : SemanticFragment (.arrow .lin A B)) :
+    FirstOrder A ∧ SemanticFragment B := by
+  cases h with
+  | ofFirstOrder hFO => cases hFO
+  | arrowLin hA hB => exact ⟨hA, hB⟩
+
+theorem tensor_firstOrder {A B : Ty} (h : SemanticFragment (.tensor A B)) :
+    FirstOrder A ∧ FirstOrder B := by
+  cases h with
+  | ofFirstOrder hFO =>
+      cases hFO with
+      | tensor hA hB => exact ⟨hA, hB⟩
+
+theorem semanticFragmentB_eq {A : Ty} (h : SemanticFragment A) : semanticFragmentB A = true := by
+  cases h with
+  | ofFirstOrder hFO =>
+      cases hFO with
+      | unit => rfl
+      | bit => rfl
+      | qubit => rfl
+      | tensor hA hB =>
+          simp [semanticFragmentB, Ty.firstOrderB_eq hA, Ty.firstOrderB_eq hB]
+  | arrowLin hFO hB =>
+      simp [semanticFragmentB, Ty.firstOrderB_eq hFO, semanticFragmentB_eq hB]
+  | arrowUnresBit hB =>
+      simp [semanticFragmentB, semanticFragmentB_eq hB]
+
 end SemanticFragment
 
 end Ty
+
+/-- Every unrestricted context type lies in the semantic fragment. -/
+def CtxUAllFragment (Γ : List Ty) : Prop :=
+  ∀ ⦃A⦄, A ∈ Γ → Ty.SemanticFragment A
+
+/-- Every occupied linear context cell lies in the semantic fragment. -/
+def CtxLAllSomeFragment (Δ : List (Option Ty)) : Prop :=
+  ∀ ⦃A⦄, some A ∈ Δ → Ty.SemanticFragment A
+
+namespace CtxUAllFragment
+
+theorem nil : CtxUAllFragment [] := by
+  intro A h
+  cases h
+
+theorem cons {A : Ty} {Γ : List Ty}
+    (hA : Ty.SemanticFragment A) (hΓ : CtxUAllFragment Γ) :
+    CtxUAllFragment (A :: Γ) := by
+  intro A' hm
+  cases hm with
+  | head => exact hA
+  | tail _ hm => exact hΓ hm
+
+theorem lookup {Γ : List Ty} (hΓ : CtxUAllFragment Γ) {n A}
+    (h : Lookup Γ n A) : Ty.SemanticFragment A :=
+  hΓ (Lookup.mem h)
+
+end CtxUAllFragment
+
+namespace CtxLAllSomeFragment
+
+theorem nil : CtxLAllSomeFragment [] := by
+  intro A h
+  cases h
+
+theorem cons_none {Δ : List (Option Ty)} (hΔ : CtxLAllSomeFragment Δ) :
+    CtxLAllSomeFragment (none :: Δ) := by
+  intro A hm
+  simp only [List.mem_cons] at hm
+  rcases hm with heq | hm
+  · cases heq
+  · exact hΔ hm
+
+theorem cons_some {A : Ty} {Δ : List (Option Ty)}
+    (hA : Ty.SemanticFragment A) (hΔ : CtxLAllSomeFragment Δ) :
+    CtxLAllSomeFragment (some A :: Δ) := by
+  intro A' hm
+  simp only [List.mem_cons] at hm
+  rcases hm with heq | hm
+  · exact Option.some_inj.mp heq ▸ hA
+  · exact hΔ hm
+
+theorem lookup {Δ : List (Option Ty)} (hΔ : CtxLAllSomeFragment Δ)
+    {n : Nat} {A : Ty} (h : Lookup Δ n (some A)) : Ty.SemanticFragment A :=
+  hΔ (Lookup.mem h)
+
+theorem of_oSplit_left {Δ Δ₁ Δ₂ : List (Option Ty)}
+    (hΔ : CtxLAllSomeFragment Δ) (h : OSplit Δ Δ₁ Δ₂) :
+    CtxLAllSomeFragment Δ₁ := by
+  intro A hm
+  exact hΔ (OSplit.mem_left h hm)
+
+theorem of_oSplit_right {Δ Δ₁ Δ₂ : List (Option Ty)}
+    (hΔ : CtxLAllSomeFragment Δ) (h : OSplit Δ Δ₁ Δ₂) :
+    CtxLAllSomeFragment Δ₂ := by
+  intro A hm
+  exact hΔ (OSplit.mem_right h hm)
+
+end CtxLAllSomeFragment
 
 /-- One-wire quotation type is in the fragment. -/
 theorem quotationTy_semanticFragment :
@@ -150,6 +268,45 @@ theorem not_fold {A : Ty} {M : Term} : ¬ SemanticFragment (.fold A M) := by
 
 theorem not_unfold {M : Term} : ¬ SemanticFragment (.unfold M) := by
   intro h; cases h
+
+theorem lam_body {κ A M} (h : SemanticFragment (Term.lam κ A M)) : SemanticFragment M := by
+  cases h with | lam _ hM => exact hM
+
+theorem lam_dom {κ A M} (h : SemanticFragment (Term.lam κ A M)) : Ty.SemanticFragment A := by
+  cases h with | lam hA _ => exact hA
+
+theorem app_fn {F X} (h : SemanticFragment (Term.app F X)) : SemanticFragment F := by
+  cases h with | app hF _ => exact hF
+
+theorem app_arg {F X} (h : SemanticFragment (Term.app F X)) : SemanticFragment X := by
+  cases h with | app _ hX => exact hX
+
+theorem pair_left {M N} (h : SemanticFragment (Term.pair M N)) : SemanticFragment M := by
+  cases h with | pair hM _ => exact hM
+
+theorem pair_right {M N} (h : SemanticFragment (Term.pair M N)) : SemanticFragment N := by
+  cases h with | pair _ hN => exact hN
+
+theorem unpair_left {M K} (h : SemanticFragment (Term.unpair M K)) : SemanticFragment M := by
+  cases h with | unpair hM _ => exact hM
+
+theorem unpair_right {M K} (h : SemanticFragment (Term.unpair M K)) : SemanticFragment K := by
+  cases h with | unpair _ hK => exact hK
+
+theorem ite_cond {B T E} (h : SemanticFragment (Term.ite B T E)) : SemanticFragment B := by
+  cases h with | ite hB _ _ => exact hB
+
+theorem ite_then {B T E} (h : SemanticFragment (Term.ite B T E)) : SemanticFragment T := by
+  cases h with | ite _ hT _ => exact hT
+
+theorem ite_else {B T E} (h : SemanticFragment (Term.ite B T E)) : SemanticFragment E := by
+  cases h with | ite _ _ hE => exact hE
+
+theorem measure_qubit {Q K} (h : SemanticFragment (Term.measure Q K)) : SemanticFragment Q := by
+  cases h with | measure hQ _ => exact hQ
+
+theorem measure_cont {Q K} (h : SemanticFragment (Term.measure Q K)) : SemanticFragment K := by
+  cases h with | measure _ hK => exact hK
 
 theorem shiftLin_semanticFragment {d cutoff : Nat} :
     ∀ {M : Term}, SemanticFragment M → SemanticFragment (shiftLin d cutoff M)

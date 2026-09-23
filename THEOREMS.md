@@ -29,18 +29,43 @@ Probability labels measurement transitions; it is not a source term former.
 - `QLambda.Linear.routeA_succeeded`
 - `QLambda.Linear.routeA_skips_ordered_bang_routes`
 - `QLambda.Linear.FragCert.toHasType`
+- `QLambda.Linear.FragCert.term_fragment`
+- `QLambda.Linear.FragCert.ofHasType_complete`
+- `QLambda.Linear.FragCert.FragmentJudgment`
+- `QLambda.Linear.FragmentContext.routeA_fragment_context_acceptance`
 - `QLambda.Linear.fragment_unit_adequacy`
 - `QLambda.Linear.fragment_bitLit_adequacy`
 - `QLambda.Linear.fragment_step_preserves`
 - `QLambda.Linear.fragment_measStep_preserves`
 - `QLambda.Linear.fragment_closed_literal_adequacy`
+- `QLambda.Linear.fragment_closed_literal_denote_sound`
+- `QLambda.Linear.fragment_observable_adequacy_literals`
+- `QLambda.Linear.fragment_source_quotation_agreement_literals`
+- `QLambda.Linear.UsesAtMostQubits`
 
 Route A supplies `PresheafFragmentModel` / `routeAFragmentModel` with
 classical-bit discard/copy and primitive/measurement Yoneda maps, without a
-global bang or `LNLModel`.  Closed unit/bit **literal** observations and
-syntactic fragment step/measurement preservation are checked.  Open-context
-compositional denotation, denotational `Step` soundness, runtime Born
-adequacy, and full-language adequacy remain objectives.
+global bang or `LNLModel`.  `FragCert` / `FragmentJudgment` are the canonical
+fragment judgment (with `ofHasType` completeness).  `FragmentContext` gives
+open unrestricted/linear Day-tensor contexts.  Closed unit/bit literal
+observations, N-bounded literal adequacy, and syntactic fragment
+step/measurement preservation are checked.  Full open-term compositional
+curry/eval denotation and denotational β/η remain Track F objectives.
+
+## Day-bang / Track L boundary
+
+- `QLambda.Domain.Presheaf.SuperoperatorModule.day_bang_architecture_boundary`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.day_bang_raw_global_bound_fails_at_two`
+- `QLambda.Domain.Presheaf.trackL_presheafQuantumLNL_deferred`
+- `QLambda.Domain.Presheaf.trackL_recursive_semantics_deferred`
+- `QLambda.Domain.Presheaf.trackL_full_adequacy_deferred`
+- `QLambda.Domain.Presheaf.trackL_full_abstraction_deferred`
+- `QLambda.Linear.routeA_independent_of_day_bang_two`
+
+Raw `BangSplitEffectAdmissible 2` fails; A≤1 bang components succeed.
+`BangComultDayTransferWitness` remains the open bridge toward
+`¬ BangComultComponentsAdmissible 2` or a positive repair.  Track L packages
+are deferred on this boundary; Route A fragment work does not depend on it.
 
 ## Omega-CPO foundations
 
@@ -285,7 +310,14 @@ The following are goals, not existing declarations:
   premise-free all-dimensional Day bang comonoid / cofree UP (Route A and
   the global raw split-effect bound are refuted; half-scaling repairs the
   `(2,1)` matrix bound but is not counital;
-  `BangComultDayTransferWitness` remains open);
+  `BangComultDayTransferWitness` remains open;
+  see `day_bang_architecture_boundary`);
+- premise-free `presheafQuantumLNL`, recursive `mu`/`fix` interpretation,
+  full-language adequacy, and full abstraction (Track L deferred theorems
+  record this boundary);
+- full open-term `FragCert.denote` with curry/eval/split coherence and
+  denotational β/η / substitution for all fragment rules;
+- end-to-end N-bounded source/runtime Born simulation beyond closed literals;
 - general Day tensor and internal hom for arbitrary based / biorthogonal
   modules beyond the representable fragment.  The coefficientwise
   `symmetricFormalTensorSquare` is not the Day tensor;

@@ -644,10 +644,14 @@ successful staging beyond the minimum fragment.  The minimum fragment
 (first-order data, linear FO-domain arrows, unrestricted bit binders,
 primitives, measurement) has a checked Route~A `PresheafFragmentModel`
 (type objects and bit/prim/measure constant maps), closed unit/bit
-**literal** observations, and syntactic fragment step preservation.
-Open-context compositional denotation, denotational source soundness,
-$N$-bounded runtime Born adequacy, and full-language adequacy remain goals
-and are not included in the checked theorem list.
+**literal** observations, syntactic fragment step preservation, canonical
+`FragCert`/`FragmentJudgment` certificates, Day-tensor `FragmentContext`
+objects, and N-bounded literal adequacy.  Full open-term curry/eval
+denotation and end-to-end N-bounded Born simulation remain Track F goals.
+Track L packages are deferred on
+`day_bang_architecture_boundary` (raw A=2 split-effect bound fails;
+`BangComultDayTransferWitness` remains open) and are not included in the
+checked theorem list as completed semantics.
 
 ---
 

@@ -109,6 +109,13 @@ def firstOrderB : Ty → Bool
   | .tensor A B => firstOrderB A && firstOrderB B
   | _ => false
 
+theorem firstOrderB_eq {A : Ty} (h : FirstOrder A) : A.firstOrderB = true := by
+  induction h with
+  | unit => rfl
+  | bit => rfl
+  | qubit => rfl
+  | tensor hA hB ihA ihB => simp [firstOrderB, ihA, ihB]
+
 theorem firstOrderB_sound {A : Ty} (h : A.firstOrderB = true) :
     FirstOrder A := by
   induction A with

@@ -84,9 +84,16 @@ first-order domain, unrestricted bit binders, primitives, measurement; no
 bit/prim/measure constant maps), closed unit/bit **literal** observations,
 and syntactic fragment step preservation — see
 `QLambda/Linear/SemanticFragment.lean`, `FragmentModel.lean`,
-`FragmentDenotation.lean`, `FragmentAdequacy.lean`.  Open-context
-compositional denotation, denotational soundness, N-bounded runtime Born
-adequacy, and full-language adequacy remain objectives.  This release does
+`FragmentDenotation.lean`, `FragmentContext.lean`, `FragmentAdequacy.lean`,
+`FragmentRuntimeN.lean`.  Canonical `FragCert`/`FragmentJudgment` certificates,
+open Day-tensor fragment contexts (bit copy/discard, not bang 2), closed
+literal denotation into combined contexts, and N-bounded literal adequacy are
+checked.  Full open-term curry/eval denotation, denotational β/η for open
+terms, and end-to-end N-bounded Born simulation remain Track F objectives.
+Track L (`presheafQuantumLNL`, recursion, full adequacy/abstraction) is
+deferred on the Day-bang architecture boundary
+(`day_bang_architecture_boundary`): raw `BangSplitEffectAdmissible 2` fails;
+`BangComultDayTransferWitness` remains open.  This release does
 not claim full abstraction or unrestricted higher-order adequacy.
 `docs/NOVELTY_AUDIT.md` records the distinction between published mathematics
 and new Lean proofs.

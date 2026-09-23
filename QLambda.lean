@@ -64,8 +64,14 @@ import QLambda.Linear.PrimitiveSuperoperator
 import QLambda.Linear.TypeInterpretation
 import QLambda.Linear.SemanticFragment
 import QLambda.Linear.FragmentModel
+import QLambda.Linear.FragmentContext
 import QLambda.Linear.FragmentDenotation
 import QLambda.Linear.FragmentAdequacy
+import QLambda.Linear.FragmentCoherence
+import QLambda.Linear.FragmentRuntimeN
+import QLambda.Linear.FragmentSourceCircuitN
+import QLambda.Domain.Presheaf.DayBangBoundary
+import QLambda.Domain.Presheaf.TrackLDeferral
 
 /-!
 # Typed linear qlambda
