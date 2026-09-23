@@ -172,15 +172,27 @@ theorem routeA_fragment_acceptance :
   ⟨routeAFragmentModel.ty_eq_fragmentModule,
     routeAFragmentModel.prim_agrees, rfl⟩
 
-/-- Named Route A success marker for the ordered blocker tree. -/
+/-- Named Route A success marker: a concrete `PresheafFragmentModel` exists
+(type objects, bit discard/copy, prim/measure maps).  This does **not**
+include open-context denotation or runtime adequacy. -/
 def RouteASucceeded : Prop :=
   Nonempty PresheafFragmentModel
 
 theorem routeA_succeeded : RouteASucceeded :=
   ⟨routeAFragmentModel⟩
 
-/-- Routes B–F are not entered: Route A already meets the minimum interface. -/
-def RoutesBtoFSkipped : String :=
-  "Route A acceptance closed; Routes B–F skipped per ordered decision tree."
+/-- Mathematical record that Route A supplies the maps required by the
+minimum type/constant interface, so the ordered B–F tree is not entered for
+that gate. -/
+theorem routeA_skips_ordered_bang_routes :
+    (∀ {A : Ty} (h : Ty.SemanticFragment A),
+      ∃ M : Module, routeAFragmentModel.ty h = M) ∧
+    (∃ δ : Hom (representable 2) dayTensorUnit,
+      δ = routeAFragmentModel.bitDiscard) ∧
+    (∃ γ : Hom (representable 2) (dayTensorRepresentable 2 2),
+      γ = routeAFragmentModel.bitCopy) :=
+  ⟨fun h => ⟨routeAFragmentModel.ty h, rfl⟩,
+    ⟨routeAFragmentModel.bitDiscard, rfl⟩,
+    ⟨routeAFragmentModel.bitCopy, rfl⟩⟩
 
 end QLambda.Linear

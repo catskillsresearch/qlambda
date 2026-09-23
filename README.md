@@ -80,11 +80,14 @@ remains open.  An all-dimensional cofree bang, general Day closure on based
 modules, a premise-free `presheafQuantumLNL`, and full-language adequacy remain
 objectives.  The **minimum fragment** (first-order data, linear arrows with
 first-order domain, unrestricted bit binders, primitives, measurement; no
-`mu`/`fix`) now has a Route A `PresheafFragmentModel`, closed unit/bit
-denotation/adequacy, and fragment step preservation — see
+`mu`/`fix`) has a Route A `PresheafFragmentModel` (type objects and
+bit/prim/measure constant maps), closed unit/bit **literal** observations,
+and syntactic fragment step preservation — see
 `QLambda/Linear/SemanticFragment.lean`, `FragmentModel.lean`,
-`FragmentDenotation.lean`, `FragmentAdequacy.lean`.  This release does not claim
-full abstraction or unrestricted higher-order adequacy.
+`FragmentDenotation.lean`, `FragmentAdequacy.lean`.  Open-context
+compositional denotation, denotational soundness, N-bounded runtime Born
+adequacy, and full-language adequacy remain objectives.  This release does
+not claim full abstraction or unrestricted higher-order adequacy.
 `docs/NOVELTY_AUDIT.md` records the distinction between published mathematics
 and new Lean proofs.
 

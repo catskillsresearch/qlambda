@@ -1,4 +1,4 @@
-# Domain Semantics and Circuit Completeness for a Typed Linear Quantum $\lambda$-Calculus Formalized in Lean 4
+# Domain Semantics and Circuit Completeness for a Typed Linear Quantum $\lambda$-Calculus for Programs using up to $N$ qubits Formalized in Lean 4
 
 ---
 
@@ -642,10 +642,12 @@ that basis we aim to prove operational soundness, first-order-observable
 adequacy by finite approximants, and source-denotation preservation for
 successful staging beyond the minimum fragment.  The minimum fragment
 (first-order data, linear FO-domain arrows, unrestricted bit binders,
-primitives, measurement) now has a checked Route~A
-`PresheafFragmentModel`, closed unit/bit adequacy, and fragment step
-preservation; full-language adequacy remains a goal and is not included in
-the checked theorem list.
+primitives, measurement) has a checked Route~A `PresheafFragmentModel`
+(type objects and bit/prim/measure constant maps), closed unit/bit
+**literal** observations, and syntactic fragment step preservation.
+Open-context compositional denotation, denotational source soundness,
+$N$-bounded runtime Born adequacy, and full-language adequacy remain goals
+and are not included in the checked theorem list.
 
 ---
 

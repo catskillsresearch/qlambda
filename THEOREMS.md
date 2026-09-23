@@ -27,18 +27,20 @@ Probability labels measurement transitions; it is not a source term former.
 - `QLambda.Linear.generalQuotationTy_semanticFragment`
 - `QLambda.Linear.routeA_fragment_acceptance`
 - `QLambda.Linear.routeA_succeeded`
+- `QLambda.Linear.routeA_skips_ordered_bang_routes`
 - `QLambda.Linear.FragCert.toHasType`
 - `QLambda.Linear.fragment_unit_adequacy`
 - `QLambda.Linear.fragment_bitLit_adequacy`
 - `QLambda.Linear.fragment_step_preserves`
 - `QLambda.Linear.fragment_measStep_preserves`
-- `QLambda.Linear.fragment_program_complete`
+- `QLambda.Linear.fragment_closed_literal_adequacy`
 
 Route A supplies `PresheafFragmentModel` / `routeAFragmentModel` with
 classical-bit discard/copy and primitive/measurement Yoneda maps, without a
-global bang or `LNLModel`.  Routes B–F are skipped.  Closed unit/bit
-adequacy and fragment step/measurement preservation are checked; full
-higher-order / recursive adequacy remains an objective.
+global bang or `LNLModel`.  Closed unit/bit **literal** observations and
+syntactic fragment step/measurement preservation are checked.  Open-context
+compositional denotation, denotational `Step` soundness, runtime Born
+adequacy, and full-language adequacy remain objectives.
 
 ## Omega-CPO foundations
 
@@ -295,10 +297,20 @@ The following are goals, not existing declarations:
   internal hom, additives, and omega-CPO enrichment;
 - a premise-free LNL model `presheafQuantumLNL` whose homs contain
   allocation, reset, gates, and measurement instruments;
+- open-context compositional denotation for every `SemanticFragment` rule
+  (`Lookup`/`AllNone`/`OSplit` maps, `FragCert.denote` for lam/app/pair/
+  unpair/ite/prim/measure, derivation independence);
+- denotational `Step`/`MeasStep` soundness and semantic substitution for
+  the fragment (beyond syntactic fragment preservation);
+- N-bounded source/runtime simulation and Born-probability agreement
+  (`measureProbability` ↔ denotational branch mass);
+- finite qubit-measurement adequacy beyond closed unit/bit literals;
 - interpretation of all source types and strictly positive recursive types;
-- a concrete structural source denotation independent of typing derivations;
+- a concrete structural source denotation independent of typing derivations
+  for the full language (including `fix`/`mu`);
 - semantic substitution, operational soundness, and fix/fold equations;
 - adequacy for closed terms with first-order observable results via
   subnormalized finite approximants;
 - preservation of source denotation by successful staging and canonical
-  circuit quotation.
+  circuit quotation;
+- full abstraction for a named fragment, or a precise no-go boundary.

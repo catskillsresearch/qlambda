@@ -9,8 +9,12 @@ import QLambda.Linear.Operational
 /-!
 # Fragment soundness and first-order observable adequacy
 
-Soundness for classical source steps that stay in the fragment, and adequacy
-for closed unit/bit observations under the Route A denotation.
+Syntactic soundness for classical source steps that stay in the fragment, and
+closed unit/bit literal observations under the Route A constant maps.
+
+This file does **not** yet contain compositional open-context denotation,
+denotational `Step` soundness, or runtime Born adequacy; those are separate
+objectives.
 -/
 
 namespace QLambda.Linear
@@ -107,14 +111,25 @@ theorem fragment_measureBranch_agrees (b : Bool) :
     routeAFragmentModel.measureBranch b = measureBranchYoneda b :=
   rfl
 
-/-- Named package: Route A supplies denotation, soundness, and closed
-unit/bit adequacy for the minimum fragment. -/
-theorem fragment_program_complete :
+/-- Route A supplies a `PresheafFragmentModel` together with closed unit and
+bit-literal observations.  This is **not** compositional open-context
+denotation, runtime Born adequacy, or full-language completeness. -/
+theorem fragment_closed_literal_adequacy :
     RouteASucceeded ∧
       (FragCert.denoteUnit FragCert.closed_unit_cert =
         routeAFragmentModel.unitIntro) ∧
       (∀ b, FragCert.denoteBitLit (FragCert.closed_bitLit_cert b) =
         routeAFragmentModel.bitLit b) :=
   ⟨routeA_succeeded, fragment_unit_adequacy, fragment_bitLit_adequacy⟩
+
+/-- Deprecated alias retained for earlier citations; same statement as
+`fragment_closed_literal_adequacy`. -/
+theorem fragment_program_complete :
+    RouteASucceeded ∧
+      (FragCert.denoteUnit FragCert.closed_unit_cert =
+        routeAFragmentModel.unitIntro) ∧
+      (∀ b, FragCert.denoteBitLit (FragCert.closed_bitLit_cert b) =
+        routeAFragmentModel.bitLit b) :=
+  fragment_closed_literal_adequacy
 
 end QLambda.Linear
