@@ -36,6 +36,7 @@ import QLambda.Domain.Presheaf.Generated
 import QLambda.Domain.Presheaf.PseudoRepresentable
 import QLambda.Domain.Presheaf.Classical
 import QLambda.Domain.Presheaf.ClassicalCategory
+import QLambda.Domain.Presheaf.RepresentableBipolar
 import QLambda.Domain.Presheaf.Monoidal
 import QLambda.Domain.Presheaf.DayCoend
 import QLambda.Domain.Presheaf.OmegaEnriched
