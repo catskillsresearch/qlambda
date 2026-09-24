@@ -25,7 +25,8 @@ Kernel-checked foundations include quantum relations, a compact-closed
 $\mathsf{Set}\dashv\mathsf{qRel}$ model, quantum CPOs, and finite completely
 positive maps; these do not yet form one model of the full language.  For the
 fragment we check a Route~A CP-presheaf denotation (`FragCert.denote`),
-`UsesAtMostQubits\,N`, measured $\mathsf{new0}$ Born adequacy, staging of
+the `UsesAtMostQubits` $N$-qubit resource bound, measured $\mathsf{new0}$ Born
+adequacy, staging of
 successfully elaborated closed terms to IBM Composer/OpenQASM, and
 Hom-to-ideal-CQ agreement on a declared quotation covering set, including
 two-wire circuit completeness.  Full-language bang/LNL, recursive-type
