@@ -149,14 +149,11 @@ noncomputable def representable (A : ℕ) : Module where
             (traceNonincreasing_iff_effect_le_one _).mpr (by
               have hE : (⟨C, hC⟩ : CPMap m 1).effect = 1 := by
                 ext i j
-                simp [CPMap.effect, C, Finset.card_fin, nsmul_eq_mul,
-                  Nat.cast_one, one_mul]
-              simpa [hE] using
-                (le_refl (1 : Matrix (Fin m) (Fin m) ℂ)))⟩
+                simp [CPMap.effect, C]
+              simp [hE])⟩
       have hδE : δ.cp.effect = (1 : Matrix (Fin m) (Fin m) ℂ) := by
         ext i j
-        simp [δ, CPMap.effect, Finset.card_fin, nsmul_eq_mul, Nat.cast_one,
-          one_mul]
+        simp [δ, CPMap.effect]
       have hchoi_form (Ψ : Superoperator m 1)
           (p q : Fin 1 × Fin m) :
           Ψ.cp.choi p q = Ψ.cp.effect q.2 p.2 := by
@@ -205,7 +202,7 @@ noncomputable def representable (A : ℕ) : Module where
         simpa [hRe] using hIE
       have hadd_cp (i : ι) :
           (f i).cp + (r i).cp = δ.cp := by
-        simpa [r] using CPMap.add_residualOfLE (hf_le i)
+        simp [r]
       have hten_cp (i : ι) :
           CPMap.tensor (f i).cp (CPMap.identity (n + 2)) +
               CPMap.tensor (r i).cp (CPMap.identity (n + 2)) =

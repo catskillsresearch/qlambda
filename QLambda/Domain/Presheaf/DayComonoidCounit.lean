@@ -58,7 +58,7 @@ theorem tensorLeftUnitor_comp_split_one (q : ℕ) :
     change Superoperator.ofEquivalence
         (Superoperator.tensorLeftUnitorEquiv (tensorPowerDimension 1 q)) =
       Superoperator.ofEquivalence eU
-    refine ofEquivalence_dim_one (by simp [Nat.one_mul, htgt]) htgt _ _
+    refine ofEquivalence_dim_one (by simp) htgt _ _
   have hL :
       Superoperator.comp
           (Superoperator.tensorLeftUnitor (tensorPowerDimension 1 q))
@@ -95,7 +95,7 @@ theorem tensorLeftUnitor_comp_split_zero :
     change Superoperator.ofEquivalence
         (Superoperator.tensorLeftUnitorEquiv (tensorPowerDimension 0 0)) =
       Superoperator.ofEquivalence eU
-    exact ofEquivalence_dim_one (by simp [Nat.one_mul, h1]) h1 _ _
+    exact ofEquivalence_dim_one (by simp) h1 _ _
   have hL :
       Superoperator.comp
           (Superoperator.tensorLeftUnitor (tensorPowerDimension 0 0))
@@ -178,7 +178,7 @@ theorem dayLeftUnitor_tensor_id_comp_split_of_le_one (A : ℕ) (hA : A ≤ 1) (q
         Superoperator.tensorLeftUnitor (tensorPowerDimension A q) := by
     convert Superoperator.comp_identity
       (Superoperator.tensorLeftUnitor (tensorPowerDimension A q))
-    simp [tensorPowerDimension]
+    simp
   have houter := congrArg
     (fun t => Superoperator.comp t
       (Superoperator.ofEquivalence (tensorSplitEquiv A 0 q)))
@@ -509,8 +509,7 @@ theorem tensorRightUnitor_comp_split_one (p : ℕ) :
     change Superoperator.ofEquivalence
         (Superoperator.tensorRightUnitorEquiv (tensorPowerDimension 1 p)) =
       Superoperator.ofEquivalence eU
-    refine ofEquivalence_dim_one ?_ htgt _ _
-    simp [tensorPowerDimension, htgt]
+    refine ofEquivalence_dim_one (by simp) htgt _ _
   have hL :
       Superoperator.comp
           (Superoperator.tensorRightUnitor (tensorPowerDimension 1 p))
@@ -547,7 +546,7 @@ theorem tensorRightUnitor_comp_split_zero :
     change Superoperator.ofEquivalence
         (Superoperator.tensorRightUnitorEquiv (tensorPowerDimension 0 0)) =
       Superoperator.ofEquivalence eU
-    exact ofEquivalence_dim_one (by simp [Nat.mul_one, h1]) h1 _ _
+    exact ofEquivalence_dim_one (by simp) h1 _ _
   have hL :
       Superoperator.comp
           (Superoperator.tensorRightUnitor (tensorPowerDimension 0 0))
@@ -598,7 +597,7 @@ theorem dayRightUnitor_id_tensor_comp_split_of_le_one (A : ℕ) (hA : A ≤ 1) (
           (tensorPowerDimension A p * tensorPowerDimension A 0) := by
     convert Superoperator.tensor_identity
       (n := tensorPowerDimension A p) (ℓ := 1) using 1
-    · simp [tensorPowerDimension]
+    · simp
   have hmid :
       Superoperator.comp
           (Superoperator.comp
@@ -629,7 +628,7 @@ theorem dayRightUnitor_id_tensor_comp_split_of_le_one (A : ℕ) (hA : A ≤ 1) (
         Superoperator.tensorRightUnitor (tensorPowerDimension A p) := by
     convert Superoperator.comp_identity
       (Superoperator.tensorRightUnitor (tensorPowerDimension A p))
-    simp [tensorPowerDimension]
+    simp
   have houter := congrArg
     (fun t => Superoperator.comp t
       (Superoperator.ofEquivalence (tensorSplitEquiv A p 0)))
@@ -864,13 +863,13 @@ theorem half_scale_not_counital_bang_repair :
     bangNormalizedSplitFamilyEffect_two_one =
         (1 : Matrix (Fin (tensorPowerDimension 2 1))
           (Fin (tensorPowerDimension 2 1)) ℂ) ∧
-      (∀ (A : ℕ) (hA : A ≤ 1),
+      (∀ (A : ℕ) (_hA : A ≤ 1),
         (((Hom.comp (DayTensor.leftUnitor (bang A))
             (Hom.comp (DayTensor.map (bangCounit A) (Hom.id (bang A)))
               (bangComultComponent A 0 1))).app
             (tensorPowerDimension A 1) (bangIdentityDegreeOne A)) 1).val =
           Superoperator.identity (tensorPowerDimension A 1)) ∧
-      (∀ (A : ℕ) (hA : A ≤ 1),
+      (∀ (A : ℕ) (_hA : A ≤ 1),
         (((Hom.comp (DayTensor.rightUnitor (bang A))
             (Hom.comp (DayTensor.map (Hom.id (bang A)) (bangCounit A))
               (bangComultComponent A 1 0))).app
