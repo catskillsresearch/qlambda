@@ -27,9 +27,21 @@ lookup spine `quoteSkipSpine` (and likewise gate spines for `x`/`h`);
 `fragCert_*_quote_interprets` and `Prim.superoperator` / canonical-gate
 agreement after `yonedaMap`.
 
+**F7 (non-packaging bridge).** `interpretQuoteSpine` maps a quotation Hom plus
+a `QuoteSpineWitness` (a Hom-level equation naming one of the skip/x/h spines)
+to a `CQ.Sem` assembled from Composer blocks, without consulting any source
+`Command`.  `interpret_skip_quote` / `interpret_x_quote` / `interpret_h_quote`
+take a closed certificate on an *arbitrary* term together with
+`FragCert.denote c = quoteSkipSpine` (resp. `quoteGateSpine`) and conclude
+agreement with `Command.skip.denote` / `(Command.x w).denote` /
+`(Command.h w).denote`.  For the canonical quotations the hypothesis is
+discharged for every certificate by `fragCert_skip_quote_denote_independent` /
+`fragCert_x_quote_denote_independent` / `fragCert_h_quote_denote_independent`.
+
 **Not claimed.** A general Hom-inspecting extract from arbitrary
 `η : Hom _ (fragmentModule quotationTy)` into `CQ.Sem` (decidable Hom equality
-is unavailable); only the known skip/x/h spines are identified.
+is unavailable); the spine witness is supplied by the caller and only the known
+skip/x/h spines are identified.
 -/
 
 namespace QLambda.Linear
@@ -393,6 +405,160 @@ theorem fragCert_h_quote_denote (w : Fin 1) :
     FragCert.denote (fragCert_h_quote w) = quoteGateSpine .h rfl :=
   rfl
 
+/-- Any closed certificate for `(Command.x w).quote` denotes as the `x` gate
+spine: the certificate spine is forced by the quoted term, so `denote` does not
+depend on the certificate witness. -/
+theorem fragCert_x_quote_denote_independent (w : Fin 1)
+    (c : FragCert.Closed (Command.x w).quote Command.quotationTy) :
+    FragCert.denote c = quoteGateSpine .x rfl := by
+  refine Eq.trans ?_ (fragCert_x_quote_denote w)
+  cases c with
+  | lamU hΓ hΔ hAd hDup hN hArr cLam =>
+    cases cLam with
+    | lamL hΓ' hΔ' hAd' hFO hB cBody =>
+      cases cBody with
+      | appL hΓb hΔb hs hA hBb cF cX =>
+        cases hs with
+        | left hs0 =>
+            -- The gate argument would need a live wire in an exhausted slot.
+            cases hs0
+            cases cX with
+            | appL _ _ hs' _ _ _ cW =>
+                cases hs' with
+                | none hs1 =>
+                    cases hs1
+                    cases cW with
+                    | varL _ _ hl _ _ => cases hl
+            | appU _ _ hs' _ _ _ cW =>
+                cases hs' with
+                | none hs1 =>
+                    cases hs1
+                    cases cW with
+                    | varL _ _ hl _ _ => cases hl
+        | right hs0 =>
+            cases hs0
+            cases cF with
+            | lamL hΓc hΔc hAdc hFOc hBc cPair =>
+              cases cPair with
+              | pair hΓp hΔp hsp hAp hBp cL cR =>
+                cases hsp with
+                | left hsp0 =>
+                    cases hsp0 with
+                    | none hsp1 =>
+                        cases hsp1
+                        cases cL with
+                        | varL _ _ hlL _ _ =>
+                          cases cR with
+                          | varU _ _ hlU _ _ _ =>
+                            cases cX with
+                            | appL _ _ hsx _ _ cP cW =>
+                                cases hsx with
+                                | left hsx0 =>
+                                    cases hsx0
+                                    cases cW with
+                                    | varL _ _ hlW _ _ => cases hlW
+                                | right hsx0 =>
+                                    cases hsx0
+                                    cases cP with
+                                    | prim _ _ _ _ =>
+                                      cases cW with
+                                      | varL _ _ hlW _ _ =>
+                                        simp only [fragCert_x_quote,
+                                          fragCert_gate_lamL,
+                                          fragCert_gate_body,
+                                          fragCert_gate_cont,
+                                          fragCert_gate_pair_body,
+                                          fragCert_gate_arg,
+                                          fragCert_gate_prim,
+                                          fragCert_gate_wire]
+                                        congr
+                            | appU _ _ hsx _ _ cP cW =>
+                                cases cP
+                | right hsp0 =>
+                    cases hsp0 with
+                    | none hsp1 =>
+                        cases hsp1
+                        cases cL with
+                        | varL _ _ hlL _ _ => cases hlL
+      | appU hΓb hΔb hs hNX hBb cF cX =>
+        cases cF
+
+/-- Any closed certificate for `(Command.h w).quote` denotes as the `h` gate
+spine. -/
+theorem fragCert_h_quote_denote_independent (w : Fin 1)
+    (c : FragCert.Closed (Command.h w).quote Command.quotationTy) :
+    FragCert.denote c = quoteGateSpine .h rfl := by
+  refine Eq.trans ?_ (fragCert_h_quote_denote w)
+  cases c with
+  | lamU hΓ hΔ hAd hDup hN hArr cLam =>
+    cases cLam with
+    | lamL hΓ' hΔ' hAd' hFO hB cBody =>
+      cases cBody with
+      | appL hΓb hΔb hs hA hBb cF cX =>
+        cases hs with
+        | left hs0 =>
+            cases hs0
+            cases cX with
+            | appL _ _ hs' _ _ _ cW =>
+                cases hs' with
+                | none hs1 =>
+                    cases hs1
+                    cases cW with
+                    | varL _ _ hl _ _ => cases hl
+            | appU _ _ hs' _ _ _ cW =>
+                cases hs' with
+                | none hs1 =>
+                    cases hs1
+                    cases cW with
+                    | varL _ _ hl _ _ => cases hl
+        | right hs0 =>
+            cases hs0
+            cases cF with
+            | lamL hΓc hΔc hAdc hFOc hBc cPair =>
+              cases cPair with
+              | pair hΓp hΔp hsp hAp hBp cL cR =>
+                cases hsp with
+                | left hsp0 =>
+                    cases hsp0 with
+                    | none hsp1 =>
+                        cases hsp1
+                        cases cL with
+                        | varL _ _ hlL _ _ =>
+                          cases cR with
+                          | varU _ _ hlU _ _ _ =>
+                            cases cX with
+                            | appL _ _ hsx _ _ cP cW =>
+                                cases hsx with
+                                | left hsx0 =>
+                                    cases hsx0
+                                    cases cW with
+                                    | varL _ _ hlW _ _ => cases hlW
+                                | right hsx0 =>
+                                    cases hsx0
+                                    cases cP with
+                                    | prim _ _ _ _ =>
+                                      cases cW with
+                                      | varL _ _ hlW _ _ =>
+                                        simp only [fragCert_h_quote,
+                                          fragCert_gate_lamL,
+                                          fragCert_gate_body,
+                                          fragCert_gate_cont,
+                                          fragCert_gate_pair_body,
+                                          fragCert_gate_arg,
+                                          fragCert_gate_prim,
+                                          fragCert_gate_wire]
+                                        congr
+                            | appU _ _ hsx _ _ cP cW =>
+                                cases cP
+                | right hsp0 =>
+                    cases hsp0 with
+                    | none hsp1 =>
+                        cases hsp1
+                        cases cL with
+                        | varL _ _ hlL _ _ => cases hlL
+      | appU hΓb hΔb hs hNX hBb cF cX =>
+        cases cF
+
 /-- Gate-body spine expands through FO eval of the continuation against the
 `Prim.superoperator` Yoneda point. -/
 theorem quoteGateSpine_body_eq (p : Prim)
@@ -461,12 +627,68 @@ theorem routeA_primMap_h_canonicalModel :
   rw [fragment_prim_superoperator]
   exact prim_superoperator_h_yoneda_canonicalModel
 
-/-! ### F7: spine-level `interpretQuoteHom` (skip / x / h) -/
+/-! ### F7: spine-driven `FragCert.denote` ⇒ `CQ.Sem` bridge (skip / x / h)
+
+The interpret below is *not* packaging: `interpretQuoteSpine` consumes only a
+Hom together with a witness identifying it as one of the three known quotation
+spines, and produces a `CQ.Sem` built from Composer instruction blocks.  No
+source command is inspected, and the certificate's subject term is an arbitrary
+`Term` — only the Hom-level equation `FragCert.denote c = quoteSkipSpine`
+(resp. `quoteGateSpine`) is used.  Agreement with `Command.denote` is then a
+theorem rather than a definition.  A general extract from an arbitrary
+`η : Hom _ (fragmentModule quotationTy)` is still *not* claimed: the witness is
+supplied by the caller because Hom equality is undecidable. -/
+
+/-- Witness identifying a closed quotation Hom as one of the three spines
+established on the source side (`skip`, gate `x`, gate `h`).  The witness
+carries only a Hom-level equation, so it is the sole channel through which a
+spine determines a CQ meaning. -/
+inductive QuoteSpineWitness (η : Hom (FragmentContext.combined [] [])
+    (fragmentModule Command.quotationTy)) : Type where
+  | skip (h : η = quoteSkipSpine)
+  | gateX (h : η = quoteGateSpine .x rfl)
+  | gateH (h : η = quoteGateSpine .h rfl)
+
+/-- Spine-driven interpretation into `CQ.Sem`.  The result is assembled from
+Composer instruction blocks and depends only on the witnessed spine; it never
+consults a source `Command`. -/
+noncomputable def interpretQuoteSpine (model : Composer.Model 1 1)
+    {η : Hom (FragmentContext.combined [] [])
+      (fragmentModule Command.quotationTy)} :
+    QuoteSpineWitness η → CQ.Sem 1 1
+  | .skip _ => CQ.skip
+  | .gateX _ => Composer.denoteBlock model [.gate (.x (0 : Fin 1))]
+  | .gateH _ => Composer.denoteBlock model [.gate (.h (0 : Fin 1))]
+
+theorem interpretQuoteSpine_skip_eq_CQ_skip (model : Composer.Model 1 1)
+    {η : Hom (FragmentContext.combined [] [])
+      (fragmentModule Command.quotationTy)} (h : η = quoteSkipSpine) :
+    interpretQuoteSpine model (.skip h) = CQ.skip :=
+  rfl
+
+theorem interpretQuoteSpine_gateX_eq_gateBlock (model : Composer.Model 1 1)
+    {η : Hom (FragmentContext.combined [] [])
+      (fragmentModule Command.quotationTy)} (w : Fin 1)
+    (h : η = quoteGateSpine .x rfl) :
+    interpretQuoteSpine model (.gateX h) =
+      Composer.denoteBlock model [.gate (.x w)] := by
+  rw [Fin.eq_zero w]
+  rfl
+
+theorem interpretQuoteSpine_gateH_eq_gateBlock (model : Composer.Model 1 1)
+    {η : Hom (FragmentContext.combined [] [])
+      (fragmentModule Command.quotationTy)} (w : Fin 1)
+    (h : η = quoteGateSpine .h rfl) :
+    interpretQuoteSpine model (.gateH h) =
+      Composer.denoteBlock model [.gate (.h w)] := by
+  rw [Fin.eq_zero w]
+  rfl
 
 /-- Transport from a closed quotation certificate to `CQ.Sem` via the
-underlying command.  This is the honest source-side interpret: Hom equality
-is not decidable, so a general extract from an arbitrary quotation Hom remains
-open; skip/x/h are identified with spines below. -/
+underlying command.  This is the packaging source-side interpret retained for
+earlier citations; the non-packaging bridge is `interpretQuoteSpine`, which
+agrees with it on the three identified spines
+(`interpretQuoteHom_skip_eq_spine` / `_x_` / `_h_`). -/
 noncomputable def interpretQuoteHom {C : Command 1 1}
     (model : Composer.Model 1 1) (_hC : C.Quotable)
     (_c : FragCert.Closed C.quote Command.quotationTy) : CQ.Sem 1 1 :=
@@ -493,13 +715,23 @@ theorem interpretSkipSpine_eq_command_skip (model : Composer.Model 1 1)
     interpretSkipSpine model η hη = Command.skip.denote model :=
   (command_skip_denote_eq_CQ_skip model).symm
 
-/-- When a closed skip-quote certificate denotes as the skip spine, CQ
-interpretation is `CQ.skip`. -/
-theorem interpret_skip_quote (model : Composer.Model 1 1)
-    (c : FragCert.Closed Command.skip.quote Command.quotationTy)
-    (_hc : FragCert.denote c = quoteSkipSpine) :
-    Command.skip.denote model = CQ.skip :=
-  command_skip_denote_eq_CQ_skip model
+/-- Relation between the earlier thin skip interpret and the spine-driven one. -/
+theorem interpretSkipSpine_eq_interpretQuoteSpine (model : Composer.Model 1 1)
+    (η : Hom (FragmentContext.combined [] [])
+      (fragmentModule Command.quotationTy))
+    (hη : η = quoteSkipSpine) :
+    interpretSkipSpine model η hη = interpretQuoteSpine model (.skip hη) :=
+  rfl
+
+/-- Non-packaging skip bridge.  For an *arbitrary* term `t` carrying a closed
+quotation certificate whose Hom denotation is `quoteSkipSpine`, the
+spine-driven interpretation is `CQ.skip`, which is `Command.skip.denote`. -/
+theorem interpret_skip_quote {t : Term} (model : Composer.Model 1 1)
+    (c : FragCert.Closed t Command.quotationTy)
+    (hc : FragCert.denote c = quoteSkipSpine) :
+    interpretQuoteSpine model (.skip hc) = CQ.skip ∧
+    interpretQuoteSpine model (.skip hc) = Command.skip.denote model :=
+  ⟨rfl, (command_skip_denote_eq_CQ_skip model).symm⟩
 
 theorem interpretQuoteHom_skip (model : Composer.Model 1 1)
     (c : FragCert.Closed Command.skip.quote Command.quotationTy) :
@@ -544,10 +776,135 @@ theorem command_h_denote_eq_gateBlock (model : Composer.Model 1 1)
       Composer.denoteBlock model [.gate (.h w)] :=
   rfl
 
+/-- Non-packaging `x` bridge: any closed quotation certificate (of an arbitrary
+term) whose Hom denotation is the `x` gate spine interprets as the single-gate
+Composer block, i.e. as `(Command.x w).denote model`. -/
+theorem interpret_x_quote {t : Term} (model : Composer.Model 1 1) (w : Fin 1)
+    (c : FragCert.Closed t Command.quotationTy)
+    (hc : FragCert.denote c = quoteGateSpine .x rfl) :
+    interpretQuoteSpine model (.gateX hc) =
+        Composer.denoteBlock model [.gate (.x w)] ∧
+    interpretQuoteSpine model (.gateX hc) = (Command.x w).denote model :=
+  ⟨interpretQuoteSpine_gateX_eq_gateBlock model w hc,
+    (interpretQuoteSpine_gateX_eq_gateBlock model w hc).trans
+      (command_x_denote_eq_gateBlock model w).symm⟩
+
+/-- Non-packaging `h` bridge, dual to `interpret_x_quote`. -/
+theorem interpret_h_quote {t : Term} (model : Composer.Model 1 1) (w : Fin 1)
+    (c : FragCert.Closed t Command.quotationTy)
+    (hc : FragCert.denote c = quoteGateSpine .h rfl) :
+    interpretQuoteSpine model (.gateH hc) =
+        Composer.denoteBlock model [.gate (.h w)] ∧
+    interpretQuoteSpine model (.gateH hc) = (Command.h w).denote model :=
+  ⟨interpretQuoteSpine_gateH_eq_gateBlock model w hc,
+    (interpretQuoteSpine_gateH_eq_gateBlock model w hc).trans
+      (command_h_denote_eq_gateBlock model w).symm⟩
+
+/-- Spine interpretation of the hand-built `skip` quote certificate. -/
+theorem fragCert_skip_quote_spine_interpret (model : Composer.Model 1 1) :
+    interpretQuoteSpine model (.skip fragCert_skip_quote_denote) =
+      Command.skip.denote model :=
+  (interpret_skip_quote model fragCert_skip_quote fragCert_skip_quote_denote).2
+
+/-- Spine interpretation of the hand-built `x` quote certificate. -/
+theorem fragCert_x_quote_spine_interpret (model : Composer.Model 1 1)
+    (w : Fin 1) :
+    interpretQuoteSpine model (.gateX (fragCert_x_quote_denote w)) =
+      (Command.x w).denote model :=
+  (interpret_x_quote model w (fragCert_x_quote w)
+    (fragCert_x_quote_denote w)).2
+
+/-- Spine interpretation of the hand-built `h` quote certificate. -/
+theorem fragCert_h_quote_spine_interpret (model : Composer.Model 1 1)
+    (w : Fin 1) :
+    interpretQuoteSpine model (.gateH (fragCert_h_quote_denote w)) =
+      (Command.h w).denote model :=
+  (interpret_h_quote model w (fragCert_h_quote w)
+    (fragCert_h_quote_denote w)).2
+
+/-- Any closed certificate for `Command.skip.quote` feeds the skip bridge:
+its denotation is forced to be `quoteSkipSpine`. -/
+theorem interpret_skip_quote_of_closed (model : Composer.Model 1 1)
+    (c : FragCert.Closed Command.skip.quote Command.quotationTy) :
+    interpretQuoteSpine model
+        (.skip (fragCert_skip_quote_denote_independent c)) =
+      Command.skip.denote model :=
+  (interpret_skip_quote model c
+    (fragCert_skip_quote_denote_independent c)).2
+
+/-- Any closed certificate for `(Command.x w).quote` feeds the `x` bridge. -/
+theorem interpret_x_quote_of_closed (model : Composer.Model 1 1) (w : Fin 1)
+    (c : FragCert.Closed (Command.x w).quote Command.quotationTy) :
+    interpretQuoteSpine model
+        (.gateX (fragCert_x_quote_denote_independent w c)) =
+      (Command.x w).denote model :=
+  (interpret_x_quote model w c
+    (fragCert_x_quote_denote_independent w c)).2
+
+/-- Any closed certificate for `(Command.h w).quote` feeds the `h` bridge. -/
+theorem interpret_h_quote_of_closed (model : Composer.Model 1 1) (w : Fin 1)
+    (c : FragCert.Closed (Command.h w).quote Command.quotationTy) :
+    interpretQuoteSpine model
+        (.gateH (fragCert_h_quote_denote_independent w c)) =
+      (Command.h w).denote model :=
+  (interpret_h_quote model w c
+    (fragCert_h_quote_denote_independent w c)).2
+
+/-- The spine-driven meaning is determined by the Hom alone: two closed
+certificates for possibly different terms that denote as the skip spine get the
+same CQ interpretation. -/
+theorem interpret_skip_quote_determined {t₁ t₂ : Term}
+    (model : Composer.Model 1 1)
+    (c₁ : FragCert.Closed t₁ Command.quotationTy)
+    (c₂ : FragCert.Closed t₂ Command.quotationTy)
+    (h₁ : FragCert.denote c₁ = quoteSkipSpine)
+    (h₂ : FragCert.denote c₂ = quoteSkipSpine) :
+    interpretQuoteSpine model (.skip h₁) =
+      interpretQuoteSpine model (.skip h₂) :=
+  rfl
+
+theorem interpret_x_quote_determined {t₁ t₂ : Term}
+    (model : Composer.Model 1 1)
+    (c₁ : FragCert.Closed t₁ Command.quotationTy)
+    (c₂ : FragCert.Closed t₂ Command.quotationTy)
+    (h₁ : FragCert.denote c₁ = quoteGateSpine .x rfl)
+    (h₂ : FragCert.denote c₂ = quoteGateSpine .x rfl) :
+    interpretQuoteSpine model (.gateX h₁) =
+      interpretQuoteSpine model (.gateX h₂) :=
+  rfl
+
+theorem interpret_h_quote_determined {t₁ t₂ : Term}
+    (model : Composer.Model 1 1)
+    (c₁ : FragCert.Closed t₁ Command.quotationTy)
+    (c₂ : FragCert.Closed t₂ Command.quotationTy)
+    (h₁ : FragCert.denote c₁ = quoteGateSpine .h rfl)
+    (h₂ : FragCert.denote c₂ = quoteGateSpine .h rfl) :
+    interpretQuoteSpine model (.gateH h₁) =
+      interpretQuoteSpine model (.gateH h₂) :=
+  rfl
+
 theorem interpretQuoteHom_x (model : Composer.Model 1 1) (w : Fin 1)
     (c : FragCert.Closed (Command.x w).quote Command.quotationTy) :
     interpretQuoteHom model .x c = (Command.x w).denote model :=
   rfl
+
+/-- The packaging interpret agrees with the spine-driven one on `skip`. -/
+theorem interpretQuoteHom_skip_eq_spine (model : Composer.Model 1 1) :
+    interpretQuoteHom model .skip fragCert_skip_quote =
+      interpretQuoteSpine model (.skip fragCert_skip_quote_denote) :=
+  (fragCert_skip_quote_spine_interpret model).symm
+
+/-- The packaging interpret agrees with the spine-driven one on `x`. -/
+theorem interpretQuoteHom_x_eq_spine (model : Composer.Model 1 1) (w : Fin 1) :
+    interpretQuoteHom model .x (fragCert_x_quote w) =
+      interpretQuoteSpine model (.gateX (fragCert_x_quote_denote w)) :=
+  (fragCert_x_quote_spine_interpret model w).symm
+
+/-- The packaging interpret agrees with the spine-driven one on `h`. -/
+theorem interpretQuoteHom_h_eq_spine (model : Composer.Model 1 1) (w : Fin 1) :
+    interpretQuoteHom model .h (fragCert_h_quote w) =
+      interpretQuoteSpine model (.gateH (fragCert_h_quote_denote w)) :=
+  (fragCert_h_quote_spine_interpret model w).symm
 
 theorem interpretQuoteHom_h (model : Composer.Model 1 1) (w : Fin 1)
     (c : FragCert.Closed (Command.h w).quote Command.quotationTy) :
@@ -609,6 +966,51 @@ theorem interpretQuoteHom_skip_x_h (model : Composer.Model 1 1)
       prim_superoperator_x_yoneda_canonicalModel_wire w⟩,
     ⟨rfl, fragCert_h_quote_denote w,
       prim_superoperator_h_yoneda_canonicalModel_wire w⟩⟩
+
+/-- Unified non-packaging F7 bridge for skip/x/h.  Each conjunct starts from a
+Hom-level equation `FragCert.denote c = spine` for a certificate on an
+*arbitrary* term and lands on `Command.denote`, with the CQ value produced by
+`interpretQuoteSpine` from the Hom witness alone. -/
+theorem fragCert_spine_interprets_skip_x_h (model : Composer.Model 1 1)
+    (w : Fin 1) {t₀ t₁ t₂ : Term}
+    (c₀ : FragCert.Closed t₀ Command.quotationTy)
+    (c₁ : FragCert.Closed t₁ Command.quotationTy)
+    (c₂ : FragCert.Closed t₂ Command.quotationTy)
+    (h₀ : FragCert.denote c₀ = quoteSkipSpine)
+    (h₁ : FragCert.denote c₁ = quoteGateSpine .x rfl)
+    (h₂ : FragCert.denote c₂ = quoteGateSpine .h rfl) :
+    (interpretQuoteSpine model (.skip h₀) = CQ.skip ∧
+      interpretQuoteSpine model (.skip h₀) = Command.skip.denote model) ∧
+    (interpretQuoteSpine model (.gateX h₁) =
+        Composer.denoteBlock model [.gate (.x w)] ∧
+      interpretQuoteSpine model (.gateX h₁) = (Command.x w).denote model) ∧
+    (interpretQuoteSpine model (.gateH h₂) =
+        Composer.denoteBlock model [.gate (.h w)] ∧
+      interpretQuoteSpine model (.gateH h₂) = (Command.h w).denote model) :=
+  ⟨interpret_skip_quote model c₀ h₀,
+    interpret_x_quote model w c₁ h₁,
+    interpret_h_quote model w c₂ h₂⟩
+
+/-- Certificate-level F7 package: for the canonical quotations of skip/x/h the
+spine hypothesis is discharged for *every* closed certificate, so the
+non-packaging interpretation always agrees with `Command.denote`. -/
+theorem fragCert_quote_spine_interprets_skip_x_h (model : Composer.Model 1 1)
+    (w : Fin 1)
+    (c₀ : FragCert.Closed Command.skip.quote Command.quotationTy)
+    (c₁ : FragCert.Closed (Command.x w).quote Command.quotationTy)
+    (c₂ : FragCert.Closed (Command.h w).quote Command.quotationTy) :
+    interpretQuoteSpine model
+        (.skip (fragCert_skip_quote_denote_independent c₀)) =
+      Command.skip.denote model ∧
+    interpretQuoteSpine model
+        (.gateX (fragCert_x_quote_denote_independent w c₁)) =
+      (Command.x w).denote model ∧
+    interpretQuoteSpine model
+        (.gateH (fragCert_h_quote_denote_independent w c₂)) =
+      (Command.h w).denote model :=
+  ⟨interpret_skip_quote_of_closed model c₀,
+    interpret_x_quote_of_closed model w c₁,
+    interpret_h_quote_of_closed model w c₂⟩
 
 /-- Propositional content of the N-bounded source–quotation package. -/
 def FragmentSourceQuotationAgreement (N : Nat) : Prop :=
@@ -693,7 +1095,9 @@ compile/reflect equalities, and the N-bounded source packages.  Hom-side
 bridge: `fragCert_skip_quote_interprets` / `fragCert_x_quote_interprets` /
 `fragCert_h_quote_interprets` identify closed quote denotations with
 `quoteSkipSpine` / `quoteGateSpine` and CQ via `interpretQuoteHom` plus
-`Prim.superoperator`–canonical-gate Yoneda agreement.  A general Hom-inspecting
+`Prim.superoperator`–canonical-gate Yoneda agreement, and
+`fragCert_quote_spine_interprets_skip_x_h` upgrades this to the non-packaging
+`interpretQuoteSpine` bridge.  A general Hom-inspecting
 `FragCert.denote`↔`CQ.Sem` extract for arbitrary quoted commands remains open. -/
 theorem fragment_source_circuit_commuting_square (N : Nat) :
     Nonempty (FragmentWeightedSimulation N) ∧

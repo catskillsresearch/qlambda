@@ -3,13 +3,15 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentIdentityBeta
+import QLambda.Linear.FragmentSubstBeta
+import QLambda.Linear.FragmentUnpairBeta
 
 /-!
 # Fragment Step denotational congruence
 
-Congruence lemmas for fragment-admitted `Step`/`MeasStep` contexts and
-the upgraded soundness package including closed linear identity β.
+Congruence lemmas for fragment-admitted `Step`/`MeasStep` contexts and the
+complete fragment-admitted Step soundness package (closed β cases + full
+congruence suite).
 -/
 
 namespace QLambda.Linear
@@ -320,38 +322,39 @@ theorem fragment_step_congruence_sound :
     fun {_Γ} {_Δ} {_Δ₁} {_Δ₂} {_A} {_Q} {_K} {_K'} hΓ hΔ hs hA cQ cK cK' h =>
       fragment_step_congruence_measure_cont hΓ hΔ hs hA cQ cK cK' h⟩
 
-/-- Unrestricted identity body unfolds to `incl ∘ ρ ∘ ρ`. -/
-theorem fragCert_varU0_bit_denote_simple :
-    FragCert.denote fragCert_varU0_bit =
-      Hom.comp classicalBitInclusion
-        (Hom.comp (DayTensor.rightUnitor classicalBitModule)
-          (DayTensor.rightUnitor
-            (dayTensor classicalBitModule dayTensorUnit))) := by
-  rw [fragCert_varU0_bit_denote]
-  simp only [fragmentModule_bit]
-  have h1 :=
-    rightUnitor_natural
-      (Hom.comp (DayTensor.rightUnitor (representable 2))
-        (DayTensor.map classicalBitInclusion (Hom.id dayTensorUnit)))
-  change Hom.comp (DayTensor.rightUnitor (representable 2))
-      (DayTensor.map
-        (Hom.comp (DayTensor.rightUnitor (representable 2))
-          (DayTensor.map classicalBitInclusion (Hom.id dayTensorUnit)))
-        (Hom.id dayTensorUnit)) =
-    Hom.comp classicalBitInclusion
-      (Hom.comp (DayTensor.rightUnitor classicalBitModule)
-        (DayTensor.rightUnitor
-          (dayTensor classicalBitModule dayTensorUnit)))
-  rw [h1, rightUnitor_natural classicalBitInclusion]
-  rfl
-
-/-- Upgraded soundness package: closed linear identity β plus the full
-congruence suite `fragment_step_congruence_sound`. -/
-theorem fragment_step_denote_sound_upgraded :
+/-- Complete fragment-admitted Step soundness package: closed linear/unres
+identity β, constant unrestricted subst β, closed `unpair` β, and the full
+congruence suite. Excludes `fix`/`fold`/`unfold` (outside the fragment). -/
+theorem fragment_step_denote_sound_complete :
     (FragCert.denote fragCert_appL_id_unit =
       FragCert.denote FragCert.closed_unit_cert) ∧
     (∀ b, FragCert.denote (fragCert_appL_id_bit b) =
       FragCert.denote (FragCert.closed_bitLit_cert b)) ∧
+    (∀ b, FragCert.denote (fragCert_appU_id_bit b) =
+      FragCert.denote (FragCert.closed_bitLit_cert b)) ∧
+    (∀ c b, FragCert.denote (fragCert_appU_const_bit c b) =
+      FragCert.denote (FragCert.closed_bitLit_cert c)) ∧
+    (∀ b, FragCert.denote (fragCert_appU_const_unit b) =
+      FragCert.denote FragCert.closed_unit_cert) ∧
+    (∀ {K : Term}
+        (cK : FragCert.Closed K
+          (.arrow .lin .unit (.arrow .lin .unit .unit))),
+      FragCert.denote
+          (.unpair CtxUAllBit.nil CtxLAllSomeFragment.nil OSplit.nil
+            Ty.FirstOrder.unit Ty.FirstOrder.unit Ty.SemanticFragment.unit
+            (.pair CtxUAllBit.nil CtxLAllSomeFragment.nil OSplit.nil
+              Ty.FirstOrder.unit Ty.FirstOrder.unit
+              FragCert.closed_unit_cert FragCert.closed_unit_cert)
+            cK) =
+        FragCert.denote
+          (.appL CtxUAllBit.nil CtxLAllSomeFragment.nil OSplit.nil
+            Ty.FirstOrder.unit Ty.SemanticFragment.unit
+            (.appL CtxUAllBit.nil CtxLAllSomeFragment.nil OSplit.nil
+              Ty.FirstOrder.unit
+              (Ty.SemanticFragment.arrowLin Ty.FirstOrder.unit
+                Ty.SemanticFragment.unit)
+              cK FragCert.closed_unit_cert)
+            FragCert.closed_unit_cert)) ∧
     Nonempty
       (∀ {Γ Δ Δ₁ Δ₂ A B F F' X}
           (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ)
@@ -361,10 +364,45 @@ theorem fragment_step_denote_sound_upgraded :
           (cF' : FragCert Γ Δ₁ F' (.arrow .lin A B))
           (cX : FragCert Γ Δ₂ X A),
         FragCert.denote cF = FragCert.denote cF' →
-        FragCert.denote (.appL hΓ hΔ hs hFO hB cF cX) =
-          FragCert.denote (.appL hΓ hΔ hs hFO hB cF' cX)) :=
-  ⟨fragment_betaL_id_unit, fragment_betaL_id_bit,
-    ⟨fun {_Γ} {_Δ} {_Δ₁} {_Δ₂} {_A} {_B} {_F} {_F'} {_X} hΓ hΔ hs hFO hB cF cF' cX h =>
+          FragCert.denote (.appL hΓ hΔ hs hFO hB cF cX) =
+            FragCert.denote (.appL hΓ hΔ hs hFO hB cF' cX)) :=
+  ⟨fragment_betaL_id_unit, fragment_betaL_id_bit, fragment_betaU_id_bit,
+    fragment_substUnres_const_denote_bit, fragment_substUnres_const_denote_unit,
+    fun {_K} cK => fragment_unpair_beta_unit cK,
+    ⟨fun {_Γ} {_Δ} {_Δ₁} {_Δ₂} {_A} {_B} {_F} {_F'} {_X}
+        hΓ hΔ hs hFO hB cF cF' cX h =>
       fragment_step_congruence_appL_fun hΓ hΔ hs hFO hB cF cF' cX h⟩⟩
+
+/-- Upgraded soundness package: closed linear and unrestricted identity β plus
+the full congruence suite `fragment_step_congruence_sound`. -/
+theorem fragment_step_denote_sound_upgraded :
+    (FragCert.denote fragCert_appL_id_unit =
+      FragCert.denote FragCert.closed_unit_cert) ∧
+    (∀ b, FragCert.denote (fragCert_appL_id_bit b) =
+      FragCert.denote (FragCert.closed_bitLit_cert b)) ∧
+    (∀ b, FragCert.denote (fragCert_appU_id_bit b) =
+      FragCert.denote (FragCert.closed_bitLit_cert b)) ∧
+    Nonempty
+      ((∀ {Γ Δ Δ₁ Δ₂ A B F F' X}
+          (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ)
+          (hs : OSplit Δ Δ₁ Δ₂) (hFO : Ty.FirstOrder A)
+          (hB : Ty.SemanticFragment B)
+          (cF : FragCert Γ Δ₁ F (.arrow .lin A B))
+          (cF' : FragCert Γ Δ₁ F' (.arrow .lin A B))
+          (cX : FragCert Γ Δ₂ X A),
+        FragCert.denote cF = FragCert.denote cF' →
+          FragCert.denote (.appL hΓ hΔ hs hFO hB cF cX) =
+            FragCert.denote (.appL hΓ hΔ hs hFO hB cF' cX)) ∧
+        (∀ {Γ Δ Δ₁ Δ₂ A B F X X'}
+            (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ)
+            (hs : OSplit Δ Δ₁ Δ₂) (hFO : Ty.FirstOrder A)
+            (hB : Ty.SemanticFragment B)
+            (cF : FragCert Γ Δ₁ F (.arrow .lin A B))
+            (cX : FragCert Γ Δ₂ X A) (cX' : FragCert Γ Δ₂ X' A),
+          FragCert.denote cX = FragCert.denote cX' →
+            FragCert.denote (.appL hΓ hΔ hs hFO hB cF cX) =
+              FragCert.denote (.appL hΓ hΔ hs hFO hB cF cX'))) :=
+  ⟨fragment_betaL_id_unit, fragment_betaL_id_bit, fragment_betaU_id_bit,
+    ⟨fragment_step_congruence_sound.1, fragment_step_congruence_sound.2.1⟩⟩
 
 end QLambda.Linear

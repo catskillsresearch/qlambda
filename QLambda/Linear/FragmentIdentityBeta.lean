@@ -9,7 +9,7 @@ import QLambda.Linear.FragmentCoherenceCore
 # Closed identity β on `FragCert.denote`
 
 Certificate constructors and redex=contractum proofs for closed linear
-identity application; spines for unrestricted identity β.
+and unrestricted identity application.
 -/
 
 namespace QLambda.Linear
@@ -22,9 +22,9 @@ open Domain.Presheaf
 /-! ## Closed identity β certificate constructors
 
 Closed linear identity β (`fragment_betaL_id_unit` / `fragment_betaL_id_bit`)
-is proved via FO Day β plus Day unitor/braiding cancellation against
-`combinedOSplit_nil` / `closedPoint`.  Unrestricted identity β follows the
-same spine once the unrestricted move cancels. -/
+and unrestricted identity β (`fragment_betaU_id_bit`) are proved via Day β
+plus Day unitor/braiding cancellation against `combinedOSplit_nil` /
+`closedPoint` (with classicalize for the unrestricted case). -/
 
 theorem fragment_unit_admissible : Ty.Admissible .unit := by
   decide
@@ -401,6 +401,197 @@ theorem fragCert_varU0_bit_denote :
           (Hom.id dayTensorUnit)) := by
   rfl
 
+/-- Unrestricted identity body unfolds to `incl ∘ ρ ∘ ρ`. -/
+theorem fragCert_varU0_bit_denote_simple :
+    FragCert.denote fragCert_varU0_bit =
+      Hom.comp classicalBitInclusion
+        (Hom.comp (DayTensor.rightUnitor classicalBitModule)
+          (DayTensor.rightUnitor
+            (dayTensor classicalBitModule dayTensorUnit))) := by
+  rw [fragCert_varU0_bit_denote]
+  simp only [fragmentModule_bit]
+  have h1 :=
+    rightUnitor_natural
+      (Hom.comp (DayTensor.rightUnitor (representable 2))
+        (DayTensor.map classicalBitInclusion (Hom.id dayTensorUnit)))
+  change Hom.comp (DayTensor.rightUnitor (representable 2))
+      (DayTensor.map
+        (Hom.comp (DayTensor.rightUnitor (representable 2))
+          (DayTensor.map classicalBitInclusion (Hom.id dayTensorUnit)))
+        (Hom.id dayTensorUnit)) =
+    Hom.comp classicalBitInclusion
+      (Hom.comp (DayTensor.rightUnitor classicalBitModule)
+        (DayTensor.rightUnitor
+          (dayTensor classicalBitModule dayTensorUnit)))
+  rw [h1, rightUnitor_natural classicalBitInclusion]
+  rfl
+
+/-- Regroup the unrestricted identity composite so that the body unitors sit
+next to the move, and the classicalize sits next to the closed argument. -/
+private theorem unres_identity_regroup {A₀ A₁ A₂ A₃ A₄ A₅ A₆ : Module}
+    (i : Hom A₅ A₆) (r : Hom A₄ A₅) (m : Hom A₃ A₄) (c : Hom A₂ A₃)
+    (p : Hom A₁ A₂) (s : Hom A₀ A₁) :
+    Hom.comp (Hom.comp (Hom.comp i r) (Hom.comp m c)) (Hom.comp p s) =
+      Hom.comp i (Hom.comp (Hom.comp r m) (Hom.comp (Hom.comp c p) s)) := by
+  simp only [Hom.comp_assoc]
+
+/-- Cancel unrestricted identity body ∘ move ∘ classicalize ∘ closed point ∘ split. -/
+private theorem closed_unres_identity_cancel
+    (f : Hom dayTensorUnit (fragmentModule .bit))
+    (hfix :
+      Hom.comp classicalBitInclusion (Hom.comp bitClassicalize f) = f) :
+    Hom.comp
+        (Hom.comp
+          (Hom.comp classicalBitInclusion
+            (Hom.comp (DayTensor.rightUnitor classicalBitModule)
+              (DayTensor.rightUnitor
+                (dayTensor classicalBitModule dayTensorUnit))))
+          (Hom.comp
+            (FragmentContext.moveArgumentIntoUnrestricted
+              dayTensorUnit dayTensorUnit classicalBitModule)
+            (DayTensor.map (Hom.id (dayTensor dayTensorUnit dayTensorUnit))
+              bitClassicalize)))
+        (Hom.comp
+          (DayTensor.map (Hom.id (FragmentContext.combined [] []))
+            (FragmentContext.closedPoint f))
+          (FragmentContext.combinedOSplit CtxUAllBit.nil OSplit.nil)) =
+      FragmentContext.closedPoint f := by
+  have hmove := FragmentContext.identity_body_unres_move_eq classicalBitModule
+  have hO :
+      FragmentContext.combinedOSplit CtxUAllBit.nil OSplit.nil =
+        DayTensor.map FragmentContext.closedLeftUnitorInv
+          FragmentContext.closedLeftUnitorInv := by
+    rw [FragmentContext.combinedOSplit_nil]; rfl
+  have hfuse :
+      Hom.comp bitClassicalize (FragmentContext.closedPoint f) =
+        FragmentContext.closedPoint (Hom.comp bitClassicalize f) := by
+    simp only [FragmentContext.closedPoint]
+    exact Hom.comp_assoc bitClassicalize f
+      FragmentContext.combinedClosedCollapse
+  -- Fuse the classicalize with the closed argument.
+  have hmap :
+      Hom.comp
+          (DayTensor.map (Hom.id (dayTensor dayTensorUnit dayTensorUnit))
+            bitClassicalize)
+          (DayTensor.map (Hom.id (FragmentContext.combined [] []))
+            (FragmentContext.closedPoint f)) =
+        DayTensor.map (Hom.id (FragmentContext.combined [] []))
+          (FragmentContext.closedPoint (Hom.comp bitClassicalize f)) := by
+    rw [← hfuse]
+    change Hom.comp
+        (DayTensor.map (Hom.id (FragmentContext.combined [] [])) bitClassicalize)
+        (DayTensor.map (Hom.id (FragmentContext.combined [] []))
+          (FragmentContext.closedPoint f)) =
+      DayTensor.map (Hom.id (FragmentContext.combined [] []))
+        (Hom.comp bitClassicalize (FragmentContext.closedPoint f))
+    simpa only [Hom.id_comp] using
+      (DayTensor.map_comp
+        (Hom.id (FragmentContext.combined [] []))
+        (Hom.id (FragmentContext.combined [] []))
+        bitClassicalize (FragmentContext.closedPoint f)).symm
+  -- The linear cancellation lemma at the classicalized argument.
+  have hcancel :
+      Hom.comp
+          (Hom.comp (DayTensor.leftUnitor classicalBitModule)
+            (DayTensor.map (DayTensor.rightUnitor dayTensorUnit)
+              (Hom.id classicalBitModule)))
+          (Hom.comp
+            (DayTensor.map (Hom.id (FragmentContext.combined [] []))
+              (FragmentContext.closedPoint (Hom.comp bitClassicalize f)))
+            (DayTensor.map FragmentContext.closedLeftUnitorInv
+              FragmentContext.closedLeftUnitorInv)) =
+        FragmentContext.closedPoint (Hom.comp bitClassicalize f) := by
+    rw [FragmentContext.closedPoint]
+    exact closed_identity_move_cancel (Hom.comp bitClassicalize f)
+  refine Eq.trans (unres_identity_regroup _ _ _ _ _ _) ?_
+  rw [hmove, hmap, hO]
+  refine Eq.trans (congrArg (Hom.comp classicalBitInclusion) hcancel) ?_
+  -- Remaining: incl ∘ classicalize ∘ f = f, under the closed collapse.
+  simp only [FragmentContext.closedPoint]
+  exact Eq.trans
+    (Hom.comp_assoc classicalBitInclusion (Hom.comp bitClassicalize f)
+      FragmentContext.combinedClosedCollapse)
+    (congrArg (fun g => Hom.comp g FragmentContext.combinedClosedCollapse) hfix)
+
+/-- Helper: unrestricted Day β plus move/split/classicalize cancellation. -/
+private theorem fragment_betaU_id_closed_aux
+    (body : Hom
+      (dayTensor (dayTensor classicalBitModule dayTensorUnit) dayTensorUnit)
+      (fragmentModule .bit))
+    (f : Hom dayTensorUnit (fragmentModule .bit))
+    (hbody :
+      body =
+        Hom.comp classicalBitInclusion
+          (Hom.comp (DayTensor.rightUnitor classicalBitModule)
+            (DayTensor.rightUnitor
+              (dayTensor classicalBitModule dayTensorUnit))))
+    (hfix :
+      Hom.comp classicalBitInclusion (Hom.comp bitClassicalize f) = f) :
+    Hom.comp (FragmentContext.evalUnrestrictedBit _)
+      (Hom.comp
+        (DayTensor.map (FragmentContext.abstractUnrestricted body)
+          (FragmentContext.closedPoint f))
+        (FragmentContext.combinedOSplit CtxUAllBit.nil OSplit.nil)) =
+      FragmentContext.closedPoint f := by
+  let Φ : Hom (FragmentContext.combined [] [])
+      (dayInternalHom classicalBitModule (fragmentModule .bit)) :=
+    FragmentContext.abstractUnrestricted body
+  have hfactor :
+      DayTensor.map Φ (FragmentContext.closedPoint f) =
+        Hom.comp (DayTensor.map Φ (Hom.id (fragmentModule .bit)))
+          (DayTensor.map (Hom.id (FragmentContext.combined [] []))
+            (FragmentContext.closedPoint f)) := by
+    simpa only [Hom.comp_id, Hom.id_comp] using
+      DayTensor.map_comp Φ (Hom.id (FragmentContext.combined [] []))
+        (Hom.id (fragmentModule .bit)) (FragmentContext.closedPoint f)
+  change Hom.comp (FragmentContext.evalUnrestrictedBit _)
+      (Hom.comp (DayTensor.map Φ (FragmentContext.closedPoint f))
+        (FragmentContext.combinedOSplit CtxUAllBit.nil OSplit.nil)) =
+    FragmentContext.closedPoint f
+  rw [hfactor]
+  have hreassoc :
+      Hom.comp (FragmentContext.evalUnrestrictedBit _)
+          (Hom.comp
+            (Hom.comp (DayTensor.map Φ (Hom.id (fragmentModule .bit)))
+              (DayTensor.map (Hom.id (FragmentContext.combined [] []))
+                (FragmentContext.closedPoint f)))
+            (FragmentContext.combinedOSplit CtxUAllBit.nil OSplit.nil)) =
+        Hom.comp
+          (Hom.comp (FragmentContext.evalUnrestrictedBit _)
+            (DayTensor.map Φ (Hom.id (fragmentModule .bit))))
+          (Hom.comp
+            (DayTensor.map (Hom.id (FragmentContext.combined [] []))
+              (FragmentContext.closedPoint f))
+            (FragmentContext.combinedOSplit CtxUAllBit.nil OSplit.nil)) := by
+    rw [Hom.comp_assoc, Hom.comp_assoc, ← Hom.comp_assoc]
+  rw [hreassoc]
+  have hβ :
+      Hom.comp (FragmentContext.evalUnrestrictedBit _)
+          (DayTensor.map Φ (Hom.id (fragmentModule .bit))) =
+        Hom.comp body
+          (Hom.comp
+            (FragmentContext.moveArgumentIntoUnrestricted
+              dayTensorUnit dayTensorUnit classicalBitModule)
+            (DayTensor.map (Hom.id (dayTensor dayTensorUnit dayTensorUnit))
+              bitClassicalize)) := by
+    dsimp [Φ]
+    exact FragmentContext.evalUnrestrictedBit_abstractUnrestricted body
+  rw [hβ, hbody]
+  exact closed_unres_identity_cancel f hfix
+
+/-- Closed unrestricted identity β at bit: `appU (λx. x) (bitLit b) = bitLit b`. -/
+theorem fragment_betaU_id_bit (b : Bool) :
+    FragCert.denote (fragCert_appU_id_bit b) =
+      FragCert.denote (FragCert.closed_bitLit_cert b) := by
+  have harg :
+      FragCert.denote (FragCert.closed_bitLit_cert b) =
+        FragmentContext.closedPoint (bitLitHom b) :=
+    FragCert.closed_bitLit_denote_eq b
+  rw [fragment_betaU_id_bit_spine, harg]
+  exact fragment_betaU_id_closed_aux _
+    (bitLitHom b) fragCert_varU0_bit_denote_simple
+    (classicalBitInclusion_comp_bitClassicalize_bitLit b)
+
 /-- F4b foothold: substituting a value for linear `var 0` is the value
 (definitionally on terms). -/
 theorem substLin_varL0 (V : Term) :
@@ -423,5 +614,12 @@ theorem fragment_substLin_id_denote_bit (b : Bool) :
 theorem substUnres_varU0 (V : Term) :
     Term.substUnres 0 V (.var .unres 0) = V := by
   simp [Term.substUnres, shiftUnres_zero]
+
+/-- F4b: denotation of the closed unrestricted identity redex equals the
+argument (packaged from the unrestricted identity β theorem). -/
+theorem fragment_substUnres_id_denote_bit (b : Bool) :
+    FragCert.denote (fragCert_appU_id_bit b) =
+      FragCert.denote (FragCert.closed_bitLit_cert b) :=
+  fragment_betaU_id_bit b
 
 end QLambda.Linear

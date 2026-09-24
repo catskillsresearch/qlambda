@@ -6,13 +6,14 @@ Authors: Lars Warren Ericson.
 import QLambda.Linear.FragmentCoherenceCore
 import QLambda.Linear.FragmentIdentityBeta
 import QLambda.Linear.FragmentStepCongruence
+import QLambda.Linear.FragmentUnpairBeta
+import QLambda.Linear.FragmentSubstBeta
 
 /-!
 # Fragment denotational coherence (Route A)
 
-Barrel re-exporting core soundness, closed identity β, and Step congruence.
-Open remainders (unrestricted identity β, general subst, full Step suite)
-live in follow-on modules as they land.
+Barrel re-exporting core soundness, closed identity / unpair β, Step
+congruence, and non-identity substitution lemmas.
 -/
 
 namespace QLambda.Linear

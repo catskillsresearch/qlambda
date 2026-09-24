@@ -58,10 +58,18 @@ Probability labels measurement transitions; it is not a source term former.
 - `QLambda.Linear.FragmentContext.evalFragmentFirstOrder_abstractLinear`
 - `QLambda.Linear.fragment_betaL_id_unit`
 - `QLambda.Linear.fragment_betaL_id_bit`
+- `QLambda.Linear.fragment_betaU_id_bit`
+- `QLambda.Linear.fragment_unpair_beta`
+- `QLambda.Linear.fragment_betaL_open_move`
+- `QLambda.Linear.fragment_betaU_bit_open_move`
 - `QLambda.Linear.fragment_substLin_id_denote_unit`
 - `QLambda.Linear.fragment_substLin_id_denote_bit`
+- `QLambda.Linear.fragment_substUnres_id_denote_bit`
+- `QLambda.Linear.fragment_substUnres_const_denote_bit`
+- `QLambda.Linear.fragment_substUnres_const_denote_unit`
 - `QLambda.Linear.fragment_step_congruence_sound`
 - `QLambda.Linear.fragment_step_denote_sound_upgraded`
+- `QLambda.Linear.fragment_step_denote_sound_complete`
 - `QLambda.Linear.fragment_measStep_denote_sound`
 - `QLambda.Linear.measureProbability_eq_instrument_branch_trace`
 - `QLambda.Linear.usesAtMost_measure_new0_cont`
@@ -78,6 +86,14 @@ Probability labels measurement transitions; it is not a source term former.
 - `QLambda.Linear.fragCert_x_quote_denote`
 - `QLambda.Linear.fragCert_h_quote_denote`
 - `QLambda.Linear.command_skip_denote_eq_CQ_skip`
+- `QLambda.Linear.fragCert_x_quote_denote_independent`
+- `QLambda.Linear.fragCert_h_quote_denote_independent`
+- `QLambda.Linear.interpretQuoteSpine`
+- `QLambda.Linear.interpret_skip_quote`
+- `QLambda.Linear.interpret_x_quote`
+- `QLambda.Linear.interpret_h_quote`
+- `QLambda.Linear.fragCert_spine_interprets_skip_x_h`
+- `QLambda.Linear.fragCert_quote_spine_interprets_skip_x_h`
 - `QLambda.Linear.fragment_source_quotation_agreement`
 - `QLambda.Linear.fragment_source_elaboration_agreement`
 - `QLambda.Linear.fragment_source_circuit_commuting_square`
@@ -95,13 +111,18 @@ unrestricted/linear Day-tensor contexts over `classicalBitModule`, with
 `evalFragmentFirstOrder_abstractLinear`).  `FragmentIte` inhabits
 `FragmentBranching.iteElim` via controlled bra⊗id selection, supplies
 `FragCert.denote` / `routeAFragmentDenotationModel`, and proves closed FO
-`ite` Step soundness plus closed linear identity β
-(`fragment_betaL_id_unit` / `_bit`).  Step congruence packaging and
+`ite` Step soundness plus closed linear and unrestricted identity β
+(`fragment_betaL_id_unit` / `_bit`, `fragment_betaU_id_bit`), closed
+`unpair` β, open-context move forms, and constant unrestricted subst β.
+Step congruence packaging, `fragment_step_denote_sound_complete`, and
 `FragmentMeasuredSimulation` (measured `new0` with `|0⟩` Born masses) are
 checked; Hom-side quote spines (`quoteSkipSpine` / `quoteGateSpine`) equal
-hand-built `FragCert` denotations.  Unrestricted identity β, general subst,
-full Step soundness, and a `FragCert.denote`↔`CQ.Sem` interpret functor
-remain Track F lemmas.
+hand-built `FragCert` denotations, and `interpretQuoteSpine` turns a
+Hom-level spine equation into a `CQ.Sem` agreeing with `Command.denote` for
+skip/x/h without inspecting the source command (spine hypothesis discharged
+for every closed certificate of those quotations).  A general
+`FragCert.denote`↔`CQ.Sem` interpret for arbitrary quoted commands beyond
+skip/x/h remains open.
 
 ## Day-bang / Track L boundary
 
@@ -387,11 +408,13 @@ structure is also witnessed by a one-object model with singleton homs.
 ## Unmet semantic objectives
 
 The following are goals, not existing declarations.  Route A
-`FragCert.denote`, Day closed β/η, closed FO `ite` and closed linear identity
-β, Step congruence packaging, measured `new0` Born adequacy, Hom-side quote
-spines, L8 ambient-CP replacement, and L9 relative AmbientCP admissibility
-(`A ≤ 1` + degree-row at 2) are already checked (see the index above); they
-are not listed here as open.
+`FragCert.denote`, Day closed β/η, closed FO `ite`, closed linear and
+unrestricted identity β, closed `unpair` β, open-context lam/app move forms,
+constant unrestricted subst β, Step congruence and the complete fragment-
+admitted Step package, measured `new0` Born adequacy, Hom-side quote spines
+with thin skip/x/h CQ bridge, L8 ambient-CP replacement, and L9 relative
+AmbientCP admissibility (`A ≤ 1` + degree-row at 2) are already checked (see
+the index above); they are not listed here as open.
 
 - all-dimensional TNI `BangComultComponentsAdmissible A` for `A ≥ 2`, and a
   premise-free all-dimensional Day bang comonoid / cofree UP (Route A and
@@ -403,15 +426,6 @@ are not listed here as open.
   is packaged), then premise-free `presheafQuantumLNL`, recursive `mu`/`fix`,
   full-language adequacy, and full abstraction (Track L deferred theorems
   record this boundary; absolute A=2 is not claimed);
-- unrestricted identity β, unpair/measure redex=contractum, and general
-  open-term lam/app β/η on `FragCert.denote` (closed linear identity β and
-  Day/FO spines are checked);
-- general semantic substitution on `FragCert.denote` for non-identity FO
-  bodies (identity-body aliases are checked);
-- denotational soundness for every fragment-admitted Step/MeasStep
-  constructor beyond congruence packaging and closed linear/`ite` β;
-- a `FragCert.denote` ↔ `CQ.Sem` interpret functor for quoted commands
-  (Hom spines and thin skip CQ equality are checked; domains still differ);
 - general Day tensor and internal hom for arbitrary based / biorthogonal
   modules beyond the representable fragment.  The coefficientwise
   `symmetricFormalTensorSquare` is not the Day tensor;
