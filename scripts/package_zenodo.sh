@@ -21,11 +21,7 @@ missing=0
 for req in "$PDF" arxiv.md LICENSE README.md lean-toolchain lakefile.toml \
     QLambda.lean .zenodo.json CITATION.cff PROVENANCE.md NOTICE \
     formalization.yaml comparator.json Challenge.lean Solution.lean \
-    THEOREMS.md ZENODO.md vendor/FROZEN.txt \
-    vendor/scott1972/Scott1972.lean vendor/scott1972/LICENSE \
-    vendor/scott1972/README.md vendor/scott1972/CITATION.cff \
-    vendor/scott1972/.zenodo.json vendor/scott1972/lakefile.toml \
-    vendor/scott1972/lake-manifest.json vendor/scott1972/lean-toolchain; do
+    THEOREMS.md ZENODO.md vendor/FROZEN.txt; do
   if [[ ! -e "$req" ]]; then
     echo "error: missing $req" >&2
     missing=1
@@ -80,7 +76,7 @@ cp -f arxiv.md LICENSE README.md .zenodo.json CITATION.cff PROVENANCE.md NOTICE 
   formalization.yaml comparator.json THEOREMS.md ZENODO.md "${STAGE}/"
 cp -f lean-toolchain lakefile.toml QLambda.lean Challenge.lean Solution.lean "${STAGE}/"
 [[ -e lake-manifest.json ]] && cp -f lake-manifest.json "${STAGE}/"
-mkdir -p "${STAGE}/QLambda" "${STAGE}/scripts" "${STAGE}/vendor/scott1972"
+mkdir -p "${STAGE}/QLambda" "${STAGE}/scripts" "${STAGE}/vendor"
 find QLambda -type f -name '*.lean' -print0 | while IFS= read -r -d '' f; do
   dest="${STAGE}/${f}"
   mkdir -p "$(dirname "$dest")"
@@ -89,18 +85,7 @@ done
 find scripts -maxdepth 1 -type f \
     \( -name '*.sh' -o -name '*.py' -o -name '*.json' -o -name '*.tex' \) \
     -exec cp -f {} "${STAGE}/scripts/" \;
-find vendor/scott1972 -path '*/.lake' -prune -o \
-    -type f -name '*.lean' -print0 | while IFS= read -r -d '' f; do
-  dest="${STAGE}/${f}"
-  mkdir -p "$(dirname "$dest")"
-  cp -f "$f" "$dest"
-done
 cp -f vendor/FROZEN.txt "${STAGE}/vendor/"
-cp -f vendor/scott1972/LICENSE vendor/scott1972/README.md \
-  vendor/scott1972/CITATION.cff vendor/scott1972/.zenodo.json \
-  vendor/scott1972/ZENODO.md vendor/scott1972/lakefile.toml \
-  vendor/scott1972/lake-manifest.json vendor/scott1972/lean-toolchain \
-  "${STAGE}/vendor/scott1972/"
 
 (
   cd "$STAGE"

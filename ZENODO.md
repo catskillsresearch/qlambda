@@ -32,4 +32,4 @@ linear quantum lambda-calculus (Lean 4)
 https://doi.org/10.5281/zenodo.XXXXXXX
 ```
 
-Related: https://github.com/catskillsresearch/qlambda · https://arxiv.org/abs/2109.02196 · https://github.com/catskillsresearch/scott1972
+Related: https://github.com/catskillsresearch/qlambda · https://arxiv.org/abs/2109.02196

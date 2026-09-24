@@ -1,8 +1,4 @@
 # Frozen checkouts vendored for one Palomar SHA.
-# Copied 2026-08-23 (UTC). No .git / .lake directories.
-
-vendor/scott1972
-  origin: https://github.com/catskillsresearch/scott1972
-  rev:    36bf01f99f00fcb78b999052212372ba026521ba
-  from:   /home/catskills/Desktop/scott1972
-  date:   2026-08-23
+# No Lean foundation libraries are currently vendored under vendor/.
+# Palomar policy pins live in vendor/PALOMAR_POLICY_PIN and
+# vendor/PALOMAR_PREFLIGHT_PIN.

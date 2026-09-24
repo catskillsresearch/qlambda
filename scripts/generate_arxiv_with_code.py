@@ -11,25 +11,18 @@ GITHUB = "https://github.com/catskillsresearch/qlambda"
 
 
 def lean_sources() -> list[str]:
-    """Complete checked source surface (vendor + project), excluding build caches."""
-    vendor = sorted(
-        path.relative_to(ROOT).as_posix()
-        for path in (ROOT / "vendor" / "scott1972").rglob("*.lean")
-        if ".lake" not in path.parts
-    )
+    """Complete checked source surface, excluding build caches."""
     qlambda = sorted(
         path.relative_to(ROOT).as_posix()
         for path in (ROOT / "QLambda").rglob("*.lean")
     )
-    return vendor + ["QLambda.lean"] + qlambda + ["Challenge.lean", "Solution.lean"]
+    return ["QLambda.lean"] + qlambda + ["Challenge.lean", "Solution.lean"]
 
 
 FILES = lean_sources()
 
 
 def file_role(path: str) -> str:
-    if path.startswith("vendor/scott1972/"):
-        return "Vendored Scott 1972 foundation"
     if path == "QLambda.lean":
         return "QLambda root import graph"
     if path == "Challenge.lean":
@@ -77,8 +70,7 @@ def main() -> None:
     title = paper_title(arxiv)
     body = narrative_body(arxiv)
 
-    vendor_files = [f for f in FILES if f.startswith("vendor/")]
-    project_files = [f for f in FILES if not f.startswith("vendor/")]
+    project_files = list(FILES)
 
     parts: list[str] = []
     parts.append(
@@ -113,8 +105,7 @@ def main() -> None:
     parts.append("\n\n---\n\n")
     parts.append("# Appendix A: Lean module index\n\n")
     parts.append(
-        f"Checked by `lake build`. Repository: [{GITHUB}]({GITHUB}). "
-        "Vendored `vendor/scott1972` is pinned in `vendor/FROZEN.txt`.\n\n"
+        f"Checked by `lake build`. Repository: [{GITHUB}]({GITHUB}).\n\n"
     )
 
     def append_table(title: str, paths: list[str]) -> None:
@@ -126,17 +117,10 @@ def main() -> None:
         parts.append("\n")
 
     append_table("QLambda project and Palomar", project_files)
-    append_table("Vendored Scott1972 (subset of rows; full tree under vendor/scott1972/)", vendor_files)
-
-    parts.append(
-        "Primary OCR source: [`sources/ScottContinLatt1972.md`]"
-        f"({GITHUB}/blob/main/sources/ScottContinLatt1972.md) — transcription of **[Sco72]**.\n\n"
-    )
 
     total_lines = sum(len((ROOT / f).read_text().splitlines()) for f in FILES)
     parts.append(
-        f"**Total indexed:** {len(FILES)} files ({len(project_files)} project + "
-        f"{len(vendor_files)} vendor), {total_lines} lines of Lean.\n\n"
+        f"**Total indexed:** {len(FILES)} files, {total_lines} lines of Lean.\n\n"
     )
 
     out = ROOT / "arxiv_with_code.md"

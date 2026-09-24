@@ -91,13 +91,6 @@ sources:
       relations, its compact-closed structure and Set adjunction, recursive
       chain shift isomorphism, and certified two-wire circuit quotation.
 
-related_formalizations:
-  - id: "https://github.com/catskillsresearch/scott1972/tree/36bf01f99f00fcb78b999052212372ba026521ba"
-    relationship: other
-    note: >-
-      Same-author Lean formalization of Scott's Continuous Lattices, frozen
-      in vendor/scott1972 for preservation and background order theory.
-
 automation:
   methods:
     - method: agent

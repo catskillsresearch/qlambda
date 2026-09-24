@@ -3,9 +3,5 @@ Copyright 2026 Lars Warren Ericson / Catskills Research Company
 
 Licensed under the Apache License, Version 2.0 (see LICENSE).
 
-This snapshot vendors:
-
-  vendor/scott1972/
-    Same-author Lean 4 formalization of Dana Scott, Continuous Lattices
-    (1972). Apache-2.0. Remote: https://github.com/catskillsresearch/scott1972
-    Frozen SHA: see vendor/FROZEN.txt.
+This repository does not currently vendor third-party Lean libraries under
+`vendor/`. Mathlib is a Lake dependency (see `lakefile.toml`).

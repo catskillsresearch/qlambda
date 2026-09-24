@@ -156,10 +156,9 @@ figures; see `docs/CMU_TECH_REPORT.md`.
 
 ## Provenance
 
-The development uses Mathlib and the vendored
-[`scott1972`](https://github.com/catskillsresearch/scott1972) formalization.
-The quantum-set/qCPO construction follows Weaver and
-Kornell--Lindenhovius--Mislove.  See `PROVENANCE.md` and the paper references.
+The development uses Mathlib. The quantum-set/qCPO construction follows Weaver
+and Kornell--Lindenhovius--Mislove.  See `PROVENANCE.md` and the paper
+references.
 
 AI agents assisted with proof exploration, code, and prose under the author's
 direction.  Lean kernel checking, not generated text, is the proof authority.

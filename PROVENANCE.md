@@ -42,10 +42,9 @@ lifted-qCPO recursive model. See `docs/QCPO_LNL_DESIGN.md`.
 
 ## Vendored material and automation
 
-`vendor/scott1972` is a frozen same-author Lean development of Scott's
-*Continuous Lattices*, identified by `vendor/FROZEN.txt`. It is retained for
-preservation and background order theory; the compared typed-linear
-statements do not import the retired omega-QVA architecture.
+No Lean foundation libraries are currently vendored under `vendor/`. Palomar
+policy pins live in `vendor/PALOMAR_POLICY_PIN` and
+`vendor/PALOMAR_PREFLIGHT_PIN`.
 
 AI agents assisted with proof exploration, refactoring, tests, and prose
 under author direction. Lean kernel checking, not generated text, is the
