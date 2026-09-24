@@ -26,9 +26,11 @@ The Gate-8 suite `ambientCP_gate8_testSuite` packages the acceptance checks.
 **L9 (relative AmbientCP):** `AmbientCPModule` / `BangComultAmbientCPAdmissible`
 in `AmbientCPBang.lean`.  Full relative admissibility is closed for `A ≤ 1`;
 every dimension admits ambient-CP degree-row sums
-(`bangComultAmbientCP_degree_row_hasSum`).  Glued `BangComultAmbientCPAdmissible 2`
-and ambient-CP Day comonoid packaging remain for L10–L12; absolute
-`BangComultComponentsAdmissible 2` is not claimed.
+(`bangComultAmbientCP_degree_row_hasSum`); `AmbientCPComonoid` packages
+absolute `bangComonoid` for `A ≤ 1`.  A=1-style row→`ℕ×ℕ` glue is blocked by
+`¬ BangDegreeUnitRectangleHasSum 2` (`day_bang_l9_ambientCP_row_glue_deferred`).
+Glued `BangComultAmbientCPAdmissible 2` and L10–L12 LNL remain deferred;
+absolute `BangComultComponentsAdmissible 2` is not claimed.
 -/
 
 namespace QLambda.Domain.Presheaf.SuperoperatorModule
@@ -133,16 +135,18 @@ theorem day_bang_l8_resolved_by_ambientCP_replacement :
 /-! ## L9: relative AmbientCP bang admissibility -/
 
 /-- L9 acceptance (relative AmbientCP, positive): Gate-8 category, relative
-admissibility for `A ≤ 1`, ambient-CP degree-row gate at `A = 2`, and
-existing `A ≤ 1` comonoids.  Absolute `BangComultComponentsAdmissible 2` and a
-glued `BangComultAmbientCPAdmissible 2` remain deferred (common-fiber residual;
-see `day_bang_l9_absolute_bangComult_two_not_claimed`). -/
+admissibility for `A ≤ 1`, ambient-CP degree-row gate at `A = 2`,
+`AmbientCPComonoid` packaging for `A ≤ 1`, and the precise rectangle no-go
+blocking A=1-style glue at 2.  Absolute `BangComultComponentsAdmissible 2` and
+glued `BangComultAmbientCPAdmissible 2` remain deferred (see
+`day_bang_l9_ambientCP_row_glue_deferred`). -/
 theorem day_bang_l9_ambientCP_bang_admissible :
     AmbientCPDayBangCategory ∧
       BangComultAmbientCPAdmissible 0 ∧
       BangComultAmbientCPAdmissible 1 ∧
       BangComultAmbientCPDegreeRowAdmissible 2 ∧
-      (∀ A ≤ 1, Nonempty Comonoid) ∧
+      ¬ BangDegreeUnitRectangleHasSum 2 ∧
+      (∀ A ≤ 1, Nonempty AmbientCPComonoid) ∧
       ((BangComultDayTransferWitness →
           ¬ BangComultComponentsAdmissible 2) ∧
         (∀ A, BangComultComponentsAdmissible A →
@@ -151,7 +155,8 @@ theorem day_bang_l9_ambientCP_bang_admissible :
     bangComultAmbientCPAdmissible_zero,
     bangComultAmbientCPAdmissible_one,
     bangComultAmbientCP_degree_row_admissible_two,
-    bangComonoid_nonempty_of_le_one,
+    not_bangDegreeUnitRectangleHasSum_two,
+    ambientCPBangComonoid_of_le_one,
     day_bang_l9_absolute_bangComult_two_not_claimed⟩
 
 end QLambda.Domain.Presheaf.SuperoperatorModule

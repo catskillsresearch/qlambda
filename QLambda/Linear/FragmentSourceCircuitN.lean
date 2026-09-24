@@ -21,12 +21,15 @@ have nonempty `FragCert.Closed` certificates; `Quotation.denote_compile` /
 `denote_reflect` and `elaborates_compile_agreement` give CQ equalities;
 measurement branches and Born sums agree under `q ≤ N`.  Hom-side foothold:
 hand-built `fragCert_skip_quote` denotes as the Day curry / `tensorIntro` /
-lookup spine `quoteSkipSpine` (and likewise gate spines for `x`/`h` when
-built); `Prim.superoperator .x` agrees definitionally with the canonical
-Composer gate after `yonedaMap`.
+lookup spine `quoteSkipSpine` (and likewise gate spines for `x`/`h`);
+`interpretQuoteHom` transports a closed quotation certificate to `CQ.Sem` via
+`Command.denote`; skip/x/h identify Hom spines with CQ via
+`fragCert_*_quote_interprets` and `Prim.superoperator` / canonical-gate
+agreement after `yonedaMap`.
 
-**Not claimed.** A full interpret functor from quoted `FragCert.denote` into
-`CQ.Sem` for arbitrary commands.  Thin CQ-side: `Command.skip.denote = CQ.skip`.
+**Not claimed.** A general Hom-inspecting extract from arbitrary
+`η : Hom _ (fragmentModule quotationTy)` into `CQ.Sem` (decidable Hom equality
+is unavailable); only the known skip/x/h spines are identified.
 -/
 
 namespace QLambda.Linear
@@ -437,6 +440,14 @@ theorem prim_superoperator_x_yoneda_canonicalModel :
           ((Composer.canonicalModel 1 1).gate (.x (0 : Fin 1)))) :=
   rfl
 
+/-- After Yoneda, `Prim.superoperator .h` is the canonical Composer `h` gate. -/
+theorem prim_superoperator_h_yoneda_canonicalModel :
+    yonedaMap (Prim.superoperator .h) =
+      yonedaMap
+        (Superoperator.ofQuantumOperation
+          ((Composer.canonicalModel 1 1).gate (.h (0 : Fin 1)))) :=
+  rfl
+
 theorem routeA_primMap_x_canonicalModel :
     routeAFragmentModel.primMap .x =
       yonedaMap
@@ -444,6 +455,163 @@ theorem routeA_primMap_x_canonicalModel :
           ((Composer.canonicalModel 1 1).gate (.x (0 : Fin 1)))) := by
   rw [fragment_prim_superoperator]
   exact prim_superoperator_x_yoneda_canonicalModel
+
+theorem routeA_primMap_h_canonicalModel :
+    routeAFragmentModel.primMap .h =
+      yonedaMap
+        (Superoperator.ofQuantumOperation
+          ((Composer.canonicalModel 1 1).gate (.h (0 : Fin 1)))) := by
+  rw [fragment_prim_superoperator]
+  exact prim_superoperator_h_yoneda_canonicalModel
+
+/-! ### F7: spine-level `interpretQuoteHom` (skip / x / h) -/
+
+/-- Transport from a closed quotation certificate to `CQ.Sem` via the
+underlying command.  This is the honest source-side interpret: Hom equality
+is not decidable, so a general extract from an arbitrary quotation Hom remains
+open; skip/x/h are identified with spines below. -/
+noncomputable def interpretQuoteHom {C : Command 1 1}
+    (model : Composer.Model 1 1) (_hC : C.Quotable)
+    (_c : FragCert.Closed C.quote Command.quotationTy) : CQ.Sem 1 1 :=
+  C.denote model
+
+/-- Skip-spine interpret: conditioned on `η = quoteSkipSpine`, returns `CQ.skip`. -/
+noncomputable def interpretSkipSpine (_model : Composer.Model 1 1)
+    (η : Hom (FragmentContext.combined [] [])
+      (fragmentModule Command.quotationTy))
+    (_hη : η = quoteSkipSpine) : CQ.Sem 1 1 :=
+  CQ.skip
+
+theorem interpretSkipSpine_eq_CQ_skip (model : Composer.Model 1 1)
+    (η : Hom (FragmentContext.combined [] [])
+      (fragmentModule Command.quotationTy))
+    (hη : η = quoteSkipSpine) :
+    interpretSkipSpine model η hη = CQ.skip :=
+  rfl
+
+theorem interpretSkipSpine_eq_command_skip (model : Composer.Model 1 1)
+    (η : Hom (FragmentContext.combined [] [])
+      (fragmentModule Command.quotationTy))
+    (hη : η = quoteSkipSpine) :
+    interpretSkipSpine model η hη = Command.skip.denote model :=
+  (command_skip_denote_eq_CQ_skip model).symm
+
+/-- When a closed skip-quote certificate denotes as the skip spine, CQ
+interpretation is `CQ.skip`. -/
+theorem interpret_skip_quote (model : Composer.Model 1 1)
+    (c : FragCert.Closed Command.skip.quote Command.quotationTy)
+    (_hc : FragCert.denote c = quoteSkipSpine) :
+    Command.skip.denote model = CQ.skip :=
+  command_skip_denote_eq_CQ_skip model
+
+theorem interpretQuoteHom_skip (model : Composer.Model 1 1)
+    (c : FragCert.Closed Command.skip.quote Command.quotationTy) :
+    interpretQuoteHom model .skip c = CQ.skip :=
+  command_skip_denote_eq_CQ_skip model
+
+/-- Source Hom denotation of the hand-built skip quote equals the skip spine,
+and CQ meaning is `CQ.skip`. -/
+theorem fragCert_skip_quote_interprets (model : Composer.Model 1 1) :
+    Command.skip.denote model = CQ.skip ∧
+    FragCert.denote fragCert_skip_quote = quoteSkipSpine :=
+  ⟨command_skip_denote_eq_CQ_skip model, fragCert_skip_quote_denote⟩
+
+/-- Wire-0 specialization: gate spine prim leaf agrees with the canonical
+Composer `x` matrix after Yoneda (any `Fin 1` wire). -/
+theorem prim_superoperator_x_yoneda_canonicalModel_wire (w : Fin 1) :
+    yonedaMap (Prim.superoperator .x) =
+      yonedaMap
+        (Superoperator.ofQuantumOperation
+          ((Composer.canonicalModel 1 1).gate (.x w))) := by
+  rw [Fin.eq_zero w]
+  exact prim_superoperator_x_yoneda_canonicalModel
+
+theorem prim_superoperator_h_yoneda_canonicalModel_wire (w : Fin 1) :
+    yonedaMap (Prim.superoperator .h) =
+      yonedaMap
+        (Superoperator.ofQuantumOperation
+          ((Composer.canonicalModel 1 1).gate (.h w))) := by
+  rw [Fin.eq_zero w]
+  exact prim_superoperator_h_yoneda_canonicalModel
+
+/-- CQ denotation of `Command.x` is the single-gate Composer block. -/
+theorem command_x_denote_eq_gateBlock (model : Composer.Model 1 1)
+    (w : Fin 1) :
+    (Command.x w).denote model =
+      Composer.denoteBlock model [.gate (.x w)] :=
+  rfl
+
+theorem command_h_denote_eq_gateBlock (model : Composer.Model 1 1)
+    (w : Fin 1) :
+    (Command.h w).denote model =
+      Composer.denoteBlock model [.gate (.h w)] :=
+  rfl
+
+theorem interpretQuoteHom_x (model : Composer.Model 1 1) (w : Fin 1)
+    (c : FragCert.Closed (Command.x w).quote Command.quotationTy) :
+    interpretQuoteHom model .x c = (Command.x w).denote model :=
+  rfl
+
+theorem interpretQuoteHom_h (model : Composer.Model 1 1) (w : Fin 1)
+    (c : FragCert.Closed (Command.h w).quote Command.quotationTy) :
+    interpretQuoteHom model .h c = (Command.h w).denote model :=
+  rfl
+
+/-- Hom denotation of the `x` quote is the gate spine; FO prim leaf agrees
+with the canonical Composer `x` gate; CQ meaning is the gate block. -/
+theorem fragCert_x_quote_interprets (w : Fin 1) :
+    FragCert.denote (fragCert_x_quote w) = quoteGateSpine .x rfl ∧
+    yonedaMap (Prim.superoperator .x) =
+      yonedaMap
+        (Superoperator.ofQuantumOperation
+          ((Composer.canonicalModel 1 1).gate (.x w))) ∧
+    (Command.x w).denote (Composer.canonicalModel 1 1) =
+      Composer.denoteBlock (Composer.canonicalModel 1 1) [.gate (.x w)] :=
+  ⟨fragCert_x_quote_denote w,
+    prim_superoperator_x_yoneda_canonicalModel_wire w,
+    command_x_denote_eq_gateBlock _ w⟩
+
+/-- Hom denotation of the `h` quote is the gate spine; FO prim leaf agrees
+with the canonical Composer `h` gate; CQ meaning is the gate block. -/
+theorem fragCert_h_quote_interprets (w : Fin 1) :
+    FragCert.denote (fragCert_h_quote w) = quoteGateSpine .h rfl ∧
+    yonedaMap (Prim.superoperator .h) =
+      yonedaMap
+        (Superoperator.ofQuantumOperation
+          ((Composer.canonicalModel 1 1).gate (.h w))) ∧
+    (Command.h w).denote (Composer.canonicalModel 1 1) =
+      Composer.denoteBlock (Composer.canonicalModel 1 1) [.gate (.h w)] :=
+  ⟨fragCert_h_quote_denote w,
+    prim_superoperator_h_yoneda_canonicalModel_wire w,
+    command_h_denote_eq_gateBlock _ w⟩
+
+/-- Unified skip/x/h interpret package: Hom spines match hand-built
+certificates, and CQ meanings agree with `Command.denote` / prim–gate
+Yoneda equality on the canonical model. -/
+theorem interpretQuoteHom_skip_x_h (model : Composer.Model 1 1)
+    (w : Fin 1) :
+    (interpretQuoteHom model .skip fragCert_skip_quote = CQ.skip ∧
+      FragCert.denote fragCert_skip_quote = quoteSkipSpine) ∧
+    (interpretQuoteHom model .x (fragCert_x_quote w) =
+        (Command.x w).denote model ∧
+      FragCert.denote (fragCert_x_quote w) = quoteGateSpine .x rfl ∧
+      yonedaMap (Prim.superoperator .x) =
+        yonedaMap
+          (Superoperator.ofQuantumOperation
+            ((Composer.canonicalModel 1 1).gate (.x w)))) ∧
+    (interpretQuoteHom model .h (fragCert_h_quote w) =
+        (Command.h w).denote model ∧
+      FragCert.denote (fragCert_h_quote w) = quoteGateSpine .h rfl ∧
+      yonedaMap (Prim.superoperator .h) =
+        yonedaMap
+          (Superoperator.ofQuantumOperation
+            ((Composer.canonicalModel 1 1).gate (.h w)))) :=
+  ⟨⟨interpretQuoteHom_skip model fragCert_skip_quote,
+      fragCert_skip_quote_denote⟩,
+    ⟨rfl, fragCert_x_quote_denote w,
+      prim_superoperator_x_yoneda_canonicalModel_wire w⟩,
+    ⟨rfl, fragCert_h_quote_denote w,
+      prim_superoperator_h_yoneda_canonicalModel_wire w⟩⟩
 
 /-- Propositional content of the N-bounded source–quotation package. -/
 def FragmentSourceQuotationAgreement (N : Nat) : Prop :=
@@ -525,12 +693,11 @@ theorem fragment_source_elaboration_agreement_literals (_N : Nat) :
 
 /-- Commuting-square package: weighted simulation, quote certificates, CQ
 compile/reflect equalities, and the N-bounded source packages.  Hom-side
-bridge step: `fragCert_skip_quote_denote` / `fragCert_skip_quote_denote_independent`
-identify closed skip-quote denotation with `quoteSkipSpine` (gate quotes
-likewise via `fragCert_x_quote_denote` / `fragCert_h_quote_denote`); CQ-side
-thin interpret is `command_skip_denote_eq_CQ_skip`.  A full
-`FragCert.denote`↔`CQ.Sem` interpret functor for arbitrary quoted commands
-remains open. -/
+bridge: `fragCert_skip_quote_interprets` / `fragCert_x_quote_interprets` /
+`fragCert_h_quote_interprets` identify closed quote denotations with
+`quoteSkipSpine` / `quoteGateSpine` and CQ via `interpretQuoteHom` plus
+`Prim.superoperator`–canonical-gate Yoneda agreement.  A general Hom-inspecting
+`FragCert.denote`↔`CQ.Sem` extract for arbitrary quoted commands remains open. -/
 theorem fragment_source_circuit_commuting_square (N : Nat) :
     Nonempty (FragmentWeightedSimulation N) ∧
     (∀ C (_hC : Command.Quotable C),

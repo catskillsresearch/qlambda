@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Composer.MatrixSemantics
-import QLambda.Domain.QuantumCPO
-import QLambda.Domain.QuantumRel
+import QLambda.Domain.CompletedCP
+import QLambda.Domain.QuantumRelations
 
 /-!
 # Published quantum posets / qCPOs and the finite circuit embedding

@@ -7,9 +7,9 @@ import QLambda.Linear.SemanticFragment
 import QLambda.Linear.TypeInterpretation
 import QLambda.Linear.PrimitiveSuperoperator
 import QLambda.Domain.Presheaf.Yoneda
-import QLambda.Domain.Presheaf.ClosedGenerated
+import QLambda.Domain.Presheaf.ClosedGeneration
 import QLambda.Domain.Presheaf.DayCoend
-import QLambda.Domain.Presheaf.Module
+import QLambda.Domain.Presheaf.SuperoperatorModule
 
 /-!
 # Physical bit copy/discard boundary

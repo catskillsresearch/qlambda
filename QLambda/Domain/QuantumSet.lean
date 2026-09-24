@@ -4,18 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
-import QLambda.QuantumInstrument
+import QLambda.QuantumInstruments
 
 /-!
 # Quantum sets
-
-This is the published Kornell presentation used by Lindenhovius–Mislove–
-Kornell quantum CPOs: a quantum set is a collection of finite-dimensional
-Hilbert spaces (its atoms).  The Cartesian product tensors atoms; the
-classical embedding `liftSet` replaces each ordinary point by a
-one-dimensional atom.
-
-See arXiv:2109.02196, §2.
 -/
 
 set_option warn.classDefReducibility false
@@ -88,51 +80,12 @@ def dual (X : QuantumSet) : QuantumSet where
   Atom := X.Atom
   dim := X.dim
 
-/-- A quantum set is finite when it has finitely many atoms. -/
-class Finite (X : QuantumSet) where
-  fintype : Fintype X.Atom
-  decidable : DecidableEq X.Atom
-
-attribute [instance, instance_reducible] Finite.fintype Finite.decidable
-
 instance : Inhabited unit.Atom := ⟨PUnit.unit⟩
 instance : Inhabited qubit.Atom := ⟨PUnit.unit⟩
 instance : Inhabited (atomic n).Atom := ⟨PUnit.unit⟩
 instance : Unique unit.Atom := inferInstanceAs (Unique PUnit)
 instance : Unique qubit.Atom := inferInstanceAs (Unique PUnit)
 instance : Unique (atomic n).Atom := inferInstanceAs (Unique PUnit)
-
-instance : Finite empty where
-  fintype := inferInstanceAs (Fintype Empty)
-  decidable := inferInstanceAs (DecidableEq Empty)
-
-instance : Finite unit where
-  fintype := inferInstanceAs (Fintype PUnit)
-  decidable := inferInstanceAs (DecidableEq PUnit)
-
-instance : Finite qubit where
-  fintype := inferInstanceAs (Fintype PUnit)
-  decidable := inferInstanceAs (DecidableEq PUnit)
-
-instance : Finite bit where
-  fintype := inferInstanceAs (Fintype Bool)
-  decidable := inferInstanceAs (DecidableEq Bool)
-
-instance : Finite (atomic n) where
-  fintype := inferInstanceAs (Fintype PUnit)
-  decidable := inferInstanceAs (DecidableEq PUnit)
-
-instance [Finite X] [Finite Y] : Finite (tensor X Y) where
-  fintype := inferInstanceAs (Fintype (X.Atom × Y.Atom))
-  decidable := inferInstanceAs (DecidableEq (X.Atom × Y.Atom))
-
-instance [Finite X] [Finite Y] : Finite (sum X Y) where
-  fintype := inferInstanceAs (Fintype (X.Atom ⊕ Y.Atom))
-  decidable := inferInstanceAs (DecidableEq (X.Atom ⊕ Y.Atom))
-
-instance [Fintype α] [DecidableEq α] : Finite (liftSet α) where
-  fintype := inferInstanceAs (Fintype α)
-  decidable := inferInstanceAs (DecidableEq α)
 
 instance [DecidableEq α] : DecidableEq (liftSet α).Atom :=
   show DecidableEq α from inferInstance

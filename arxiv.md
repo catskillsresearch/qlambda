@@ -667,9 +667,10 @@ physical-bit copy/discard is not counital; `classicalBitModule` is the
 unrestricted carrier with checked comonoid laws.  Unrestricted identity β,
 general subst, full Step soundness, and a `FragCert.denote`↔`CQ.Sem`
 interpret functor remain Track F lemmas.  Track L packages are deferred on
-L9 glue: relative AmbientCP admissibility for $A\le 1$ and a degree-row gate
-at 2 are checked; `AmbientCPComonoid` and glued
-`BangComultAmbientCPAdmissible 2` remain open (absolute A=2 not claimed).
+L9: relative AmbientCP admissibility for $A\le 1$, a degree-row gate at 2,
+and `AmbientCPComonoid` packaging for $A\le 1$ are checked; A=1-style glue
+is blocked by `$\neg$ BangDegreeUnitRectangleHasSum 2`, so glued
+`BangComultAmbientCPAdmissible 2` remains open (absolute A=2 not claimed).
 
 ---
 

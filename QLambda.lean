@@ -30,7 +30,7 @@ import QLambda.Domain.QuantumLNL
 import QLambda.Domain.Presheaf.CPMap
 import QLambda.Domain.Presheaf.Superoperator
 import QLambda.Domain.Presheaf.SigmaMon
-import QLambda.Domain.Presheaf.Module
+import QLambda.Domain.Presheaf.SuperoperatorModule
 import QLambda.Domain.Presheaf.Yoneda
 import QLambda.Domain.Presheaf.Generated
 import QLambda.Domain.Presheaf.PseudoRepresentable

@@ -2472,6 +2472,43 @@ theorem triangle (M N : Module) :
   simp only [N.act_id] at hr
   rw [hr, Superoperator.tensor_triangle_naturality]
 
+/-- Right-unitor / associator coherence: `(id ⊗ ρ) ∘ α = ρ`. -/
+theorem rightUnitor_associator (M N : Module) :
+    Hom.comp (map (Hom.id M) (rightUnitor N))
+        (associator M N dayTensorUnit) =
+      rightUnitor (dayTensor M N) := by
+  apply hom_ext_nested_left
+  intro m n u x y q
+  rw [Hom.comp_app, associator_intro_intro,
+    (map (Hom.id M) (rightUnitor N)).naturality, map_intro]
+  change Superoperator u 1 at q
+  rw [rightUnitor_intro, Hom.id_app, rightUnitor_intro]
+  have hl :=
+    (DayCoend.intro M N).naturality x y
+      (Superoperator.identity m)
+      (Superoperator.comp (Superoperator.tensorRightUnitor n)
+        (Superoperator.tensor (Superoperator.identity n) q))
+  simp only [M.act_id] at hl
+  rw [hl, (dayTensor M N).act_comp]
+  congr 1
+  exact Superoperator.tensor_rightUnitor_associator_naturality m n q
+
+/-- Inverse form: `ρ ∘ α⁻¹ = id ⊗ ρ`. -/
+theorem rightUnitor_associatorInv (M N : Module) :
+    Hom.comp (rightUnitor (dayTensor M N))
+        (associatorInv M N dayTensorUnit) =
+      map (Hom.id M) (rightUnitor N) := by
+  have h :=
+    congrArg (fun g => Hom.comp g (associatorInv M N dayTensorUnit))
+      (rightUnitor_associator M N)
+  -- From `(id ⊗ ρ) ∘ α ∘ α⁻¹ = ρ ∘ α⁻¹`, reverse to start from `ρ ∘ α⁻¹`.
+  refine Eq.trans h.symm ?_
+  refine Eq.trans (Hom.comp_assoc _ _ _) ?_
+  refine Eq.trans
+    (congrArg (Hom.comp (map (Hom.id M) (rightUnitor N)))
+      (associator_hom_inv M N dayTensorUnit)) ?_
+  exact Hom.comp_id _
+
 theorem hexagon (M N P : Module) :
     Hom.comp (braiding M (dayTensor N P))
         (associator M N P) =

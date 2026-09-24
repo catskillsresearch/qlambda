@@ -118,6 +118,13 @@ remain Track F lemmas.
 - `QLambda.Domain.Presheaf.SuperoperatorModule.AmbientCPModule`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.BangComultAmbientCPAdmissible`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.bangComultAmbientCP_degree_row_hasSum`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.BangDegreeUnitRectangleHasSum`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.not_bangDegreeUnitRectangleHasSum_two`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.bangComultAmbientCPAdmissible_two_glue_residual`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.AmbientCPComonoid`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.ambientCPBangComonoid_of_le_one`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.day_bang_l9_ambientCP_comonoid_le_one`
+- `QLambda.Domain.Presheaf.SuperoperatorModule.day_bang_l9_ambientCP_row_glue_deferred`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.day_bang_l9_ambientCP_bang_admissible`
 - `QLambda.Domain.Presheaf.SuperoperatorModule.day_bang_l9_absolute_bangComult_two_not_claimed`
 - `QLambda.Domain.Presheaf.trackL_presheafQuantumLNL_deferred`
@@ -132,12 +139,14 @@ but no TNI/representable witness is constructed.  L8 resolves via the named
 replacement `AmbientCPDayBangCategory` (`cpmModule` fibers) and Gate-8 suite
 `ambientCP_gate8_testSuite` / terminal
 `day_bang_l8_resolved_by_ambientCP_replacement`.  L9 records relative
-AmbientCP bang admissibility for `A ≤ 1` and a degree-row gate at 2
-(`day_bang_l9_ambientCP_bang_admissible`); glued
-`BangComultAmbientCPAdmissible 2` and `AmbientCPComonoid` remain open.
-Absolute A=2 is not claimed.  Track L packages remain deferred until a
-usable AmbientCP comonoid exists; Route A fragment work does not depend on
-it.
+AmbientCP bang admissibility for `A ≤ 1`, a degree-row gate at 2,
+`AmbientCPComonoid` packaging for `A ≤ 1`, and the precise rectangle no-go
+`¬ BangDegreeUnitRectangleHasSum 2`
+(`day_bang_l9_ambientCP_bang_admissible` /
+`day_bang_l9_ambientCP_row_glue_deferred`).  Glued
+`BangComultAmbientCPAdmissible 2` remains open.  Absolute A=2 is not
+claimed.  Track L packages remain deferred until A=2 glue or a limited
+A≤1 LNL; Route A fragment work does not depend on it.
 
 ## Omega-CPO foundations
 
@@ -389,10 +398,11 @@ are not listed here as open.
   the global raw split-effect bound are refuted; L8 selects
   `AmbientCPDayBangCategory` /
   `day_bang_l8_resolved_by_ambientCP_replacement`);
-- glued `BangComultAmbientCPAdmissible 2` and `AmbientCPComonoid` packaging,
-  then premise-free `presheafQuantumLNL`, recursive `mu`/`fix`, full-language
-  adequacy, and full abstraction (Track L deferred theorems record this
-  boundary; absolute A=2 is not claimed);
+- glued `BangComultAmbientCPAdmissible 2` (A=1-style rectangle glue blocked
+  by `¬ BangDegreeUnitRectangleHasSum 2`; `AmbientCPComonoid` for `A ≤ 1`
+  is packaged), then premise-free `presheafQuantumLNL`, recursive `mu`/`fix`,
+  full-language adequacy, and full abstraction (Track L deferred theorems
+  record this boundary; absolute A=2 is not claimed);
 - unrestricted identity β, unpair/measure redex=contractum, and general
   open-term lam/app β/η on `FragCert.denote` (closed linear identity β and
   Day/FO spines are checked);

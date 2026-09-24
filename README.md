@@ -98,10 +98,12 @@ spines (`quoteSkipSpine` / `quoteGateSpine`) — see
 `representable 2` is formally not counital; `classicalBitModule` supplies
 the unrestricted carrier with a checked Day comonoid.  Unrestricted identity
 β, general subst, full Step soundness, and a `FragCert.denote`↔`CQ.Sem`
-interpret functor remain Track F lemmas.  Track L is deferred on L9 glue:
-relative AmbientCP admissibility for `A ≤ 1` and a degree-row gate at 2 are
-checked (`day_bang_l9_ambientCP_bang_admissible`); `AmbientCPComonoid` and
-glued `BangComultAmbientCPAdmissible 2` remain open.  This release does not
+interpret functor remain Track F lemmas.  Track L is deferred on L9→L10 glue:
+relative AmbientCP admissibility for `A ≤ 1`, a degree-row gate at 2, and
+`AmbientCPComonoid` packaging for `A ≤ 1` are checked
+(`day_bang_l9_ambientCP_bang_admissible`); A=1-style glue is blocked by
+`¬ BangDegreeUnitRectangleHasSum 2`, so glued
+`BangComultAmbientCPAdmissible 2` remains open.  This release does not
 claim full abstraction or unrestricted higher-order adequacy.
 `docs/NOVELTY_AUDIT.md` records the distinction between published mathematics
 and new Lean proofs.

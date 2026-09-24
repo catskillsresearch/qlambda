@@ -572,6 +572,20 @@ theorem tensor_triangle (a b : ℕ) :
   simp [tensorAssociatorEquiv, tensorLeftUnitorEquiv,
     tensorRightUnitorEquiv, tensorEquiv]
 
+/-- Right-unitor / associator coherence on finite tensor bases:
+`(id ⊗ ρ) ∘ α = ρ`. -/
+theorem tensor_rightUnitor_associator (a b : ℕ) :
+    comp (tensor (identity a) (tensorRightUnitor b))
+        (tensorAssociator a b 1) =
+      tensorRightUnitor (a * b) := by
+  simp only [tensorAssociator, tensorRightUnitor,
+    ← ofEquivalence_refl, tensor_ofEquivalence, ofEquivalence_comp]
+  congr 1
+  ext x
+  simp [tensorAssociatorEquiv, tensorRightUnitorEquiv, tensorEquiv]
+  rw [Nat.mul_comm b]
+  exact Nat.mod_add_div' (↑x) b
+
 theorem tensor_hexagon (a b c : ℕ) :
     comp (tensorSwap a (b * c)) (tensorAssociator a b c) =
       comp (tensorAssociatorInv b c a)
@@ -621,6 +635,42 @@ theorem tensorAssociator_naturality
   dsimp [CPMap.choiTensorEquiv, tensorAssociatorEquiv]
   simp
   ring
+
+/-- Natural form of `tensor_rightUnitor_associator` with a unit wire. -/
+theorem tensor_rightUnitor_associator_naturality {u : ℕ}
+    (a b : ℕ) (q : Superoperator u 1) :
+    comp
+        (tensor (identity a)
+          (comp (tensorRightUnitor b)
+            (tensor (identity b) q)))
+        (tensorAssociator a b u) =
+      comp (tensorRightUnitor (a * b))
+        (tensor (identity (a * b)) q) := by
+  calc
+    comp
+        (tensor (identity a)
+          (comp (tensorRightUnitor b)
+            (tensor (identity b) q)))
+        (tensorAssociator a b u) =
+      comp (tensor (identity a) (tensorRightUnitor b))
+        (comp (tensor (identity a) (tensor (identity b) q))
+          (tensorAssociator a b u)) := by
+            rw [comp_assoc, ← tensor_comp]; simp
+    _ = comp (tensor (identity a) (tensorRightUnitor b))
+        (comp (tensorAssociator a b 1)
+          (tensor (tensor (identity a) (identity b)) q)) := by
+            rw [← tensorAssociator_naturality]
+    _ = comp
+        (comp (tensor (identity a) (tensorRightUnitor b))
+          (tensorAssociator a b 1))
+        (tensor (tensor (identity a) (identity b)) q) := by
+            rw [comp_assoc]
+    _ = comp (tensorRightUnitor (a * b))
+        (tensor (tensor (identity a) (identity b)) q) := by
+            rw [tensor_rightUnitor_associator]
+    _ = comp (tensorRightUnitor (a * b))
+        (tensor (identity (a * b)) q) := by
+            rw [tensor_identity]
 
 theorem tensorLeftUnitor_naturality {a a' : ℕ}
     (f : Superoperator a a') :

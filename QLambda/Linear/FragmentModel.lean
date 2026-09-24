@@ -5,7 +5,7 @@ Authors: Lars Warren Ericson.
 -/
 import QLambda.Linear.FragmentPhysicalBit
 import QLambda.Linear.FragmentClassicalBit
-import QLambda.Linear.FragmentModelCore
+import QLambda.Linear.PresheafFragmentModel
 
 /-!
 # Route A fragment model
