@@ -310,7 +310,10 @@ The following are goals, not existing declarations:
   premise-free all-dimensional Day bang comonoid / cofree UP (Route A and
   the global raw split-effect bound are refuted; half-scaling repairs the
   `(2,1)` matrix bound but is not counital;
-  `BangComultDayTransferWitness` remains open;
+  `bangComultDayTransferWitness_not_admissible` proves that any
+  `BangComultDayTransferWitness` refutes
+  `BangComultComponentsAdmissible 2`, while construction of the witness
+  remains open;
   see `day_bang_architecture_boundary`);
 - premise-free `presheafQuantumLNL`, recursive `mu`/`fix` interpretation,
   full-language adequacy, and full abstraction (Track L deferred theorems
@@ -329,9 +332,15 @@ The following are goals, not existing declarations:
   internal hom, additives, and omega-CPO enrichment;
 - a premise-free LNL model `presheafQuantumLNL` whose homs contain
   allocation, reset, gates, and measurement instruments;
-- open-context compositional denotation for every `SemanticFragment` rule
-  (`Lookup`/`AllNone`/`OSplit` maps, `FragCert.denote` for lam/app/pair/
-  unpair/ite/prim/measure, derivation independence);
+- open-context compositional denotation for every `SemanticFragment` rule.
+  `FragmentContext` now supplies all-bit unrestricted and linear
+  `Lookup`/`AllNone`/`OSplit` maps with proof-witness independence, but
+  `FragCert.denote` for lam/app/pair/unpair/ite/prim/measure and the required
+  coherence laws remain open.  The originally proposed physical-bit
+  contraction is not counital:
+  `physical_bit_copy_discard_not_left_counital`; the dephasing-fixed
+  `classicalBitModule` has concrete weakening and contraction maps, whose
+  comonoid equations and integration remain to be proved;
 - denotational `Step`/`MeasStep` soundness and semantic substitution for
   the fragment (beyond syntactic fragment preservation);
 - N-bounded source/runtime simulation and Born-probability agreement

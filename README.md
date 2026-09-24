@@ -75,8 +75,10 @@ joint-effect bound (Route A) is refuted at `A = 2`.
 carrier-membership predicate) and fails by excluding the degree-one identity
 series.  Scaling by `1/2` repairs the `(2,1)` matrix inequality, but
 left/right counit force the `(0,1)`/`(1,0)` boundary weights to remain `1`,
-so half-scaling is not a counital repair; `BangComultDayTransferWitness`
-remains open.  An all-dimensional cofree bang, general Day closure on based
+so half-scaling is not a counital repair.  A
+`BangComultDayTransferWitness` would now kernel-checkably refute
+`BangComultComponentsAdmissible 2`; constructing the witness remains open.
+An all-dimensional cofree bang, general Day closure on based
 modules, a premise-free `presheafQuantumLNL`, and full-language adequacy remain
 objectives.  The **minimum fragment** (first-order data, linear arrows with
 first-order domain, unrestricted bit binders, primitives, measurement; no
@@ -86,14 +88,19 @@ and syntactic fragment step preservation — see
 `QLambda/Linear/SemanticFragment.lean`, `FragmentModel.lean`,
 `FragmentDenotation.lean`, `FragmentContext.lean`, `FragmentAdequacy.lean`,
 `FragmentRuntimeN.lean`.  Canonical `FragCert`/`FragmentJudgment` certificates,
-open Day-tensor fragment contexts (bit copy/discard, not bang 2), closed
-literal denotation into combined contexts, and N-bounded literal adequacy are
-checked.  Full open-term curry/eval denotation, denotational β/η for open
+open Day-tensor fragment contexts and their Lookup/AllNone/OSplit maps,
+closed literal denotation into combined contexts, and N-bounded literal
+adequacy are checked.  The proposed copy/discard on physical
+`representable 2` is formally not counital; a dephasing-fixed classical-bit
+module now supplies replacement weakening/contraction maps, with its
+comonoid equations and semantic integration still open.  Full open-term
+curry/eval denotation, denotational β/η for open
 terms, and end-to-end N-bounded Born simulation remain Track F objectives.
 Track L (`presheafQuantumLNL`, recursion, full adequacy/abstraction) is
 deferred on the Day-bang architecture boundary
 (`day_bang_architecture_boundary`): raw `BangSplitEffectAdmissible 2` fails;
-`BangComultDayTransferWitness` remains open.  This release does
+the transfer-witness implication is proved, while witness construction
+remains open.  This release does
 not claim full abstraction or unrestricted higher-order adequacy.
 `docs/NOVELTY_AUDIT.md` records the distinction between published mathematics
 and new Lean proofs.

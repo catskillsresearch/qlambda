@@ -80,6 +80,8 @@ namespace QLambda.Domain.Presheaf
 
 namespace SuperoperatorModule
 
+set_option maxHeartbeats 2000000
+
 open Matrix
 open scoped BigOperators ComplexOrder MatrixOrder
 
@@ -874,6 +876,81 @@ def BangComultDayTransferWitness : Prop :=
     ¬ ∃ Φ : (L.obj (tensorPowerDimension 2 1)).Carrier,
         (L.obj (tensorPowerDimension 2 1)).HasSum
           (fun i : Bool => bif i then z₀₁ else z₁₀) Φ
+
+/-- A Day-transfer witness isolates an inadmissible two-term row of the full
+component family, and therefore refutes mixed-component admissibility at
+dimension two. -/
+theorem bangComultDayTransferWitness_not_admissible :
+    BangComultDayTransferWitness → ¬ BangComultComponentsAdmissible 2 := by
+  rintro ⟨L, β, z₀₁, z₁₀, hz₀₁, hz₁₀, hbad⟩ hAd
+  let n := tensorPowerDimension 2 1
+  let x := bangIdentityDegreeOne 2
+  let F : ℕ × ℕ → (L.obj n).Carrier := fun pq =>
+    DayCoend.evaluate L β (bangComultComponentFamily 2 n x pq)
+  obtain ⟨z, hz⟩ := hAd n x L β
+  have hzF : (L.obj n).HasSum F z := by
+    simpa [F, n, x] using hz
+  let S : Set (ℕ × ℕ) :=
+    {pq | pq = (0, 1) ∨ pq = (1, 0)}
+  let κ : Bool → Type := fun b =>
+    bif b then (Sᶜ : Set (ℕ × ℕ)) else S
+  let e : (Σ b, κ b) ≃ ℕ × ℕ :=
+    (Equiv.sumEquivSigmaBool S (Sᶜ : Set (ℕ × ℕ))).symm.trans
+      (Equiv.Set.sumCompl S)
+  have hκ : ∀ b, Countable (κ b) := by
+    intro b
+    cases b <;> simp [κ]
+    all_goals exact Set.to_countable _
+  letI (b : Bool) : Countable (κ b) := hκ b
+  have hzReindexed :
+      (L.obj n).HasSum (F ∘ e) z :=
+    ((L.obj n).summation.reindex e F z).mpr hzF
+  obtain ⟨g, hrows, _⟩ :=
+    ((L.obj n).summation.flatten
+      (fun b (j : κ b) => F (e ⟨b, j⟩)) z).mp hzReindexed
+  have hselected :
+      (L.obj n).HasSum (fun j : κ false => F (e ⟨false, j⟩))
+        (g false) :=
+    hrows false
+  let selectedEquiv : Bool ≃ S :=
+    { toFun := fun b => match b with
+        | true => ⟨(0, 1), Or.inl rfl⟩
+        | false => ⟨(1, 0), Or.inr rfl⟩
+      invFun := fun pq => if pq.1.1 = 0 then true else false
+      left_inv := by
+        intro b
+        cases b <;> simp
+      right_inv := by
+        rintro ⟨pq, hpq⟩
+        rcases hpq with rfl | rfl <;> simp }
+  have hboolF :
+      (L.obj n).HasSum
+        (fun i : Bool => F (selectedEquiv i)) (g false) := by
+    have hre :=
+      ((L.obj n).summation.reindex selectedEquiv
+        (fun j : κ false => F (e ⟨false, j⟩)) (g false)).mpr hselected
+    convert hre using 1
+    funext i
+    cases i <;> rfl
+  apply hbad
+  refine ⟨g false, ?_⟩
+  refine ((L.obj n).hasSum_congr ?_).mp hboolF
+  intro i
+  cases i with
+  | false =>
+      change
+        DayCoend.evaluate L β
+            (bangComultComponentFamily 2 n x (1, 0)) =
+          bif false then z₀₁ else z₁₀
+      rw [hz₁₀]
+      rfl
+  | true =>
+      change
+        DayCoend.evaluate L β
+            (bangComultComponentFamily 2 n x (0, 1)) =
+          bif true then z₀₁ else z₁₀
+      rw [hz₀₁]
+      rfl
 
 /-- Gate 6 (honest form): Route A alone closes a joint-effect bound, not the
 Day admissibility quantifier; the missing bridge is

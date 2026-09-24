@@ -10,10 +10,11 @@ import QLambda.Linear.FragmentModel
 # Day-bang architecture boundary (Gate 8)
 
 The raw global split-effect bound fails at `A = 2`, so an all-dimensional
-cofree Day bang is not obtained from the Route A fiber analysis alone.  The
-missing Day bridge is `BangComultDayTransferWitness`.  Track F (Route A
-fragment) does not require this bang; Track L (`presheafQuantumLNL`, recursion,
-full adequacy) waits on a positive redesign or a kernel-checked transfer.
+cofree Day bang is not obtained from the Route A fiber analysis alone.  A
+`BangComultDayTransferWitness` now kernel-checkably refutes Day component
+admissibility; constructing that witness or finding a positive replacement
+remains open.  Track L (`presheafQuantumLNL`, recursion, full adequacy) waits
+on that resolution.
 -/
 
 namespace QLambda.Domain.Presheaf.SuperoperatorModule
@@ -47,8 +48,9 @@ theorem day_bang_architecture_boundary : DayBangArchitectureBoundary :=
 theorem trackL_requires_day_bang_resolution :
     DayBangArchitectureBoundary ∧
       (BangComultDayTransferWitness →
-        ¬ BangSplitEffectAdmissible 2) :=
-  ⟨day_bang_architecture_boundary, fun _ => day_bang_raw_global_bound_fails_at_two⟩
+        ¬ BangComultComponentsAdmissible 2) :=
+  ⟨day_bang_architecture_boundary,
+    bangComultDayTransferWitness_not_admissible⟩
 
 end QLambda.Domain.Presheaf.SuperoperatorModule
 

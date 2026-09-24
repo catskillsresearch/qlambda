@@ -153,6 +153,12 @@ end Ty
 def CtxUAllFragment (Γ : List Ty) : Prop :=
   ∀ ⦃A⦄, A ∈ Γ → Ty.SemanticFragment A
 
+/-- Route-A unrestricted contexts contain only classical-bit binders.  This
+is stronger than merely requiring all entries to be fragment types and is
+the discipline needed by direct bit weakening/contraction. -/
+def CtxUAllBit (Γ : List Ty) : Prop :=
+  ∀ ⦃A⦄, A ∈ Γ → A = .bit
+
 /-- Every occupied linear context cell lies in the semantic fragment. -/
 def CtxLAllSomeFragment (Δ : List (Option Ty)) : Prop :=
   ∀ ⦃A⦄, some A ∈ Δ → Ty.SemanticFragment A
@@ -176,6 +182,31 @@ theorem lookup {Γ : List Ty} (hΓ : CtxUAllFragment Γ) {n A}
   hΓ (Lookup.mem h)
 
 end CtxUAllFragment
+
+namespace CtxUAllBit
+
+theorem nil : CtxUAllBit [] := by
+  intro A h
+  cases h
+
+theorem cons {Γ : List Ty} (hΓ : CtxUAllBit Γ) :
+    CtxUAllBit (.bit :: Γ) := by
+  intro A hm
+  cases hm with
+  | head => rfl
+  | tail _ hm => exact hΓ hm
+
+theorem lookup {Γ : List Ty} (hΓ : CtxUAllBit Γ) {n : Nat} {A : Ty}
+    (h : Lookup Γ n A) : A = .bit :=
+  hΓ (Lookup.mem h)
+
+theorem fragment {Γ : List Ty} (hΓ : CtxUAllBit Γ) :
+    CtxUAllFragment Γ := by
+  intro A hm
+  rw [hΓ hm]
+  exact Ty.SemanticFragment.bit
+
+end CtxUAllBit
 
 namespace CtxLAllSomeFragment
 

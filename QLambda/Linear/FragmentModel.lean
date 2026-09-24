@@ -25,6 +25,8 @@ Route A supplies classical-bit weaken/contract maps directly (not via
 
 namespace QLambda.Linear
 
+set_option maxHeartbeats 2000000
+
 open Domain.Presheaf.SuperoperatorModule
 open Domain.Presheaf
 open scoped ComplexOrder MatrixOrder BigOperators
@@ -102,6 +104,547 @@ noncomputable def bitCopy :
     Hom (representable 2) (dayTensorRepresentable 2 2) :=
   yonedaMap bitCopySuperoperator
 
+/-- Computational-basis dephasing, i.e. the channel obtained by copying a
+bit in the chosen basis and discarding either output.  This is the decisive
+boundary for using `representable 2` as a classical comonoid: coherent
+off-diagonal inputs are erased. -/
+noncomputable def bitDephaseSuperoperator : Superoperator 2 2 where
+  cp := (Instrument.measure (0 : Fin 1)).branch 0 +
+    (Instrument.measure (0 : Fin 1)).branch 1
+  trace_nonincreasing := by
+    intro ρ hρ
+    rw [CPMap.applyMat_add_map, Matrix.trace_add, Complex.add_re]
+    have h := (Instrument.measure (0 : Fin 1)).trace_nonincreasing ρ hρ
+    simpa only [Fin.sum_univ_two, Instrument.measure,
+      Instrument.ofQuantumInstrument, CPMap.applyMat_ofKraus,
+      KrausFamily.applyMat_single, Composer.projector_conjTranspose] using h
+
+/-- The classical-basis copy/discard composite is not the identity on the
+full quantum representable `y(2)`: it removes the `|0⟩⟨1|` coherence. -/
+theorem bitDephaseSuperoperator_ne_identity :
+    bitDephaseSuperoperator ≠ Superoperator.identity 2 := by
+  intro h
+  have happ := congrArg (fun f : Superoperator 2 2 =>
+    f.cp.applyMat (KrausFamily.matrixUnit 0 1)) h
+  have he := congrFun (congrFun happ 0) 1
+  simp only [bitDephaseSuperoperator, CPMap.applyMat_add_map,
+    Instrument.measure_branch_zero, Instrument.measure_branch_one,
+    CPMap.applyMat_ofKraus, Superoperator.identity,
+    CPMap.applyMat_identity] at he
+  have h00 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 0)).1 =
+        false := by native_decide
+  have h01 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 1)).1 =
+        true := by native_decide
+  norm_num [KrausFamily.applyMat, Composer.projector,
+    KrausFamily.matrixUnit, Matrix.mul_apply, Matrix.conjTranspose_apply,
+    Composer.onWire, Composer.registerSplit, Composer.proj₂, CQ.QDim,
+    h00, h01] at he
+
+/-- The current Route-A `representable 2` carrier cannot itself satisfy the
+classical-bit copy/delete equations.  A diagonal/fixed-point carrier (or
+another genuinely classical carrier) is required before open unrestricted
+contexts can be interpreted soundly. -/
+theorem representable_bit_copy_delete_no_go :
+    bitDephaseSuperoperator ≠ Superoperator.identity 2 :=
+  bitDephaseSuperoperator_ne_identity
+
+private theorem sum_fin4_complex (f : Fin 4 → ℂ) :
+    (∑ x : Fin 4, f x) = f 0 + f 1 + f 2 + f 3 := by
+  rw [show (Finset.univ : Finset (Fin 4)) = {0, 1, 2, 3} by decide]
+  simp [Finset.sum_insert]
+  ring
+
+/-- The left discard-after-copy composite on the physical bit carrier. -/
+noncomputable def bitLeftCounitSuperoperator : Superoperator 2 2 :=
+  Superoperator.comp (Superoperator.tensorLeftUnitor 2)
+    (Superoperator.comp
+      (Superoperator.tensor SigmaMon.ChoiSum.discardTwo
+        (Superoperator.identity 2))
+      bitCopySuperoperator)
+
+/-- The right discard-after-copy composite on the physical bit carrier. -/
+noncomputable def bitRightCounitSuperoperator : Superoperator 2 2 :=
+  Superoperator.comp (Superoperator.tensorRightUnitor 2)
+    (Superoperator.comp
+      (Superoperator.tensor (Superoperator.identity 2)
+        SigmaMon.ChoiSum.discardTwo)
+      bitCopySuperoperator)
+
+theorem bitLeftCounitSuperoperator_eq_dephase :
+    bitLeftCounitSuperoperator = bitDephaseSuperoperator := by
+  apply Superoperator.ext
+  apply CPMap.ext
+  ext ai bj
+  rcases ai with ⟨a, i⟩
+  rcases bj with ⟨b, j⟩
+  unfold bitLeftCounitSuperoperator
+  rw [show Superoperator.tensorLeftUnitor 2 =
+      Superoperator.ofEquivalence (Superoperator.tensorLeftUnitorEquiv 2)
+    from rfl]
+  rw [Superoperator.choi_comp_ofEquivalence_left]
+  have h00 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 0)).1 =
+        false := by native_decide
+  have h01 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 1)).1 =
+        true := by native_decide
+  fin_cases a <;> fin_cases i <;> fin_cases b <;> fin_cases j
+  all_goals
+    simp only [Superoperator.cp_comp, CPMap.choi_comp_apply,
+      Superoperator.cp_tensor, bitCopySuperoperator,
+      Superoperator.cp_ofIsometry, CPMap.choi_tensor,
+      Matrix.reindex_apply, Matrix.submatrix_apply,
+      Matrix.kroneckerMap_apply, bitDephaseSuperoperator,
+      CPMap.choi_add, Matrix.add_apply, CPMap.choi_ofKraus,
+      Instrument.measure_branch_zero, Instrument.measure_branch_one]
+  all_goals
+    norm_num [CPMap.choiTensorEquiv, classicalCopyMatrix,
+      finProdFinEquiv, finOneEquiv, Equiv.punitProd,
+      Fin.divNat, Fin.modNat,
+      SigmaMon.ChoiSum.discardTwo, SigmaMon.ChoiSum.basisBra,
+      Superoperator.identity, CPMap.identity,
+      KrausFamily.choi, KrausFamily.choiTerm, KrausFamily.identity,
+      Matrix.one_apply, h00, h01,
+      Superoperator.tensorLeftUnitorEquiv,
+      Composer.projector, Composer.onWire, Composer.registerSplit,
+      Composer.proj₂, CQ.QDim]
+  all_goals simp [sum_fin4_complex]
+
+theorem bitRightCounitSuperoperator_eq_dephase :
+    bitRightCounitSuperoperator = bitDephaseSuperoperator := by
+  apply Superoperator.ext
+  apply CPMap.ext
+  ext ai bj
+  rcases ai with ⟨a, i⟩
+  rcases bj with ⟨b, j⟩
+  unfold bitRightCounitSuperoperator
+  rw [show Superoperator.tensorRightUnitor 2 =
+      Superoperator.ofEquivalence (Superoperator.tensorRightUnitorEquiv 2)
+    from rfl]
+  rw [Superoperator.choi_comp_ofEquivalence_left]
+  have h00 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 0)).1 =
+        false := by native_decide
+  have h01 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 1)).1 =
+        true := by native_decide
+  fin_cases a <;> fin_cases i <;> fin_cases b <;> fin_cases j
+  all_goals
+    simp only [Superoperator.cp_comp, CPMap.choi_comp_apply,
+      Superoperator.cp_tensor, bitCopySuperoperator,
+      Superoperator.cp_ofIsometry, CPMap.choi_tensor,
+      Matrix.reindex_apply, Matrix.submatrix_apply,
+      Matrix.kroneckerMap_apply, bitDephaseSuperoperator,
+      CPMap.choi_add, Matrix.add_apply, CPMap.choi_ofKraus,
+      Instrument.measure_branch_zero, Instrument.measure_branch_one]
+  all_goals
+    norm_num [CPMap.choiTensorEquiv, classicalCopyMatrix,
+      finProdFinEquiv, finOneEquiv, Equiv.prodPUnit,
+      Fin.divNat, Fin.modNat,
+      SigmaMon.ChoiSum.discardTwo, SigmaMon.ChoiSum.basisBra,
+      Superoperator.identity, CPMap.identity,
+      KrausFamily.choi, KrausFamily.choiTerm, KrausFamily.identity,
+      Matrix.one_apply, h00, h01,
+      Superoperator.tensorRightUnitorEquiv,
+      Composer.projector, Composer.onWire, Composer.registerSplit,
+      Composer.proj₂, CQ.QDim]
+  all_goals simp [sum_fin4_complex]
+
+/-- Both concrete physical-bit counit composites fail: each is dephasing,
+not identity. -/
+theorem concrete_bit_copy_discard_not_counital :
+    bitLeftCounitSuperoperator ≠ Superoperator.identity 2 ∧
+    bitRightCounitSuperoperator ≠ Superoperator.identity 2 := by
+  constructor
+  · rw [bitLeftCounitSuperoperator_eq_dephase]
+    exact bitDephaseSuperoperator_ne_identity
+  · rw [bitRightCounitSuperoperator_eq_dephase]
+    exact bitDephaseSuperoperator_ne_identity
+
+/-- The physical copy transported from the representable tensor presentation
+to the genuine coend Day tensor. -/
+noncomputable def physicalBitCopyDay :
+    Hom (representable 2)
+      (dayTensor (representable 2) (representable 2)) :=
+  Hom.comp (dayTensorRepresentableIso 2 2).inv bitCopy
+
+/-- Left counit composite for the concrete physical-bit copy. -/
+noncomputable def physicalBitLeftCounit :
+    Hom (representable 2) (representable 2) :=
+  Hom.comp (DayTensor.leftUnitor (representable 2))
+    (Hom.comp
+      (DayTensor.map bitDiscard (Hom.id (representable 2)))
+      physicalBitCopyDay)
+
+private theorem physicalBitCopyDay_app_identity :
+    physicalBitCopyDay.app 2 (Superoperator.identity 2) =
+      (dayTensor (representable 2) (representable 2)).act
+        ((DayCoend.intro (representable 2) (representable 2)).app
+          (Superoperator.identity 2) (Superoperator.identity 2))
+        bitCopySuperoperator := by
+  let e := dayTensorRepresentableIso 2 2
+  have hpres :=
+    ((dayTensorRepresentablePresentation 2 2).universal
+      (dayTensorPresentation
+        (representable 2) (representable 2)).object).apply_symm_apply
+      (dayTensorPresentation (representable 2) (representable 2)).intro
+  rw [(dayTensorRepresentablePresentation 2 2).universal_apply] at hpres
+  have hbase := congrArg
+    (fun b : Bilinear (representable 2) (representable 2)
+        (dayTensor (representable 2) (representable 2)) =>
+      b.app (Superoperator.identity 2) (Superoperator.identity 2)) hpres
+  dsimp only [Bilinear.postcomp] at hbase
+  change
+    (((dayTensorRepresentablePresentation 2 2).universal
+      (dayTensorPresentation
+        (representable 2) (representable 2)).object).symm
+      (dayTensorPresentation
+        (representable 2) (representable 2)).intro).app 4
+        (Superoperator.tensor (Superoperator.identity 2)
+          (Superoperator.identity 2)) =
+      (DayCoend.intro (representable 2) (representable 2)).app
+        (Superoperator.identity 2) (Superoperator.identity 2) at hbase
+  rw [Superoperator.tensor_identity] at hbase
+  change e.inv.app 4 (Superoperator.identity 4) =
+    (DayCoend.intro (representable 2) (representable 2)).app
+      (Superoperator.identity 2) (Superoperator.identity 2) at hbase
+  have hnat := e.inv.naturality
+    (Superoperator.identity 4) bitCopySuperoperator
+  simp only [representable_act, Superoperator.identity_comp] at hnat
+  change e.inv.app 2 bitCopySuperoperator =
+    (dayTensor (representable 2) (representable 2)).act
+      (e.inv.app 4 (Superoperator.identity 4)) bitCopySuperoperator at hnat
+  unfold physicalBitCopyDay bitCopy
+  change (dayTensorRepresentableIso 2 2).inv.app 2
+      ((yonedaMap bitCopySuperoperator).app 2
+        (Superoperator.identity 2)) = _
+  rw [yonedaMap_app, Superoperator.comp_identity]
+  rw [hnat, hbase]
+
+theorem physicalBitLeftCounit_app_identity :
+    physicalBitLeftCounit.app 2 (Superoperator.identity 2) =
+      bitLeftCounitSuperoperator := by
+  unfold physicalBitLeftCounit
+  change (DayTensor.leftUnitor (representable 2)).app 2
+      ((DayTensor.map bitDiscard
+        (Hom.id (representable 2))).app 2
+        (physicalBitCopyDay.app 2 (Superoperator.identity 2))) =
+    bitLeftCounitSuperoperator
+  rw [physicalBitCopyDay_app_identity]
+  rw [(DayTensor.map bitDiscard
+    (Hom.id (representable 2))).naturality]
+  have hmap := DayTensor.map_intro bitDiscard
+    (Hom.id (representable 2))
+    (Superoperator.identity 2) (Superoperator.identity 2)
+  rw [hmap]
+  have hdiscard :
+      bitDiscard.app 2 (Superoperator.identity 2) =
+        SigmaMon.ChoiSum.discardTwo := by
+    unfold bitDiscard
+    rw [yonedaMap_app, Superoperator.comp_identity]
+  have hid :
+      (Hom.id (representable 2)).app 2
+          (Superoperator.identity 2) =
+        Superoperator.identity 2 := by
+    rfl
+  rw [hdiscard, hid]
+  rw [(DayTensor.leftUnitor (representable 2)).naturality]
+  have hleft := DayTensor.leftUnitor_intro
+    (M := representable 2)
+    SigmaMon.ChoiSum.discardTwo
+    (Superoperator.identity 2)
+  rw [hleft]
+  unfold bitLeftCounitSuperoperator
+  simp only [representable_act, Superoperator.identity_comp]
+  exact (Superoperator.comp_assoc _ _ _).symm
+
+theorem physicalBitLeftCounit_eq_dephase :
+    physicalBitLeftCounit = yonedaMap bitDephaseSuperoperator := by
+  apply (yonedaEquiv (representable 2) 2).injective
+  change physicalBitLeftCounit.app 2 (Superoperator.identity 2) =
+    (yonedaMap bitDephaseSuperoperator).app 2
+      (Superoperator.identity 2)
+  rw [physicalBitLeftCounit_app_identity, yonedaMap_app,
+    Superoperator.comp_identity, bitLeftCounitSuperoperator_eq_dephase]
+
+/-- Exact F2 boundary: the stated copy/discard maps on `representable 2`
+violate the left counit equation in the genuine Day tensor. -/
+theorem physical_bit_copy_discard_not_left_counital :
+    physicalBitLeftCounit ≠ Hom.id (representable 2) := by
+  intro h
+  have happ := congrArg
+    (fun f : Hom (representable 2) (representable 2) =>
+      f.app 2 (Superoperator.identity 2)) h
+  rw [physicalBitLeftCounit_app_identity] at happ
+  change bitLeftCounitSuperoperator =
+    Superoperator.identity 2 at happ
+  rw [bitLeftCounitSuperoperator_eq_dephase] at happ
+  exact bitDephaseSuperoperator_ne_identity happ
+
+/-- Computational-basis dephasing is idempotent. -/
+theorem bitDephaseSuperoperator_idempotent :
+    Superoperator.comp bitDephaseSuperoperator bitDephaseSuperoperator =
+      bitDephaseSuperoperator := by
+  apply Superoperator.ext
+  apply CPMap.ext_apply
+  intro ρ
+  rw [Superoperator.cp_comp, CPMap.applyMat_comp]
+  have h00 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 0)).1 =
+        false := by native_decide
+  have h01 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 1)).1 =
+        true := by native_decide
+  ext a b
+  fin_cases a <;> fin_cases b
+  all_goals
+    simp [bitDephaseSuperoperator, CPMap.applyMat_add_map,
+      Instrument.measure_branch_zero, Instrument.measure_branch_one,
+      CPMap.applyMat_ofKraus, KrausFamily.applyMat,
+      Composer.projector, Matrix.mul_apply, Matrix.conjTranspose_apply,
+      Composer.onWire, Composer.registerSplit, Composer.proj₂, CQ.QDim,
+      h00, h01]
+
+/-- Maps into a classical bit are precisely the maps fixed by computational
+basis dephasing.  This separates unrestricted classical data from the
+physical qubit carrier `representable 2`. -/
+abbrev ClassicalBitCarrier (n : ℕ) := {x : Superoperator n 2 //
+  Superoperator.comp bitDephaseSuperoperator x = x}
+
+noncomputable instance (n : ℕ) : Zero (ClassicalBitCarrier n) :=
+  ⟨⟨0, by simp [Superoperator.comp_zero_right]⟩⟩
+
+/-- The inherited Choi summation on dephasing-fixed bit maps. -/
+noncomputable def classicalBitFiber (n : ℕ) : Fiber where
+  Carrier := ClassicalBitCarrier n
+  zero := 0
+  summation :=
+    { HasSum := fun f a =>
+        SigmaMon.ChoiSum.HasSum (fun i => (f i).1) a.1
+      unique := by
+        intro ι _ f a b ha hb
+        exact Subtype.ext (SigmaMon.ChoiSum.unique ha hb)
+      empty := by
+        convert (SigmaMon.ChoiSum.empty :
+          SigmaMon.ChoiSum.HasSum (fun i : Empty => nomatch i)
+            (0 : Superoperator n 2)) using 1
+        rfl
+      singleton := fun a => SigmaMon.ChoiSum.singleton a.1
+      remove_zero := by
+        intro ι _ f s a hzero
+        exact SigmaMon.ChoiSum.remove_zero
+          (fun i => (f i).1) s a.1
+          (fun i hi => congrArg Subtype.val (hzero i hi))
+      reindex := by
+        intro ι κ _ _ e f a
+        exact SigmaMon.ChoiSum.reindex e (fun i => (f i).1) a.1
+      flatten := by
+        classical
+        intro ι _ κ _ f a
+        constructor
+        · intro hflat
+          rcases (SigmaMon.superoperatorPartialCountableSum.flatten
+            (fun i j => (f i j).1) a.1).mp hflat with
+            ⟨g, hrows, hsum⟩
+          let G : ι → ClassicalBitCarrier n := fun i =>
+            { val := g i
+              property := by
+                have hc := SigmaMon.ChoiSum.comp_left
+                  bitDephaseSuperoperator (hrows i)
+                have hc' : SigmaMon.ChoiSum.HasSum
+                    (fun j => (f i j).1)
+                    (Superoperator.comp bitDephaseSuperoperator (g i)) := by
+                  convert hc using 1
+                  funext j
+                  exact (f i j).property.symm
+                exact SigmaMon.ChoiSum.unique hc' (hrows i) }
+          exact ⟨G, fun i => hrows i, hsum⟩
+        · rintro ⟨g, hrows, hsum⟩
+          exact (SigmaMon.superoperatorPartialCountableSum.flatten
+            (fun i j => (f i j).1) a.1).mpr
+              ⟨fun i => (g i).1, hrows, hsum⟩ }
+
+/-- Module of classical bit maps.  Action is precomposition, and fixedness is
+closed under all partial sums required by `Module`. -/
+noncomputable def classicalBitModule : Module where
+  obj := classicalBitFiber
+  act := fun x f => ⟨Superoperator.comp x.1 f, by
+    calc
+      Superoperator.comp bitDephaseSuperoperator
+          (Superoperator.comp x.1 f) =
+        Superoperator.comp
+          (Superoperator.comp bitDephaseSuperoperator x.1) f :=
+            Superoperator.comp_assoc _ _ _
+      _ = Superoperator.comp x.1 f :=
+        congrArg (fun z => Superoperator.comp z f) x.2⟩
+  act_zero_element := by
+    intro m n f
+    apply Subtype.ext
+    exact Superoperator.comp_zero_left f
+  act_zero_map := by
+    intro m n x
+    apply Subtype.ext
+    exact Superoperator.comp_zero_right x.1
+  act_id := by
+    intro n x
+    apply Subtype.ext
+    exact Superoperator.comp_identity x.1
+  act_comp := by
+    intro l m n x f g
+    apply Subtype.ext
+    exact (Superoperator.comp_assoc x.1 f g).symm
+  act_sum_element := by
+    intro ι _ m n x s f h
+    exact SigmaMon.ChoiSum.comp_right f h
+  act_sum_map := by
+    intro ι _ m n x f s h
+    exact SigmaMon.ChoiSum.comp_left x.1 h
+  act_sum_from_one := by
+    intro ι _ m x s f h
+    change SigmaMon.ChoiSum.HasSum (fun i => (x i).1) s.1 at h
+    obtain ⟨z, hz⟩ := (representable 2).act_sum_from_one f h
+    have hz' : SigmaMon.ChoiSum.HasSum
+        (fun i => Superoperator.comp bitDephaseSuperoperator
+          (Superoperator.comp (x i).1 (f i)))
+        (Superoperator.comp bitDephaseSuperoperator z) :=
+      SigmaMon.ChoiSum.comp_left bitDephaseSuperoperator hz
+    have heach : (fun i => Superoperator.comp bitDephaseSuperoperator
+          (Superoperator.comp (x i).1 (f i))) =
+        (fun i => Superoperator.comp (x i).1 (f i)) := by
+      funext i
+      calc
+        Superoperator.comp bitDephaseSuperoperator
+            (Superoperator.comp (x i).1 (f i)) =
+          Superoperator.comp
+            (Superoperator.comp bitDephaseSuperoperator (x i).1) (f i) :=
+              Superoperator.comp_assoc _ _ _
+        _ = Superoperator.comp (x i).1 (f i) :=
+          congrArg (fun z => Superoperator.comp z (f i)) (x i).2
+    have hfix : Superoperator.comp bitDephaseSuperoperator z = z :=
+      SigmaMon.ChoiSum.unique (heach ▸ hz') hz
+    refine ⟨⟨z, hfix⟩, ?_⟩
+    change SigmaMon.ChoiSum.HasSum
+      (fun i => Superoperator.comp (x i).1 (f i)) z
+    exact hz
+  act_sum_tensor_from_one := by
+    intro ι _ m A x s f h
+    change SigmaMon.ChoiSum.HasSum (fun i => (x i).1) s.1 at h
+    obtain ⟨z, hz⟩ := (representable 2).act_sum_tensor_from_one f h
+    have hz' : SigmaMon.ChoiSum.HasSum
+        (fun i => Superoperator.comp bitDephaseSuperoperator
+          (Superoperator.comp (x i).1
+            (Superoperator.tensor (f i) (Superoperator.identity A))))
+        (Superoperator.comp bitDephaseSuperoperator z) :=
+      SigmaMon.ChoiSum.comp_left bitDephaseSuperoperator hz
+    have heach : (fun i => Superoperator.comp bitDephaseSuperoperator
+          (Superoperator.comp (x i).1
+            (Superoperator.tensor (f i) (Superoperator.identity A)))) =
+        (fun i => Superoperator.comp (x i).1
+          (Superoperator.tensor (f i) (Superoperator.identity A))) := by
+      funext i
+      calc
+        Superoperator.comp bitDephaseSuperoperator
+            (Superoperator.comp (x i).1 _) =
+          Superoperator.comp
+            (Superoperator.comp bitDephaseSuperoperator (x i).1) _ :=
+              Superoperator.comp_assoc _ _ _
+        _ = Superoperator.comp (x i).1 _ :=
+          congrArg (fun z => Superoperator.comp z
+            (Superoperator.tensor (f i) (Superoperator.identity A))) (x i).2
+    have hfix : Superoperator.comp bitDephaseSuperoperator z = z :=
+      SigmaMon.ChoiSum.unique (heach ▸ hz') hz
+    refine ⟨⟨z, hfix⟩, ?_⟩
+    change SigmaMon.ChoiSum.HasSum
+      (fun i => Superoperator.comp (x i).1
+        (Superoperator.tensor (f i) (Superoperator.identity A))) z
+    exact hz
+
+/-- Forget that a bit map is dephasing-fixed. -/
+noncomputable def classicalBitInclusion :
+    Hom classicalBitModule (representable 2) where
+  app := fun _ x => x.1
+  map_zero := fun _ => rfl
+  map_sum := fun h => h
+  naturality := fun _ _ => rfl
+
+/-- Project a physical bit map to its computational-basis classical part. -/
+noncomputable def bitClassicalize :
+    Hom (representable 2) classicalBitModule where
+  app := fun _ x =>
+    ⟨Superoperator.comp bitDephaseSuperoperator x, by
+      calc
+        Superoperator.comp bitDephaseSuperoperator
+            (Superoperator.comp bitDephaseSuperoperator x) =
+          Superoperator.comp
+            (Superoperator.comp bitDephaseSuperoperator
+              bitDephaseSuperoperator) x :=
+                Superoperator.comp_assoc _ _ _
+        _ = Superoperator.comp bitDephaseSuperoperator x :=
+          congrArg (fun z => Superoperator.comp z x)
+            bitDephaseSuperoperator_idempotent⟩
+  map_zero := by
+    intro n
+    apply Subtype.ext
+    exact Superoperator.comp_zero_right _
+  map_sum := by
+    intro ι _ n f x h
+    exact SigmaMon.ChoiSum.comp_left bitDephaseSuperoperator h
+  naturality := by
+    intro m n x f
+    apply Subtype.ext
+    exact Superoperator.comp_assoc _ _ _
+
+/-- The generic dephased classical bit at fiber two. -/
+noncomputable def classicalBitGeneric :
+    (classicalBitModule.obj 2).Carrier :=
+  ⟨bitDephaseSuperoperator, bitDephaseSuperoperator_idempotent⟩
+
+/-- Weakening for the dephasing-fixed classical-bit module. -/
+noncomputable def classicalBitWeakening :
+    Hom classicalBitModule dayTensorUnit where
+  app := fun _ x => Superoperator.comp SigmaMon.ChoiSum.discardTwo x.1
+  map_zero := by
+    intro n
+    exact Superoperator.comp_zero_right _
+  map_sum := by
+    intro ι _ n f s h
+    exact SigmaMon.ChoiSum.comp_left SigmaMon.ChoiSum.discardTwo h
+  naturality := by
+    intro m n x f
+    exact Superoperator.comp_assoc _ _ _
+
+/-- Contraction for dephasing-fixed classical bits.  A single coend generator
+avoids an inadmissible branch-dependent Day sum. -/
+noncomputable def classicalBitContraction :
+    Hom classicalBitModule
+      (dayTensor classicalBitModule classicalBitModule) where
+  app := fun _ x =>
+    (dayTensor classicalBitModule classicalBitModule).act
+      ((DayCoend.intro classicalBitModule classicalBitModule).app
+        classicalBitGeneric classicalBitGeneric)
+      (Superoperator.comp bitCopySuperoperator x.1)
+  map_zero := by
+    intro n
+    change
+      (dayTensor classicalBitModule classicalBitModule).act
+        ((DayCoend.intro classicalBitModule classicalBitModule).app
+          classicalBitGeneric classicalBitGeneric)
+        (Superoperator.comp bitCopySuperoperator
+          (0 : Superoperator n 2)) = 0
+    rw [Superoperator.comp_zero_right,
+      (dayTensor classicalBitModule classicalBitModule).act_zero_map]
+  map_sum := by
+    intro ι _ n f s h
+    apply (dayTensor classicalBitModule classicalBitModule).act_sum_map
+    exact SigmaMon.ChoiSum.comp_left bitCopySuperoperator h
+  naturality := by
+    intro m n x f
+    rw [(dayTensor classicalBitModule classicalBitModule).act_comp]
+    congr 1
+    exact Superoperator.comp_assoc _ _ _
+
 /-- Bit preparation from a Boolean literal. -/
 noncomputable def bitPrepare (b : Bool) : Superoperator 1 2 :=
   if b then SigmaMon.ChoiSum.isometricBasisPrep 1
@@ -129,8 +672,9 @@ structure PresheafFragmentModel where
   ty : ∀ {A}, Ty.SemanticFragment A → Module
   /-- Classical-bit discard. -/
   bitDiscard : Hom (representable 2) dayTensorUnit
-  /-- Classical-bit copy into the representable tensor square. -/
-  bitCopy : Hom (representable 2) (dayTensorRepresentable 2 2)
+  /-- Classical-bit copy into the actual coend Day tensor square. -/
+  bitCopy :
+    Hom (representable 2) (dayTensor (representable 2) (representable 2))
   /-- Boolean constants. -/
   bitLit : Bool → Hom dayTensorUnit (representable 2)
   /-- Unit point. -/
@@ -152,7 +696,7 @@ structure PresheafFragmentModel where
 noncomputable def routeAFragmentModel : PresheafFragmentModel where
   ty := fun {A} _ => fragmentModule A
   bitDiscard := bitDiscard
-  bitCopy := bitCopy
+  bitCopy := Hom.comp (dayTensorRepresentableIso 2 2).inv bitCopy
   bitLit := bitLitHom
   unitIntro := yonedaMap (Superoperator.identity 1)
   primMap := primYoneda
@@ -189,7 +733,8 @@ theorem routeA_skips_ordered_bang_routes :
       ∃ M : Module, routeAFragmentModel.ty h = M) ∧
     (∃ δ : Hom (representable 2) dayTensorUnit,
       δ = routeAFragmentModel.bitDiscard) ∧
-    (∃ γ : Hom (representable 2) (dayTensorRepresentable 2 2),
+    (∃ γ : Hom (representable 2)
+        (dayTensor (representable 2) (representable 2)),
       γ = routeAFragmentModel.bitCopy) :=
   ⟨fun h => ⟨routeAFragmentModel.ty h, rfl⟩,
     ⟨routeAFragmentModel.bitDiscard, rfl⟩,

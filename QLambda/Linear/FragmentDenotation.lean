@@ -24,55 +24,55 @@ open Domain.Presheaf
 
 /-- Type-valued fragment typing certificate (canonical derivation shape). -/
 inductive FragCert : List Ty → List (Option Ty) → Term → Ty → Type where
-  | unit {Γ Δ} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ) :
+  | unit {Γ Δ} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ) :
       AllNone Δ → FragCert Γ Δ .unit .unit
-  | bitLit {Γ Δ} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ)
+  | bitLit {Γ Δ} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ)
       (b : Bool) : AllNone Δ → FragCert Γ Δ (.bitLit b) .bit
-  | prim {Γ Δ} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ)
+  | prim {Γ Δ} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ)
       (p : Prim) : AllNone Δ → FragCert Γ Δ (.prim p) (primTy p)
-  | varU {Γ Δ n A} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ) :
+  | varU {Γ Δ n A} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ) :
       Lookup Γ n A → Ty.Duplicable A → AllNone Δ → Ty.SemanticFragment A →
       FragCert Γ Δ (.var .unres n) A
-  | varL {Γ Δ n A} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ) :
+  | varL {Γ Δ n A} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ) :
       Lookup Δ n (some A) → OnlySomeAt Δ n → Ty.SemanticFragment A →
       FragCert Γ Δ (.var .lin n) A
-  | lamU {Γ Δ A B M} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ) :
+  | lamU {Γ Δ A B M} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ) :
       Ty.Admissible A → Ty.Duplicable A → AllNone Δ →
       Ty.SemanticFragment (.arrow .unres A B) →
       FragCert (A :: Γ) Δ M B →
       FragCert Γ Δ (.lam .unres A M) (.arrow .unres A B)
-  | lamL {Γ Δ A B M} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ) :
+  | lamL {Γ Δ A B M} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ) :
       Ty.Admissible A → Ty.FirstOrder A → Ty.SemanticFragment B →
       FragCert Γ (some A :: Δ) M B →
       FragCert Γ Δ (.lam .lin A M) (.arrow .lin A B)
-  | appL {Γ Δ Δ₁ Δ₂ A B F X} (hΓ : CtxUAllFragment Γ)
+  | appL {Γ Δ Δ₁ Δ₂ A B F X} (hΓ : CtxUAllBit Γ)
       (hΔ : CtxLAllSomeFragment Δ) :
       OSplit Δ Δ₁ Δ₂ → Ty.FirstOrder A → Ty.SemanticFragment B →
       FragCert Γ Δ₁ F (.arrow .lin A B) → FragCert Γ Δ₂ X A →
       FragCert Γ Δ (.app F X) B
-  | appU {Γ Δ ΔF ΔX B F X} (hΓ : CtxUAllFragment Γ)
+  | appU {Γ Δ ΔF ΔX B F X} (hΓ : CtxUAllBit Γ)
       (hΔ : CtxLAllSomeFragment Δ) :
       OSplit Δ ΔF ΔX → AllNone ΔX → Ty.SemanticFragment B →
       FragCert Γ ΔF F (.arrow .unres .bit B) → FragCert Γ ΔX X .bit →
       FragCert Γ Δ (.app F X) B
-  | pair {Γ Δ Δ₁ Δ₂ A B M N} (hΓ : CtxUAllFragment Γ)
+  | pair {Γ Δ Δ₁ Δ₂ A B M N} (hΓ : CtxUAllBit Γ)
       (hΔ : CtxLAllSomeFragment Δ) :
       OSplit Δ Δ₁ Δ₂ → Ty.FirstOrder A → Ty.FirstOrder B →
       FragCert Γ Δ₁ M A → FragCert Γ Δ₂ N B →
       FragCert Γ Δ (.pair M N) (.tensor A B)
-  | unpair {Γ Δ Δ₁ Δ₂ A B C M K} (hΓ : CtxUAllFragment Γ)
+  | unpair {Γ Δ Δ₁ Δ₂ A B C M K} (hΓ : CtxUAllBit Γ)
       (hΔ : CtxLAllSomeFragment Δ) :
       OSplit Δ Δ₁ Δ₂ → Ty.FirstOrder A → Ty.FirstOrder B →
       Ty.SemanticFragment C →
       FragCert Γ Δ₁ M (.tensor A B) →
       FragCert Γ Δ₂ K (.arrow .lin A (.arrow .lin B C)) →
       FragCert Γ Δ (.unpair M K) C
-  | ite {Γ Δ Δ₁ Δ₂ A B T E} (hΓ : CtxUAllFragment Γ)
+  | ite {Γ Δ Δ₁ Δ₂ A B T E} (hΓ : CtxUAllBit Γ)
       (hΔ : CtxLAllSomeFragment Δ) :
       OSplit Δ Δ₁ Δ₂ → Ty.SemanticFragment A →
       FragCert Γ Δ₁ B .bit → FragCert Γ Δ₂ T A → FragCert Γ Δ₂ E A →
       FragCert Γ Δ (.ite B T E) A
-  | measure {Γ Δ Δ₁ Δ₂ A Q K} (hΓ : CtxUAllFragment Γ)
+  | measure {Γ Δ Δ₁ Δ₂ A Q K} (hΓ : CtxUAllBit Γ)
       (hΔ : CtxLAllSomeFragment Δ) :
       OSplit Δ Δ₁ Δ₂ → Ty.SemanticFragment A →
       FragCert Γ Δ₁ Q .qubit →
@@ -135,7 +135,7 @@ theorem term_fragment {Γ Δ M A} : FragCert Γ Δ M A → Term.SemanticFragment
 
 /-- Context types in unrestricted and linear scopes lie in the fragment. -/
 theorem ctx_fragment {Γ Δ M A} (c : FragCert Γ Δ M A) :
-    CtxUAllFragment Γ ∧ CtxLAllSomeFragment Δ := by
+    CtxUAllBit Γ ∧ CtxLAllSomeFragment Δ := by
   induction c with
   | unit hΓ hΔ _ => exact ⟨hΓ, hΔ⟩
   | bitLit hΓ hΔ _ _ => exact ⟨hΓ, hΔ⟩
@@ -189,57 +189,57 @@ end FragmentBinders
 
 /-- Propositional fragment judgment (mirror of `FragCert`). -/
 inductive FragmentJudgment : List Ty → List (Option Ty) → Term → Ty → Prop where
-  | unit {Γ Δ} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ) :
+  | unit {Γ Δ} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ) :
       AllNone Δ → FragmentJudgment Γ Δ .unit .unit
-  | bitLit {Γ Δ} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ)
+  | bitLit {Γ Δ} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ)
       (b : Bool) : AllNone Δ → FragmentJudgment Γ Δ (.bitLit b) .bit
-  | prim {Γ Δ} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ)
+  | prim {Γ Δ} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ)
       (p : Prim) : AllNone Δ → FragmentJudgment Γ Δ (.prim p) (primTy p)
-  | varU {Γ Δ n A} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ) :
+  | varU {Γ Δ n A} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ) :
       Lookup Γ n A → Ty.Duplicable A → AllNone Δ → Ty.SemanticFragment A →
       FragmentJudgment Γ Δ (.var .unres n) A
-  | varL {Γ Δ n A} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ) :
+  | varL {Γ Δ n A} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ) :
       Lookup Δ n (some A) → OnlySomeAt Δ n → Ty.SemanticFragment A →
       FragmentJudgment Γ Δ (.var .lin n) A
-  | lamU {Γ Δ A B M} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ) :
+  | lamU {Γ Δ A B M} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ) :
       Ty.Admissible A → Ty.Duplicable A → AllNone Δ →
       Ty.SemanticFragment (.arrow .unres A B) →
       FragmentJudgment (A :: Γ) Δ M B →
       FragmentJudgment Γ Δ (.lam .unres A M) (.arrow .unres A B)
-  | lamL {Γ Δ A B M} (hΓ : CtxUAllFragment Γ) (hΔ : CtxLAllSomeFragment Δ) :
+  | lamL {Γ Δ A B M} (hΓ : CtxUAllBit Γ) (hΔ : CtxLAllSomeFragment Δ) :
       Ty.Admissible A → Ty.FirstOrder A → Ty.SemanticFragment B →
       FragmentJudgment Γ (some A :: Δ) M B →
       FragmentJudgment Γ Δ (.lam .lin A M) (.arrow .lin A B)
-  | appL {Γ Δ Δ₁ Δ₂ A B F X} (hΓ : CtxUAllFragment Γ)
+  | appL {Γ Δ Δ₁ Δ₂ A B F X} (hΓ : CtxUAllBit Γ)
       (hΔ : CtxLAllSomeFragment Δ) :
       OSplit Δ Δ₁ Δ₂ → Ty.FirstOrder A → Ty.SemanticFragment B →
       FragmentJudgment Γ Δ₁ F (.arrow .lin A B) → FragmentJudgment Γ Δ₂ X A →
       FragmentJudgment Γ Δ (.app F X) B
-  | appU {Γ Δ ΔF ΔX B F X} (hΓ : CtxUAllFragment Γ)
+  | appU {Γ Δ ΔF ΔX B F X} (hΓ : CtxUAllBit Γ)
       (hΔ : CtxLAllSomeFragment Δ) :
       OSplit Δ ΔF ΔX → AllNone ΔX → Ty.SemanticFragment B →
       FragmentJudgment Γ ΔF F (.arrow .unres .bit B) →
       FragmentJudgment Γ ΔX X .bit →
       FragmentJudgment Γ Δ (.app F X) B
-  | pair {Γ Δ Δ₁ Δ₂ A B M N} (hΓ : CtxUAllFragment Γ)
+  | pair {Γ Δ Δ₁ Δ₂ A B M N} (hΓ : CtxUAllBit Γ)
       (hΔ : CtxLAllSomeFragment Δ) :
       OSplit Δ Δ₁ Δ₂ → Ty.FirstOrder A → Ty.FirstOrder B →
       FragmentJudgment Γ Δ₁ M A → FragmentJudgment Γ Δ₂ N B →
       FragmentJudgment Γ Δ (.pair M N) (.tensor A B)
-  | unpair {Γ Δ Δ₁ Δ₂ A B C M K} (hΓ : CtxUAllFragment Γ)
+  | unpair {Γ Δ Δ₁ Δ₂ A B C M K} (hΓ : CtxUAllBit Γ)
       (hΔ : CtxLAllSomeFragment Δ) :
       OSplit Δ Δ₁ Δ₂ → Ty.FirstOrder A → Ty.FirstOrder B →
       Ty.SemanticFragment C →
       FragmentJudgment Γ Δ₁ M (.tensor A B) →
       FragmentJudgment Γ Δ₂ K (.arrow .lin A (.arrow .lin B C)) →
       FragmentJudgment Γ Δ (.unpair M K) C
-  | ite {Γ Δ Δ₁ Δ₂ A B T E} (hΓ : CtxUAllFragment Γ)
+  | ite {Γ Δ Δ₁ Δ₂ A B T E} (hΓ : CtxUAllBit Γ)
       (hΔ : CtxLAllSomeFragment Δ) :
       OSplit Δ Δ₁ Δ₂ → Ty.SemanticFragment A →
       FragmentJudgment Γ Δ₁ B .bit → FragmentJudgment Γ Δ₂ T A →
       FragmentJudgment Γ Δ₂ E A →
       FragmentJudgment Γ Δ (.ite B T E) A
-  | measure {Γ Δ Δ₁ Δ₂ A Q K} (hΓ : CtxUAllFragment Γ)
+  | measure {Γ Δ Δ₁ Δ₂ A Q K} (hΓ : CtxUAllBit Γ)
       (hΔ : CtxLAllSomeFragment Δ) :
       OSplit Δ Δ₁ Δ₂ → Ty.SemanticFragment A →
       FragmentJudgment Γ Δ₁ Q .qubit →
@@ -316,15 +316,15 @@ abbrev Closed (M : Term) (A : Ty) := FragCert [] [] M A
 
 /-- Closed unit certificate. -/
 def closed_unit_cert : Closed .unit .unit :=
-  .unit CtxUAllFragment.nil CtxLAllSomeFragment.nil trivial
+  .unit CtxUAllBit.nil CtxLAllSomeFragment.nil trivial
 
 /-- Closed bit-literal certificate. -/
 def closed_bitLit_cert (b : Bool) : Closed (.bitLit b) .bit :=
-  .bitLit CtxUAllFragment.nil CtxLAllSomeFragment.nil b trivial
+  .bitLit CtxUAllBit.nil CtxLAllSomeFragment.nil b trivial
 
 /-- Closed primitive certificate. -/
 def closed_prim_cert (p : Prim) : Closed (.prim p) (primTy p) :=
-  .prim CtxUAllFragment.nil CtxLAllSomeFragment.nil p trivial
+  .prim CtxUAllBit.nil CtxLAllSomeFragment.nil p trivial
 
 theorem closed_unit_cert_unique (c : Closed .unit .unit) :
     c = closed_unit_cert := by
@@ -344,15 +344,15 @@ theorem closed_prim_cert_unique {p : Prim} (c : Closed (.prim p) (primTy p)) :
 /-- Closed unit/bit/prim judgments inhabit `FragmentJudgment`. -/
 theorem fragmentJudgment_closed_unit :
     FragmentJudgment [] [] .unit .unit :=
-  .unit CtxUAllFragment.nil CtxLAllSomeFragment.nil trivial
+  .unit CtxUAllBit.nil CtxLAllSomeFragment.nil trivial
 
 theorem fragmentJudgment_closed_bitLit (b : Bool) :
     FragmentJudgment [] [] (.bitLit b) .bit :=
-  .bitLit CtxUAllFragment.nil CtxLAllSomeFragment.nil b trivial
+  .bitLit CtxUAllBit.nil CtxLAllSomeFragment.nil b trivial
 
 theorem fragmentJudgment_closed_prim (p : Prim) :
     FragmentJudgment [] [] (.prim p) (primTy p) :=
-  .prim CtxUAllFragment.nil CtxLAllSomeFragment.nil p trivial
+  .prim CtxUAllBit.nil CtxLAllSomeFragment.nil p trivial
 
 /-- Denotation of closed unit certificates. -/
 noncomputable def denoteUnit
