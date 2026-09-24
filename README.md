@@ -83,28 +83,26 @@ constructed.  L8 instead publishes the ambient-CP replacement
 (terminal `day_bang_l8_resolved_by_ambientCP_replacement`).  An
 all-dimensional TNI cofree bang, general Day closure on based modules, a
 premise-free `presheafQuantumLNL`, and full-language adequacy remain
-objectives (Track L waits on a bang rebuilt in the replacement).  The **minimum fragment** (first-order data, linear arrows with
-first-order domain, unrestricted bit binders, primitives, measurement; no
-`mu`/`fix`) has a Route A `PresheafFragmentModel`, compositional
-`FragCert.denote` via controlled `iteElim`
-(`routeAFragmentDenotationModel`), classical-bit comonoid contexts with Day
-closed β/η, closed FO `ite` Step soundness, N-bounded Born↔Instrument
-adequacy (including a measured `new0` bound), and source–quotation/elaboration
-packages with quote `FragCert`s and CQ compile/reflect — see
+objectives (Track L waits on an AmbientCP comonoid).  The **minimum fragment**
+(first-order data, linear arrows with first-order domain, unrestricted bit
+binders, primitives, measurement; no `mu`/`fix`) has a Route A
+`PresheafFragmentModel`, compositional `FragCert.denote` via controlled
+`iteElim`, classical-bit comonoid contexts with Day/FO closed β/η, closed FO
+`ite` and closed linear identity β, Step congruence packaging, measured
+`new0` Born adequacy (`FragmentMeasuredSimulation`), and Hom-side quote
+spines (`quoteSkipSpine` / `quoteGateSpine`) — see
 `QLambda/Linear/SemanticFragment.lean`, `FragmentModel.lean`,
 `FragmentDenotation.lean`, `FragmentIte.lean`, `FragmentContext.lean`,
 `FragmentAdequacy.lean`, `FragmentCoherence.lean`, `FragmentRuntimeN.lean`,
 `FragmentSourceCircuitN.lean`.  The proposed copy/discard on physical
 `representable 2` is formally not counital; `classicalBitModule` supplies
-the unrestricted carrier with a checked Day comonoid.  Open-term lam/app
-β equalities and a `FragCert.denote`↔`CQ.Sem` bridge remain Track F lemmas.
-Track L (`presheafQuantumLNL`, recursion, full adequacy/abstraction) is
-deferred on the Day-bang architecture boundary
-(`day_bang_architecture_boundary` / `day_bang_l8_resolved_by_ambientCP_replacement`):
-raw `BangSplitEffectAdmissible 2` fails; the transfer-witness implication is
-proved; L8 selects ambient CP as the named replacement rather than a TNI
-witness.  This release does not claim full abstraction or unrestricted
-higher-order adequacy.
+the unrestricted carrier with a checked Day comonoid.  Unrestricted identity
+β, general subst, full Step soundness, and a `FragCert.denote`↔`CQ.Sem`
+interpret functor remain Track F lemmas.  Track L is deferred on L9 glue:
+relative AmbientCP admissibility for `A ≤ 1` and a degree-row gate at 2 are
+checked (`day_bang_l9_ambientCP_bang_admissible`); `AmbientCPComonoid` and
+glued `BangComultAmbientCPAdmissible 2` remain open.  This release does not
+claim full abstraction or unrestricted higher-order adequacy.
 `docs/NOVELTY_AUDIT.md` records the distinction between published mathematics
 and new Lean proofs.
 

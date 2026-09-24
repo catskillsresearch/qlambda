@@ -14,6 +14,10 @@ import QLambda.Linear.Elaboration
 Weighted source/runtime simulation indexed by live-qubit bound `q ≤ N`.
 Connects runtime `measureProbability`, denotational measurement branches,
 and closed fragment observations under `UsesAtMostQubits N`.
+
+F5–F6 register-history identification: `FragmentMeasuredSimulation`
+packages a closed `measure (app (prim new0) unit) K` certificate, its
+`measureElim` spine, and `|0⟩` Born masses matching Instrument traces.
 -/
 
 namespace QLambda.Linear
@@ -123,21 +127,226 @@ theorem measureProbability_eq_instrument_branch_trace
                 ((Instrument.measure (0 : Fin 1)).branch 0) ρ.mat)).re
       rw [Instrument.measure_branch_zero, CPMap.applyMat_ofKraus]
 
-/-- Single-qubit `measure (prim new0) K` is 1-bounded whenever `K` is. -/
+/-- Single-qubit `measure (app (prim new0) unit) K` is 1-bounded whenever `K` is. -/
 theorem usesAtMost_measure_new0 (N : Nat) (K : Term)
     (hN : 1 ≤ N) (hK : UsesAtMostQubits N K) :
-    UsesAtMostQubits N (.measure (.prim .new0) K) :=
-  ⟨Nat.le_trans (Nat.le_refl 1) hN, hK⟩
+    UsesAtMostQubits N (.measure (.app (.prim .new0) .unit) K) :=
+  ⟨⟨Nat.le_trans (Nat.le_refl 1) hN, trivial⟩, hK⟩
 
-/-- Concrete 1-bounded measured program: measure a fresh qubit, discard
-continuation as a unit lambda (syntactic bound only). -/
+/-- Measurement continuation that returns the post-measurement qubit
+(linear identity; unrestricted bit is weakened). -/
 def measureNew0Cont : Term :=
-  .lam .unres .bit (.lam .lin .qubit .unit)
+  .lam .unres .bit (.lam .lin .qubit (.var .lin 0))
+
+/-- Closed measured program: allocate `|0⟩`, measure, return the retained qubit. -/
+def measureNew0Program : Term :=
+  .measure (.app (.prim .new0) .unit) measureNew0Cont
 
 theorem usesAtMost_measure_new0_cont :
-    UsesAtMostQubits 1 (.measure (.prim .new0) measureNew0Cont) :=
+    UsesAtMostQubits 1 measureNew0Program :=
   usesAtMost_measure_new0 1 measureNew0Cont (Nat.le_refl 1)
     (by simp [measureNew0Cont, UsesAtMostQubits])
+
+private theorem measure_bit_admissible : Ty.Admissible .bit := by decide
+private theorem measure_qubit_admissible : Ty.Admissible .qubit := by decide
+private theorem measure_bit_duplicable : Ty.Duplicable .bit := by decide
+
+private theorem measure_ctxU_bit : CtxUAllBit [.bit] :=
+  CtxUAllBit.cons CtxUAllBit.nil
+
+private theorem measure_ctxL_qubit :
+    CtxLAllSomeFragment [some (.qubit : Ty)] :=
+  CtxLAllSomeFragment.cons_some Ty.SemanticFragment.qubit
+    CtxLAllSomeFragment.nil
+
+/-- Closed certificate for `app (prim new0) unit`. -/
+noncomputable def fragCert_app_new0_unit :
+    FragCert.Closed (.app (.prim .new0) .unit) .qubit :=
+  .appL CtxUAllBit.nil CtxLAllSomeFragment.nil OSplit.nil
+    Ty.FirstOrder.unit Ty.SemanticFragment.qubit
+    (FragCert.closed_prim_cert .new0) FragCert.closed_unit_cert
+
+/-- Linear body `varL 0` of the measure continuation. -/
+noncomputable def fragCert_measure_new0_varL :
+    FragCert [.bit] [some .qubit] (.var .lin 0) .qubit :=
+  .varL measure_ctxU_bit measure_ctxL_qubit Lookup.zero
+    (by simp [OnlySomeAt, AllNone]) Ty.SemanticFragment.qubit
+
+/-- Inner linear abstraction of `measureNew0Cont`. -/
+noncomputable def fragCert_measure_new0_lamL :
+    FragCert [.bit] []
+      (.lam .lin .qubit (.var .lin 0))
+      (.arrow .lin .qubit .qubit) :=
+  .lamL measure_ctxU_bit CtxLAllSomeFragment.nil measure_qubit_admissible
+    Ty.FirstOrder.qubit Ty.SemanticFragment.qubit fragCert_measure_new0_varL
+
+/-- Closed certificate for the measure continuation. -/
+noncomputable def fragCert_measure_new0_cont :
+    FragCert.Closed measureNew0Cont
+      (.arrow .unres .bit (.arrow .lin .qubit .qubit)) :=
+  .lamU CtxUAllBit.nil CtxLAllSomeFragment.nil measure_bit_admissible
+    measure_bit_duplicable trivial
+    (.arrowUnresBit (.arrowLin Ty.FirstOrder.qubit Ty.SemanticFragment.qubit))
+    fragCert_measure_new0_lamL
+
+/-- Closed `FragCert` for `measureNew0Program`. -/
+noncomputable def closed_measure_new0_cert :
+    FragCert.Closed measureNew0Program .qubit :=
+  .measure CtxUAllBit.nil CtxLAllSomeFragment.nil OSplit.nil
+    Ty.SemanticFragment.qubit
+    fragCert_app_new0_unit fragCert_measure_new0_cont
+
+/-- Denotation of the closed measured program expands through `measureElim`. -/
+theorem denote_closed_measure_new0 :
+    FragCert.denote closed_measure_new0_cert =
+      Hom.comp (FragCert.measureElim _)
+        (Hom.comp
+          (DayTensor.map
+            (FragCert.denote fragCert_app_new0_unit)
+            (FragCert.denote fragCert_measure_new0_cont))
+          (FragmentContext.combinedOSplit CtxUAllBit.nil OSplit.nil)) :=
+  FragCert.denote_measure_eq CtxUAllBit.nil CtxLAllSomeFragment.nil OSplit.nil
+    Ty.SemanticFragment.qubit fragCert_app_new0_unit fragCert_measure_new0_cont
+
+/-- Allocation leaf expands through FO Day eval of `prim new0` on unit. -/
+theorem denote_app_new0_unit :
+    FragCert.denote fragCert_app_new0_unit =
+      Hom.comp
+        (FragmentContext.evalFragmentFirstOrder Ty.FirstOrder.unit _)
+        (Hom.comp
+          (DayTensor.map
+            (FragCert.denote (FragCert.closed_prim_cert .new0))
+            (FragCert.denote FragCert.closed_unit_cert))
+          (FragmentContext.combinedOSplit CtxUAllBit.nil OSplit.nil)) :=
+  FragCert.denote_appL_eq CtxUAllBit.nil CtxLAllSomeFragment.nil OSplit.nil
+    Ty.FirstOrder.unit Ty.SemanticFragment.qubit
+    (FragCert.closed_prim_cert .new0) FragCert.closed_unit_cert
+
+/-- `Prim.new0` Kraus presentation is exactly `|0⟩` allocation. -/
+theorem prim_new0_kraus_eq_ketZero :
+    Prim.kraus .new0 = [Prim.ketZero] :=
+  rfl
+
+/-- `|0⟩` is an isometry `ℂ → ℂ²`. -/
+theorem ketZero_isometry :
+    Matrix.conjTranspose Prim.ketZero * Prim.ketZero =
+      (1 : Matrix (Fin 1) (Fin 1) ℂ) := by
+  ext i j
+  fin_cases i; fin_cases j
+  simp [Prim.ketZero, Matrix.mul_apply, Matrix.conjTranspose_apply]
+
+/-- Unit density on the zero-qubit register (scalar `1`). -/
+noncomputable def unitRegister0 : Runtime.RegisterState 0 where
+  mat := 1
+  posSemidef := Matrix.PosSemidef.one
+  trace_eq_one := by
+    simp [Matrix.trace_one]
+
+/-- Runtime register obtained by allocating `|0⟩` via `Prim.ketZero`. -/
+noncomputable def registerKetZero : Runtime.RegisterState 1 where
+  mat := KrausFamily.applyMat [Prim.ketZero] unitRegister0.mat
+  posSemidef :=
+    KrausFamily.applyMat_posSemidef [Prim.ketZero] unitRegister0.posSemidef
+  trace_eq_one :=
+    (KrausFamily.trace_applyMat_isometry Prim.ketZero ketZero_isometry
+        unitRegister0.mat).trans unitRegister0.trace_eq_one
+
+/-- Allocation agrees definitionally with the `new0` Kraus action. -/
+theorem registerKetZero_eq_new0_apply :
+    registerKetZero.mat =
+      KrausFamily.applyMat (Prim.kraus .new0) unitRegister0.mat :=
+  rfl
+
+/-- Explicit matrix entries of the prepared `|0⟩⟨0|` register. -/
+theorem registerKetZero_apply (i j : Fin (CQ.QDim 1)) :
+    registerKetZero.mat i j = if i = 0 ∧ j = 0 then (1 : ℂ) else 0 := by
+  simp only [registerKetZero, unitRegister0, KrausFamily.applyMat_single,
+    Matrix.mul_one]
+  -- `ketZero * ketZero†` is the rank-one projector onto basis vector `0`.
+  change (Prim.ketZero * Matrix.conjTranspose Prim.ketZero) i j =
+    if i = 0 ∧ j = 0 then 1 else 0
+  simp only [Matrix.mul_apply, Matrix.conjTranspose_apply, Prim.ketZero]
+  fin_cases i <;> fin_cases j <;> simp
+
+/-- One-wire false projector recovers `|0⟩⟨0|`. -/
+theorem projector_false_oneWire (i j : Fin (CQ.QDim 1)) :
+    Composer.projector (0 : Fin 1) false i j =
+      if i = 0 ∧ j = 0 then (1 : ℂ) else 0 := by
+  have h00 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 0)).1 =
+        false := by decide
+  have h01 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 1)).1 =
+        true := by decide
+  fin_cases i <;> fin_cases j <;>
+    simp [Composer.projector, Composer.onWire, Composer.registerSplit,
+      Composer.proj₂, CQ.QDim, h00, h01, Matrix.reindex_apply,
+      Matrix.kroneckerMap, Matrix.one_apply]
+
+/-- One-wire true projector recovers `|1⟩⟨1|`. -/
+theorem projector_true_oneWire (i j : Fin (CQ.QDim 1)) :
+    Composer.projector (0 : Fin 1) true i j =
+      if i = 1 ∧ j = 1 then (1 : ℂ) else 0 := by
+  have h00 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 0)).1 =
+        false := by decide
+  have h01 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 1)).1 =
+        true := by decide
+  fin_cases i <;> fin_cases j <;>
+    simp [Composer.projector, Composer.onWire, Composer.registerSplit,
+      Composer.proj₂, CQ.QDim, h00, h01, Matrix.reindex_apply,
+      Matrix.kroneckerMap, Matrix.one_apply]
+
+private theorem trace_projector_registerKetZero (b : Bool) :
+    Matrix.trace
+        (Composer.projector (0 : Fin 1) b * registerKetZero.mat) =
+      if b then (0 : ℂ) else 1 := by
+  change
+      (∑ i : Fin (CQ.QDim 1),
+        (Composer.projector (0 : Fin 1) b * registerKetZero.mat) i i) =
+      if b then 0 else 1
+  simp_rw [Matrix.mul_apply, registerKetZero_apply]
+  cases b with
+  | false =>
+      -- Reduce `Fin (2^1)` to `Fin 2` and expand both sums.
+      simp [CQ.QDim, Fin.sum_univ_two, projector_false_oneWire]
+  | true =>
+      simp [CQ.QDim, Fin.sum_univ_two, projector_true_oneWire]
+
+/-- Born mass of outcome `b` on `|0⟩` equals `1` iff `b = false`. -/
+theorem measureProbability_registerKetZero (b : Bool) :
+    Runtime.RegisterState.measureProbability registerKetZero (0 : Fin 1) b =
+      if b then (0 : ℝ) else 1 := by
+  change
+      (Matrix.trace
+          (KrausFamily.applyMat
+            [Composer.projector (0 : Fin 1) b] registerKetZero.mat)).re =
+        if b then 0 else 1
+  have htrace :
+      Matrix.trace
+          (KrausFamily.applyMat
+            [Composer.projector (0 : Fin 1) b] registerKetZero.mat) =
+        Matrix.trace
+          (Composer.projector (0 : Fin 1) b * registerKetZero.mat) := by
+    rw [KrausFamily.applyMat_single,
+      Matrix.trace_mul_comm
+        (Composer.projector (0 : Fin 1) b * registerKetZero.mat)
+        (Matrix.conjTranspose (Composer.projector (0 : Fin 1) b)),
+      Composer.projector_conjTranspose, ← Matrix.mul_assoc,
+      Composer.projector_mul_self]
+  rw [htrace, trace_projector_registerKetZero]
+  cases b <;> simp
+
+theorem measureProbability_registerKetZero_false :
+    Runtime.RegisterState.measureProbability registerKetZero (0 : Fin 1) false =
+      1 := by
+  simpa using measureProbability_registerKetZero false
+
+theorem measureProbability_registerKetZero_true :
+    Runtime.RegisterState.measureProbability registerKetZero (0 : Fin 1) true =
+      0 := by
+  simpa using measureProbability_registerKetZero true
 
 /-- Weighted source/runtime simulation witness for closed fragment programs
 bounded by `N` live qubits: denotation exists and measurement branches match. -/
@@ -158,7 +367,7 @@ structure FragmentWeightedSimulation (N : Nat) where
   uses_bit : ∀ b, UsesAtMostQubits N (.bitLit b)
   /-- Runtime Born masses are probabilities. -/
   born_sum :
-    ∀ {q} (hq : q ≤ N) (w : Fin q) (ρ : Runtime.RegisterState q),
+    ∀ {q} (_hq : q ≤ N) (w : Fin q) (ρ : Runtime.RegisterState q),
       Runtime.RegisterState.measureProbability ρ w false +
         Runtime.RegisterState.measureProbability ρ w true = 1
   /-- Born mass agrees with Instrument branch trace at one qubit. -/
@@ -171,7 +380,7 @@ structure FragmentWeightedSimulation (N : Nat) where
                 (if b then (1 : Fin 2) else 0)).cp.applyMat ρ.mat)).re
   /-- A nontrivial closed measured program is N-bounded when `1 ≤ N`. -/
   uses_measure_new0 :
-    1 ≤ N → UsesAtMostQubits N (.measure (.prim .new0) measureNew0Cont)
+    1 ≤ N → UsesAtMostQubits N measureNew0Program
 
 /-- Every `N` supplies a weighted simulation package. -/
 theorem fragmentWeightedSimulation (N : Nat) :
@@ -185,6 +394,59 @@ theorem fragmentWeightedSimulation (N : Nat) :
   born_instrument := fun ρ b _hN => measureProbability_eq_instrument_branch_trace ρ b
   uses_measure_new0 := fun hN =>
     UsesAtMostQubits.mono hN usesAtMost_measure_new0_cont
+
+/-- Register-history identification: closed measured `new0` program under
+`UsesAtMostQubits N`, with denotational `measureElim` spine and `|0⟩` Born
+masses matching Instrument/CompletedCP packaging. -/
+structure FragmentMeasuredSimulation (N : Nat)
+    extends FragmentWeightedSimulation N where
+  /-- Closed certificate for the measured allocation program. -/
+  measured_cert : FragCert.Closed measureNew0Program .qubit
+  /-- The measured program is N-bounded when allocation is admitted. -/
+  uses_measured : 1 ≤ N → UsesAtMostQubits N measureNew0Program
+  /-- Denotation expands as `measureElim ∘ map(denote Q, denote K) ∘ split`. -/
+  denote_measured :
+    FragCert.denote measured_cert =
+      Hom.comp (FragCert.measureElim _)
+        (Hom.comp
+          (DayTensor.map
+            (FragCert.denote fragCert_app_new0_unit)
+            (FragCert.denote fragCert_measure_new0_cont))
+          (FragmentContext.combinedOSplit CtxUAllBit.nil OSplit.nil))
+  /-- Denotational measurement branches agree with Yoneda. -/
+  measure_branch_yoneda :
+    ∀ b, routeAFragmentModel.measureBranch b = measureBranchYoneda b
+  /-- Runtime Born masses on the prepared `|0⟩` register. -/
+  born_ketZero_false :
+    1 ≤ N →
+      Runtime.RegisterState.measureProbability registerKetZero (0 : Fin 1)
+          false = 1
+  born_ketZero_true :
+    1 ≤ N →
+      Runtime.RegisterState.measureProbability registerKetZero (0 : Fin 1)
+          true = 0
+  /-- Those Born masses equal Instrument branch traces. -/
+  born_ketZero_instrument :
+    ∀ b, 1 ≤ N →
+      Runtime.RegisterState.measureProbability registerKetZero (0 : Fin 1) b =
+        (Matrix.trace
+          (((Instrument.measure (0 : Fin 1)).branchSuperoperator
+              (if b then (1 : Fin 2) else 0)).cp.applyMat
+            registerKetZero.mat)).re
+
+/-- Every `N` supplies a measured register-history simulation package. -/
+noncomputable def fragmentMeasuredSimulation (N : Nat) :
+    FragmentMeasuredSimulation N where
+  toFragmentWeightedSimulation := fragmentWeightedSimulation N
+  measured_cert := closed_measure_new0_cert
+  uses_measured := fun hN =>
+    UsesAtMostQubits.mono hN usesAtMost_measure_new0_cont
+  denote_measured := denote_closed_measure_new0
+  measure_branch_yoneda := fragment_measStep_denote_sound_branch
+  born_ketZero_false := fun _ => measureProbability_registerKetZero_false
+  born_ketZero_true := fun _ => measureProbability_registerKetZero_true
+  born_ketZero_instrument := fun b _ =>
+    measureProbability_eq_instrument_branch_trace registerKetZero b
 
 /-- N-bounded observable adequacy for closed recursion-free fragment
 programs: unit, bit, and measurement-branch observations. -/
@@ -205,6 +467,28 @@ theorem fragment_observable_adequacy (N : Nat) :
     fragment_measStep_denote_sound_branch,
     fun q _hq w ρ => n_bounded_measureProbability_sum q w ρ⟩
 
+/-- Measured-program adequacy: closed `measureNew0Program` under
+`UsesAtMostQubits`, `measureElim` spine, and `|0⟩` Born masses. -/
+theorem fragment_measured_observable_adequacy (N : Nat) (hN : 1 ≤ N) :
+    UsesAtMostQubits N measureNew0Program ∧
+    (FragCert.denote closed_measure_new0_cert =
+      Hom.comp (FragCert.measureElim _)
+        (Hom.comp
+          (DayTensor.map
+            (FragCert.denote fragCert_app_new0_unit)
+            (FragCert.denote fragCert_measure_new0_cont))
+          (FragmentContext.combinedOSplit CtxUAllBit.nil OSplit.nil))) ∧
+    Runtime.RegisterState.measureProbability registerKetZero (0 : Fin 1)
+        false = 1 ∧
+    Runtime.RegisterState.measureProbability registerKetZero (0 : Fin 1)
+        true = 0 ∧
+    (∀ b, routeAFragmentModel.measureBranch b = measureBranchYoneda b) :=
+  ⟨UsesAtMostQubits.mono hN usesAtMost_measure_new0_cont,
+    denote_closed_measure_new0,
+    measureProbability_registerKetZero_false,
+    measureProbability_registerKetZero_true,
+    fragment_measStep_denote_sound_branch⟩
+
 /-- Literal-only corollary retained for earlier citations. -/
 theorem fragment_observable_adequacy_literals (N : Nat) :
     UsesAtMostQubits N .unit ∧
@@ -213,7 +497,7 @@ theorem fragment_observable_adequacy_literals (N : Nat) :
       routeAFragmentModel.unitIntro) ∧
     (∀ b, FragCert.denoteBitLit (FragCert.closed_bitLit_cert b) =
       routeAFragmentModel.bitLit b) :=
-  ⟨usesAtMost_unit N, usesAtMost_bitLit N,
-    FragCert.denoteUnit_eq _, fun b => FragCert.denoteBitLit_eq _⟩
+  ⟨usesAtMost_unit N, fun b => usesAtMost_bitLit N b,
+    FragCert.denoteUnit_eq _, fun _ => FragCert.denoteBitLit_eq _⟩
 
 end QLambda.Linear

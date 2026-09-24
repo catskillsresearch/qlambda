@@ -567,6 +567,42 @@ noncomputable def bitClassicalize :
     apply Subtype.ext
     exact Superoperator.comp_assoc _ _ _
 
+/-- Classical bits are fixed points of `bitClassicalize`. -/
+theorem bitClassicalize_comp_classicalBitInclusion :
+    Hom.comp bitClassicalize classicalBitInclusion =
+      Hom.id classicalBitModule := by
+  ext n x
+  apply Subtype.ext
+  change Superoperator.comp bitDephaseSuperoperator x.1 = x.1
+  exact x.2
+
+/-- Computational-basis preparations are fixed by dephasing. -/
+theorem bitDephase_comp_isometricBasisPrep (i : Fin 2) :
+    Superoperator.comp bitDephaseSuperoperator
+        (SigmaMon.ChoiSum.isometricBasisPrep i) =
+      SigmaMon.ChoiSum.isometricBasisPrep i := by
+  apply Superoperator.ext
+  apply CPMap.ext
+  funext p q
+  have h00 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 0)).1 =
+        false := by decide
+  have h01 :
+      ((Composer.splitWire (0 : Fin 1)) ((Composer.basisEquiv 1) 1)).1 =
+        true := by decide
+  rcases p with ⟨a, u⟩
+  rcases q with ⟨b, v⟩
+  fin_cases u; fin_cases v
+  fin_cases i <;> fin_cases a <;> fin_cases b <;>
+    norm_num [Superoperator.cp_comp, CPMap.choi_comp_apply,
+      bitDephaseSuperoperator, CPMap.choi_add, Matrix.add_apply,
+      Instrument.measure_branch_zero, Instrument.measure_branch_one,
+      CPMap.choi_ofKraus, KrausFamily.choiTerm,
+      SigmaMon.ChoiSum.isometricBasisPrep, SigmaMon.ChoiSum.basisKet,
+      Matrix.conjTranspose_apply,
+      Composer.projector, Composer.onWire, Composer.registerSplit,
+      Composer.proj₂, CQ.QDim, h00, h01]
+
 /-- The generic dephased classical bit at fiber two. -/
 noncomputable def classicalBitGeneric :
     (classicalBitModule.obj 2).Carrier :=
@@ -879,6 +915,33 @@ noncomputable def bitPrepare (b : Bool) : Superoperator 1 2 :=
 noncomputable def bitLitHom (b : Bool) :
     Hom dayTensorUnit (representable 2) :=
   yonedaMap (bitPrepare b)
+
+theorem bitDephase_comp_bitPrepare (b : Bool) :
+    Superoperator.comp bitDephaseSuperoperator (bitPrepare b) =
+      bitPrepare b := by
+  cases b <;> simp only [bitPrepare]
+  · exact bitDephase_comp_isometricBasisPrep 0
+  · exact bitDephase_comp_isometricBasisPrep 1
+
+/-- Forgetting then classicalizing is computational-basis dephasing. -/
+theorem classicalBitInclusion_comp_bitClassicalize :
+    Hom.comp classicalBitInclusion bitClassicalize =
+      yonedaMap bitDephaseSuperoperator := by
+  ext n x
+  rfl
+
+/-- Bit literals are already classical: inclusion recovers them after
+classicalization. -/
+theorem classicalBitInclusion_comp_bitClassicalize_bitLit (b : Bool) :
+    Hom.comp classicalBitInclusion
+        (Hom.comp bitClassicalize (bitLitHom b)) =
+      bitLitHom b := by
+  change Hom.comp
+      (Hom.comp classicalBitInclusion bitClassicalize) (bitLitHom b) =
+    bitLitHom b
+  rw [classicalBitInclusion_comp_bitClassicalize]
+  -- `yonedaMap dephase ∘ yonedaMap prep = yonedaMap (dephase ∘ prep)`
+  simp only [bitLitHom, ← yonedaMap_comp, bitDephase_comp_bitPrepare]
 
 /-- Primitive as a Yoneda map on its Hilbert IO dimensions. -/
 noncomputable def primYoneda (p : Prim) :

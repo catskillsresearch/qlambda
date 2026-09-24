@@ -104,11 +104,49 @@ theorem unrestrictedLookup_exists {Γ : List Ty} {n : Nat} {A : Ty}
                 (map classicalBitWeakening f)⟩
 termination_by Γ.length
 
+/-- Structural discard of an all-bit unrestricted context. -/
+noncomputable def unrestrictedAllBitDiscardLists :
+    ∀ (Γ : List Ty), Hom (unrestricted Γ) dayTensorUnit
+  | [] => Hom.id dayTensorUnit
+  | _ :: Γ =>
+      Hom.comp (leftUnitor dayTensorUnit)
+        (map classicalBitWeakening (unrestrictedAllBitDiscardLists Γ))
+
+theorem unrestrictedAllBitDiscardLists_nil :
+    unrestrictedAllBitDiscardLists [] = Hom.id dayTensorUnit :=
+  rfl
+
+/-- Structural unrestricted lookup (computes without eliminating `Lookup` /
+`CtxUAllBit : Prop`). Impossible shapes return `0`. -/
+noncomputable def unrestrictedLookupLists :
+    ∀ (Γ : List Ty) (n : Nat) (A : Ty),
+      Hom (unrestricted Γ) (fragmentModule A)
+  | [], _, _ => 0
+  | _ :: Γ, 0, A =>
+      if h : A = .bit then by
+        subst A
+        exact Hom.comp (rightUnitor (fragmentModule .bit))
+          (map classicalBitInclusion
+            (unrestrictedAllBitDiscardLists Γ))
+      else
+        0
+  | _ :: Γ, n + 1, A =>
+      Hom.comp (leftUnitor (fragmentModule A))
+        (map classicalBitWeakening (unrestrictedLookupLists Γ n A))
+
+theorem unrestrictedLookupLists_zero_bit (Γ : List Ty) :
+    unrestrictedLookupLists (.bit :: Γ) 0 .bit =
+      Hom.comp (rightUnitor (fragmentModule .bit))
+        (map classicalBitInclusion
+          (unrestrictedAllBitDiscardLists Γ)) := by
+  simp only [unrestrictedLookupLists, ↓reduceIte]
+  rfl
+
 /-- Select an unrestricted bit variable, weakening every other bit entry. -/
 noncomputable def unrestrictedLookup {Γ : List Ty} {n : Nat} {A : Ty}
-    (hΓ : CtxUAllBit Γ) (hl : Lookup Γ n A) :
+    (_hΓ : CtxUAllBit Γ) (_hl : Lookup Γ n A) :
     Hom (unrestricted Γ) (fragmentModule A) :=
-  Classical.choice (unrestrictedLookup_exists hΓ hl)
+  unrestrictedLookupLists Γ n A
 
 /-- Collapse the empty combined context to the Day unit. -/
 noncomputable def combinedClosedCollapse :
@@ -142,46 +180,53 @@ noncomputable def linearAllNoneCollapse {Δ : List (Option Ty)}
       | some A =>
           simp [AllNone] at h
 
-/-- Existence of the projection from a singleton-used linear context.
-`Nonempty` keeps the proof recursion in `Prop`; the concrete map is selected
-below. -/
-theorem linearOnlySomeAtProject_exists {Δ : List (Option Ty)}
-    {n : Nat} {A : Ty} (hl : Lookup Δ n (some A))
-    (ho : OnlySomeAt Δ n) :
-    Nonempty (Hom (linear Δ) (fragmentModule A)) := by
-  cases Δ with
-  | nil => cases hl
-  | cons cell Δ =>
-      cases n with
-      | zero =>
-          cases cell with
-          | none => cases hl
-          | some B =>
-              cases hl
-              simp only [OnlySomeAt] at ho
-              exact ⟨Hom.comp (rightUnitor (fragmentModule A))
-                (map (Hom.id (fragmentModule A))
-                  (linearAllNoneCollapse ho))⟩
-      | succ n =>
-          cases cell with
-          | none =>
-              cases hl with
-              | succ hl =>
-                  simp only [OnlySomeAt] at ho
-                  obtain ⟨f⟩ := linearOnlySomeAtProject_exists hl ho
-                  exact ⟨Hom.comp (leftUnitor (fragmentModule A))
-                    (map (Hom.id dayTensorUnit) f)⟩
-          | some B =>
-              simp [OnlySomeAt] at ho
-termination_by Δ.length
+/-- Structural all-none collapse on the underlying list (computes without
+eliminating `AllNone : Prop`). Impossible shapes return `0`. -/
+noncomputable def linearAllNoneCollapseLists :
+    ∀ (Δ : List (Option Ty)), Hom (linear Δ) dayTensorUnit
+  | [] => Hom.id dayTensorUnit
+  | none :: Δ =>
+      Hom.comp (leftUnitor dayTensorUnit)
+        (map (Hom.id dayTensorUnit) (linearAllNoneCollapseLists Δ))
+  | some _ :: _ => 0
+
+/-- Structural projection from a uniquely occupied linear cell (computes
+without eliminating `Lookup`/`OnlySomeAt : Prop`). Impossible shapes return
+`0`. -/
+noncomputable def linearOnlySomeAtProjectLists :
+    ∀ (Δ : List (Option Ty)) (n : Nat) (A : Ty),
+      Hom (linear Δ) (fragmentModule A)
+  | [], _, _ => 0
+  | some B :: Δ, 0, A =>
+      if h : B = A then by
+        subst A
+        exact Hom.comp (rightUnitor (fragmentModule B))
+          (map (Hom.id (fragmentModule B))
+            (linearAllNoneCollapseLists Δ))
+      else
+        0
+  | none :: Δ, n + 1, A =>
+      Hom.comp (leftUnitor (fragmentModule A))
+        (map (Hom.id dayTensorUnit)
+          (linearOnlySomeAtProjectLists Δ n A))
+  | some _ :: _, _ + 1, _ => 0
+  | none :: _, 0, _ => 0
 
 /-- Project the unique occupied linear cell selected by `Lookup` and
 `OnlySomeAt`. -/
 noncomputable def linearOnlySomeAtProject {Δ : List (Option Ty)}
-    {n : Nat} {A : Ty} (hl : Lookup Δ n (some A))
-    (ho : OnlySomeAt Δ n) :
+    {n : Nat} {A : Ty} (_hl : Lookup Δ n (some A))
+    (_ho : OnlySomeAt Δ n) :
     Hom (linear Δ) (fragmentModule A) :=
-  Classical.choice (linearOnlySomeAtProject_exists hl ho)
+  linearOnlySomeAtProjectLists Δ n A
+
+/-- Singleton occupied linear cell projects by the right unitor. -/
+theorem linearOnlySomeAtProjectLists_singleton (A : Ty) :
+    linearOnlySomeAtProjectLists [some A] 0 A =
+      Hom.comp (rightUnitor (fragmentModule A))
+        (map (Hom.id (fragmentModule A)) (Hom.id dayTensorUnit)) := by
+  simp only [linearOnlySomeAtProjectLists, ↓reduceIte]
+  rfl
 
 /-- Canonical middle-four interchange
 `(M ⊗ N) ⊗ (P ⊗ Q) → (M ⊗ P) ⊗ (N ⊗ Q)`. -/
@@ -265,10 +310,128 @@ noncomputable def evalFirstOrder (A : ℕ) (N : Module) :
     (map (dayInternalHomRepresentableIso A N).inv
       (Hom.id (representable A)))
 
+/-- First-order Day β: evaluating a FO-curried morphism recovers the original. -/
+theorem evalFirstOrder_curryFirstOrder (d : ℕ) {X N : Module}
+    (f : Hom (dayTensor X (representable d)) N) :
+    Hom.comp (evalFirstOrder d N)
+      (DayTensor.map (curryFirstOrder d f) (Hom.id (representable d))) = f := by
+  unfold evalFirstOrder curryFirstOrder
+  rw [← Hom.comp_assoc]
+  have hmap :
+      Hom.comp
+        (DayTensor.map (dayInternalHomRepresentableIso d N).inv
+          (Hom.id (representable d)))
+        (DayTensor.map
+          (Hom.comp (dayInternalHomRepresentableIso d N).hom (dayCurry f))
+          (Hom.id (representable d))) =
+      DayTensor.map
+        (Hom.comp (dayInternalHomRepresentableIso d N).inv
+          (Hom.comp (dayInternalHomRepresentableIso d N).hom (dayCurry f)))
+        (Hom.id (representable d)) := by
+    have h :=
+      (DayTensor.map_comp
+        (dayInternalHomRepresentableIso d N).inv
+        (Hom.comp (dayInternalHomRepresentableIso d N).hom (dayCurry f))
+        (Hom.id (representable d))
+        (Hom.id (representable d))).symm
+    simpa only [Hom.comp_id] using h
+  rw [hmap]
+  have hiso :
+      Hom.comp (dayInternalHomRepresentableIso d N).inv
+        (Hom.comp (dayInternalHomRepresentableIso d N).hom (dayCurry f)) =
+      dayCurry f := by
+    rw [Hom.comp_assoc, (dayInternalHomRepresentableIso d N).inv_hom, Hom.id_comp]
+  rw [hiso]
+  exact dayEval_dayCurry f
+
+/-- `λ = ρ ∘ σ` as Fin equivalences on the unit factor. -/
+private theorem tensorLeftUnitor_eq_rightUnitor_swap (a : ℕ) :
+    Superoperator.comp (Superoperator.tensorRightUnitor a)
+        (Superoperator.tensorSwap 1 a) =
+      Superoperator.tensorLeftUnitor a := by
+  simp only [Superoperator.tensorLeftUnitor, Superoperator.tensorRightUnitor,
+    Superoperator.tensorSwap, ← Superoperator.ofEquivalence_refl,
+    Superoperator.ofEquivalence_comp]
+  congr 1
+  ext x
+  simp [Superoperator.tensorLeftUnitorEquiv,
+    Superoperator.tensorRightUnitorEquiv, Superoperator.tensorSwapEquiv]
+
+/-- Left and right unitors agree after braiding the unit past `A`. -/
+theorem rightUnitor_comp_braiding (A : Module) :
+    Hom.comp (rightUnitor A) (braiding dayTensorUnit A) =
+      leftUnitor A := by
+  apply DayTensor.hom_ext
+  intro m n q x
+  change
+      (rightUnitor A).app (m * n)
+          ((braiding dayTensorUnit A).app (m * n)
+            ((DayCoend.intro dayTensorUnit A).app q x)) =
+        (leftUnitor A).app (m * n)
+          ((DayCoend.intro dayTensorUnit A).app q x)
+  rw [braiding_intro, (rightUnitor A).naturality]
+  -- After naturality the intermediate fiber is indexed by `n * m`.
+  rw [rightUnitor_intro (M := A) (m := n) (n := m) x q]
+  rw [leftUnitor_intro (M := A) q x, A.act_comp]
+  congr 1
+  change Superoperator m 1 at q
+  calc
+    Superoperator.comp
+        (Superoperator.comp (Superoperator.tensorRightUnitor n)
+          (Superoperator.tensor (Superoperator.identity n) q))
+        (Superoperator.tensorSwap m n) =
+      Superoperator.comp (Superoperator.tensorRightUnitor n)
+        (Superoperator.comp
+          (Superoperator.tensor (Superoperator.identity n) q)
+          (Superoperator.tensorSwap m n)) := by
+        rw [Superoperator.comp_assoc]
+    _ = Superoperator.comp (Superoperator.tensorRightUnitor n)
+          (Superoperator.comp (Superoperator.tensorSwap 1 n)
+            (Superoperator.tensor q (Superoperator.identity n))) := by
+        rw [← Superoperator.tensorSwap_naturality]
+    _ = Superoperator.comp
+          (Superoperator.comp (Superoperator.tensorRightUnitor n)
+            (Superoperator.tensorSwap 1 n))
+          (Superoperator.tensor q (Superoperator.identity n)) := by
+        rw [← Superoperator.comp_assoc]
+    _ = Superoperator.comp (Superoperator.tensorLeftUnitor n)
+          (Superoperator.tensor q (Superoperator.identity n)) := by
+        rw [tensorLeftUnitor_eq_rightUnitor_swap]
+
+/-- Cancel `ρ ∘ λ⁻¹` on the Day unit. -/
+theorem rightUnitor_comp_leftUnitorInv_unit :
+    Hom.comp (rightUnitor dayTensorUnit) (leftUnitorInv dayTensorUnit) =
+      Hom.id dayTensorUnit := by
+  rw [← leftUnitor_unit_eq_rightUnitor_unit, leftUnitor_hom_inv]
+
 /-- Reorder `(U ⊗ L) ⊗ A` to `U ⊗ (A ⊗ L)`. -/
 noncomputable def moveArgumentIntoLinear (U L A : Module) :
     Hom (dayTensor (dayTensor U L) A) (dayTensor U (dayTensor A L)) :=
   Hom.comp (map (Hom.id U) (braiding L A)) (associator U L A)
+
+/-- Identity-body projection composed with `moveArgumentIntoLinear` reduces to
+`λ ∘ (ρ ⊗ id)`. -/
+theorem identity_body_move_eq (A : Module) :
+    Hom.comp
+      (Hom.comp (leftUnitor A)
+        (map (Hom.id dayTensorUnit) (rightUnitor A)))
+      (moveArgumentIntoLinear dayTensorUnit dayTensorUnit A) =
+    Hom.comp (leftUnitor A)
+      (map (rightUnitor dayTensorUnit) (Hom.id A)) := by
+  unfold moveArgumentIntoLinear
+  have hmap :
+      Hom.comp
+          (map (Hom.id dayTensorUnit) (rightUnitor A))
+          (map (Hom.id dayTensorUnit) (braiding dayTensorUnit A)) =
+        map (Hom.id dayTensorUnit)
+          (Hom.comp (rightUnitor A) (braiding dayTensorUnit A)) := by
+    simpa only [Hom.comp_id] using
+      (DayTensor.map_comp (Hom.id dayTensorUnit) (Hom.id dayTensorUnit)
+        (rightUnitor A) (braiding dayTensorUnit A)).symm
+  rw [← Hom.comp_assoc (leftUnitor A), Hom.comp_assoc
+    (map (Hom.id dayTensorUnit) (rightUnitor A)), hmap,
+    rightUnitor_comp_braiding]
+  exact congrArg (Hom.comp (leftUnitor A)) (DayTensor.triangle dayTensorUnit A)
 
 /-- Reorder `(U ⊗ L) ⊗ A` to `(A ⊗ U) ⊗ L`. -/
 noncomputable def moveArgumentIntoUnrestricted (U L A : Module) :
@@ -286,6 +449,36 @@ noncomputable def abstractUnrestricted {U L N : Module}
     (Hom.comp body
       (moveArgumentIntoUnrestricted U L classicalBitModule))
 
+private noncomputable def castHom {M N : Module} (h : M = N) : Hom M N := by
+  subst N
+  exact Hom.id M
+
+private noncomputable def castHomInv {M N : Module} (h : M = N) : Hom N M := by
+  subst N
+  exact Hom.id M
+
+/-- A first-order fragment object as its representing Yoneda module. -/
+noncomputable def firstOrderToRep {A : Ty} (hA : Ty.FirstOrder A) :
+    Hom (fragmentModule A) (representable A.hilbertDim) :=
+  castHom (by
+    simpa [Ty.FirstOrder.dimension] using fragmentModule_of_firstOrder hA)
+
+/-- Inverse representable transport for a first-order fragment object. -/
+noncomputable def firstOrderFromRep {A : Ty} (hA : Ty.FirstOrder A) :
+    Hom (representable A.hilbertDim) (fragmentModule A) :=
+  castHomInv (by
+    simpa [Ty.FirstOrder.dimension] using fragmentModule_of_firstOrder hA)
+
+theorem firstOrderToRep_comp_fromRep {A : Ty} (hA : Ty.FirstOrder A) :
+    Hom.comp (firstOrderToRep hA) (firstOrderFromRep hA) =
+      Hom.id (representable A.hilbertDim) := by
+  cases hA <;> rfl
+
+theorem firstOrderFromRep_comp_toRep {A : Ty} (hA : Ty.FirstOrder A) :
+    Hom.comp (firstOrderFromRep hA) (firstOrderToRep hA) =
+      Hom.id (fragmentModule A) := by
+  cases hA <;> rfl
+
 /-- Linear abstraction over a first-order representable domain. -/
 noncomputable def abstractLinear {U L N : Module} {A : Ty}
     (hA : Ty.FirstOrder A)
@@ -302,28 +495,6 @@ noncomputable def abstractLinear {U L N : Module} {A : Ty}
     (Hom.comp body
       (moveArgumentIntoLinear U L (representable hA.dimension)))
 
-private noncomputable def castHom {M N : Module} (h : M = N) : Hom M N := by
-  subst N
-  exact Hom.id M
-
-private noncomputable def castHomInv {M N : Module} (h : M = N) : Hom N M := by
-  subst N
-  exact Hom.id M
-
-/-- A first-order fragment object as its representing Yoneda module. -/
-noncomputable def firstOrderToRep {A : Ty} (hA : Ty.FirstOrder A) :
-    Hom (fragmentModule A) (representable A.hilbertDim) := by
-  apply castHom
-  rw [fragmentModule_of_firstOrder hA]
-  congr 1
-
-/-- Inverse representable transport for a first-order fragment object. -/
-noncomputable def firstOrderFromRep {A : Ty} (hA : Ty.FirstOrder A) :
-    Hom (representable A.hilbertDim) (fragmentModule A) := by
-  apply castHomInv
-  rw [fragmentModule_of_firstOrder hA]
-  congr 1
-
 /-- Evaluation specialized to a first-order source type. -/
 noncomputable def evalFragmentFirstOrder {A : Ty}
     (hA : Ty.FirstOrder A) (N : Module) :
@@ -333,6 +504,84 @@ noncomputable def evalFragmentFirstOrder {A : Ty}
   Hom.comp (evalFirstOrder A.hilbertDim N)
     (map (Hom.id _) (firstOrderToRep hA))
 
+@[simp] theorem abstractLinear_unit {U L N : Module}
+    (body : Hom (dayTensor U (dayTensor (fragmentModule .unit) L)) N) :
+    abstractLinear .unit body =
+      curryFirstOrder 1
+        (Hom.comp body (moveArgumentIntoLinear U L (representable 1))) :=
+  rfl
+
+@[simp] theorem abstractLinear_bit {U L N : Module}
+    (body : Hom (dayTensor U (dayTensor (fragmentModule .bit) L)) N) :
+    abstractLinear .bit body =
+      curryFirstOrder 2
+        (Hom.comp body (moveArgumentIntoLinear U L (representable 2))) :=
+  rfl
+
+@[simp] theorem abstractLinear_qubit {U L N : Module}
+    (body : Hom (dayTensor U (dayTensor (fragmentModule .qubit) L)) N) :
+    abstractLinear .qubit body =
+      curryFirstOrder 2
+        (Hom.comp body (moveArgumentIntoLinear U L (representable 2))) :=
+  rfl
+
+@[simp] theorem evalFragmentFirstOrder_unit (N : Module) :
+    evalFragmentFirstOrder .unit N = evalFirstOrder 1 N := by
+  change Hom.comp (evalFirstOrder 1 N)
+      (DayTensor.map (Hom.id _) (Hom.id (representable 1))) =
+    evalFirstOrder 1 N
+  rw [DayTensor.map_id, Hom.comp_id]
+
+@[simp] theorem evalFragmentFirstOrder_bit (N : Module) :
+    evalFragmentFirstOrder .bit N = evalFirstOrder 2 N := by
+  change Hom.comp (evalFirstOrder 2 N)
+      (DayTensor.map (Hom.id _) (Hom.id (representable 2))) =
+    evalFirstOrder 2 N
+  rw [DayTensor.map_id, Hom.comp_id]
+
+@[simp] theorem evalFragmentFirstOrder_qubit (N : Module) :
+    evalFragmentFirstOrder .qubit N = evalFirstOrder 2 N := by
+  change Hom.comp (evalFirstOrder 2 N)
+      (DayTensor.map (Hom.id _) (Hom.id (representable 2))) =
+    evalFirstOrder 2 N
+  rw [DayTensor.map_id, Hom.comp_id]
+
+/-- Fragment Day β: evaluating an FO-abstracted body recovers the moved body. -/
+theorem evalFragmentFirstOrder_abstractLinear {U L N : Module} {A : Ty}
+    (hA : Ty.FirstOrder A)
+    (body : Hom (dayTensor U (dayTensor (fragmentModule A) L)) N) :
+    Hom.comp (evalFragmentFirstOrder hA N)
+      (DayTensor.map (abstractLinear hA body) (Hom.id (fragmentModule A))) =
+    Hom.comp body (moveArgumentIntoLinear U L (fragmentModule A)) := by
+  cases hA with
+  | unit =>
+      simp only [evalFragmentFirstOrder_unit, abstractLinear_unit]
+      exact evalFirstOrder_curryFirstOrder 1 _
+  | bit =>
+      simp only [evalFragmentFirstOrder_bit, abstractLinear_bit]
+      exact evalFirstOrder_curryFirstOrder 2 _
+  | qubit =>
+      simp only [evalFragmentFirstOrder_qubit, abstractLinear_qubit]
+      exact evalFirstOrder_curryFirstOrder 2 _
+  | @tensor A B hA hB =>
+      have hAbs :
+          abstractLinear (.tensor hA hB) body =
+            curryFirstOrder (A.hilbertDim * B.hilbertDim)
+              (Hom.comp body
+                (moveArgumentIntoLinear U L
+                  (representable (A.hilbertDim * B.hilbertDim)))) :=
+        rfl
+      have hEv :
+          evalFragmentFirstOrder (.tensor hA hB) N =
+            evalFirstOrder (A.hilbertDim * B.hilbertDim) N := by
+        change Hom.comp (evalFirstOrder (A.hilbertDim * B.hilbertDim) N)
+            (DayTensor.map (Hom.id _)
+              (Hom.id (representable (A.hilbertDim * B.hilbertDim)))) =
+          evalFirstOrder (A.hilbertDim * B.hilbertDim) N
+        rw [DayTensor.map_id, Hom.comp_id]
+      simp only [hAbs, hEv]
+      exact evalFirstOrder_curryFirstOrder (A.hilbertDim * B.hilbertDim) _
+
 /-- Evaluation of an unrestricted function after classicalizing its physical
 term-level bit argument. -/
 noncomputable def evalUnrestrictedBit (N : Module) :
@@ -341,6 +590,68 @@ noncomputable def evalUnrestrictedBit (N : Module) :
         (fragmentModule .bit)) N :=
   Hom.comp (dayEval classicalBitModule N)
     (map (Hom.id _) bitClassicalize)
+
+/-- Unrestricted Day β: evaluating an abstracted body recovers the moved body
+after classicalizing the physical bit argument. -/
+theorem evalUnrestrictedBit_abstractUnrestricted {U L N : Module}
+    (body : Hom (dayTensor (dayTensor classicalBitModule U) L) N) :
+    Hom.comp (evalUnrestrictedBit N)
+      (DayTensor.map (abstractUnrestricted body)
+        (Hom.id (fragmentModule .bit))) =
+    Hom.comp body
+      (Hom.comp (moveArgumentIntoUnrestricted U L classicalBitModule)
+        (DayTensor.map (Hom.id (dayTensor U L)) bitClassicalize)) := by
+  unfold evalUnrestrictedBit abstractUnrestricted
+  -- Align `fragmentModule .bit` with the stated domain of `bitClassicalize`.
+  simp only [fragmentModule_bit]
+  have hmap :
+      Hom.comp
+          (DayTensor.map (Hom.id (dayInternalHom classicalBitModule N))
+            bitClassicalize)
+          (DayTensor.map (dayCurry
+              (Hom.comp body
+                (moveArgumentIntoUnrestricted U L classicalBitModule)))
+            (Hom.id (representable 2))) =
+        DayTensor.map
+          (dayCurry
+            (Hom.comp body
+              (moveArgumentIntoUnrestricted U L classicalBitModule)))
+          bitClassicalize := by
+    simpa only [Hom.id_comp, Hom.comp_id] using
+      (DayTensor.map_comp
+        (Hom.id (dayInternalHom classicalBitModule N))
+        (dayCurry
+          (Hom.comp body
+            (moveArgumentIntoUnrestricted U L classicalBitModule)))
+        bitClassicalize
+        (Hom.id (representable 2))).symm
+  rw [← Hom.comp_assoc, hmap]
+  have hfactor :
+      DayTensor.map
+          (dayCurry
+            (Hom.comp body
+              (moveArgumentIntoUnrestricted U L classicalBitModule)))
+          bitClassicalize =
+        Hom.comp
+          (DayTensor.map
+            (dayCurry
+              (Hom.comp body
+                (moveArgumentIntoUnrestricted U L classicalBitModule)))
+            (Hom.id classicalBitModule))
+          (DayTensor.map (Hom.id (dayTensor U L)) bitClassicalize) := by
+    simpa only [Hom.comp_id, Hom.id_comp] using
+      DayTensor.map_comp
+        (dayCurry
+          (Hom.comp body
+            (moveArgumentIntoUnrestricted U L classicalBitModule)))
+        (Hom.id (dayTensor U L))
+        (Hom.id classicalBitModule)
+        bitClassicalize
+  rw [hfactor]
+  -- `Hom.comp` is definitionally associative, so Day β applies under postcomposition.
+  exact congrArg (fun g => Hom.comp g
+      (DayTensor.map (Hom.id (dayTensor U L)) bitClassicalize))
+    (dayEval_dayCurry _)
 
 /-- Pair introduction for first-order fragment objects. -/
 noncomputable def tensorIntro {A B : Ty}

@@ -659,18 +659,17 @@ approximants, and source-denotation preservation for successful staging
 beyond the minimum fragment.  The minimum fragment (first-order data, linear
 FO-domain arrows, unrestricted bit binders, primitives, measurement) has a
 checked Route~A `PresheafFragmentModel`, compositional `FragCert.denote`
-via controlled `iteElim` (`routeAFragmentDenotationModel`), classical-bit
-Day comonoid contexts (`classicalBitComonoid`) with Day closed β/η, closed
-FO `ite` Step soundness, N-bounded Born↔Instrument adequacy (including a
-measured `new0` bound), and source–quotation/elaboration packages with quote
-`FragCert`s and CQ compile/reflect.  The concrete physical-bit copy/discard
-is not counital; `classicalBitModule` is the unrestricted carrier with
-checked comonoid laws.  Open-term lam/app β equalities and a
-`FragCert.denote`↔`CQ.Sem` bridge remain Track F lemmas.  Track L packages
-are deferred on `day_bang_architecture_boundary` / ambient-CP replacement
-(raw A=2 split-effect bound fails; witness implication proved; bang rebuild
-in `AmbientCPDayBangCategory` still open) and are not included in the
-checked theorem list as completed semantics.
+via controlled `iteElim`, classical-bit Day comonoid contexts with Day/FO
+closed β/η, closed FO `ite` and closed linear identity β, Step congruence
+packaging, measured `new0` Born adequacy (`FragmentMeasuredSimulation`), and
+Hom-side quote spines (`quoteSkipSpine` / `quoteGateSpine`).  The concrete
+physical-bit copy/discard is not counital; `classicalBitModule` is the
+unrestricted carrier with checked comonoid laws.  Unrestricted identity β,
+general subst, full Step soundness, and a `FragCert.denote`↔`CQ.Sem`
+interpret functor remain Track F lemmas.  Track L packages are deferred on
+L9 glue: relative AmbientCP admissibility for $A\le 1$ and a degree-row gate
+at 2 are checked; `AmbientCPComonoid` and glued
+`BangComultAmbientCPAdmissible 2` remain open (absolute A=2 not claimed).
 
 ---
 

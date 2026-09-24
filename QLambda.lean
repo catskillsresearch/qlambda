@@ -72,6 +72,7 @@ import QLambda.Linear.FragmentCoherence
 import QLambda.Linear.FragmentRuntimeN
 import QLambda.Linear.FragmentSourceCircuitN
 import QLambda.Domain.Presheaf.DayBangBoundary
+import QLambda.Domain.Presheaf.AmbientCPBang
 import QLambda.Domain.Presheaf.TrackLDeferral
 
 /-!

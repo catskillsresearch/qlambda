@@ -3,11 +3,11 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.Presheaf.Comonoid
+import QLambda.Domain.Presheaf.AmbientCPBang
 import QLambda.Linear.FragmentModel
 
 /-!
-# Day-bang architecture boundary (Gate 8)
+# Day-bang architecture boundary (Gate 8 / L9)
 
 The raw global split-effect bound fails at `A = 2`, so an all-dimensional
 cofree Day bang is not obtained from the Route A fiber analysis alone.
@@ -22,8 +22,13 @@ carrier).
 (`cpmModule`).  It restores `Fiber.HasSumAdd` and `HasActSumFromDim`, so it
 cannot host the nonsummable Bool pair required by a Day-transfer witness.
 The Gate-8 suite `ambientCP_gate8_testSuite` packages the acceptance checks.
-Track L packages remain deferred until a bang/comonoid is rebuilt in that
-(or another) replacement; Route A fragment work is independent.
+
+**L9 (relative AmbientCP):** `AmbientCPModule` / `BangComultAmbientCPAdmissible`
+in `AmbientCPBang.lean`.  Full relative admissibility is closed for `A ≤ 1`;
+every dimension admits ambient-CP degree-row sums
+(`bangComultAmbientCP_degree_row_hasSum`).  Glued `BangComultAmbientCPAdmissible 2`
+and ambient-CP Day comonoid packaging remain for L10–L12; absolute
+`BangComultComponentsAdmissible 2` is not claimed.
 -/
 
 namespace QLambda.Domain.Presheaf.SuperoperatorModule
@@ -124,6 +129,30 @@ theorem day_bang_l8_resolved_by_ambientCP_replacement :
   ⟨day_bang_architecture_boundary,
     ambientCP_gate8_testSuite,
     bangComultDayTransferWitness_not_admissible⟩
+
+/-! ## L9: relative AmbientCP bang admissibility -/
+
+/-- L9 acceptance (relative AmbientCP, positive): Gate-8 category, relative
+admissibility for `A ≤ 1`, ambient-CP degree-row gate at `A = 2`, and
+existing `A ≤ 1` comonoids.  Absolute `BangComultComponentsAdmissible 2` and a
+glued `BangComultAmbientCPAdmissible 2` remain deferred (common-fiber residual;
+see `day_bang_l9_absolute_bangComult_two_not_claimed`). -/
+theorem day_bang_l9_ambientCP_bang_admissible :
+    AmbientCPDayBangCategory ∧
+      BangComultAmbientCPAdmissible 0 ∧
+      BangComultAmbientCPAdmissible 1 ∧
+      BangComultAmbientCPDegreeRowAdmissible 2 ∧
+      (∀ A ≤ 1, Nonempty Comonoid) ∧
+      ((BangComultDayTransferWitness →
+          ¬ BangComultComponentsAdmissible 2) ∧
+        (∀ A, BangComultComponentsAdmissible A →
+          BangComultAmbientCPAdmissible A)) :=
+  ⟨ambientCPDayBangCategory,
+    bangComultAmbientCPAdmissible_zero,
+    bangComultAmbientCPAdmissible_one,
+    bangComultAmbientCP_degree_row_admissible_two,
+    bangComonoid_nonempty_of_le_one,
+    day_bang_l9_absolute_bangComult_two_not_claimed⟩
 
 end QLambda.Domain.Presheaf.SuperoperatorModule
 
