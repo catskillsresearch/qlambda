@@ -19,6 +19,7 @@ SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS))
 
 from lean_includes import expand_lean_includes
+from module_roles import file_role as module_file_role
 
 GITHUB = "https://github.com/catskillsresearch/qlambda"
 BLUEPRINT_RE = re.compile(r"<!--\s*blueprints:\s*([A-Za-z0-9_-]+)\s*-->")
@@ -51,19 +52,7 @@ def ensure_blueprint_artifacts() -> None:
 
 
 def file_role(path: str) -> str:
-    if path == "QLambda.lean":
-        return "QLambda root import graph"
-    if path == "Challenge.lean":
-        return "Palomar challenge statements"
-    if path == "Solution.lean":
-        return "Palomar compared solutions"
-    if path.startswith("QLambda/Domain/"):
-        return "Quantum relation, qCPO, and LNL semantics"
-    if path.startswith("QLambda/Linear/"):
-        return "Typed linear language, runtime, and circuit correspondence"
-    if path.startswith("QLambda/Composer/"):
-        return "Composer/OpenQASM interchange"
-    return "QLambda development"
+    return module_file_role(path, CARDS)
 
 
 def github_blob(rel: str) -> str:
