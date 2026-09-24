@@ -5,7 +5,7 @@ Authors: Lars Warren Ericson.
 -/
 import QLambda.Linear.FragmentContextSplit
 import QLambda.Linear.FragmentClassicalBitChannels
-import QLambda.Linear.FragmentClassicalBitCoassoc
+import QLambda.Linear.FragmentClassicalBitCoassoc.bitCoassocLeft_eq_right
 import QLambda.Domain.Presheaf.Comonoid
 
 /-!
