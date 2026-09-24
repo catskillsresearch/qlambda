@@ -87,18 +87,19 @@ objectives (Track L waits on a bang rebuilt in the replacement).  The **minimum 
 first-order domain, unrestricted bit binders, primitives, measurement; no
 `mu`/`fix`) has a Route A `PresheafFragmentModel`, compositional
 `FragCert.denote` via controlled `iteElim`
-(`routeAFragmentDenotationModel`), classical-bit comonoid contexts, closed
-unit/bit observations, N-bounded `fragment_observable_adequacy`, and
-source–quotation/elaboration squares — see
+(`routeAFragmentDenotationModel`), classical-bit comonoid contexts with Day
+closed β/η, closed FO `ite` Step soundness, N-bounded Born↔Instrument
+adequacy (including a measured `new0` bound), and source–quotation/elaboration
+packages with quote `FragCert`s and CQ compile/reflect — see
 `QLambda/Linear/SemanticFragment.lean`, `FragmentModel.lean`,
 `FragmentDenotation.lean`, `FragmentIte.lean`, `FragmentContext.lean`,
 `FragmentAdequacy.lean`, `FragmentCoherence.lean`, `FragmentRuntimeN.lean`,
 `FragmentSourceCircuitN.lean`.  The proposed copy/discard on physical
 `representable 2` is formally not counital; `classicalBitModule` supplies
-the unrestricted carrier with a checked Day comonoid.  Incremental open-term
-β/η identities remain Track F lemmas.  Track L (`presheafQuantumLNL`,
-recursion, full adequacy/abstraction) is deferred on the Day-bang
-architecture boundary
+the unrestricted carrier with a checked Day comonoid.  Open-term lam/app
+β equalities and a `FragCert.denote`↔`CQ.Sem` bridge remain Track F lemmas.
+Track L (`presheafQuantumLNL`, recursion, full adequacy/abstraction) is
+deferred on the Day-bang architecture boundary
 (`day_bang_architecture_boundary` / `day_bang_l8_resolved_by_ambientCP_replacement`):
 raw `BangSplitEffectAdmissible 2` fails; the transfer-witness implication is
 proved; L8 selects ambient CP as the named replacement rather than a TNI

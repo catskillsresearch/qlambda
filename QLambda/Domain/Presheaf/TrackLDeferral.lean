@@ -38,14 +38,16 @@ theorem trackL_recursive_semantics_deferred :
     ¬ BangSplitEffectAdmissible 2 :=
   day_bang_raw_global_bound_fails_at_two
 
-/-- Full-language first-order adequacy is deferred; the N-bounded fragment
-literal branch is the completed finite observation theorem on Track F. -/
+/-- Full-language first-order adequacy is deferred.  Track F supplies N-bounded
+fragment observations (closed FO `ite` β, Born↔Instrument mass, quotation
+`FragCert`s); full-language adequacy still needs a bang in
+`AmbientCPDayBangCategory`. -/
 theorem trackL_full_adequacy_deferred :
     DayBangArchitectureBoundary :=
   day_bang_architecture_boundary
 
 /-- Full abstraction investigation is deferred to a positive Track L model or a
-precise no-go once Day bang is resolved. -/
+precise no-go once a bang/comonoid exists in `AmbientCPDayBangCategory`. -/
 theorem trackL_full_abstraction_deferred :
     DayBangArchitectureBoundary :=
   day_bang_architecture_boundary

@@ -660,17 +660,17 @@ beyond the minimum fragment.  The minimum fragment (first-order data, linear
 FO-domain arrows, unrestricted bit binders, primitives, measurement) has a
 checked Route~A `PresheafFragmentModel`, compositional `FragCert.denote`
 via controlled `iteElim` (`routeAFragmentDenotationModel`), classical-bit
-Day comonoid contexts (`classicalBitComonoid`), closed unit/bit
-observations, N-bounded `fragment_observable_adequacy`, Step/MeasStep
-denotational soundness packages, and source–quotation/elaboration
-commuting squares.  The concrete physical-bit copy/discard is not
-counital; `classicalBitModule` is the unrestricted carrier with checked
-comonoid laws.  Incremental open-term β/η identities remain Track F
-lemmas.  Track L packages are deferred on
-`day_bang_architecture_boundary` / ambient-CP replacement (raw A=2
-split-effect bound fails; witness implication proved; bang rebuild in
-`AmbientCPDayBangCategory` still open) and are not included in the checked
-theorem list as completed semantics.
+Day comonoid contexts (`classicalBitComonoid`) with Day closed β/η, closed
+FO `ite` Step soundness, N-bounded Born↔Instrument adequacy (including a
+measured `new0` bound), and source–quotation/elaboration packages with quote
+`FragCert`s and CQ compile/reflect.  The concrete physical-bit copy/discard
+is not counital; `classicalBitModule` is the unrestricted carrier with
+checked comonoid laws.  Open-term lam/app β equalities and a
+`FragCert.denote`↔`CQ.Sem` bridge remain Track F lemmas.  Track L packages
+are deferred on `day_bang_architecture_boundary` / ambient-CP replacement
+(raw A=2 split-effect bound fails; witness implication proved; bang rebuild
+in `AmbientCPDayBangCategory` still open) and are not included in the
+checked theorem list as completed semantics.
 
 ---
 

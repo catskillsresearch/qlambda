@@ -207,6 +207,50 @@ noncomputable def dayEval (A N : Module) :
   (dayClosedPresentation.closed (dayInternalHom A N) A N).symm
     (Hom.id (dayInternalHom A N))
 
+/-- Uncurrying through Day closedness is evaluation after applying the
+curried map in the first Day factor. -/
+theorem dayUncurry_eq_eval_comp {X A N : Module}
+    (g : Hom X (dayInternalHom A N)) :
+    (dayClosedPresentation.closed X A N).symm g =
+      Hom.comp (dayEval A N) (DayTensor.map g (Hom.id A)) := by
+  apply DayTensor.hom_ext
+  intro m n x y
+  -- Both sides act on coend generators by `(g.app m x).app id y`.
+  change
+      ((dayClosedPresentation.closed X A N).symm g).app (m * n)
+          ((DayCoend.intro X A).app x y) =
+        (dayEval A N).app (m * n)
+          ((DayTensor.map g (Hom.id A)).app (m * n)
+            ((DayCoend.intro X A).app x y))
+  have hmap := DayTensor.map_intro g (Hom.id A) x y
+  rw [hmap, Hom.id_app]
+  -- `closed.symm g = lift (uncurry g)` and `dayEval = lift (uncurry id)`.
+  change
+      DayCoend.evaluate N (DayInternalHom.uncurry g)
+          ((DayCoend.intro X A).app x y) =
+        DayCoend.evaluate N
+          (DayInternalHom.uncurry (Hom.id (dayInternalHom A N)))
+          ((DayCoend.intro (dayInternalHom A N) A).app (g.app m x) y)
+  rw [DayCoend.evaluate_intro, DayCoend.evaluate_intro]
+  rfl
+
+/-- Day β: evaluating a curried Day morphism recovers the original. -/
+theorem dayEval_dayCurry {X A N : Module}
+    (f : Hom (dayTensor X A) N) :
+    Hom.comp (dayEval A N)
+      (DayTensor.map (dayCurry f) (Hom.id A)) = f := by
+  rw [← dayUncurry_eq_eval_comp]
+  exact (dayClosedPresentation.closed X A N).symm_apply_apply f
+
+/-- Day η: currying an evaluated Day morphism recovers the original. -/
+theorem dayCurry_dayEval {X A N : Module}
+    (g : Hom X (dayInternalHom A N)) :
+    dayCurry
+        (Hom.comp (dayEval A N) (DayTensor.map g (Hom.id A))) =
+      g := by
+  rw [← dayUncurry_eq_eval_comp]
+  exact (dayClosedPresentation.closed X A N).apply_symm_apply g
+
 /-- Curry over a first-order representable domain and transport to the
 specialized representable internal hom used by linear arrows. -/
 noncomputable def curryFirstOrder {X N : Module} (A : ℕ)
@@ -369,11 +413,46 @@ theorem linearOSplit_exists {Δ Δ₁ Δ₂ : List (Option Ty)}
           (Hom.comp (map (braiding _ _) (Hom.id _))
             (Hom.comp (associatorInv _ _ _) (map (Hom.id _) f))))⟩
 
+/-- Structural Day split on the underlying lists (computes without eliminating
+`OSplit : Prop`). Impossible shapes return `0`. -/
+noncomputable def linearOSplitLists :
+    ∀ (Δ Δ₁ Δ₂ : List (Option Ty)),
+      Hom (linear Δ) (dayTensor (linear Δ₁) (linear Δ₂))
+  | [], [], [] => leftUnitorInv dayTensorUnit
+  | none :: Δ, none :: Δ₁, none :: Δ₂ =>
+      Hom.comp
+        (map (leftUnitorInv _) (leftUnitorInv _))
+        (Hom.comp (leftUnitor _)
+          (map (Hom.id dayTensorUnit) (linearOSplitLists Δ Δ₁ Δ₂)))
+  | some A :: Δ, some B :: Δ₁, none :: Δ₂ =>
+      if h : A = B then
+        h ▸ Hom.comp
+          (map (Hom.id _) (leftUnitorInv _))
+          (Hom.comp (associatorInv _ _ _)
+            (map (Hom.id _) (linearOSplitLists Δ Δ₁ Δ₂)))
+      else
+        0
+  | some A :: Δ, none :: Δ₁, some B :: Δ₂ =>
+      if h : A = B then
+        h ▸ Hom.comp
+          (map (leftUnitorInv _) (Hom.id _))
+          (Hom.comp (associator _ _ _)
+            (Hom.comp (map (braiding _ _) (Hom.id _))
+              (Hom.comp (associatorInv _ _ _)
+                (map (Hom.id _) (linearOSplitLists Δ Δ₁ Δ₂)))))
+      else
+        0
+  | _, _, _ => 0
+
 /-- Structural Day split selected by an `OSplit` witness. -/
 noncomputable def linearOSplit {Δ Δ₁ Δ₂ : List (Option Ty)}
-    (hs : OSplit Δ Δ₁ Δ₂) :
+    (_hs : OSplit Δ Δ₁ Δ₂) :
     Hom (linear Δ) (dayTensor (linear Δ₁) (linear Δ₂)) :=
-  Classical.choice (linearOSplit_exists hs)
+  linearOSplitLists Δ Δ₁ Δ₂
+
+theorem linearOSplit_nil (hs : OSplit [] [] []) :
+    linearOSplit hs = leftUnitorInv dayTensorUnit :=
+  rfl
 
 /-- Physical bit copy retained only as a boundary map; unrestricted
 contraction below uses `classicalBitContraction`. -/
@@ -413,22 +492,57 @@ theorem unrestrictedContraction_exists {Γ : List Ty}
         (map bitContractionDay f)⟩
 
 /-- Direct contraction for an all-bit unrestricted context. -/
+noncomputable def unrestrictedContractionLists :
+    ∀ (Γ : List Ty),
+      Hom (unrestricted Γ) (dayTensor (unrestricted Γ) (unrestricted Γ))
+  | [] => leftUnitorInv dayTensorUnit
+  | .bit :: Γ =>
+      Hom.comp
+        (tensorInterchange classicalBitModule classicalBitModule
+          (unrestricted Γ) (unrestricted Γ))
+        (map bitContractionDay (unrestrictedContractionLists Γ))
+  | _ :: _ => 0
+
+/-- Direct contraction for an all-bit unrestricted context. -/
 noncomputable def unrestrictedContraction {Γ : List Ty}
-    (hΓ : CtxUAllBit Γ) :
+    (_hΓ : CtxUAllBit Γ) :
     Hom (unrestricted Γ)
       (dayTensor (unrestricted Γ) (unrestricted Γ)) :=
-  Classical.choice (unrestrictedContraction_exists hΓ)
+  unrestrictedContractionLists Γ
+
+theorem unrestrictedContraction_nil (hΓ : CtxUAllBit []) :
+    unrestrictedContraction hΓ = leftUnitorInv dayTensorUnit :=
+  rfl
+
+/-- Duplicate the shared unrestricted context and split the linear context.
+On empty contexts the middle-four interchange is omitted: the split is
+definitionally `λ⁻¹ ⊗ λ⁻¹`, matching the Day-unit packaging used by closed
+`ite` Step soundness. -/
+noncomputable def combinedOSplitLists :
+    ∀ (Γ : List Ty) (Δ Δ₁ Δ₂ : List (Option Ty)),
+      Hom (combined Γ Δ)
+        (dayTensor (combined Γ Δ₁) (combined Γ Δ₂))
+  | [], [], [], [] =>
+      map (leftUnitorInv dayTensorUnit) (leftUnitorInv dayTensorUnit)
+  | Γ, Δ, Δ₁, Δ₂ =>
+      Hom.comp
+        (tensorInterchange (unrestricted Γ) (unrestricted Γ)
+          (linear Δ₁) (linear Δ₂))
+        (map (unrestrictedContractionLists Γ) (linearOSplitLists Δ Δ₁ Δ₂))
 
 /-- Duplicate the shared unrestricted context and split the linear context. -/
 noncomputable def combinedOSplit {Γ : List Ty}
-    {Δ Δ₁ Δ₂ : List (Option Ty)} (hΓ : CtxUAllBit Γ)
-    (hs : OSplit Δ Δ₁ Δ₂) :
+    {Δ Δ₁ Δ₂ : List (Option Ty)} (_hΓ : CtxUAllBit Γ)
+    (_hs : OSplit Δ Δ₁ Δ₂) :
     Hom (combined Γ Δ)
       (dayTensor (combined Γ Δ₁) (combined Γ Δ₂)) :=
-  Hom.comp
-    (tensorInterchange (unrestricted Γ) (unrestricted Γ)
-      (linear Δ₁) (linear Δ₂))
-    (map (unrestrictedContraction hΓ) (linearOSplit hs))
+  combinedOSplitLists Γ Δ Δ₁ Δ₂
+
+/-- Empty combined split is the Day-unit pairing `λ⁻¹ ⊗ λ⁻¹`. -/
+theorem combinedOSplit_nil (hΓ : CtxUAllBit []) (hs : OSplit [] [] []) :
+    combinedOSplit hΓ hs =
+      map (leftUnitorInv dayTensorUnit) (leftUnitorInv dayTensorUnit) :=
+  rfl
 
 /-- Select an unrestricted bit variable from a combined context. -/
 noncomputable def combinedLookupUnrestricted {Γ : List Ty}

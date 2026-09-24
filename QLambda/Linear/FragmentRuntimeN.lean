@@ -21,6 +21,8 @@ namespace QLambda.Linear
 set_option maxHeartbeats 8000000
 
 open Domain.Presheaf.SuperoperatorModule
+open Domain.Presheaf
+open scoped ComplexOrder MatrixOrder BigOperators
 
 /-- Syntactic upper bound on live wires appearing in a term's qubit-typed
 subexpressions (conservative: counts `prim new0` and qubit variables). -/
@@ -79,6 +81,64 @@ theorem n_bounded_measureBranch_completedCP (b : Bool) :
     routeAFragmentModel.measureBranch b = measureBranchYoneda b :=
   fragment_measureBranch_agrees b
 
+/-- Runtime Born mass is the `NormalizedDensity.bornWeight` of the Kraus
+measurement branch (definitional). -/
+theorem measureProbability_eq_yoneda_branch_mass
+    (ρ : Runtime.RegisterState 1) (b : Bool) :
+    Runtime.RegisterState.measureProbability ρ (0 : Fin 1) b =
+      NormalizedDensity.bornWeight
+        (Runtime.RegisterState.measureBranch (0 : Fin 1) b) ρ :=
+  rfl
+
+/-- The same Born mass equals the Instrument branch CP-map trace. -/
+theorem measureProbability_eq_instrument_branch_trace
+    (ρ : Runtime.RegisterState 1) (b : Bool) :
+    Runtime.RegisterState.measureProbability ρ (0 : Fin 1) b =
+      (Matrix.trace
+        (((Instrument.measure (0 : Fin 1)).branchSuperoperator
+            (if b then (1 : Fin 2) else 0)).cp.applyMat ρ.mat)).re := by
+  cases b with
+  | true =>
+      simp only [measureProbability_eq_yoneda_branch_mass,
+        Runtime.RegisterState.measureBranch, NormalizedDensity.bornWeight,
+        Instrument.branchSuperoperator]
+      change
+          (Matrix.trace
+              (KrausFamily.applyMat
+                [Composer.projector (0 : Fin 1) true] ρ.mat)).re =
+            (Matrix.trace
+              (CPMap.applyMat
+                ((Instrument.measure (0 : Fin 1)).branch 1) ρ.mat)).re
+      rw [Instrument.measure_branch_one, CPMap.applyMat_ofKraus]
+  | false =>
+      simp only [measureProbability_eq_yoneda_branch_mass,
+        Runtime.RegisterState.measureBranch, NormalizedDensity.bornWeight,
+        Instrument.branchSuperoperator]
+      change
+          (Matrix.trace
+              (KrausFamily.applyMat
+                [Composer.projector (0 : Fin 1) false] ρ.mat)).re =
+            (Matrix.trace
+              (CPMap.applyMat
+                ((Instrument.measure (0 : Fin 1)).branch 0) ρ.mat)).re
+      rw [Instrument.measure_branch_zero, CPMap.applyMat_ofKraus]
+
+/-- Single-qubit `measure (prim new0) K` is 1-bounded whenever `K` is. -/
+theorem usesAtMost_measure_new0 (N : Nat) (K : Term)
+    (hN : 1 ≤ N) (hK : UsesAtMostQubits N K) :
+    UsesAtMostQubits N (.measure (.prim .new0) K) :=
+  ⟨Nat.le_trans (Nat.le_refl 1) hN, hK⟩
+
+/-- Concrete 1-bounded measured program: measure a fresh qubit, discard
+continuation as a unit lambda (syntactic bound only). -/
+def measureNew0Cont : Term :=
+  .lam .unres .bit (.lam .lin .qubit .unit)
+
+theorem usesAtMost_measure_new0_cont :
+    UsesAtMostQubits 1 (.measure (.prim .new0) measureNew0Cont) :=
+  usesAtMost_measure_new0 1 measureNew0Cont (Nat.le_refl 1)
+    (by simp [measureNew0Cont, UsesAtMostQubits])
+
 /-- Weighted source/runtime simulation witness for closed fragment programs
 bounded by `N` live qubits: denotation exists and measurement branches match. -/
 structure FragmentWeightedSimulation (N : Nat) where
@@ -101,6 +161,17 @@ structure FragmentWeightedSimulation (N : Nat) where
     ∀ {q} (hq : q ≤ N) (w : Fin q) (ρ : Runtime.RegisterState q),
       Runtime.RegisterState.measureProbability ρ w false +
         Runtime.RegisterState.measureProbability ρ w true = 1
+  /-- Born mass agrees with Instrument branch trace at one qubit. -/
+  born_instrument :
+    ∀ (ρ : Runtime.RegisterState 1) (b : Bool),
+      1 ≤ N →
+        Runtime.RegisterState.measureProbability ρ (0 : Fin 1) b =
+          (Matrix.trace
+            (((Instrument.measure (0 : Fin 1)).branchSuperoperator
+                (if b then (1 : Fin 2) else 0)).cp.applyMat ρ.mat)).re
+  /-- A nontrivial closed measured program is N-bounded when `1 ≤ N`. -/
+  uses_measure_new0 :
+    1 ≤ N → UsesAtMostQubits N (.measure (.prim .new0) measureNew0Cont)
 
 /-- Every `N` supplies a weighted simulation package. -/
 theorem fragmentWeightedSimulation (N : Nat) :
@@ -111,6 +182,9 @@ theorem fragmentWeightedSimulation (N : Nat) :
   uses_unit := usesAtMost_unit N
   uses_bit := fun _ => usesAtMost_bitLit N _
   born_sum := fun {_q} _hq w ρ => n_bounded_measureProbability_sum _q w ρ
+  born_instrument := fun ρ b _hN => measureProbability_eq_instrument_branch_trace ρ b
+  uses_measure_new0 := fun hN =>
+    UsesAtMostQubits.mono hN usesAtMost_measure_new0_cont
 
 /-- N-bounded observable adequacy for closed recursion-free fragment
 programs: unit, bit, and measurement-branch observations. -/

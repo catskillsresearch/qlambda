@@ -46,10 +46,22 @@ Probability labels measurement transitions; it is not a source term former.
 - `QLambda.Linear.fragment_closed_literal_adequacy`
 - `QLambda.Linear.fragment_closed_literal_denote_sound`
 - `QLambda.Linear.fragment_step_denote_sound`
+- `QLambda.Linear.fragment_step_denote_sound_iteTrue_closed`
+- `QLambda.Linear.fragment_step_denote_sound_iteFalse_closed`
+- `QLambda.Linear.FragCert.denote_ite_true_closed`
+- `QLambda.Linear.FragCert.denote_ite_false_closed`
+- `QLambda.Linear.FragmentContext.combinedOSplit_nil`
+- `QLambda.Linear.fragment_day_beta`
+- `QLambda.Linear.fragment_day_eta`
+- `QLambda.Linear.fragment_subst_lin_spine`
+- `QLambda.Linear.fragment_subst_unres_bit_spine`
 - `QLambda.Linear.fragment_measStep_denote_sound`
+- `QLambda.Linear.measureProbability_eq_instrument_branch_trace`
+- `QLambda.Linear.usesAtMost_measure_new0_cont`
 - `QLambda.Linear.fragment_observable_adequacy`
 - `QLambda.Linear.fragment_observable_adequacy_literals`
 - `QLambda.Linear.fragmentWeightedSimulation`
+- `QLambda.Linear.fragment_quote_has_fragCert`
 - `QLambda.Linear.fragment_source_quotation_agreement`
 - `QLambda.Linear.fragment_source_elaboration_agreement`
 - `QLambda.Linear.fragment_source_circuit_commuting_square`
@@ -62,13 +74,17 @@ global bang or `LNLModel`.  `FragCert` / `FragmentJudgment` are the canonical
 fragment judgment (with `ofHasType` completeness and
 `fragmentJudgment_of_hasType`).  `FragmentContext` gives open
 unrestricted/linear Day-tensor contexts over `classicalBitModule`, with
-`classicalBitComonoid` satisfying the four comonoid laws.  `FragmentIte`
-inhabits `FragmentBranching.iteElim` via controlled bra⊗id selection and
-supplies `FragCert.denote` / `routeAFragmentDenotationModel`.  Closed
-unit/bit observations, N-bounded `fragment_observable_adequacy`, Step/MeasStep
-denotational soundness packages, and source–quotation/elaboration commuting
-squares are checked.  Full open-term β/η identity proofs remain incremental
-Track F lemmas layered on Day closedness.
+`classicalBitComonoid` satisfying the four comonoid laws and Day closed
+β/η (`dayEval_dayCurry` / `fragment_day_beta`).  `FragmentIte` inhabits
+`FragmentBranching.iteElim` via controlled bra⊗id selection, supplies
+`FragCert.denote` / `routeAFragmentDenotationModel`, and proves closed FO
+`ite` Step soundness (`denote_ite_true_closed` / `_false_closed`).  N-bounded
+`fragment_observable_adequacy` includes Born↔Instrument mass agreement and
+a measured `new0` program bound; `fragment_source_circuit_commuting_square`
+packages quote `FragCert`s with CQ compile/reflect (not a
+`FragCert.denote`↔`CQ.Sem` identification).  Open-term lam/app/unpair β
+identities and full Step congruence for every constructor remain Track F
+lemmas.
 
 ## Day-bang / Track L boundary
 
@@ -335,25 +351,32 @@ structure is also witnessed by a one-object model with singleton homs.
 
 ## Unmet semantic objectives
 
-The following are goals, not existing declarations:
+The following are goals, not existing declarations.  Route A
+`FragCert.denote` / `routeAFragmentDenotationModel`, classical-bit comonoid
+contexts, controlled `iteElim`, Day closed β/η, closed FO `ite` Step
+soundness, Born↔Instrument mass, quotation `FragCert`s, and L8 ambient-CP
+replacement are already checked (see the index above); they are not listed
+here as open.
 
 - all-dimensional TNI `BangComultComponentsAdmissible A` for `A ≥ 2`, and a
   premise-free all-dimensional Day bang comonoid / cofree UP (Route A and
-  the global raw split-effect bound are refuted; half-scaling repairs the
-  `(2,1)` matrix bound but is not counital;
-  `bangComultDayTransferWitness_not_admissible` proves that any
-  `BangComultDayTransferWitness` refutes
-  `BangComultComponentsAdmissible 2`, while no TNI witness is constructed;
-  L8 instead selects `AmbientCPDayBangCategory` /
-  `day_bang_l8_resolved_by_ambientCP_replacement`;
-  see `day_bang_architecture_boundary`);
+  the global raw split-effect bound are refuted; L8 selects
+  `AmbientCPDayBangCategory` /
+  `day_bang_l8_resolved_by_ambientCP_replacement`);
 - bang/comonoid rebuilt inside `AmbientCPDayBangCategory`, then premise-free
   `presheafQuantumLNL`, recursive `mu`/`fix` interpretation, full-language
   adequacy, and full abstraction (Track L deferred theorems record this
   boundary);
-- full open-term `FragCert.denote` with curry/eval/split coherence and
-  denotational β/η / substitution for all fragment rules;
-- end-to-end N-bounded source/runtime Born simulation beyond closed literals;
+- open-term denotational β/η for lam/app/unpair/measure continuations equating
+  `FragCert.denote` of a redex to `FragCert.denote` of its contractum (Day
+  spines and closed FO `ite` β are checked; full substitution lemmas and
+  congruence for every `Step`/`MeasStep` constructor remain);
+- end-to-end identification of `FragCert.denote` of a measured closed program
+  with runtime register histories (Born↔Instrument one-wire mass and
+  `UsesAtMostQubits` for `measure (prim new0) _` are checked);
+- a `FragCert.denote` ↔ `CQ.Sem` bridge for quoted/elaborated commands (quote
+  certificates and CQ compile/reflect equalities are checked; domains still
+  differ);
 - general Day tensor and internal hom for arbitrary based / biorthogonal
   modules beyond the representable fragment.  The coefficientwise
   `symmetricFormalTensorSquare` is not the Day tensor;
@@ -363,30 +386,7 @@ The following are goals, not existing declarations:
   representable dimensions `A ≤ 1`), including digging `!A → !!A`;
 - the based double-dual classical subcategory and its general Day tensor,
   internal hom, additives, and omega-CPO enrichment;
-- a premise-free LNL model `presheafQuantumLNL` whose homs contain
-  allocation, reset, gates, and measurement instruments;
-- open-context compositional denotation for every `SemanticFragment` rule.
-  `FragmentContext` now supplies all-bit unrestricted and linear
-  `Lookup`/`AllNone`/`OSplit` maps with proof-witness independence, but
-  `FragCert.denote` for lam/app/pair/unpair/ite/prim/measure and the required
-  coherence laws remain open.  The originally proposed physical-bit
-  contraction is not counital:
-  `physical_bit_copy_discard_not_left_counital`; the dephasing-fixed
-  `classicalBitModule` now carries a proved Day comonoid
-  (`FragmentContext.classicalBitComonoid`: left/right counit, coassoc,
-  cocomm), and unrestricted contexts/arrows use it; `FragmentBranching.iteElim`
-  (controlled bit selection) remains the open F2/F3 bridge for `ite`;
-- denotational `Step`/`MeasStep` soundness and semantic substitution for
-  the fragment (beyond syntactic fragment preservation);
-- N-bounded source/runtime simulation and Born-probability agreement
-  (`measureProbability` ↔ denotational branch mass);
-- finite qubit-measurement adequacy beyond closed unit/bit literals;
 - interpretation of all source types and strictly positive recursive types;
 - a concrete structural source denotation independent of typing derivations
   for the full language (including `fix`/`mu`);
-- semantic substitution, operational soundness, and fix/fold equations;
-- adequacy for closed terms with first-order observable results via
-  subnormalized finite approximants;
-- preservation of source denotation by successful staging and canonical
-  circuit quotation;
 - full abstraction for a named fragment, or a precise no-go boundary.

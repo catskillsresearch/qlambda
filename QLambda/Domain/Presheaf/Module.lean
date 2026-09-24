@@ -328,6 +328,24 @@ theorem basisBra_mul_basisKet (i : Fin 2) :
       split_ifs <;> simp
     _ = 1 := by simp
 
+theorem basisBra_mul_basisKet_of_ne {i j : Fin 2} (h : i ≠ j) :
+    basisBra i * basisKet j = (0 : Matrix (Fin 1) (Fin 1) ℂ) := by
+  ext a b
+  fin_cases a; fin_cases b
+  simp only [basisBra, basisKet, Matrix.mul_apply, Matrix.zero_apply]
+  classical
+  calc
+    (∑ k : Fin 2, (if k = i then (1 : ℂ) else 0) *
+        (if k = j then (1 : ℂ) else 0)) =
+        ∑ k : Fin 2, (0 : ℂ) := by
+      refine Finset.sum_congr rfl fun k _ => ?_
+      split_ifs with hki hkj
+      · exact False.elim (h (hki.symm.trans hkj))
+      · simp
+      · simp
+      · simp
+    _ = 0 := by simp
+
 /-- Complementary computational-basis effect `⟨i|−|i⟩ : 2 → 1`. -/
 noncomputable def complementaryBasisEffect (i : Fin 2) : Superoperator 2 1 where
   cp := CPMap.ofKraus [basisBra i]
@@ -382,6 +400,26 @@ theorem complementaryBasisEffect_comp_isometricBasisPrep (i : Fin 2) :
     _ = (1 : Matrix (Fin 1) (Fin 1) ℂ) * ρ * (1 : Matrix (Fin 1) (Fin 1) ℂ)ᴴ := by
           simp [basisBra_mul_basisKet]
     _ = ρ := by simp
+
+theorem complementaryBasisEffect_comp_isometricBasisPrep_of_ne
+    {i j : Fin 2} (h : i ≠ j) :
+    Superoperator.comp (complementaryBasisEffect i) (isometricBasisPrep j) = 0 := by
+  apply Superoperator.ext
+  apply CPMap.ext_apply
+  intro ρ
+  simp only [Superoperator.cp_comp, complementaryBasisEffect, isometricBasisPrep,
+    Superoperator.cp_zero, CPMap.applyMat_comp, CPMap.applyMat_ofKraus,
+    CPMap.applyMat_zero, KrausFamily.applyMat_single]
+  calc
+    basisBra i * (basisKet j * ρ * (basisKet j)ᴴ) * (basisBra i)ᴴ
+        = (basisBra i * basisKet j) * ρ *
+            ((basisBra i * basisKet j)ᴴ) := by
+          -- `(basisKet j)ᴴ * (basisBra i)ᴴ = (basisBra i * basisKet j)ᴴ`
+          simp [Matrix.mul_assoc, ← Matrix.conjTranspose_mul]
+    _ = (0 : Matrix (Fin 1) (Fin 1) ℂ) * ρ *
+            ((0 : Matrix (Fin 1) (Fin 1) ℂ)ᴴ) := by
+          simp [basisBra_mul_basisKet_of_ne h]
+    _ = 0 := by simp
 
 theorem e0_comp_p0 :
     Superoperator.comp e0 p0 = Superoperator.identity 1 :=

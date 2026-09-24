@@ -110,8 +110,9 @@ private theorem typed_bit_var (Γ : List Ty) (n : Nat) :
   exact .varU .zero bit_duplicable (allNone_unused n)
 
 /-- Interpret a one-bit classical expression as a pure source bit term.
-The supplied term is the current value of the sole classical slot. -/
-private def quoteCExpr (current : Term) : Composer.CExpr 1 → Term
+The supplied term is the current value of the sole classical slot.
+Exposed for fragment-binder induction on quotations (Track F7). -/
+def quoteCExpr (current : Term) : Composer.CExpr 1 → Term
   | .lit b => .bitLit b
   | .bit _ => current
   | .not e => .ite (quoteCExpr current e) (.bitLit false) (.bitLit true)
@@ -124,7 +125,7 @@ private def quoteCExpr (current : Term) : Composer.CExpr 1 → Term
         (.ite (quoteCExpr current e₂) (.bitLit false) (.bitLit true))
         (quoteCExpr current e₂)
 
-private theorem quoteCExpr_typed
+theorem quoteCExpr_typed
     {Γ : List Ty} {current : Term}
     (hcurrent : ∀ n, HasType (.bit :: Γ) (unused n) current .bit) :
     ∀ (e : Composer.CExpr 1) (n : Nat),
@@ -159,8 +160,9 @@ private theorem quoteCExpr_typed
       exact .ite (split_unused n) (ih₁ n) hnot (ih₂ n)
 
 /-- CPS quotation of a command body.  The current wire is always linear
-index zero; `current` is a pure term denoting the current classical slot. -/
-private def quoteBody (C : Command 1 1) (current : Term)
+index zero; `current` is a pure term denoting the current classical slot.
+Exposed for fragment-binder induction on quotations (Track F7). -/
+def quoteBody (C : Command 1 1) (current : Term)
     (k : Term → Term) : Term :=
   match C with
   | .skip => k current
@@ -194,13 +196,13 @@ private def quoteBody (C : Command 1 1) (current : Term)
       .ite (quoteCExpr current guard)
         (quoteBody yes current k) (quoteBody no current k)
 
-private def ContinuationTyped (k : Term → Term) : Prop :=
+def ContinuationTyped (k : Term → Term) : Prop :=
   ∀ (Γ : List Ty) (n : Nat) (current : Term),
     (∀ m, HasType (.bit :: Γ) (unused m) current .bit) →
     HasType (.bit :: Γ) (liveQubit n) (k current)
       (.tensor .qubit .bit)
 
-private theorem gateArg_typed (Γ : List Ty) (n : Nat) (p : Prim)
+theorem gateArg_typed (Γ : List Ty) (n : Nat) (p : Prim)
     (hp : primTy p = .arrow .lin .qubit .qubit) :
     HasType Γ (liveQubit n)
       (.app (.prim p) (.var .lin 0)) .qubit := by
@@ -210,7 +212,7 @@ private theorem gateArg_typed (Γ : List Ty) (n : Nat) (p : Prim)
         (allNone_unused (n + 1)))
   · exact typed_live_var Γ n
 
-private theorem quoteBody_typed {C : Command 1 1}
+theorem quoteBody_typed {C : Command 1 1}
     (hC : C.Quotable) {k : Term → Term}
     (hk : ContinuationTyped k) :
     ∀ (Γ : List Ty) (n : Nat) (current : Term),
