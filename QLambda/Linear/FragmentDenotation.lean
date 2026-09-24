@@ -744,11 +744,11 @@ end FragCert
 
 /-- Route A supplies closed unit/bit denotation into combined contexts. -/
 noncomputable def routeAClosedDenotationCore :
-    (∀ (c : FragCert.Closed .unit .unit),
+    (∀ (_c : FragCert.Closed .unit .unit),
       Hom (FragmentContext.combined [] []) (fragmentModule .unit)) ×
-    (∀ (b : Bool) (c : FragCert.Closed (.bitLit b) .bit),
+    (∀ (b : Bool) (_c : FragCert.Closed (.bitLit b) .bit),
       Hom (FragmentContext.combined [] []) (fragmentModule .bit)) :=
-  ⟨FragCert.denoteClosedUnit, fun b c => FragCert.denoteClosedBitLit c⟩
+  ⟨FragCert.denoteClosedUnit, fun _b c => FragCert.denoteClosedBitLit c⟩
 
 namespace ClosedSemanticFragment
 

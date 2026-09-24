@@ -117,10 +117,6 @@ theorem fragCert_varL0_unit_denote :
           (Hom.comp (DayTensor.rightUnitor (fragmentModule .unit))
             (DayTensor.map (Hom.id (fragmentModule .unit))
               (Hom.id dayTensorUnit)))) := by
-  simp only [fragCert_varL0_unit, FragCert.denote_varL_eq,
-    FragmentContext.combinedLookupLinear,
-    FragmentContext.linearOnlySomeAtProject,
-    FragmentContext.linearOnlySomeAtProjectLists_singleton]
   rfl
 
 /-- Spine expansion of the closed unit identity redex through FO Day eval. -/
@@ -198,10 +194,6 @@ theorem fragCert_varL0_bit_denote :
           (Hom.comp (DayTensor.rightUnitor (fragmentModule .bit))
             (DayTensor.map (Hom.id (fragmentModule .bit))
               (Hom.id dayTensorUnit)))) := by
-  simp only [fragCert_varL0_bit, FragCert.denote_varL_eq,
-    FragmentContext.combinedLookupLinear,
-    FragmentContext.linearOnlySomeAtProject,
-    FragmentContext.linearOnlySomeAtProjectLists_singleton]
   rfl
 
 theorem fragCert_varL0_bit_denote_simple :
@@ -407,10 +399,6 @@ theorem fragCert_varU0_bit_denote :
           (Hom.comp (DayTensor.rightUnitor (fragmentModule .bit))
             (DayTensor.map classicalBitInclusion (Hom.id dayTensorUnit)))
           (Hom.id dayTensorUnit)) := by
-  simp only [fragCert_varU0_bit, FragCert.denote_varU_eq,
-    FragmentContext.combinedLookupUnrestricted,
-    FragmentContext.unrestrictedLookup,
-    FragmentContext.unrestrictedLookupLists_zero_bit]
   rfl
 
 /-- F4b foothold: substituting a value for linear `var 0` is the value
