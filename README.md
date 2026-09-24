@@ -90,17 +90,20 @@ binders, primitives, measurement; no `mu`/`fix`) has a Route A
 `iteElim`, classical-bit comonoid contexts with Day/FO closed β/η, closed FO
 `ite` and closed linear/unrestricted identity β, closed `unpair` β, constant
 unrestricted subst β, Step congruence / complete fragment Step package,
-measured `new0` Born adequacy (`FragmentMeasuredSimulation`), Hom-side quote
-spines (`quoteSkipSpine` / `quoteGateSpine`), and spine-driven skip/x/h CQ
-bridge — see
+measured `new0` Born adequacy (`FragmentMeasuredSimulation`), N-qubit
+denotation + OpenQASM staging packaging
+(`n_qubit_fragment_denotation_openqasm_interface`), Hom-side quote spines, and
+spine-driven CQ bridges for skip/x/h plus a covering set
+(t/reset/measure/seq-skip; branch via packaging) — see
 `QLambda/Linear/SemanticFragment.lean`, `FragmentModel.lean`,
 `FragmentDenotation.lean`, `FragmentIte.lean`, `FragmentContext.lean`,
 `FragmentAdequacy.lean`, `FragmentCoherence.lean`, `FragmentRuntimeN.lean`,
-`FragmentSourceCircuitN.lean`.  The proposed copy/discard on physical
+`FragmentSourceCircuitN.lean`, `FragmentQuoteBridgeExt.lean`,
+`FragmentNDenotation.lean`.  The proposed copy/discard on physical
 `representable 2` is formally not counital; `classicalBitModule` supplies
-the unrestricted carrier with a checked Day comonoid.  A general
-`FragCert.denote`↔`CQ.Sem` interpret for arbitrary quoted commands beyond
-skip/x/h remains open.  Track L is deferred on L9→L10 glue:
+the unrestricted carrier with a checked Day comonoid.  Remaining Quotable
+Hom spines beyond that covering set, and undecidable arbitrary Hom→CQ
+extract, remain open.  Track L is deferred on L9→L10 glue:
 relative AmbientCP admissibility for `A ≤ 1`, a degree-row gate at 2, and
 `AmbientCPComonoid` packaging for `A ≤ 1` are checked
 (`day_bang_l9_ambientCP_bang_admissible`); A=1-style glue is blocked by

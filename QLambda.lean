@@ -78,6 +78,8 @@ import QLambda.Linear.FragmentUnpairBeta
 import QLambda.Linear.FragmentSubstBeta
 import QLambda.Linear.FragmentRuntimeN
 import QLambda.Linear.FragmentSourceCircuitN
+import QLambda.Linear.FragmentQuoteBridgeExt
+import QLambda.Linear.FragmentNDenotation
 import QLambda.Domain.Presheaf.DayBangBoundary
 import QLambda.Domain.Presheaf.AmbientCPGate8TestSuite
 import QLambda.Domain.Presheaf.AmbientCPBang

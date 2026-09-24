@@ -99,6 +99,17 @@ Probability labels measurement transitions; it is not a source term former.
 - `QLambda.Linear.fragment_source_circuit_commuting_square`
 - `QLambda.Linear.fragment_source_quotation_agreement_literals`
 - `QLambda.Linear.UsesAtMostQubits`
+- `QLambda.Linear.n_qubit_fragment_denotation_openqasm_interface`
+- `QLambda.Linear.commandToOpenQASM`
+- `QLambda.Linear.interpretQuoteSpineExt`
+- `QLambda.Linear.fragCert_spine_interprets_t_reset_measure_seq_branch`
+- `QLambda.Linear.elaborates_cq_compile_transport`
+- `QLambda.Linear.elab_transport_skip_quote`
+- `QLambda.Linear.elab_transport_measure_quote`
+- `QLambda.Linear.measured_control_elaborates_openqasm`
+- `QLambda.Linear.bell_elaborates_openqasm`
+- `QLambda.Linear.measure_quote_cq_bridge`
+- `QLambda.Linear.n_qubit_quote_cq_covering_set`
 
 Route A supplies `PresheafFragmentModel` / `routeAFragmentModel` with
 classical-bit discard/copy and primitive/measurement Yoneda maps, without a
@@ -116,13 +127,18 @@ unrestricted/linear Day-tensor contexts over `classicalBitModule`, with
 `unpair` β, open-context move forms, and constant unrestricted subst β.
 Step congruence packaging, `fragment_step_denote_sound_complete`, and
 `FragmentMeasuredSimulation` (measured `new0` with `|0⟩` Born masses) are
-checked; Hom-side quote spines (`quoteSkipSpine` / `quoteGateSpine`) equal
-hand-built `FragCert` denotations, and `interpretQuoteSpine` turns a
-Hom-level spine equation into a `CQ.Sem` agreeing with `Command.denote` for
-skip/x/h without inspecting the source command (spine hypothesis discharged
-for every closed certificate of those quotations).  A general
-`FragCert.denote`↔`CQ.Sem` interpret for arbitrary quoted commands beyond
-skip/x/h remains open.
+checked.  `n_qubit_fragment_denotation_openqasm_interface` packages
+`FragCert.denote`, `UsesAtMostQubits`, successful `Elaborates` ⇒ well-formed
+Composer, and `commandToOpenQASM`.  Hom-side quote spines
+(`quoteSkipSpine` / `quoteGateSpine` / `quoteMeasureSpine`) equal hand-built
+`FragCert` denotations; `interpretQuoteSpine` / `interpretQuoteSpineExt`
+turn spine equations into `CQ.Sem` agreeing with `Command.denote` for
+skip/x/h plus the covering set t/reset/measure/seq-skip (branch via
+`interpretQuoteHom` packaging).  Elaboration transport is quote-normal-form:
+successful staging reuses `elaborates_compile_agreement`, and closed quote
+certs transport via the spine bridges.  Remaining Quotable constructors
+without a dedicated Hom spine (e.g. `ry`, non-skip `seq` shapes) and
+undecidable arbitrary Hom→CQ extract stay open.
 
 ## Day-bang / Track L boundary
 
@@ -411,11 +427,17 @@ The following are goals, not existing declarations.  Route A
 `FragCert.denote`, Day closed β/η, closed FO `ite`, closed linear and
 unrestricted identity β, closed `unpair` β, open-context lam/app move forms,
 constant unrestricted subst β, Step congruence and the complete fragment-
-admitted Step package, measured `new0` Born adequacy, Hom-side quote spines
-with thin skip/x/h CQ bridge, L8 ambient-CP replacement, and L9 relative
-AmbientCP admissibility (`A ≤ 1` + degree-row at 2) are already checked (see
-the index above); they are not listed here as open.
+admitted Step package, measured `new0` Born adequacy, N-qubit fragment
+denotation + OpenQASM staging interface packaging, Hom-side quote spines with
+skip/x/h and covering-set (t/reset/measure/seq-skip/branch packaging) CQ
+bridges, L8 ambient-CP replacement, and L9 relative AmbientCP admissibility
+(`A ≤ 1` + degree-row at 2) are already checked (see the index above); they
+are not listed here as open.
 
+- dedicated Hom⇒CQ spines for remaining `Quotable` constructors beyond the
+  covering set (e.g. `ry`, non-trivial `seq` shapes), and a general
+  decidable extract of `CQ.Sem` from arbitrary quotation Homs (not claimed;
+  only successful `Elaborates` / `Quotable` paths with spine witnesses);
 - all-dimensional TNI `BangComultComponentsAdmissible A` for `A ≥ 2`, and a
   premise-free all-dimensional Day bang comonoid / cofree UP (Route A and
   the global raw split-effect bound are refuted; L8 selects

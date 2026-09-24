@@ -646,30 +646,32 @@ bound but is not a counital repair (boundary weights remain $1$);
 the implication from `BangComultDayTransferWitness` to failure of
 dimension-two Day admissibility is checked; no TNI witness is constructed,
 and L8 instead records `AmbientCPDayBangCategory` /
-`day_bang_l8_resolved_by_ambientCP_replacement`.  The remaining objective is
-the minimum first-order/quotation/runtime fragment denotation and adequacy,
-without requiring an all-dimensional TNI bang or premise-free
-`presheafQuantumLNL`.  The finite CP maps, TNI superoperators, representable
-Yoneda/Day fragment, first-order type objects, $A\le 1$ bang/cofreeness,
-Route~A/global-bound refutations, ambient-CP Gate~8 replacement, and
-primitive agreement are checked; they are not that all-dimensional LNL
-instance or full-language denotation.  On that basis we aim to prove
-operational soundness, first-order-observable adequacy by finite
-approximants, and source-denotation preservation for successful staging
-beyond the minimum fragment.  The minimum fragment (first-order data, linear
-FO-domain arrows, unrestricted bit binders, primitives, measurement) has a
-checked Route~A `PresheafFragmentModel`, compositional `FragCert.denote`
-via controlled `iteElim`, classical-bit Day comonoid contexts with Day/FO
-closed β/η, closed FO `ite` and closed linear identity β, Step congruence
-packaging, measured `new0` Born adequacy (`FragmentMeasuredSimulation`), and
-Hom-side quote spines (`quoteSkipSpine` / `quoteGateSpine`).  The concrete
-physical-bit copy/discard is not counital; `classicalBitModule` is the
-unrestricted carrier with checked comonoid laws.  Unrestricted identity β,
-general subst, full Step soundness, and a `FragCert.denote`↔`CQ.Sem`
-interpret functor remain Track F lemmas.  Track L packages are deferred on
-L9: relative AmbientCP admissibility for $A\le 1$, a degree-row gate at 2,
-and `AmbientCPComonoid` packaging for $A\le 1$ are checked; A=1-style glue
-is blocked by `$\neg$ BangDegreeUnitRectangleHasSum 2`, so glued
+`day_bang_l8_resolved_by_ambientCP_replacement`.  The finite CP maps, TNI
+superoperators, representable Yoneda/Day fragment, first-order type objects,
+$A\le 1$ bang/cofreeness, Route~A/global-bound refutations, ambient-CP Gate~8
+replacement, and primitive agreement are checked; they are not an
+all-dimensional LNL instance or full-language denotation.  The minimum
+fragment (first-order data, linear FO-domain arrows, unrestricted bit
+binders, primitives, measurement) has a checked Route~A
+`PresheafFragmentModel`, compositional `FragCert.denote` via controlled
+`iteElim`, classical-bit Day comonoid contexts with Day/FO closed β/η,
+closed FO `ite`, closed linear and unrestricted identity β, closed `unpair`
+β, constant unrestricted subst β, Step congruence /
+`fragment_step_denote_sound_complete`, measured `new0` Born adequacy
+(`FragmentMeasuredSimulation`), and the N-qubit packaging theorem
+`n_qubit_fragment_denotation_openqasm_interface` (`UsesAtMostQubits`,
+successful `Elaborates` ⇒ well-formed Composer, `commandToOpenQASM`).
+Hom-side quote spines and `interpretQuoteSpine` /
+`interpretQuoteSpineExt` identify `FragCert.denote` with ideal `CQ.Sem` for
+skip/x/h and a covering set of Quotable forms (t/reset/measure/seq-skip;
+branch via `interpretQuoteHom` packaging).  Remaining Quotable constructors
+without dedicated Hom spines and undecidable arbitrary Hom→CQ extract stay
+open; Track~L / bang are independent.  The concrete physical-bit
+copy/discard is not counital; `classicalBitModule` is the unrestricted
+carrier with checked comonoid laws.  Track L packages are deferred on L9:
+relative AmbientCP admissibility for $A\le 1$, a degree-row gate at 2, and
+`AmbientCPComonoid` packaging for $A\le 1$ are checked; A=1-style glue is
+blocked by `$\neg$ BangDegreeUnitRectangleHasSum 2`, so glued
 `BangComultAmbientCPAdmissible 2` remains open (absolute A=2 not claimed).
 
 ---
