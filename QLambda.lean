@@ -75,6 +75,7 @@ import QLambda.Linear.FragmentIte
 import QLambda.Linear.FragmentAdequacy
 import QLambda.Linear.FragmentCoherence
 import QLambda.Linear.FragmentUnpairBeta
+import QLambda.Linear.FragmentSubstBeta
 import QLambda.Linear.FragmentRuntimeN
 import QLambda.Linear.FragmentSourceCircuitN
 import QLambda.Domain.Presheaf.DayBangBoundary
