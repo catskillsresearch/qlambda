@@ -25,9 +25,6 @@ attribute [instance] OmegaObject.partialOrder OmegaObject.omegaComplete
 
 namespace OmegaObject
 
-instance instCoeSortOmegaObject : CoeSort OmegaObject (Type u) :=
-  ⟨OmegaObject.Carrier⟩
-
 end OmegaObject
 
 end QLambda.Domain

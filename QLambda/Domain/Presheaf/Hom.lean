@@ -110,15 +110,6 @@ def zero (M : Module.{u}) (N : Module.{v}) : Hom M N where
     intro m n x f
     exact (N.act_zero_element f).symm
 
-instance instZeroHom (M : Module.{u}) (N : Module.{v}) : Zero (Hom M N) :=
-  ⟨zero M N⟩
-
-@[simp]
-theorem zero_app (M : Module.{u}) (N : Module.{v})
-    (n : ℕ) (x : (M.obj n).Carrier) :
-    (0 : Hom M N).app n x = 0 :=
-  rfl
-
 /-- Pointwise partial sums of natural transformations.  Naturality belongs to
 the proposed result `s`, so no choice of a pointwise sum is hidden here. -/
 def HasSum {M : Module.{u}} {N : Module.{v}} {ι : Type} [Countable ι]
@@ -131,35 +122,10 @@ theorem hasSum_unique {M : Module.{u}} {N : Module.{v}}
   ext n x
   exact (N.obj n).summation.unique (hs n x) (ht n x)
 
-theorem hasSum_empty (M : Module.{u}) (N : Module.{v}) :
-    HasSum (fun i : Empty => nomatch i) (0 : Hom M N) := by
-  intro n x
-  convert (N.obj n).summation.empty using 1
-  change (zero M N).app n x = 0
-  rfl
-
 theorem hasSum_singleton {M : Module.{u}} {N : Module.{v}} (f : Hom M N) :
     HasSum (fun _ : PUnit => f) f := by
   intro n x
   exact (N.obj n).summation.singleton _
-
-theorem hasSum_remove_zero {M : Module.{u}} {N : Module.{v}}
-    {ι : Type} [Countable ι] (f : ι → Hom M N) (s : Set ι)
-    (g : Hom M N) (hzero : ∀ i, i ∉ s → f i = 0) :
-    HasSum (fun i : s => f i) g ↔ HasSum f g := by
-  constructor <;> intro h n x
-  · apply ((N.obj n).summation.remove_zero
-      (fun i => (f i).app n x) s (g.app n x) ?_).mp
-    · exact h n x
-    · intro i hi
-      rw [hzero i hi]
-      rfl
-  · apply ((N.obj n).summation.remove_zero
-      (fun i => (f i).app n x) s (g.app n x) ?_).mpr
-    · exact h n x
-    · intro i hi
-      rw [hzero i hi]
-      rfl
 
 theorem hasSum_reindex {M : Module.{u}} {N : Module.{v}}
     {ι κ : Type} [Countable ι] [Countable κ]

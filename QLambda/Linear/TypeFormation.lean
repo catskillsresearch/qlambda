@@ -224,42 +224,4 @@ theorem duplicable_eq_true_iff {A} :
     duplicable A = true ↔ Duplicable A :=
   duplicableAt_eq_true_iff
 
-instance instDecidableWellScopedAt {n A} : Decidable (WellScopedAt n A) :=
-  if h : wellScopedAt n A = true then
-    isTrue (wellScopedAt_eq_true_iff.mp h)
-  else
-    isFalse fun hA => h (wellScopedAt_eq_true_iff.mpr hA)
-
-instance instDecidableDoesNotContainAt {target A} :
-    Decidable (DoesNotContainAt target A) :=
-  if h : doesNotContainAt target A = true then
-    isTrue (doesNotContainAt_eq_true_iff.mp h)
-  else
-    isFalse fun hA => h (doesNotContainAt_eq_true_iff.mpr hA)
-
-instance instDecidableStrictlyPositiveAt {target A} :
-    Decidable (StrictlyPositiveAt target A) :=
-  if h : strictlyPositiveAt target A = true then
-    isTrue (strictlyPositiveAt_eq_true_iff.mp h)
-  else
-    isFalse fun hA => h (strictlyPositiveAt_eq_true_iff.mpr hA)
-
-instance instDecidablePositiveRec {A} : Decidable (PositiveRec A) :=
-  if h : positiveRec A = true then
-    isTrue (positiveRec_eq_true_iff.mp h)
-  else
-    isFalse fun hA => h (positiveRec_eq_true_iff.mpr hA)
-
-instance instDecidableAdmissibleAt {n A} : Decidable (AdmissibleAt n A) :=
-  if h : admissibleAt n A = true then
-    isTrue (admissibleAt_eq_true_iff.mp h)
-  else
-    isFalse fun hA => h (admissibleAt_eq_true_iff.mpr hA)
-
-instance instDecidableDuplicableAt {κ A} : Decidable (DuplicableAt κ A) :=
-  if h : duplicableAt κ A = true then
-    isTrue (duplicableAt_eq_true_iff.mp h)
-  else
-    isFalse fun hA => h (duplicableAt_eq_true_iff.mpr hA)
-
 end QLambda.Linear.Ty

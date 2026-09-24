@@ -78,16 +78,6 @@ theorem average_fixed_iff {A k n : ℕ}
   · intro hinv
     exact average_val { val := x, invariant := hinv }
 
-instance instZeroSymmetricElement (A k n : ℕ) : Zero (SymmetricElement A k n) where
-  zero :=
-    { val := 0
-      invariant := fun _σ => Superoperator.comp_zero_right _ }
-
-@[simp]
-theorem zero_val (A k n : ℕ) :
-    (0 : SymmetricElement A k n).val = 0 :=
-  rfl
-
 /-- A symmetric element is unchanged when a homogeneous split is followed
 by the genuine tensor-factor braiding. -/
 theorem split_braiding {A p q n : ℕ}

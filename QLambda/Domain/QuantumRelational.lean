@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Composer.MatrixSemantics
-import QLambda.Domain.QuantumFunction
+import QLambda.Domain.QuantumFunctionInstances
 import QLambda.Domain.CompletedCP
 
 /-!

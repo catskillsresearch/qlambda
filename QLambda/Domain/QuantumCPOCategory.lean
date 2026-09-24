@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Domain.QuantumCPO
-import QLambda.Domain.ScottFunction
+import QLambda.Domain.ScottFunctionInstances
 
 /-!
 # Quantum CPO morphisms

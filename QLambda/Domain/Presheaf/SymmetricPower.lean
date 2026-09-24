@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Domain.Presheaf.SymmetricPowerCore
-import QLambda.Domain.Presheaf.SymmetricElement
+import QLambda.Domain.Presheaf.SymmetricElementInstances
 
 /-!
 # Symmetric tensor-power modules

@@ -16,9 +16,4 @@ fibers and joint action at every dimension. -/
 class AmbientCPModule (M : Module.{0}) : Prop where
   has_sum_add : ∀ n, Fiber.HasSumAdd (M.obj n)
   has_act_sum_from_dim : HasActSumFromDim M
-
-instance cpmModule_ambientCP (B : ℕ) : AmbientCPModule (cpmModule B) where
-  has_sum_add := fun n => Fiber.HasSumAdd.cpmModule B n
-  has_act_sum_from_dim := HasActSumFromDim.cpmModule B
-
 end QLambda.Domain.Presheaf.SuperoperatorModule

@@ -8,7 +8,7 @@ import QLambda.Linear.TypeInterpretation
 import QLambda.Linear.PrimitiveSuperoperator
 import QLambda.Domain.Presheaf.Yoneda
 import QLambda.Domain.Presheaf.ClosedGeneration
-import QLambda.Domain.Presheaf.DayCoend
+import QLambda.Domain.Presheaf.DayCoendInstances
 import QLambda.Domain.Presheaf.SuperoperatorModule
 
 /-!
@@ -377,9 +377,4 @@ basis dephasing.  This separates unrestricted classical data from the
 physical qubit carrier `representable 2`. -/
 abbrev ClassicalBitCarrier (n : ℕ) := {x : Superoperator n 2 //
   Superoperator.comp bitDephaseSuperoperator x = x}
-
-noncomputable instance instZeroClassicalBitCarrier (n : ℕ) : Zero (ClassicalBitCarrier n) :=
-  ⟨⟨0, by simp [Superoperator.comp_zero_right]⟩⟩
-
-
 end QLambda.Linear

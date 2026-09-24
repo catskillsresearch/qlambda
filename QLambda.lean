@@ -18,8 +18,8 @@ import QLambda.Domain.OmegaCPO
 import QLambda.Domain.Enriched
 import QLambda.Domain.LinearNonlinear
 import QLambda.Domain.RecursiveTypes
-import QLambda.Domain.QuantumSet
-import QLambda.Domain.QuantumRel
+import QLambda.Domain.QuantumSetInstances
+import QLambda.Domain.QuantumRelInstances
 import QLambda.Domain.QuantumRelational
 import QLambda.Domain.QuantumCPOCategory
 import QLambda.Domain.QObj
@@ -28,8 +28,8 @@ import QLambda.Domain.QuantumMonoidal
 import QLambda.Domain.DiscreteSet
 import QLambda.Domain.QuantumClassical
 import QLambda.Domain.QuantumLNL
-import QLambda.Domain.Presheaf.CPMap
-import QLambda.Domain.Presheaf.Superoperator
+import QLambda.Domain.Presheaf.CPMapInstances
+import QLambda.Domain.Presheaf.SuperoperatorInstances
 import QLambda.Domain.Presheaf.SuperoperatorInstrument
 import QLambda.Domain.Presheaf.SigmaMon
 import QLambda.Domain.Presheaf.SuperoperatorModule
@@ -41,8 +41,8 @@ import QLambda.Domain.Presheaf.ClassicalCategory
 import QLambda.Domain.Presheaf.RepresentableBipolar
 import QLambda.Domain.Presheaf.ClassicalMonoidal
 import QLambda.Domain.Presheaf.Monoidal
-import QLambda.Domain.Presheaf.DayCoend
-import QLambda.Domain.Presheaf.OmegaEnriched
+import QLambda.Domain.Presheaf.DayCoendInstances
+import QLambda.Domain.Presheaf.OmegaEnrichedInstances
 import QLambda.Domain.Presheaf.SymmetricPower
 import QLambda.Domain.Presheaf.ClosedGenerated
 import QLambda.Domain.Presheaf.Exponential
@@ -53,7 +53,7 @@ import QLambda.Domain.Presheaf.LNL
 
 import QLambda.Linear.Syntax
 import QLambda.Linear.Context
-import QLambda.Linear.TypeFormation
+import QLambda.Linear.TypeFormationInstances
 import QLambda.Linear.Typing
 import QLambda.Linear.Metatheory
 import QLambda.Linear.Operational
@@ -63,7 +63,7 @@ import QLambda.Linear.RegFile
 import QLambda.Linear.Elaboration
 import QLambda.Linear.Quotation
 import QLambda.Linear.QuotationGeneral
-import QLambda.Linear.Denotation
+import QLambda.Linear.DenotationInstances
 import QLambda.Linear.PrimitiveSuperoperator
 import QLambda.Linear.TypeInterpretation
 import QLambda.Linear.SemanticFragment

@@ -79,37 +79,6 @@ operator spaces of relations. -/
 def dual (X : QuantumSet) : QuantumSet where
   Atom := X.Atom
   dim := X.dim
-
-instance instInhabitedUnitAtom : Inhabited unit.Atom := ⟨PUnit.unit⟩
-instance instInhabitedQubitAtom : Inhabited qubit.Atom := ⟨PUnit.unit⟩
-instance instInhabitedAtomicAtom : Inhabited (atomic n).Atom := ⟨PUnit.unit⟩
-instance instUniqueUnitAtom : Unique unit.Atom := inferInstanceAs (Unique PUnit)
-instance instUniqueQubitAtom : Unique qubit.Atom := inferInstanceAs (Unique PUnit)
-instance instUniqueAtomicAtom : Unique (atomic n).Atom := inferInstanceAs (Unique PUnit)
-
-instance instDecidableEqLiftSetAtom [DecidableEq α] : DecidableEq (liftSet α).Atom :=
-  show DecidableEq α from inferInstance
-
-instance instFintypeLiftSetAtom [Fintype α] : Fintype (liftSet α).Atom :=
-  show Fintype α from inferInstance
-
-instance instLELiftSetAtom [LE α] : LE (liftSet α).Atom :=
-  show LE α from inferInstance
-
-instance instPreorderLiftSetAtom [Preorder α] : Preorder (liftSet α).Atom :=
-  show Preorder α from inferInstance
-
-instance instPartialOrderLiftSetAtom [PartialOrder α] : PartialOrder (liftSet α).Atom :=
-  show PartialOrder α from inferInstance
-
-instance instDecidableEqTensorAtom [DecidableEq X.Atom] [DecidableEq Y.Atom] :
-    DecidableEq (tensor X Y).Atom :=
-  show DecidableEq (X.Atom × Y.Atom) from inferInstance
-
-instance instDecidableEqSumAtom [DecidableEq X.Atom] [DecidableEq Y.Atom] :
-    DecidableEq (sum X Y).Atom :=
-  show DecidableEq (X.Atom ⊕ Y.Atom) from inferInstance
-
 @[simp] theorem dim_unit (x : unit.Atom) : unit.dim x = 1 :=
   rfl
 

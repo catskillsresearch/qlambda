@@ -27,20 +27,6 @@ namespace QuantumRel
 
 variable {X Y Z W : QuantumSet}
 
-/-- Pointwise inclusion of quantum relations. -/
-instance instLEQuantumRel : LE (QuantumRel X Y) where
-  le R S := ∀ x y, R.component x y ≤ S.component x y
-
-instance instPartialOrderQuantumRel : PartialOrder (QuantumRel X Y) where
-  le_refl _ _ _ := le_rfl
-  le_trans _ _ _ hRS hST x y := (hRS x y).trans (hST x y)
-  le_antisymm R S hRS hSR := by
-    cases R
-    cases S
-    congr 1
-    funext x y
-    exact le_antisymm (hRS x y) (hSR x y)
-
 /-- The zero relation. -/
 def bot : QuantumRel X Y where
   component := fun _ _ => ⊥
@@ -48,58 +34,6 @@ def bot : QuantumRel X Y where
 /-- The top relation: every operator is allowed. -/
 def top : QuantumRel X Y where
   component := fun _ _ => ⊤
-
-instance instBotQuantumRel : Bot (QuantumRel X Y) := ⟨bot⟩
-instance instTopQuantumRel : Top (QuantumRel X Y) := ⟨top⟩
-
-instance instInfSetQuantumRel : InfSet (QuantumRel X Y) where
-  sInf s := ⟨fun x y => ⨅ R : s, R.1.component x y⟩
-
-instance instSupSetQuantumRel : SupSet (QuantumRel X Y) where
-  sSup s := ⟨fun x y => ⨆ R : s, R.1.component x y⟩
-
-instance instSemilatticeInfQuantumRel : SemilatticeInf (QuantumRel X Y) where
-  inf R S := ⟨fun x y => R.component x y ⊓ S.component x y⟩
-  inf_le_left := fun _ _ _ _ => inf_le_left
-  inf_le_right := fun _ _ _ _ => inf_le_right
-  le_inf := fun _ _ _ hR hS x y => le_inf (hR x y) (hS x y)
-
-instance instSemilatticeSupQuantumRel : SemilatticeSup (QuantumRel X Y) where
-  sup R S := ⟨fun x y => R.component x y ⊔ S.component x y⟩
-  le_sup_left := fun _ _ _ _ => le_sup_left
-  le_sup_right := fun _ _ _ _ => le_sup_right
-  sup_le := fun _ _ _ hR hS x y => sup_le (hR x y) (hS x y)
-
-instance instLatticeQuantumRel : Lattice (QuantumRel X Y) where
-
-instance instBoundedOrderQuantumRel : BoundedOrder (QuantumRel X Y) where
-  le_top := fun _ _ _ => le_top
-  bot_le := fun _ _ _ => bot_le
-
-theorem isLUB_sSup (s : Set (QuantumRel X Y)) :
-    IsLUB s (sSup s) := by
-  constructor
-  · intro R hR x y
-    exact le_iSup_of_le ⟨R, hR⟩ le_rfl
-  · intro R hR x y
-    apply iSup_le
-    intro S
-    exact (hR S.property) x y
-
-theorem isGLB_sInf (s : Set (QuantumRel X Y)) :
-    IsGLB s (sInf s) := by
-  constructor
-  · intro R hR x y
-    exact iInf_le_of_le ⟨R, hR⟩ le_rfl
-  · intro R hR x y
-    apply le_iInf
-    intro S
-    exact (hR S.property) x y
-
-noncomputable instance instCompleteLatticeQuantumRel : CompleteLattice (QuantumRel X Y) where
-  isLUB_sSup := isLUB_sSup
-  isGLB_sInf := isGLB_sInf
-
 
 end QuantumRel
 

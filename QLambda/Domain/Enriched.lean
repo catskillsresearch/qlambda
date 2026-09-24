@@ -3,7 +3,7 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.OmegaObject
+import QLambda.Domain.OmegaObjectInstances
 import QLambda.Domain.OmegaCategory
 import QLambda.Domain.OmegaCategoryIso
 import QLambda.Domain.Functor

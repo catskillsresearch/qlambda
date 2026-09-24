@@ -31,21 +31,6 @@ variable {n : ℕ}
 theorem ext {ρ σ : SubNormalizedDensity n} (h : ρ.mat = σ.mat) : ρ = σ := by
   cases ρ; cases σ; congr
 
-/-- Loewner order: `ρ ≤ σ` iff `σ − ρ` is positive semidefinite. -/
-instance instPartialOrderSubNormalizedDensity : PartialOrder (SubNormalizedDensity n) where
-  le ρ σ := ρ.mat ≤ σ.mat
-  le_refl ρ := le_refl ρ.mat
-  le_trans ρ σ τ := le_trans
-  le_antisymm ρ σ hρσ hσρ := ext (le_antisymm hρσ hσρ)
-
-theorem le_def {ρ σ : SubNormalizedDensity n} :
-    ρ ≤ σ ↔ ρ.mat ≤ σ.mat :=
-  Iff.rfl
-
-theorem le_iff {ρ σ : SubNormalizedDensity n} :
-    ρ ≤ σ ↔ (σ.mat - ρ.mat).PosSemidef :=
-  Iff.rfl
-
 /-- If `A` and `-A` are both positive semidefinite, then `A = 0`. -/
 theorem le_antisymm_of_posSemidef_neg {A : Matrix (Fin n) (Fin n) ℂ}
     (hA : A.PosSemidef) (hneg : (-A).PosSemidef) : A = 0 := by
@@ -63,14 +48,6 @@ theorem re_trace_nonneg (ρ : SubNormalizedDensity n) :
   rw [hsum]
   exact Finset.sum_nonneg fun i _ =>
     (RCLike.nonneg_iff (K := ℂ).mp (ρ.posSemidef.diag_nonneg (i := i))).1
-
-instance instOrderBotSubNormalizedDensity : OrderBot (SubNormalizedDensity n) where
-  bot := ⟨0, PosSemidef.zero, by simp [Matrix.trace_zero]⟩
-  bot_le ρ := by
-    change (ρ.mat - 0).PosSemidef
-    simpa using ρ.posSemidef
-
-theorem mat_bot : (⊥ : SubNormalizedDensity n).mat = 0 := rfl
 
 noncomputable def spectralScale (t : ℝ) : ℝ := Real.exp (-max t 0)
 
@@ -102,14 +79,5 @@ noncomputable def spectralErode (t : ℝ) (ρ : SubNormalizedDensity n) :
 
 theorem spectralErode_mat (t : ℝ) (ρ : SubNormalizedDensity n) :
     (spectralErode t ρ).mat = spectralScale t • ρ.mat := rfl
-
-theorem spectralErode_mono {t : ℝ} (_ht : 0 ≤ t) {ρ σ : SubNormalizedDensity n}
-    (h : ρ ≤ σ) : spectralErode t ρ ≤ spectralErode t σ := by
-  change ((spectralErode t σ).mat - (spectralErode t ρ).mat).PosSemidef
-  have : (spectralErode t σ).mat - (spectralErode t ρ).mat =
-      spectralScale t • (σ.mat - ρ.mat) := by
-    simp [spectralErode_mat, smul_sub]
-  rw [this]
-  exact (le_iff.mp h).smul (spectralScale_nonneg t)
 
 end SubNormalizedDensity

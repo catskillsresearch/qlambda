@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Linear.Context
-import QLambda.Linear.TypeFormation
+import QLambda.Linear.TypeFormationInstances
 
 /-!
 # Typing

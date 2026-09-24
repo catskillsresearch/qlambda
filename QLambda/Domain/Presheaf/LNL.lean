@@ -5,7 +5,7 @@ Authors: Lars Warren Ericson.
 -/
 import QLambda.Domain.LinearNonlinear
 import QLambda.Domain.Presheaf.ClassicalMonoidal
-import QLambda.Domain.Presheaf.OmegaEnriched
+import QLambda.Domain.Presheaf.OmegaEnrichedInstances
 import QLambda.Domain.Presheaf.DayComonoid
 
 /-!

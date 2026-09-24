@@ -307,11 +307,6 @@ theorem residualRefines_trans {K L M : KrausFamily n m}
     _ = (applyMat K ρ + applyMat R ρ) + applyMat S ρ := by
       rw [applyMat_append]
 
-instance instIsPreorderResidualRefines :
-    IsPreorder (KrausFamily n m) ResidualRefines where
-  refl := residualRefines_refl
-  trans _ _ _ := residualRefines_trans
-
 @[simp] theorem applyMat_identity (ρ : Matrix (Fin n) (Fin n) ℂ) :
     applyMat (identity n) ρ = ρ := by
   simp [identity, applyMat]

@@ -4,10 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Domain.Presheaf.ModuleChoiSum
-import QLambda.Domain.Presheaf.Fiber
+import QLambda.Domain.Presheaf.FiberInstances
 import QLambda.Domain.Presheaf.Module
-import QLambda.Domain.Presheaf.HasActSumFromDim
-import QLambda.Domain.Presheaf.Hom
+import QLambda.Domain.Presheaf.HasActSumFromDimInstances
+import QLambda.Domain.Presheaf.HomInstances
 import QLambda.Domain.Presheaf.ModuleIso
 
 /-!

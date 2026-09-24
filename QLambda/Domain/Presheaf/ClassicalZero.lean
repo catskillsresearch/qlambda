@@ -79,11 +79,6 @@ noncomputable def zeroModule : Module where
     intros
     exact ⟨0, trivial⟩
 
-instance HasActSumFromDim.zeroModule : HasActSumFromDim zeroModule where
-  act_sum_from_dim := by
-    intros
-    exact ⟨0, trivial⟩
-
 /-- Negation of a fiberwise subsingleton module is fiberwise subsingleton. -/
 theorem neg_subsingleton (M : Module)
     (hM : ∀ n, Subsingleton (M.obj n).Carrier) (n : ℕ) :

@@ -130,14 +130,6 @@ theorem Fiber.HasSumAdd.cpmModule (A n : ℕ) :
   change CPMap n A at a b
   exact ⟨a + b, SigmaMon.CPMapSum.hasSum_add a b⟩
 
-/-- Unrestricted CP modules admit joint action at every fiber dimension. -/
-instance HasActSumFromDim.cpmModule (A : ℕ) :
-    HasActSumFromDim (cpmModule A) where
-  act_sum_from_dim := by
-    intro ι _ m d x s f h
-    obtain ⟨Χ, hΧ⟩ := SigmaMon.CPMapSum.comp_from_dim f h
-    exact ⟨Χ, hΧ⟩
-
 end SuperoperatorModule
 
 end QLambda.Domain.Presheaf

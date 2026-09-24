@@ -3,7 +3,8 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.OmegaMapFunctionSpace
+import QLambda.Domain.OmegaMapFunctionSpaceInstances
+import QLambda.Domain.OmegaCompleteInstances
 
 /-!
 # Cartesian closed structure on ω-continuous maps

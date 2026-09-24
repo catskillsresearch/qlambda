@@ -6,7 +6,7 @@ Authors: Lars Warren Ericson.
 import QLambda.Domain.Presheaf.CategoryPresentation
 import QLambda.Domain.Presheaf.CanonicalReflexivity
 import QLambda.Domain.Presheaf.ClassicalRepresentableOne
-import QLambda.Domain.Presheaf.ClassicalZero
+import QLambda.Domain.Presheaf.ClassicalZeroInstances
 import QLambda.Domain.Presheaf.BiorthogonalCategory
 import QLambda.Domain.Presheaf.AdditiveProduct
 

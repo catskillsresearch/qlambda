@@ -3,14 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.QuantumRel
+import QLambda.Domain.QuantumRelInstances
 import QLambda.Domain.QuantumRelComp
 import QLambda.Domain.QuantumRelDagger
 import QLambda.Domain.QuantumRelFunction
 import QLambda.Domain.QuantumRelAtoms
 import QLambda.Domain.QuantumRelChains
 import QLambda.Domain.QuantumRelExamples
-import QLambda.Domain.Finite
+import QLambda.Domain.FiniteInstances
 
 /-!
 # Quantum relations
