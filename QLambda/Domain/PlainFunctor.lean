@@ -13,8 +13,6 @@ namespace QLambda.Domain
 
 universe u v
 
-set_option linter.checkUnivs false
-
 namespace OmegaCategory
 
 /-- An ordinary functor between the underlying categories.  LNL adjunctions

@@ -13,8 +13,6 @@ namespace QLambda.Domain
 
 universe u v
 
-set_option linter.checkUnivs false
-
 open OmegaCategory
 
 /-- Symmetric monoidal closed structure on an enriched category. -/

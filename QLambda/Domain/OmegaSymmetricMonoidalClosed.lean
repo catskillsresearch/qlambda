@@ -14,8 +14,6 @@ namespace QLambda.Domain
 
 universe u
 
-set_option linter.checkUnivs false
-
 open OmegaCategory
 
 /-- The Cartesian tensor also gives the ωCPO category a symmetric

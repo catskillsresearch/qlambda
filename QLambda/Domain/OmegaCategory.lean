@@ -13,8 +13,9 @@ namespace QLambda.Domain
 
 universe u v
 
-set_option linter.checkUnivs false
-
+-- Object/hom universes are independent (`OmegaCategory.{u+1, u}`, `.{1, 0}`, …).
+-- Silenced like Mathlib's `Category`: structure type is `Type (max …)`.
+set_option linter.checkUnivs false in
 /-- A small category whose homs are pointed ωCPOs and whose composition is
 ω-continuous in each argument. -/
 structure OmegaCategory where

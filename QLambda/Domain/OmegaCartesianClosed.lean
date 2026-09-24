@@ -13,8 +13,6 @@ namespace QLambda.Domain
 
 universe u
 
-set_option linter.checkUnivs false
-
 open OmegaCategory
 
 /-- Terminal pointed ωCPO. -/

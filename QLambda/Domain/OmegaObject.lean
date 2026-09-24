@@ -13,8 +13,6 @@ namespace QLambda.Domain
 
 universe u
 
-set_option linter.checkUnivs false
-
 /-- A bundled ω-complete partial order. -/
 structure OmegaObject where
   Carrier : Type u

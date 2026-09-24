@@ -10,7 +10,6 @@ import QLambda.Domain.OmegaObject
 # Instance `instCoeSortOmegaObject`
 -/
 
-set_option linter.checkUnivs false
 namespace QLambda.Domain
 namespace OmegaObject
 

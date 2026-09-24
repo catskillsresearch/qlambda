@@ -13,8 +13,6 @@ namespace QLambda.Domain
 
 universe u v
 
-set_option linter.checkUnivs false
-
 namespace OmegaCategory
 
 /-- An ωCPO-enriched functor. -/

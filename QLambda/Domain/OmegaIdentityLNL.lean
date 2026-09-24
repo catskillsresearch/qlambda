@@ -15,8 +15,6 @@ namespace QLambda.Domain
 
 universe u
 
-set_option linter.checkUnivs false
-
 open OmegaCategory
 
 private noncomputable def omegaIdentityFunctor :

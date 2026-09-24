@@ -14,8 +14,6 @@ namespace QLambda.Domain
 
 universe u
 
-set_option linter.checkUnivs false
-
 /-- The canonical ωCPO-enriched category of pointed ωCPOs and
 ω-continuous maps. -/
 noncomputable def omegaMapCategory : OmegaCategory.{u + 1, u} where

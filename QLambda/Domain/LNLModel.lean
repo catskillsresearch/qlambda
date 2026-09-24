@@ -14,10 +14,10 @@ namespace QLambda.Domain
 
 universe u v
 
-set_option linter.checkUnivs false
-
 open OmegaCategory
 
+-- `u`/`v` only appear paired as `OmegaCategory.{u,v}` in this structure.
+set_option linter.checkUnivs false in
 /-- A strong symmetric monoidal adjunction between CPO-enriched categories.
 The adjunction functors are ordinary functors: important models such as
 `Set ⊣ qRel` do not preserve the selected hom orders in both directions. -/
