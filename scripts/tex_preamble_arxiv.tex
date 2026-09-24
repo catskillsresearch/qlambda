@@ -1,15 +1,18 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[11pt,letterpaper]{article}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[margin=1in]{geometry}
+\usepackage{fullpage}
+\usepackage{times}
+\usepackage{helvet}
+\usepackage{courier}
+\usepackage{cmu-titlepage2}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{stmaryrd}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{tabularx}
-\usepackage{authblk}
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage[export]{adjustbox}
@@ -23,17 +26,22 @@
 \usepackage[colorlinks=true,linkcolor=blue!40!black,citecolor=blue!40!black,urlcolor=blue!40!black]{hyperref}
 \emergencystretch=2em
 
+% Pandoc emits this on compact lists (including the AI model-card acknowledgments).
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
 % Let long \texttt{...} identifiers (e.g. lindenbaum_next_subset) break after each
 % underscore so they wrap inside narrow table cells instead of overflowing the column.
 \let\origtextunderscore\_
 \renewcommand{\_}{\origtextunderscore\allowbreak}
 
-% Long inlined Lean listings can exhaust pdfTeX main memory; build locally with
-% LuaLaTeX (see .latexmkrc).  arXiv's AutoTeX has the headroom for pdfLaTeX.
+% Long inlined Lean listings can exhaust pdfTeX main memory on very large
+% appendices; this report's AutoTeX / local compile path is pdfLaTeX only
+% (matching arXiv).  Keep listings and Mermaid figures sized for pdfLaTeX.
 %
 % The listings are kept as real UTF-8 Lean source: every Lean operator is rendered
 % through a `literate` replacement to a proper LaTeX symbol, so the code displays with
-% its native notation (∀ ◇ □ ⟶ ⊢ φ ψ Γ …) under BOTH pdfLaTeX and LuaLaTeX.  Every
+% its native notation (∀ ◇ □ ⟶ ⊢ φ ψ Γ …) under pdfLaTeX.  Every
 % non-ASCII glyph that occurs in the sources must appear in this table.
 
 \lstdefinestyle{leanbox}{
@@ -164,6 +172,7 @@
 % Greek
 \newunicodechar{α}{\ensuremath{\alpha}}
 \newunicodechar{β}{\ensuremath{\beta}}
+\newunicodechar{η}{\ensuremath{\eta}}
 \newunicodechar{σ}{\ensuremath{\sigma}}
 \newunicodechar{φ}{\ensuremath{\varphi}}
 \newunicodechar{χ}{\ensuremath{\chi}}

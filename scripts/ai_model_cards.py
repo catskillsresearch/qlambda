@@ -40,9 +40,10 @@ MODEL_CARDS: tuple[ModelCard, ...] = (
         tool_note=(
             "formalization and drafting in Cursor: typed linear syntax and "
             "metatheory, the intrinsic CP-map and superoperator-module "
-            "substrate, first-order type objects, primitive agreement, and "
-            "the proved-versus-objective boundary of this narrative. Every "
-            "emitted proof term was checked by the Lean kernel."
+            "substrate, first-order type objects, primitive agreement, "
+            "fragment denotation packaging, and the proved-versus-objective "
+            "boundary of this narrative. Every emitted proof term was checked "
+            "by the Lean kernel."
         ),
         reference=(
             "xAI. *Grok 4.7*. Model documentation as integrated in Cursor, "
@@ -50,17 +51,47 @@ MODEL_CARDS: tuple[ModelCard, ...] = (
         ),
     ),
     ModelCard(
+        label="Anthropic Claude Opus 5.5",
+        cite_key="Cla55",
+        tool_note=(
+            "formalization and refactoring in Cursor: Route A fragment "
+            "denotation, quotation Hom-to-CQ covering-set bridges, "
+            "N-qubit OpenQASM staging packaging, CMU report narrative "
+            "alignment, and proof cleanup. Every emitted proof term was "
+            "checked by the Lean kernel."
+        ),
+        reference=(
+            "Anthropic. *Claude Opus 5.5*. Model documentation as integrated "
+            "in Cursor, <https://cursor.com/docs/models> (accessed 2026)."
+        ),
+    ),
+    ModelCard(
         label="OpenAI GPT 5.6",
         cite_key="Gpt56",
         tool_note=(
-            "substantive Palomar editorial passes in Cursor "
+            "substantive Palomar editorial and packaging passes in Cursor "
             "(`statement_alignment`, `definition_fidelity`, "
-            "`literature_notability`, and `synthesis`). Those passes review "
-            "claims; they do not replace kernel-checked Lean."
+            "`literature_notability`, and `synthesis`), plus claim-boundary "
+            "review against `THEOREMS.md`. Those passes review claims; they "
+            "do not replace kernel-checked Lean."
         ),
         reference=(
             "OpenAI. *GPT 5.6*. Model documentation as integrated in Cursor, "
             "<https://cursor.com/docs/models> (accessed 2026)."
+        ),
+    ),
+    ModelCard(
+        label="Cursor Composer 2.5",
+        cite_key="Cmp25",
+        tool_note=(
+            "lighter Palomar editorial and codebase-navigation passes in "
+            "Cursor (`classification`, `metadata`, and related packaging "
+            "checks). Composer assists with repository-local edits; it does "
+            "not replace kernel-checked Lean."
+        ),
+        reference=(
+            "Anysphere, Inc. *Composer 2.5*. Model documentation as integrated "
+            "in Cursor, <https://cursor.com/docs/models> (accessed 2026)."
         ),
     ),
 )
@@ -83,9 +114,6 @@ def render_model_references() -> str:
 
 def inject_model_cards(text: str) -> str:
     """Expand acknowledgement markers; pass through unchanged if markers absent."""
-    tool_block = f"{TOOL_BULLETS_BEGIN}\n{render_tool_bullets()}\n{TOOL_BULLETS_END}"
-    ref_block = f"{REFERENCES_BEGIN}\n{render_model_references()}\n{REFERENCES_END}"
-
     has_tools = TOOL_BULLETS_BEGIN in text
     has_references = REFERENCES_BEGIN in text
     if not has_tools and not has_references:

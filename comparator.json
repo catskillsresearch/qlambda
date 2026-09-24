@@ -3,7 +3,7 @@
   "solution_module": "Solution",
   "theorem_names": [
     "QLambda.Palomar.source_type_safety",
-    "QLambda.Palomar.two_wire_quotation_typed"
+    "QLambda.Palomar.quotation_capstone"
   ],
   "definition_names": [],
   "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]

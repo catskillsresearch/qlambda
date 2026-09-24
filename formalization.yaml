@@ -30,14 +30,14 @@ status:
     First, type safety for closed programs of the typed linear quantum
     lambda-calculus: progress to a value, a classical step, or a quantum
     primitive boundary; determinism of classical steps; and preservation of
-    the type by classical and measurement steps. Second, every command in the
-    supported two-qubit/one-bit circuit fragment quotes to a closed source
-    term of the canonical curried register type. The quotation fragment
-    supports single-wire gates, rational RY, distinct-wire CX, reset,
-    measurement, store, sequencing, and conditionals. The Set-to-qRel LNL
-    model and the qCPO category are checked in the development but are not
-    compared. The selected source-semantic objective is a typed CP-enriched
-    presheaf submodel and remains unproved.
+    the type by classical and measurement steps. Second, the two-wire
+    quotation_capstone (typing + exact compile reflection) for every Quotable
+    command in the supported two-qubit/one-bit fragment. Full CQ agreement is
+    proved in-tree as GeneralQuotation.Quotation.quotation_capstone and staged
+    for a later comparator expansion. N-bounded fragment denotation packaging
+    and measured new0 Born adequacy are likewise checked in-tree and staged
+    for comparator expansion. The Set-to-qRel LNL model and the qCPO category
+    are checked in the development but are not compared.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -48,7 +48,7 @@ status:
       axioms: ["propext", "Quot.sound", "Classical.choice"]
       comparator_config: "comparator.json"
       literature_dependencies: []
-    - declaration: "QLambda.Palomar.two_wire_quotation_typed"
+    - declaration: "QLambda.Palomar.quotation_capstone"
       file: "Solution.lean"
       sorry_count: 0
       axioms: ["propext", "Quot.sound", "Classical.choice"]
@@ -102,8 +102,10 @@ automation:
   methods:
     - method: agent
       models:
-        - "Cursor Grok 4.6 (SpaceXAI / Cursor)"
-        - "GPT-5.6 Sol Medium (OpenAI / Cursor)"
+        - "xAI Grok 4.7 (Cursor)"
+        - "Anthropic Claude Opus 5.5 (Cursor)"
+        - "OpenAI GPT 5.6 (Cursor)"
+        - "Cursor Composer 2.5"
       framework: "Cursor"
       role: >-
         Proof exploration, Lean implementation, refactoring, testing, and
@@ -152,7 +154,7 @@ alignment:
       lean: "source_type_safety"
       module: "Challenge (statement), Solution / QLambda.Linear.Operational (proof)"
       status: proved
-    - source: "Every supported two-wire circuit quotes to a closed well-typed lambda term"
-      lean: "two_wire_quotation_typed"
+    - source: "Every supported two-wire Quotable command has a typed canonical quotation whose compile is the command"
+      lean: "quotation_capstone"
       module: "Challenge (statement), Solution / QLambda.Linear.QuotationGeneral (proof)"
       status: proved

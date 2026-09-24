@@ -16,7 +16,7 @@ trees have been removed.
 The compared declarations are:
 
 - `QLambda.Palomar.source_type_safety`
-- `QLambda.Palomar.two_wire_quotation_typed`
+- `QLambda.Palomar.quotation_capstone`
 
 `Challenge.lean` imports only Mathlib and restates the supporting definitions
 verbatim. Comparator compares their elaborated constants, including

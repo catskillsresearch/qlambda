@@ -3,9 +3,10 @@
 # qlambda
 
 Lean 4 formalization of a typed linear/nonlinear quantum lambda calculus,
-quantum-relation and qCPO foundations, and a verified finite circuit
-interchange.  A concrete CP-enriched source denotation remains an explicit
-objective.
+quantum-relation and qCPO foundations, and a verified $N$-bounded first-order
+fragment with Route A presheaf denotation, Composer/OpenQASM staging, and
+two-wire quotation completeness.  Full-language bang/LNL denotation remains an
+explicit objective behind AmbientCP Day-bang glue.
 
 The source judgment
 
@@ -129,19 +130,29 @@ lake exe cache get
 lake build
 ```
 
-Mechanical Palomar checks:
+Mechanical Palomar checks (build, Comparator, sorry/axioms):
 
 ```bash
 bash scripts/palomar_preflight.sh --mechanical-only
 ```
 
-Before a release candidate:
+Palomar packaging pre-checks (deterministic metadata / `formalization.yaml`
+alignment; no LLM editorial audit):
 
 ```bash
-bash scripts/palomar_preflight.sh
-bash scripts/build_arxiv_pdf.sh
-bash scripts/package_zenodo.sh
+PALOMAR_PROJECT_ROOT=$PWD python3 ../palomar-preflight/palomar_editorial_checks.py
 ```
+
+Before a Palomar / CMU-TR packaging candidate (still skip LLM editorial until ready):
+
+```bash
+bash scripts/palomar_preflight.sh --mechanical-only
+PALOMAR_PROJECT_ROOT=$PWD python3 ../palomar-preflight/palomar_editorial_checks.py
+bash scripts/build_arxiv_pdf.sh
+```
+
+The PDF uses CMU `cmu-titlepage2.sty` with table of contents and list of
+figures; see `docs/CMU_TECH_REPORT.md`.
 
 ## Provenance
 

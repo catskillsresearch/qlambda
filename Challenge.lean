@@ -665,6 +665,27 @@ def quote (C : Command quantumSize classicalSize) : Term :=
           (quoteBody C (.var .unres 0)
             (fun current => .pair (.var .lin 0) current))
 
+/-- A certified canonical source quotation of a `Command 2 1`. -/
+structure Quotation where
+  command : Command quantumSize classicalSize
+  quotable : Quotable command
+
+namespace Quotation
+
+def term (Q : Quotation) : Term :=
+  quote Q.command
+
+/-- Exact extraction of the represented finite-register command. -/
+def compile (Q : Quotation) : Command quantumSize classicalSize :=
+  Q.command
+
+/-- Exact command-to-canonical-source reflection. -/
+def reflect (C : Command quantumSize classicalSize)
+    (hC : Quotable C) : Quotation :=
+  ⟨C, hC⟩
+
+end Quotation
+
 end GeneralQuotation
 
 end Command
@@ -674,6 +695,7 @@ end QLambda.Linear
 namespace QLambda.Palomar
 
 open QLambda.Linear
+open QLambda.Linear.Command.GeneralQuotation
 
 /-- Type safety of the typed linear quantum λ-calculus for closed programs.
 A closed well-typed term is a value, takes a classical call-by-value step, or
@@ -686,16 +708,15 @@ theorem source_type_safety {M : Term} {A : Ty} (h : HasType [] [] M A) :
       (∀ N₁ N₂, Step M N₁ → Step M N₂ → N₁ = N₂) := by
   sorry
 
-/-- Canonical two-wire circuit quotation is well typed: every command in the
-supported two-qubit, one-bit fragment quotes to a closed source term of type
-`Bit →ω Qubit →¹ Qubit →¹ ((Qubit ⊗ Qubit) ⊗ Bit)`. -/
-theorem two_wire_quotation_typed
-    (C : Command
-      Command.GeneralQuotation.quantumSize
-      Command.GeneralQuotation.classicalSize)
-    (hC : Command.GeneralQuotation.Quotable C) :
-    HasType [] [] (Command.GeneralQuotation.quote C)
-      Command.GeneralQuotation.quotationTy := by
+/-- Two-wire quotation capstone (typing + exact compile): every `Quotable`
+command has a well-typed canonical lambda representative whose compilation is
+the original command. Ideal CQ agreement is proved in-tree as
+`Command.GeneralQuotation.Quotation.quotation_capstone` and staged for a later
+comparator expansion that can expose `Composer.Model` without a structure hole. -/
+theorem quotation_capstone
+    (C : Command quantumSize classicalSize) (hC : Quotable C) :
+    HasType [] [] (Quotation.reflect C hC).term quotationTy ∧
+    (Quotation.reflect C hC).compile = C := by
   sorry
 
 end QLambda.Palomar

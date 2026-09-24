@@ -2,7 +2,7 @@
 # Authoritative Zenodo metadata: .zenodo.json
 
 cff-version: 1.2.0
-title: "Domain semantics and circuit completeness for a typed linear quantum lambda-calculus (Lean 4)"
+title: "Mechanized denotation and circuit staging for an N-bounded linear quantum lambda-fragment (Lean 4)"
 message: "If you use this formalization, please cite it as below."
 type: software
 authors:
@@ -12,9 +12,10 @@ authors:
     orcid: "https://orcid.org/0000-0001-8299-9361"
 abstract: >-
   Lean 4 formalization of a typed linear/nonlinear quantum lambda-calculus,
-  quantum relations and quantum CPOs, finite CP/instrument semantics,
-  deterministic circuit staging, and structured Composer/OpenQASM
-  interchange.
+  quantum relations and quantum CPOs, a Route A CP-presheaf denotation for an
+  N-bounded first-order fragment, Composer/OpenQASM staging, and two-wire
+  quotation completeness. Full-language bang/LNL denotation remains an
+  explicit objective.
 keywords:
   - Lean 4
   - domain theory
@@ -30,7 +31,7 @@ date-released: 2026-08-22
 url: "https://github.com/catskillsresearch/qlambda"
 preferred-citation:
   type: software
-  title: "Domain semantics and circuit completeness for a typed linear quantum lambda-calculus (Lean 4)"
+  title: "Mechanized denotation and circuit staging for an N-bounded linear quantum lambda-fragment (Lean 4)"
   authors:
     - family-names: Ericson
       given-names: Lars Warren

@@ -52,13 +52,15 @@ The preflight must confirm:
 5. Solution theorem axioms are permitted by `comparator.json`; and
 6. the patch has no whitespace errors.
 
-For registry submission, also run the full editorial audit
-(`docs/PALOMAR_EDITORIAL_AUDIT.md`):
+For day-to-day work and CI, run mechanical preflight. For a packaging
+candidate (metadata / `formalization.yaml` alignment), also run the
+deterministic packaging checks. Skip the LLM editorial audit until a
+registry submission:
 
 ```bash
-bash scripts/palomar_preflight.sh              # mechanical + LLM audit
 bash scripts/palomar_preflight.sh --mechanical-only   # CI / routine edits
-python3 ../palomar-preflight/palomar_editorial_checks.py      # packaging pre-checks only
+PALOMAR_PROJECT_ROOT=$PWD python3 ../palomar-preflight/palomar_editorial_checks.py
+bash scripts/palomar_preflight.sh              # mechanical + LLM audit (submission)
 ```
 
 Treat a green `lake build` alone as insufficient.

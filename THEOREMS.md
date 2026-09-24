@@ -413,8 +413,12 @@ evaluation in addition to the kernel.
 
 - `QLambda.Palomar.source_type_safety`: closed-program progress, preservation
   under classical and measurement steps, and determinism of classical steps;
-- `QLambda.Palomar.two_wire_quotation_typed`: every supported two-wire
-  command quotes to a closed term of the canonical register type.
+- `QLambda.Palomar.quotation_capstone`: every supported two-wire `Quotable`
+  command has a typed canonical quotation whose compilation is the command.
+
+Next comparator expansion (checked in-tree, not yet compared): full CQ
+`quotation_capstone`, `n_qubit_fragment_denotation_openqasm_interface`, and
+`fragment_measured_observable_adequacy`.
 
 `Challenge.lean` imports only Mathlib and contains the matching statement
 holes by convention. The categorical existence results `quantumLNL` and

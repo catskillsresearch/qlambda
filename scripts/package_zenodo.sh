@@ -60,7 +60,7 @@ bash scripts/palomar_preflight.sh --mechanical-only
 ## Rebuild the PDF and this deposit
 
 The PDF build additionally requires Python 3, Pandoc, Mermaid CLI (`mmdc`)
-with a Chromium-compatible browser, `latexmk`, LuaLaTeX, `zip`, and `unzip`.
+with a Chromium-compatible browser, `latexmk`, pdfLaTeX, `zip`, and `unzip`.
 
 ```bash
 bash scripts/package_zenodo.sh

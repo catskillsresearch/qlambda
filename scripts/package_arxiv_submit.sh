@@ -6,6 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 TEX="arxiv.tex"
+CMU_STYLE="cmu-titlepage2.sty"
 LISTINGS_DIR="lean-listings"
 FIGURES_DIR="figures"
 OUT_DIR="dist"
@@ -28,13 +29,14 @@ if [[ ! -f "$TEX" ]]; then
   echo "error: missing $TEX" >&2
   missing=1
 fi
+if [[ ! -f "$CMU_STYLE" ]]; then
+  echo "error: missing $CMU_STYLE" >&2
+  missing=1
+fi
 if [[ ! -d "$LISTINGS_DIR" ]]; then
   echo "error: missing $LISTINGS_DIR" >&2
   missing=1
 fi
-lean_count="$(find "$LISTINGS_DIR" -maxdepth 1 -type f 2>/dev/null | wc -l)"
-# Papers without extracted code blocks or Mermaid diagrams legitimately have
-# empty include directories; the complete Lean source tree is packaged below.
 for f in "${LEAN_FILES[@]}"; do
   if [[ ! -f "$f" ]]; then
     echo "error: missing $f" >&2
@@ -53,7 +55,10 @@ python3 - <<'PY'
 import json
 from pathlib import Path
 
-sources = [{"filename": "arxiv.tex", "usage": "toplevel"}]
+sources = [
+    {"filename": "arxiv.tex", "usage": "toplevel"},
+    {"filename": "cmu-titlepage2.sty", "usage": "include"},
+]
 for path in sorted(p for p in Path("lean-listings").iterdir() if p.is_file()):
     sources.append({"filename": path.as_posix(), "usage": "include"})
 for path in sorted(Path("figures").glob("*.png")):
@@ -70,12 +75,17 @@ print(f"  {len(sources)} sources")
 PY
 
 echo "==> Packaging"
-zip -r "$ZIP" \
-  00README.json \
-  "$TEX" \
-  "$LISTINGS_DIR" \
-  "${LEAN_FILES[@]}" \
-  "${FIGURE_PNGS[@]}"
+zip_args=(
+  00README.json
+  "$TEX"
+  "$CMU_STYLE"
+  "$LISTINGS_DIR"
+  "${LEAN_FILES[@]}"
+)
+if [[ ${#FIGURE_PNGS[@]} -gt 0 ]]; then
+  zip_args+=("${FIGURE_PNGS[@]}")
+fi
+zip -r "$ZIP" "${zip_args[@]}"
 
 echo "wrote $ZIP ($(du -h "$ZIP" | cut -f1))"
 echo "Contents:"

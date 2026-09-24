@@ -10,6 +10,7 @@ import QLambda
 namespace QLambda.Palomar
 
 open QLambda.Linear
+open QLambda.Linear.Command.GeneralQuotation
 
 theorem source_type_safety {M : Term} {A : Ty} (h : HasType [] [] M A) :
     MakesProgress M ∧
@@ -21,13 +22,10 @@ theorem source_type_safety {M : Term} {A : Ty} (h : HasType [] [] M A) :
     fun _ _ hm => measStep_preservation hm h,
     fun _ _ h₁ h₂ => step_deterministic h₁ h₂⟩
 
-theorem two_wire_quotation_typed
-    (C : Command
-      Command.GeneralQuotation.quantumSize
-      Command.GeneralQuotation.classicalSize)
-    (hC : Command.GeneralQuotation.Quotable C) :
-    HasType [] [] (Command.GeneralQuotation.quote C)
-      Command.GeneralQuotation.quotationTy :=
-  Command.GeneralQuotation.quote_typed hC
+theorem quotation_capstone
+    (C : Command quantumSize classicalSize) (hC : Quotable C) :
+    HasType [] [] (Quotation.reflect C hC).term quotationTy ∧
+    (Quotation.reflect C hC).compile = C :=
+  ⟨(Quotation.reflect C hC).typing, Quotation.compile_reflect C hC⟩
 
 end QLambda.Palomar

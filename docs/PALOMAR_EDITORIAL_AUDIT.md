@@ -39,9 +39,23 @@ final public 40-character commit SHA.
 bash scripts/palomar_preflight.sh --mechanical-only
 ```
 
-Skips policy sync and LLM audit. GitHub Actions uses this on every push/PR.
+Skips policy sync, packaging pre-checks, and LLM audit. GitHub Actions uses
+this on every push/PR.
 
-Run **full** preflight locally before a Palomar submission commit.
+## Packaging (deterministic; no LLM)
+
+Before a Palomar submission candidate, run mechanical preflight and then the
+deterministic packaging checks (`formalization.yaml` / comparator / scope
+alignment). This is the usual gate until editorial review is intentionally
+enabled:
+
+```bash
+bash scripts/palomar_preflight.sh --mechanical-only
+PALOMAR_PROJECT_ROOT=$PWD python3 ../palomar-preflight/palomar_editorial_checks.py
+```
+
+Run **full** preflight (including LLM editorial) only when preparing a
+registry submission commit.
 
 Full editorial audit cost: about **six sequential LLM calls**
 (two `composer-2.5`, four `gpt-5.6-sol`), roughly **$1–1.50** and several
@@ -49,7 +63,7 @@ minutes wall time per run.
 
 ## Submission packaging checklist
 
-Before running full preflight on a submission candidate, confirm:
+Before enabling LLM editorial on a submission candidate, confirm:
 
 1. **Research interest** — compared theorems are Scott 1964 headline results
    (plus any separately labelled reconstructions), not incidental lemmas.
@@ -63,13 +77,16 @@ Before running full preflight on a submission candidate, confirm:
    `limitations`, and `alignment` match `comparator.json` and Challenge/Solution.
 4. **Sources** — `formalization.yaml` `sources:` records the primary paper and
    any extra literature for separately labelled compared results.
-5. **Mechanical green** — `bash scripts/palomar_preflight.sh --mechanical-only`
-   passes, then `PALOMAR_PROJECT_ROOT=$PWD bash ../palomar-preflight/compare_challenge_solution_types.sh`.
+5. **Mechanical + packaging green** — the two commands in **Packaging** above
+   pass, then optionally
+   `PALOMAR_PROJECT_ROOT=$PWD bash ../palomar-preflight/compare_challenge_solution_types.sh`.
 
-Deterministic packaging checks live in `scripts/palomar_editorial_checks.py`
+Deterministic packaging checks live in
+`../palomar-preflight/palomar_editorial_checks.py`
 (main-results coverage, canonical capstone metadata, material definition-hole
-pinning, projection direction, and scope sync). They run in both
-`--mechanical-only` and full preflight, before any LLM audit.
+pinning, projection direction, and scope sync). They run before any LLM audit
+in full preflight; invoke them explicitly after `--mechanical-only` when
+skipping editorial.
 
 Comparator elaboration rules (definition holes, instance paths, universe structure):
 `docs/PALOMAR_STYLE.md`.

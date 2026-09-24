@@ -1,54 +1,44 @@
-# Domain Semantics and Circuit Completeness for a Typed Linear Quantum $\lambda$-Calculus for Programs using up to $N$ qubits Formalized in Lean 4
+# Mechanized Denotation and Circuit Staging for an $N$-Bounded Linear Quantum $\lambda$-Fragment in Lean 4
+
+**Author.** Lars Warren Ericson (independent researcher, d/b/a Catskills
+Research Company; lars.ericson@catskillsresearch.com; ORCID
+0000-0001-8299-9361).
+**Technical report.** CMU-CS-26-XXX, School of Computer Science, Carnegie
+Mellon University, Pittsburgh, PA 15213.
+**Repository.** https://github.com/catskillsresearch/qlambda
+**Cross-archive.** This report will also be deposited on arXiv in cs.LO,
+math.LO, and quant-ph.
 
 ---
 
 ## Abstract
 
 We present a Lean 4 formalization of a typed linear/nonlinear quantum
-$\lambda$-calculus.  Separate unrestricted and linear contexts enforce that
-quantum data cannot be copied or discarded implicitly.  The language has
-linear and unrestricted functions, tensor products, classical bits, qubits,
-strictly positive recursive types, allocation, unitary gates, reset, and
-measurement.  Probability is not a source-language choice operator: it arises
-only from quantum measurement.
+$\lambda$-calculus and a completed denotational and staging package for a
+first-order fragment of programs that use at most $N$ live qubits.  Separate
+unrestricted and linear contexts prevent implicit copy or discard of quantum
+data.  The full language includes recursive types and $\mathsf{fix}$; the
+fragment treated denotationally excludes them.  Probability arises only from
+measurement.
 
-The completed semantic foundations comprise quantum relations, an ordinary
-compact-closed $\mathsf{Set}\dashv\mathsf{qRel}$ model, a separate enriched
-category of quantum CPOs, and presentation-independent finite completely
-positive maps.  They do not yet form one model of the source language.  Our
-semantic objective is a typed submodel of the CP-enriched presheaf semantics
-of Tsukada and Asada, in which allocation, reset, measurement, higher-order
-functions, and strictly positive recursive types coexist.  A separate finite
-fragment already stages deterministically to a typed circuit normal form and
-then to a versioned IBM Composer/OpenQASM subset.
+Kernel-checked foundations include quantum relations, a compact-closed
+$\mathsf{Set}\dashv\mathsf{qRel}$ model, quantum CPOs, and finite completely
+positive maps; these do not yet form one model of the full language.  For the
+fragment we check a Route~A CP-presheaf denotation (`FragCert.denote`),
+`UsesAtMostQubits\,N`, measured $\mathsf{new0}$ Born adequacy, staging of
+successfully elaborated closed terms to IBM Composer/OpenQASM, and
+Hom-to-ideal-CQ agreement on a declared quotation covering set, including
+two-wire circuit completeness.  Full-language bang/LNL, recursive-type
+denotation, higher-order adequacy, and full abstraction remain objectives
+behind AmbientCP Day-bang glue.
 
-The mechanization required detailed proofs for which we found no reusable
-machine-checked development in the cited quantum-relation and qCPO
-literature.  In particular, we give new Lean proofs that the relevant
-quantum-relation homs are
-complete lattices, that relational composition preserves countable joins in
-both arguments, that daggers reverse composition, that quantum functions
-compose, and that discrete quantum posets satisfy the quantum-CPO completeness
-condition.  To our knowledge, this is also the first machine-checked
-construction of the compact-closed quantum-relation structure together with
-the concrete ordinary adjunction
-$\mathsf{Set}\leftrightarrows\mathsf{qRel}$ in this representation, and the
-first certified typed lambda quotation theorem for the declared two-wire
-Composer fragment.  These are novel formal proofs, not claims that every
-underlying mathematical statement is new; the priority wording is limited by
-the literature audit described below.
-
-The present theorem boundary is explicit.  Source typing, substitution,
-preservation, runtime progress, measurement normalization, deterministic
-staging, the quantum-relation enrichment, and structured OpenQASM
-parse/render round trips are kernel checked.  So are the ordinary
-$\mathsf{Set}\dashv\mathsf{qRel}$ LNL instance, the Scott-function qCPO
-category, a generic continuous projection-chain shift isomorphism, and
-canonical two-wire lambda/circuit representability.  The CP-enriched
-presheaf model, interpretation of source recursive types, concrete
-compositional source denotation, source-level compilation theorem, and
-adequacy theorem are stated below as objectives, not completed results.
-Full sources are at
+The mechanization gives new Lean proofs of quantum-relation complete-hom
+lattices, bilateral join-continuity of composition, dagger reversal, quantum
+function composition, and discrete qCPO completeness.  To our knowledge this
+is the first machine-checked compact-closed $\mathsf{Set}\leftrightarrows
+\mathsf{qRel}$ adjunction in this representation, and the first certified
+typed lambda quotation theorem for the declared two-wire Composer fragment;
+priority wording is limited by the literature audit below.  Sources:
 https://github.com/catskillsresearch/qlambda.
 
 ---
@@ -74,7 +64,9 @@ F\llbracket\Gamma\rrbracket\otimes\llbracket\Delta\rrbracket
 \longrightarrow \llbracket A\rrbracket
 $$
 
-in a CP-enriched, $\omega$CPO-enriched LNL model.
+in a CP-enriched, $\omega$CPO-enriched LNL model.  That full model remains the
+long-term target; the kernel-checked deliverable of this paper is the
+$N$-bounded first-order fragment package summarized above.
 
 This is a typed, type-indexed account.  It does not use a universal untyped
 reflexive object.  In the intended model, each admissible recursive type has
@@ -85,7 +77,7 @@ categorical components but does not yet assemble that intended model.
 
 ### Contributions
 
-The development has four connected parts.
+The development has five connected parts.
 
 1. It gives a Church-style linear/nonlinear quantum $\lambda$-calculus with
    de Bruijn syntax, verified formation predicates for recursive types,
@@ -94,9 +86,15 @@ The development has four connected parts.
    hom orders, $\omega$-continuous composition, compact closure, the concrete
    $\mathsf{Set}\dashv\mathsf{qRel}$ LNL model, and a separate category of
    quantum CPOs and Scott-continuous quantum functions.
-3. It constructs a deterministic, resource-certified staging procedure from
-   a closed terminating first-order fragment to circuit normal form.
-4. It gives canonical typed lambda quotation for a two-wire circuit fragment
+3. It gives a Route~A CP-presheaf denotation for a first-order fragment
+   (no $\mu$/$\mathsf{fix}$), including classical-bit Day comonoid contexts,
+   closed $\beta$/Step packaging, measured $\mathsf{new0}$ Born adequacy, and
+   an $N$-qubit staging interface
+   (`n_qubit_fragment_denotation_openqasm_interface`).
+4. It constructs a deterministic, resource-certified staging procedure from
+   closed elaborable fragment terms to circuit normal form and OpenQASM, with
+   Hom$\Rightarrow$CQ agreement on a declared quotation covering set.
+5. It gives canonical typed lambda quotation for a two-wire circuit fragment
    and a structured Composer/OpenQASM interchange with ideal
    classical--quantum denotation and canonical parse/render theorems.
 
@@ -116,11 +114,49 @@ discretely ordered ordinary set category.
 
 ### Scope
 
-“Circuit completeness” means that every circuit in the declared finite target
-fragment has a canonical well-typed lambda representative.  It does not mean
-that every unitary has an exact finite decomposition.  OpenQASM is an
+The headline claim is the $N$-bounded fragment package above, not a finished
+domain semantics of the full language.  “Circuit completeness” means that
+every circuit in the declared finite target fragment (presently the supported
+two-wire Composer quotation surface) has a canonical well-typed lambda
+representative.  It does not mean that every unitary has an exact finite
+decomposition, nor that every fragment term elaborates.  OpenQASM is an
 interchange format here, not the denotational semantics, and no result concerns
 calibration, noise, transpiler heuristics, or arbitrary Python/Qiskit programs.
+The AmbientCP / Track~L path is the intended extension to bang, recursive
+types, and full-language adequacy; it is open, not abandoned.
+
+### Lean development structure
+
+The mechanization is layered.  Source metatheory and the finite runtime sit
+above a quantum-relation / qCPO substrate and a CP-presheaf fragment model;
+staging and quotation connect the fragment to Composer/OpenQASM.  Track~L
+bang glue is deferred and does not block the $N$-bounded package.
+
+```mermaid
+flowchart TB
+  Syn["Syntax · Typing · Metatheory"]
+  RT["Finite Runtime"]
+  QR["qRel · qCPO · Set ⊣ qRel"]
+  CP["CP maps · Superoperators · Day"]
+  Frag["Route A FragCert · UsesAtMostQubits N"]
+  Stage["Elaboration · Staging"]
+  Quote["Quotation · Circuit CNF"]
+  OQ["Composer · OpenQASM"]
+  TL["Track L / AmbientCP bang<br/>deferred"]
+
+  Syn --> RT
+  Syn --> Frag
+  QR --> CP
+  CP --> Frag
+  Frag --> Stage
+  Frag --> Quote
+  Stage --> OQ
+  Quote --> OQ
+  CP -.-> TL
+```
+
+**Figure.** Layered Lean development: checked $N$-bounded fragment path (solid)
+versus deferred Track~L bang glue (dashed).
 
 ---
 
@@ -256,6 +292,39 @@ For closed nonrecursive terms, progress yields either a value, a classical
 step, or a genuine quantum blocking point.  It is not the vacuous statement
 that a primitive is “stuck.”
 
+### 2.3 Theorem dependence
+
+The Palomar-facing type-safety package sits on preservation, progress, and
+determinism; those in turn rest on substitution and the typing judgment.
+
+```mermaid
+flowchart TD
+  HT["HasType / infer_sound"]
+  SL["substLin_zero_preserves"]
+  SU["substUnres_zero_preserves"]
+  SP["step_preservation"]
+  MP["measStep_preservation"]
+  SD["step_deterministic"]
+  PR["progress"]
+  STS["source_type_safety"]
+
+  HT --> SL
+  HT --> SU
+  HT --> SP
+  HT --> MP
+  HT --> PR
+  SL --> SP
+  SU --> SP
+  SP --> STS
+  MP --> STS
+  SD --> STS
+  PR --> STS
+```
+
+**Figure.** Section~2 theorem dependence: typing and substitution support
+preservation/progress; `source_type_safety` packages the closed-program
+capstone.
+
 ---
 
 ## 3. Finite Quantum Runtime
@@ -275,6 +344,27 @@ The runtime proves:
 
 The runtime does not add source-level probability.  Probabilities label
 physical measurement transitions only.
+
+### 3.1 Theorem dependence
+
+```mermaid
+flowchart TD
+  RS["RegisterState / gates"]
+  IP["Runtime.internal_preservation"]
+  MP["Runtime.measurement_preservation"]
+  BN["measureProbability_false_add_true"]
+  RP["Runtime.progress"]
+
+  RS --> IP
+  RS --> MP
+  RS --> BN
+  IP --> RP
+  MP --> RP
+  BN --> RP
+```
+
+**Figure.** Section~3 theorem dependence: register dynamics support internal
+and measurement preservation, Born normalization, and runtime progress.
 
 ---
 
@@ -346,12 +436,41 @@ concrete `Set`--`qRel` adjunction. The published recursive LNL route instead
 uses the quantum lift monad and its Kleisli category; that construction is not
 yet present here.
 
+### 4.3 Theorem dependence
+
+```mermaid
+flowchart TD
+  QS["QuantumSet"]
+  QR["QuantumRel<br/>complete Hom · joins · dagger"]
+  QF["QuantumFunction composition"]
+  QP["QuantumPoset / discrete qCPO"]
+  QM["QuantumMonoidal<br/>tensor · curry · braid"]
+  LNL["QuantumLNL Set ⊣ qRel"]
+  QC["QuantumCPOCategory"]
+
+  QS --> QR
+  QR --> QF
+  QR --> QP
+  QR --> QM
+  QM --> LNL
+  QP --> QC
+  QF --> QC
+```
+
+**Figure.** Section~4 theorem dependence: quantum-relation algebra supports the
+concrete LNL packaging and the separate Scott-function qCPO category.
+
 ---
 
 ## 5. Type-Indexed Denotation and Recursive Types
 
-This section states the semantic objective and identifies the checked
-components already available for it.  The intended interpretation assigns:
+This section separates the kernel-checked Route~A fragment denotation from the
+intended full-language model.  The fragment package (first-order data, linear
+FO-domain arrows, unrestricted bit binders, primitives, measurement; no
+$\mu$/$\mathsf{fix}$) supplies compositional `FragCert.denote`, classical-bit
+Day contexts, closed $\beta$/Step laws, measured $\mathsf{new0}$ Born
+adequacy, and the $N$-qubit OpenQASM staging interface; see §9.  The intended
+full-language interpretation still assigns
 
 $$
 \llbracket\Gamma;\Delta\rrbracket
@@ -374,10 +493,11 @@ chain.
 
 `QLambda/Linear/Denotation.lean` records the operations needed by every typing
 rule, its desired constructor equations, and presentation-independent finite
-CP meanings for physical primitives.  No concrete `DenotationModel` instance
-exists.  Classical beta, fix unfolding, and fold/unfold are exact only in the
-operational quotient generated by source reduction; these are not yet
-denotational soundness or adequacy theorems.
+CP meanings for physical primitives.  No concrete full-language
+`DenotationModel` instance exists.  Classical beta, fix unfolding, and
+fold/unfold are exact only in the operational quotient generated by source
+reduction; these are not yet full-language denotational soundness or adequacy
+theorems.
 
 The finite CP substrate for that target is now checked: intrinsic Choi maps
 are equivalent to the existing completed Kraus classes, TNI superoperators
@@ -538,6 +658,31 @@ the measured qubit.  The implementation is complete only when these clauses
 are derived from the concrete model, independent of typing derivations, and
 validated by substitution, soundness, and adequacy.
 
+### 5.2 Theorem dependence (Route A fragment)
+
+```mermaid
+flowchart TD
+  SF["SemanticFragment"]
+  FM["routeAFragmentModel"]
+  FC["FragCert.denote"]
+  Beta["closed beta / Step package"]
+  Born["FragmentMeasuredSimulation"]
+  N["UsesAtMostQubits N"]
+  Pack["n_qubit_fragment_denotation_openqasm_interface"]
+
+  SF --> FM
+  FM --> FC
+  FC --> Beta
+  FC --> Born
+  FC --> N
+  Beta --> Pack
+  Born --> Pack
+  N --> Pack
+```
+
+**Figure.** Section~5 checked-fragment theorem dependence culminating in the
+$N$-qubit staging interface package.
+
 ---
 
 ## 6. Deterministic Staging to Circuits
@@ -557,6 +702,25 @@ Lean proves successful staging is deterministic and preserves source type,
 resource typing, circuit well-formedness, and allocation bounds.  Regression
 examples include Bell preparation, measurement-controlled gates, reset/reuse,
 and higher-order gate composition.
+
+### 6.1 Theorem dependence
+
+```mermaid
+flowchart TD
+  Elab["Elaborates / elaborate"]
+  WF["elaborates_command_wellFormed"]
+  CQ["elaborates_compile_agreement"]
+  Ex["measured_control · bell tests"]
+  OQ["commandToOpenQASM"]
+
+  Elab --> WF
+  Elab --> CQ
+  Elab --> Ex
+  WF --> OQ
+```
+
+**Figure.** Section~6 theorem dependence: successful elaboration yields
+well-formed Composer commands, CQ compile agreement, and OpenQASM export.
 
 ---
 
@@ -585,9 +749,40 @@ The checked circuit-level declarations have the following meanings:
   lambda representative whose compilation is the original command and whose
   inherited CQ denotation is equal to the circuit denotation.
 
-These results do not yet relate a structural source denotation to circuit
-denotation.  That source-level `denote_compile` theorem is a semantic
-objective.
+These results give circuit-level completeness for the declared two-wire
+Quotable surface.  At the fragment level, closed quotations in the covering
+set identify `FragCert.denote` with ideal `CQ.Sem` via
+`interpretQuoteSpine` / `interpretQuoteSpineExt`, and successful elaboration
+reuses `elaborates_compile_agreement` together with quote-normal-form
+transport.  A general extract of `CQ.Sem` from an arbitrary quotation Hom,
+and dedicated spines for every remaining `Quotable` constructor, remain open;
+so does a full-language source-level `denote_compile` theorem beyond the
+fragment packaging.
+
+### 7.1 Theorem dependence
+
+```mermaid
+flowchart TD
+  QT["quote_typed"]
+  DC["denote_compile"]
+  DR["denote_reflect"]
+  CR["compile_reflect"]
+  Cap["quotation_capstone"]
+  Spine["interpretQuoteSpine"]
+  Ext["interpretQuoteSpineExt"]
+  Cover["fragCert_spine_interprets_*"]
+
+  QT --> Cap
+  DC --> Cap
+  DR --> Cap
+  CR --> Cap
+  Spine --> Ext
+  Ext --> Cover
+  Cap --> Cover
+```
+
+**Figure.** Section~7 theorem dependence: two-wire quotation capstone and the
+extended Hom$\Rightarrow$CQ covering-set spines.
 
 ---
 
@@ -608,6 +803,25 @@ instrument bind; measurement updates a classical slot; structured control is
 interpreted compositionally.  Barriers and delays remain syntax but are
 identities in the ideal semantics.
 
+### 8.1 Theorem dependence
+
+```mermaid
+flowchart TD
+  Rend["Program.renderOpenQASM"]
+  Parse["parseStructuredProgram"]
+  RT["parse_render_roundTrip"]
+  TO["toOpenQASM_roundTrip"]
+  Fix["bell · dynamicX fixtures"]
+
+  Rend --> RT
+  Parse --> RT
+  RT --> TO
+  RT --> Fix
+```
+
+**Figure.** Section~8 theorem dependence: canonical OpenQASM render/parse
+round trips on the declared structured subset.
+
 ---
 
 ## 9. Mechanized Claims and Release Boundary
@@ -623,6 +837,12 @@ The following components are kernel checked without semantic axioms:
 - the category of qCPOs and Scott-continuous quantum functions;
 - inverse continuous shift maps for projection-chain bilimits;
 - discrete qCPO instances and finite CP/gate presentations;
+- Route~A fragment denotation (`FragCert.denote`), classical-bit Day
+  comonoid contexts, closed fragment $\beta$/Step packaging, and measured
+  $\mathsf{new0}$ Born adequacy;
+- $N$-qubit staging interface (`UsesAtMostQubits`, successful `Elaborates`
+  $\Rightarrow$ well-formed Composer, `commandToOpenQASM`) and covering-set
+  Hom$\Rightarrow$CQ quotation bridges;
 - deterministic staging with resource certificates;
 - circuit/Composer correspondence on the supported block fragment;
 - typed lambda quotation and circuit completeness for the declared two-wire
@@ -674,6 +894,26 @@ relative AmbientCP admissibility for $A\le 1$, a degree-row gate at 2, and
 blocked by `$\neg$ BangDegreeUnitRectangleHasSum 2`, so glued
 `BangComultAmbientCPAdmissible 2` remains open (absolute A=2 not claimed).
 
+### 9.1 Claim-surface dependence
+
+```mermaid
+flowchart LR
+  STS["source_type_safety"]
+  Frag["n_qubit_fragment_denotation_openqasm_interface"]
+  Cap["quotation_capstone / two_wire_quotation_typed"]
+  Cover["quote CQ covering set"]
+  OQ["OpenQASM round trips"]
+
+  STS --> Frag
+  Frag --> Cover
+  Cap --> Cover
+  Frag --> OQ
+  Cover --> OQ
+```
+
+**Figure.** Section~9 claim-surface dependence among the Palomar-facing and
+$N$-bounded packaging theorems.
+
 ---
 
 ## 10. Related Work and Novelty Qualification
@@ -719,7 +959,9 @@ proof.
 <!-- AI_MODEL_REFERENCES -->
 - **[Cur26]** Anysphere, Inc. *Cursor: AI-native code editor and agent environment*. <https://cursor.com> (accessed 2026).
 - **[Grk47]** xAI. *Grok 4.7*. Model documentation as integrated in Cursor, <https://cursor.com/docs/models> (accessed 2026).
+- **[Cla55]** Anthropic. *Claude Opus 5.5*. Model documentation as integrated in Cursor, <https://cursor.com/docs/models> (accessed 2026).
 - **[Gpt56]** OpenAI. *GPT 5.6*. Model documentation as integrated in Cursor, <https://cursor.com/docs/models> (accessed 2026).
+- **[Cmp25]** Anysphere, Inc. *Composer 2.5*. Model documentation as integrated in Cursor, <https://cursor.com/docs/models> (accessed 2026).
 <!-- /AI_MODEL_REFERENCES -->
 
 ---
@@ -739,6 +981,8 @@ is recorded in `scripts/ai_model_cards.py` and expanded when building
 
 <!-- AI_MODEL_TOOL_BULLETS -->
 - **Cursor** **[Cur26]** — agent-assisted editing in the Cursor IDE for the typed linear calculus, quantum-relation and qCPO developments, the CP-presheaf substrate, circuit quotation, and drafting this narrative. Generated Lean was provisional until it compiled under the pinned toolchain.
-- **xAI Grok 4.7** **[Grk47]** — formalization and drafting in Cursor: typed linear syntax and metatheory, the intrinsic CP-map and superoperator-module substrate, first-order type objects, primitive agreement, and the proved-versus-objective boundary of this narrative. Every emitted proof term was checked by the Lean kernel.
-- **OpenAI GPT 5.6** **[Gpt56]** — substantive Palomar editorial passes in Cursor (`statement_alignment`, `definition_fidelity`, `literature_notability`, and `synthesis`). Those passes review claims; they do not replace kernel-checked Lean.
+- **xAI Grok 4.7** **[Grk47]** — formalization and drafting in Cursor: typed linear syntax and metatheory, the intrinsic CP-map and superoperator-module substrate, first-order type objects, primitive agreement, fragment denotation packaging, and the proved-versus-objective boundary of this narrative. Every emitted proof term was checked by the Lean kernel.
+- **Anthropic Claude Opus 5.5** **[Cla55]** — formalization and refactoring in Cursor: Route A fragment denotation, quotation Hom-to-CQ covering-set bridges, N-qubit OpenQASM staging packaging, CMU report narrative alignment, and proof cleanup. Every emitted proof term was checked by the Lean kernel.
+- **OpenAI GPT 5.6** **[Gpt56]** — substantive Palomar editorial and packaging passes in Cursor (`statement_alignment`, `definition_fidelity`, `literature_notability`, and `synthesis`), plus claim-boundary review against `THEOREMS.md`. Those passes review claims; they do not replace kernel-checked Lean.
+- **Cursor Composer 2.5** **[Cmp25]** — lighter Palomar editorial and codebase-navigation passes in Cursor (`classification`, `metadata`, and related packaging checks). Composer assists with repository-local edits; it does not replace kernel-checked Lean.
 <!-- /AI_MODEL_TOOL_BULLETS -->

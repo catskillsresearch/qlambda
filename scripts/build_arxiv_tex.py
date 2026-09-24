@@ -14,7 +14,7 @@ Pipeline:
       line (or `mermaid caption="..."` fence header) becomes the LaTeX caption.
   6. Inject AI model-card acknowledgements from `scripts/ai_model_cards.py` (before HTML-comment strip).
   7. pandoc → LaTeX, then splice the listing/math/figure placeholders back in.
-  8. Insert \\listoffigures immediately before \\section{References}.
+  8. Insert CMU front-matter \\tableofcontents and \\listoffigures after \\maketitle.
 """
 
 from __future__ import annotations
@@ -46,6 +46,8 @@ COMPANY = "Catskills Research Company"
 GITHUB_URL = r"https://github.com/catskillsresearch/qlambda"
 ORCID = "0000-0001-8299-9361"
 EMAIL = "lars.ericson@catskillsresearch.com"
+REPORT_NUMBER = "CMU-CS-26-XXX"
+REPORT_DATE = "September 2026"
 
 
 def find_chrome() -> str | None:
@@ -363,18 +365,67 @@ def cleanup_pandoc_latex(latex: str) -> str:
     return latex
 
 
-def insert_listoffigures(latex: str) -> str:
-    insertion = "\\clearpage\n\\listoffigures\n\n"
-    # Pandoc wraps the heading; insert *before* that group so LoF is not
-    # inside \hypertarget{references}{...}.
-    markers = [
-        "\\hypertarget{references}{%\n\\section{References}\\label{references}}",
-        "\\section{References}",
-    ]
-    for marker in markers:
-        if marker in latex:
-            return latex.replace(marker, insertion + marker, 1)
-    raise RuntimeError("missing References section in LaTeX output")
+def insert_front_matter_lists(latex: str) -> str:
+    """Table of contents and list of figures after CMU front matter (unnumbered)."""
+    block = (
+        "{\\pagestyle{empty}\n"
+        "\\tableofcontents\n"
+        "\\clearpage\n"
+        "\\listoffigures\n"
+        "\\clearpage\n"
+        "}\n"
+        "\\pagestyle{plain}\n\n"
+    )
+    return block + latex
+
+
+REFERENCES_ITEMIZE = re.compile(
+    r"(\\hypertarget\{references\}\{%\n\\section\{References\}\\label\{references\}\}\s*\n\n)"
+    r"\\begin\{itemize\}\s*\n(.*?)\n\\end\{itemize\}",
+    re.DOTALL,
+)
+REFERENCE_KEY = re.compile(r"\{\[\}(?P<key>[A-Za-z0-9]+)\{]\}")
+
+
+def format_references_cmu(latex: str) -> str:
+    """CMU SCS reports use a numbered thebibliography, not an itemize list."""
+
+    def itemize_to_bib(header: str, items: str) -> str:
+        bibitems: list[str] = []
+        for i, chunk in enumerate(re.split(r"(?=\\item\s)", items), start=1):
+            chunk = chunk.strip()
+            if not chunk.startswith("\\item"):
+                continue
+            key_m = REFERENCE_KEY.search(chunk)
+            if key_m:
+                key = key_m.group("key")
+                body = chunk[key_m.end() :].strip()
+            else:
+                key = f"R{i}"
+                body = re.sub(r"^\\item\s*", "", chunk).strip()
+            if body.startswith("}"):
+                body = body[1:].strip()
+            body = re.sub(r"\s+\n", " ", body)
+            bibitems.append(f"\\bibitem{{{key}}} {body}")
+        if not bibitems:
+            raise RuntimeError("References section itemize was empty or not parseable")
+        joined = "\n\n".join(bibitems)
+        return f"{header}\\begin{{thebibliography}}{{99}}\n{joined}\n\\end{{thebibliography}}\n"
+
+    updated, count = REFERENCES_ITEMIZE.subn(
+        lambda m: itemize_to_bib(m.group(1), m.group(2)), latex
+    )
+    if count == 1:
+        return updated
+    plain = re.compile(
+        r"(\\section\{References\}(?:\\label\{references\})?\s*\n\n)"
+        r"\\begin\{itemize\}\s*\n(.*?)\n\\end\{itemize\}",
+        re.DOTALL,
+    )
+    updated, count = plain.subn(lambda m: itemize_to_bib(m.group(1), m.group(2)), latex)
+    if count != 1:
+        raise RuntimeError("expected exactly one References itemize block in LaTeX output")
+    return updated
 
 
 def insert_appendix_command(latex: str) -> str:
@@ -385,41 +436,50 @@ def insert_appendix_command(latex: str) -> str:
 
 
 def cleanup_abstract_latex(latex: str) -> str:
-    """Keep the abstract pdfLaTeX/arXiv-safe: ASCII plus standard LaTeX escapes."""
+    """Keep the abstract pdfLaTeX/arXiv-safe: ASCII plus standard LaTeX escapes.
+
+    CMU ``\\abstract{...}`` is not ``\\long``, so blank lines / ``\\par`` are
+    forbidden inside the argument; flatten to a single paragraph.
+    """
     latex = latex.replace("\\pandocbounded{", "{")
     latex = latex.replace("\\textbf{{[}", "\\textbf{[")
     latex = latex.replace("\\texttt{{[}", "\\texttt{[")
     latex = latex.replace("{]}}", "]}")
     latex = re.sub(r"\\begin\{center\}\\rule\{.*?\}\\end\{center\}\s*", "", latex, flags=re.DOTALL)
+    latex = re.sub(r"\n\s*\n+", " ", latex)
+    latex = re.sub(r"[ \t]*\n[ \t]*", " ", latex)
+    latex = re.sub(r"\s+", " ", latex).strip()
     return latex
 
 
 def build_title_page(abstract_latex: str) -> str:
     return textwrap.dedent(
         f"""
-        \\title{{\\textbf{{{TITLE}}}}}
+        \\title{{{TITLE}}}
 
-        \\author[1]{{\\textbf{{{AUTHOR}}}}}
-        \\affil[1]{{{COMPANY}}}
-        \\affil[1]{{\\url{{{GITHUB_URL}}}}}
-        \\affil[1]{{\\texttt{{{EMAIL}}}}}
+        \\author{{
+          Lars Warren Ericson
+        }}
+        \\disclaimer{{Independent researcher, d/b/a {COMPANY}
+          (\\texttt{{{EMAIL}}}; ORCID {ORCID}).}}
 
-        \\date{{\\today}}
+        \\date{{{REPORT_DATE}}}
+        \\trnumber{{{REPORT_NUMBER}}}
+        \\keywords{{Lean 4; formal verification; quantum lambda calculus; linear types;
+          CP-presheaf semantics; OpenQASM; quantum relations; quantum CPO}}
+        \\abstract{{
+        {abstract_latex.strip()}
+        }}
+        \\hypersetup{{
+          pdftitle={{{TITLE}}},
+          pdfauthor={{Lars Warren Ericson}},
+          pdfsubject={{Carnegie Mellon University School of Computer Science Technical Report {REPORT_NUMBER}}},
+          pdfkeywords={{Lean 4, formal verification, quantum lambda calculus, OpenQASM}}
+        }}
 
         \\begin{{document}}
 
         \\maketitle
-
-        \\begin{{center}}
-          \\small
-          \\textbf{{ORCID:}} {ORCID} \\\\
-          \\textbf{{Primary Category:}} cs.LO (Logic in Computer Science) \\\\
-          \\textbf{{Secondary Categories:}} math.LO (Logic); quant-ph (Quantum Physics)
-        \\end{{center}}
-
-        \\begin{{abstract}}
-        {abstract_latex.strip()}
-        \\end{{abstract}}
         """
     ).strip()
 
@@ -452,7 +512,8 @@ def main() -> int:
     latex_body = pandoc_to_latex(body, shift=True)
     latex_body = inject_placeholders(latex_body, placeholders)
     latex_body = cleanup_pandoc_latex(latex_body)
-    latex_body = insert_listoffigures(latex_body)
+    latex_body = format_references_cmu(latex_body)
+    latex_body = insert_front_matter_lists(latex_body)
     latex_body = insert_appendix_command(latex_body)
 
     abstract_latex = pandoc_to_latex(github_math_to_tex(abstract_md), shift=False) if abstract_md else ""

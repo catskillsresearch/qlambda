@@ -56,7 +56,7 @@ proof authority.
 `comparator.json` selects:
 
 - `QLambda.Palomar.source_type_safety`;
-- `QLambda.Palomar.two_wire_quotation_typed`.
+- `QLambda.Palomar.quotation_capstone`.
 
 `Challenge.lean` imports only Mathlib. It restates the source syntax, typing,
 reduction, circuit normal form, and two-wire quotation verbatim and states
