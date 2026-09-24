@@ -32,7 +32,7 @@ DECL_START = re.compile(
     r"^(?P<indent>)"
     r"(?:(?P<attrs>(?:@\[[^\]]*\]\s*)+))?"
     r"(?:(?:noncomputable|protected|private|partial|unsafe|opaque|local)\s+)*"
-    r"(?P<kind>" + "|".join(DECL_KINDS) + r")"
+    r"(?P<kind>" + "|".join(DECL_KINDS) + r")(?![\w'])"
     r"(?:\s+(?P<name>[^\s(:{]+))?",
     re.MULTILINE,
 )
@@ -164,7 +164,13 @@ def find_decl_end(lines: list[str], start_idx: int) -> int:
         if not stripped or stripped.startswith("--"):
             i += 1
             continue
-        # Nested doc comment start at col 0 is still part of file, not next decl.
+        # A column-0 docstring or attribute belongs to the next declaration.
+        if line.startswith(("/--", "@[")):
+            j = i - 1
+            while j > start_idx and not lines[j].strip():
+                j -= 1
+            return j
+        # Other nested block comments at col 0 stay with the current decl.
         if line.startswith("/-"):
             i += 1
             continue
@@ -182,6 +188,16 @@ def find_decl_end(lines: list[str], start_idx: int) -> int:
     return n - 1
 
 
+def comment_line_mask(text: str, lines: list[str], offsets: list[int]) -> list[bool]:
+    """True for lines that start inside a `/- … -/` block (docs included)."""
+    mask = [False] * len(lines)
+    for m in DOC_BLOCK.finditer(text):
+        for k in range(len(lines)):
+            if m.start() < offsets[k] < m.end():
+                mask[k] = True
+    return mask
+
+
 def extract_file(rel: str) -> list[dict]:
     path = ROOT / rel
     text = path.read_text(encoding="utf-8")
@@ -193,12 +209,17 @@ def extract_file(rel: str) -> list[dict]:
     for ln in lines:
         offsets.append(offsets[-1] + len(ln) + 1)
 
+    in_comment = comment_line_mask(text, lines, offsets)
+
     stack: list[str] = []
     decls: list[dict] = []
     i = 0
     anon_i = 0
     while i < len(lines):
         line = lines[i]
+        if in_comment[i]:
+            i += 1
+            continue
         update_namespaces(stack, line.strip())
         # Attribute lines may precede the decl; scan a small window.
         window = "\n".join(lines[i : min(i + 6, len(lines))])

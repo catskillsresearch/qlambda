@@ -10,9 +10,13 @@ Roles are derived from (in order):
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from generate_blueprint_cards import cap, de_code_text, gloss_backticks, is_codey  # noqa: E402
 
 MODULE_DOC = re.compile(r"/-!\s*(.*?)\n-/", re.DOTALL)
 HEADING = re.compile(r"^#\s+(.+)$", re.MULTILINE)
@@ -30,7 +34,7 @@ def module_doc_headline(rel: str) -> str | None:
     body = m.group(1).strip()
     hm = HEADING.search(body)
     if hm:
-        return re.sub(r"\s+", " ", hm.group(1)).strip().rstrip(".")
+        return mathematical(re.sub(r"\s+", " ", hm.group(1)).strip().rstrip("."))
     # First non-empty paragraph
     for para in re.split(r"\n\s*\n", body):
         line = re.sub(r"\s+", " ", para).strip()
@@ -38,8 +42,23 @@ def module_doc_headline(rel: str) -> str | None:
             # Keep short; truncate long architectural notes.
             if len(line) > 140:
                 line = line[:137].rstrip() + "…"
-            return line.rstrip(".")
+            return mathematical(line.rstrip("."))
     return None
+
+
+def mathematical(text: str) -> str:
+    """Replace Lean identifiers in author prose by their English glosses."""
+    out = gloss_backticks(text, None)
+    if is_codey(out):
+        out = de_code_text(out)
+    return cap(re.sub(r"\s+", " ", out).strip())
+
+
+def role_phrase(title: str) -> str:
+    """Card heading → Role-column phrase (drop boilerplate prefixes)."""
+    t = re.sub(r"^Definition of (?:the )?", "", title)
+    t = re.sub(r"^The (?:structure|interface|inductive definition) of ", "", t)
+    return cap(t)
 
 
 def humanize_stem(rel: str) -> str:
@@ -67,7 +86,9 @@ def blueprint_titles_for(rel: str, cards_dir: Path) -> list[str]:
                 continue
             tm = CARD_TITLE.match(part)
             if tm:
-                title = tm.group(1).strip()
+                title = role_phrase(tm.group(1).strip())
+                if is_codey(title):
+                    continue
                 if title and not title.startswith("Module ") and title not in titles:
                     titles.append(title)
     return titles
@@ -84,10 +105,10 @@ def summarize_titles(titles: list[str], limit: int = 3) -> str | None:
             return (5, -len(t))
         if low in {"definition of top", "definition of bot", "definition of id"}:
             return (4, -len(t))
-        if low.startswith(
-            ("definition of", "structure:", "inductive type:", "type class:")
-        ):
-            return (0, -len(t))  # longer definitions first
+        if len(t) > 110:
+            return (3, len(t))
+        if re.search(r"\b(?:is|are|equals|preserves|holds|determines|splits|coincide)\b", low):
+            return (0, len(t))  # statements of results read best
         if low.startswith(("allocation", "theorem", "lemma", "instance for")):
             return (1, -len(t))
         if low.startswith("example:"):
@@ -117,6 +138,8 @@ def file_role(rel: str, cards_dir: Path | None = None) -> str:
     titles = blueprint_titles_for(rel, cards)
     summary = summarize_titles(titles)
 
+    if doc and summary and re.match(r"^(?:Instances?|Instance)\b", doc):
+        return summary
     if doc and summary:
         # Tie the module headline to representative blueprint subsection titles.
         if doc.lower() not in summary.lower() and summary.lower() not in doc.lower():
@@ -131,7 +154,7 @@ def file_role(rel: str, cards_dir: Path | None = None) -> str:
     if summary:
         return summary
 
-    stem = humanize_stem(rel)
+    stem = de_code_text(humanize_stem(rel))
     if rel.startswith("QLambda/Domain/"):
         return f"Domain: {stem}"
     if rel.startswith("QLambda/Linear/"):
