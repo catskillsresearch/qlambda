@@ -189,12 +189,8 @@ theorem tensor_id [DecidableEq X.Atom] [DecidableEq A.Atom] :
         refine Submodule.subset_span
           ⟨(1 : Matrix (Fin (X.dim x)) (Fin (X.dim x)) ℂ),
             (1 : Matrix (Fin (A.dim a)) (Fin (A.dim a)) ℂ), ?_, ?_, opTensor_one⟩
-        · simpa [id] using
-            (Submodule.subset_span (Set.mem_singleton
-              (1 : Matrix (Fin (X.dim x)) (Fin (X.dim x)) ℂ)))
-        · simpa [id] using
-            (Submodule.subset_span (Set.mem_singleton
-              (1 : Matrix (Fin (A.dim a)) (Fin (A.dim a)) ℂ)))
+        · simp [id]
+        · simp [id]
     · have hp : (x, a) ≠ (x, b) := fun h => hab (Prod.mk.inj h).2
       rw [show (id (X.tensor A)).component (x, a) (x, b) = ⊥ from
         id_component_ne hp]
@@ -744,8 +740,8 @@ noncomputable def qRelSymmetricMonoidalClosed :
     exact QuantumRel.tensor_mono_right f
   tensorMap_id := by
     intro A B
-    letI := A.decidable
-    letI := B.decidable
+    let _ := A.decidable
+    let _ := B.decidable
     exact QuantumRel.tensor_id
   tensorMap_comp := by
     intro A B C D E F f₂ f₁ g₂ g₁

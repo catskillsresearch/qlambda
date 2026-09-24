@@ -254,7 +254,7 @@ theorem diagonal_eq_sum_single {n : Type*} [Fintype n] [DecidableEq n] (f : n �
         if i = a then f a else 0 := by
       intro i; split_ifs <;> simp_all
     simp_rw [hterm]
-    simpa using Finset.sum_ite_eq' (s := Finset.univ) (a := a) (f := fun _ => f a)
+    simp
   · rw [if_neg hab]
     refine Finset.sum_eq_zero fun i _ => ?_
     have : ¬(i = a ∧ i = b) := fun ⟨ha, hb⟩ => hab (ha.symm.trans hb)
@@ -275,7 +275,7 @@ theorem entry_mul_single {n : Type*} [Fintype n] [DecidableEq n]
         if k = i then U a i else 0 := by
       intro k; split_ifs <;> simp_all
     simp_rw [hterm]
-    simpa using Finset.sum_ite_eq' (s := Finset.univ) (a := i) (f := fun _ => U a i)
+    simp
   · refine Finset.sum_eq_zero fun k _ => ?_
     have : ¬(i = k ∧ i = j) := fun ⟨_, h2⟩ => hj h2.symm
     simp [this]
@@ -295,8 +295,7 @@ theorem mul_single_mul_star {n : Type*} [Fintype n] [DecidableEq n]
     rw [hM]
     split_ifs with hj <;> simp [hj]
   simp_rw [hterm]
-  simpa using Finset.sum_ite_eq' (s := Finset.univ) (a := i)
-    (f := fun _ => U a i * star (U b i))
+  simp
 
 theorem isHermitian_eq_sum_eigenprojectors {n : Type*} [Fintype n] [DecidableEq n]
     (E : Matrix n n ℂ) (hE : E.IsHermitian) :
@@ -337,8 +336,8 @@ theorem eigenvectorUnitary_col_normSq {n : Type*} [Fintype n] [DecidableEq n]
     star (fun a => (↑hE.eigenvectorUnitary : Matrix n n ℂ) a i) ⬝ᵥ
       (fun a => (↑hE.eigenvectorUnitary : Matrix n n ℂ) a i) = 1 := by
   have hstar : star (↑hE.eigenvectorUnitary : Matrix n n ℂ) *
-      (↑hE.eigenvectorUnitary : Matrix n n ℂ) = 1 := by
-    simpa using (Unitary.coe_star_mul_self hE.eigenvectorUnitary)
+      (↑hE.eigenvectorUnitary : Matrix n n ℂ) = 1 :=
+    Unitary.coe_star_mul_self hE.eigenvectorUnitary
   have hii : (star (↑hE.eigenvectorUnitary : Matrix n n ℂ) *
       (↑hE.eigenvectorUnitary : Matrix n n ℂ)) i i = 1 := by
     simp [hstar]

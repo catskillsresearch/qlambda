@@ -264,7 +264,7 @@ theorem effectPairingQuad_parallelogram {A : ℕ}
     simp only [Pxp, Pxm, Px, Py]
     rw [hmat]
     ext i j
-    simp [Matrix.add_apply, Matrix.smul_apply, two_smul]
+    simp [Matrix.add_apply, two_smul]
   have h2le : (2 : ℝ) • Px + (2 : ℝ) • Py ≤ 1 := by
     simpa [Px, Py] using two_smul_vecMulVec_add_le_one x' y' hsumN
   have hsum_le : Pxp + Pxm ≤ 1 := by rwa [hmatR]
@@ -355,9 +355,9 @@ theorem effectPairingQuad_parallelogram {A : ℕ}
   have htstar : star (t : ℂ) * (t : ℂ) = ↑(t ^ 2) := by
     simp [Complex.conj_ofReal, pow_two]
   have hxpy : x' + y' = (t : ℂ) • (x + y) := by
-    ext i; simp [x', y', smul_add, mul_add]
+    ext i; simp [x', y', mul_add]
   have hxmy : x' - y' = (t : ℂ) • (x - y) := by
-    ext i; simp [x', y', smul_sub, mul_sub]
+    ext i; simp [x', y', mul_sub]
   rw [hxpy, hxmy] at hq'
   rw [effectPairingQuad_smul α (t : ℂ) (x + y),
     effectPairingQuad_smul α (t : ℂ) (x - y),
@@ -387,7 +387,7 @@ theorem effectPairingQuad_parallelogram_I {A : ℕ}
       effectPairingQuad (doubleDualEffectPairing F) y := by
     rw [effectPairingQuad_smul]
     have : star Complex.I * Complex.I = 1 := by
-      simp [Complex.star_def, Complex.conj_I, neg_mul, Complex.I_mul_I]
+      simp [Complex.conj_I, neg_mul, Complex.I_mul_I]
     rw [this, one_mul]
   rw [hI] at h
   exact h

@@ -82,12 +82,10 @@ noncomputable def module (A N : Module) : Module where
     simp only [precompose]
     rw [Superoperator.comp_assoc]
   act_sum_element := by
-    intro ι _ m n b s f h
-    intro p q x y
+    intro ι _ m n b s f h p q x y
     exact h p q (Superoperator.comp f x) y
   act_sum_map := by
-    intro ι _ m n b f s h
-    intro p q x y
+    intro ι _ m n b f s h p q x y
     exact b.map_sum_left y (SigmaMon.ChoiSum.comp_right x h)
   act_sum_from_one := by
     intro ι _ m bx bs f hs
@@ -318,8 +316,7 @@ noncomputable def curry {X A N : Module} (b : Bilinear X A N) :
     rw [X.act_zero_element]
     exact b.map_zero_left y
   map_sum := by
-    intro ι _ n x s h
-    intro p q r y
+    intro ι _ n x s h p q r y
     exact b.map_sum_left y (X.act_sum_element r h)
   naturality := by
     intro m n x f
@@ -544,8 +541,7 @@ noncomputable def dayInternalHomRepresentableIso
         intro p q r s
         exact N.act_zero_element _
       map_sum := by
-        intro ι _ n f z h
-        intro p q r s
+        intro ι _ n f z h p q r s
         exact N.act_sum_element (Superoperator.tensor r s) h
       naturality := by
         intro m n z f

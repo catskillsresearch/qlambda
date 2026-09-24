@@ -115,7 +115,7 @@ theorem unrestrictedAllBitDiscardLists_nil :
 /-- Structural unrestricted lookup (computes without eliminating `Lookup` /
 `CtxUAllBit : Prop`). Impossible shapes return `0`. -/
 noncomputable def unrestrictedLookupLists :
-    ∀ (Γ : List Ty) (n : Nat) (A : Ty),
+    ∀ (Γ : List Ty) (_n : Nat) (A : Ty),
       Hom (unrestricted Γ) (fragmentModule A)
   | [], _, _ => 0
   | _ :: Γ, 0, A =>
@@ -135,7 +135,7 @@ theorem unrestrictedLookupLists_zero_bit (Γ : List Ty) :
       Hom.comp (rightUnitor (fragmentModule .bit))
         (map classicalBitInclusion
           (unrestrictedAllBitDiscardLists Γ)) := by
-  simp only [unrestrictedLookupLists, ↓reduceIte]
+  simp only [unrestrictedLookupLists]
   rfl
 
 /-- Select an unrestricted bit variable, weakening every other bit entry. -/
@@ -190,7 +190,7 @@ noncomputable def linearAllNoneCollapseLists :
 without eliminating `Lookup`/`OnlySomeAt : Prop`). Impossible shapes return
 `0`. -/
 noncomputable def linearOnlySomeAtProjectLists :
-    ∀ (Δ : List (Option Ty)) (n : Nat) (A : Ty),
+    ∀ (Δ : List (Option Ty)) (_n : Nat) (A : Ty),
       Hom (linear Δ) (fragmentModule A)
   | [], _, _ => 0
   | some B :: Δ, 0, A =>
@@ -221,7 +221,7 @@ theorem linearOnlySomeAtProjectLists_singleton (A : Ty) :
     linearOnlySomeAtProjectLists [some A] 0 A =
       Hom.comp (rightUnitor (fragmentModule A))
         (map (Hom.id (fragmentModule A)) (Hom.id dayTensorUnit)) := by
-  simp only [linearOnlySomeAtProjectLists, ↓reduceIte]
+  simp only [linearOnlySomeAtProjectLists]
   rfl
 
 /-- Canonical middle-four interchange

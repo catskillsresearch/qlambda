@@ -146,8 +146,8 @@ theorem inv_smul_le_one_of_le_trace_smul {A : ℕ}
       (c⁻¹ : ℝ) • (c • 1 - E) := by
     ext i j
     have hc0' : (c : ℂ) ≠ 0 := by exact_mod_cast hc0.ne'
-    simp [Matrix.sub_apply, Matrix.smul_apply, Matrix.one_apply, smul_eq_mul]
-    split_ifs <;> field_simp [hc0'] <;> ring
+    simp [Matrix.sub_apply, Matrix.smul_apply, Matrix.one_apply]
+    split_ifs <;> (field_simp [hc0']; try ring)
   rw [this]
   exact hE_le'.smul (inv_nonneg.mpr hc0.le)
 
@@ -270,7 +270,7 @@ theorem effectExpectationExt_smul {A : ℕ}
       (Complex.nonneg_iff.mp (Matrix.PosSemidef.trace_nonneg hE)).2.symm
     have htRE : (Matrix.trace (r • E)).re = r * (Matrix.trace E).re := by
       have := congrArg Complex.re htr
-      simpa [Complex.mul_re, himE, Complex.ofReal_re] using this
+      simp [Complex.mul_re, himE, Complex.ofReal_re] at this ⊢
     set cRE : ℝ := max (Matrix.trace (r • E)).re 1
     have hcRE0 : 0 < cRE := lt_of_lt_of_le (by norm_num : (0:ℝ)<1) (le_max_right _ _)
     set U : ℝ := max D (cRE / r)
@@ -414,9 +414,7 @@ theorem effectPairingQuad_eq_ext {A : ℕ}
       intro hv0
       have : v = 0 := (dotProduct_star_self_eq_zero).1 hv0
       have hmat0 : Matrix.vecMulVec v (star v) = 0 := by simp [this]
-      have h0le : (0 : Matrix (Fin A) (Fin A) ℂ) ≤ 1 := by
-        rw [Matrix.le_iff, sub_zero]; exact PosSemidef.one
-      exact hle (by simpa [hmat0] using h0le)
+      exact hle (by simp [hmat0])
     set û := normalizeVec v hv
     have hre := (star_dotProduct_self_nonneg_real v).1
     have him := (star_dotProduct_self_nonneg_real v).2

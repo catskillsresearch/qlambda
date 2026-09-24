@@ -722,16 +722,14 @@ theorem effectPairingQuad_smul {A : ℕ}
       (star c * c) * effectPairingQuad α v := by
   simp only [effectPairingQuad]
   by_cases hv : star v ⬝ᵥ v = 0
-  · have hcv0 : star (c • v) ⬝ᵥ (c • v) = 0 := by
-      rw [star_dotProduct_smul_self, hv]; ring
-    simp [hv, hcv0]
+  · simp [hv]
   · by_cases hcv : star (c • v) ⬝ᵥ (c • v) = 0
     · have : (star c * c) * (star v ⬝ᵥ v) = 0 := by
         simpa [star_dotProduct_smul_self] using hcv
       have hc0 : star c * c = 0 := (mul_eq_zero.mp this).resolve_right hv
       rw [dif_pos hcv, dif_neg hv, hc0, zero_mul]
     · have hc0 : c ≠ 0 := fun hc => by
-        simp [hc, zero_smul, star_dotProduct_smul_self, mul_zero, zero_mul] at hcv
+        simp [hc, zero_smul] at hcv
       have hproj := normalizeVec_smul_projector c v hc0 hv hcv
       rw [dif_neg hcv, dif_neg hv, star_dotProduct_smul_self]
       have hof :

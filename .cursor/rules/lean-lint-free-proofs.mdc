@@ -1,0 +1,32 @@
+---
+description: Lean proofs must build with zero linter warnings on touched files
+globs: "**/*.lean"
+alwaysApply: true
+---
+
+# Lint-free Lean proofs
+
+Every change that touches Lean proofs must leave those modules **warning-free**.
+
+## Required check
+
+After editing a `.lean` file, build it and confirm **0 warnings** for that path:
+
+```bash
+lake build <Module.Name> 2>&1 | tee /tmp/lean_lint.log
+rg "warning: .*<relative/path>.lean|error:|Build completed|build failed" /tmp/lean_lint.log
+```
+
+Do not consider the task done while the touched file still emits warnings, even if the build succeeds.
+
+## Fix carefully (no blind scrub)
+
+- Drop **unused simp args** only when the proof still closes (`by simp` / shorter lists). Prefer the DayComonoidCounit pattern: bare `by simp` over listing lemmas the linter rejects.
+- `simpa` → `simp` only when `simp` alone closes. Never write invalid `simp using t`. Prefer `simp; exact t`, `exact t`, or keep `simpa using t` if that is what closes.
+- Unused binders → `_name`. Unused `have`/`change`/`letI` → remove or rename; in prop goals prefer `let` over `letI`.
+- Merge redundant `intro` lines when the linter suggests it.
+- If a mechanical lint fix breaks the build, **revert that site** and try a different closing tactic — do not leave a red build.
+
+## Scope
+
+Applies to all new and edited proofs in this repo. Cleaning unrelated noisy files is optional unless requested; **never introduce new warnings** in files you touch.
