@@ -24,35 +24,35 @@ class Finite (X : QuantumSet) where
 
 attribute [instance, instance_reducible] Finite.fintype Finite.decidable
 
-instance : Finite empty where
+instance instFiniteEmpty : Finite empty where
   fintype := inferInstanceAs (Fintype Empty)
   decidable := inferInstanceAs (DecidableEq Empty)
 
-instance : Finite unit where
+instance instFiniteUnit : Finite unit where
   fintype := inferInstanceAs (Fintype PUnit)
   decidable := inferInstanceAs (DecidableEq PUnit)
 
-instance : Finite qubit where
+instance instFiniteQubit : Finite qubit where
   fintype := inferInstanceAs (Fintype PUnit)
   decidable := inferInstanceAs (DecidableEq PUnit)
 
-instance : Finite bit where
+instance instFiniteBit : Finite bit where
   fintype := inferInstanceAs (Fintype Bool)
   decidable := inferInstanceAs (DecidableEq Bool)
 
-instance : Finite (atomic n) where
+instance instFiniteAtomic : Finite (atomic n) where
   fintype := inferInstanceAs (Fintype PUnit)
   decidable := inferInstanceAs (DecidableEq PUnit)
 
-instance [Finite X] [Finite Y] : Finite (tensor X Y) where
+instance instFiniteTensor [Finite X] [Finite Y] : Finite (tensor X Y) where
   fintype := inferInstanceAs (Fintype (X.Atom × Y.Atom))
   decidable := inferInstanceAs (DecidableEq (X.Atom × Y.Atom))
 
-instance [Finite X] [Finite Y] : Finite (sum X Y) where
+instance instFiniteSum [Finite X] [Finite Y] : Finite (sum X Y) where
   fintype := inferInstanceAs (Fintype (X.Atom ⊕ Y.Atom))
   decidable := inferInstanceAs (DecidableEq (X.Atom ⊕ Y.Atom))
 
-instance [Fintype α] [DecidableEq α] : Finite (liftSet α) where
+instance instFiniteLiftSet [Fintype α] [DecidableEq α] : Finite (liftSet α) where
   fintype := inferInstanceAs (Fintype α)
   decidable := inferInstanceAs (DecidableEq α)
 

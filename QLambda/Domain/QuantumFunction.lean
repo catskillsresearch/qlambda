@@ -50,7 +50,7 @@ def restrictAtom {P Q : QuantumPoset} (F : QuantumFunction P Q)
 
 /-- Pointwise order on quantum functions (Kornell--Lindenhovius--Mislove,
 Lemma 2.6.6): `F ⊑ G` iff `G ≤ S ∘ F`, where `S` is the codomain order. -/
-instance {P Q : QuantumPoset} : LE (QuantumFunction P Q) where
+instance instLEQuantumFunction {P Q : QuantumPoset} : LE (QuantumFunction P Q) where
   le F G := G.rel ≤ Q.order.comp F.rel
 
 theorem le_def {P Q : QuantumPoset} {F G : QuantumFunction P Q} :
@@ -80,7 +80,7 @@ theorem comp_dagger_le_order {P Q : QuantumPoset}
     _ = Q.order := QuantumRel.comp_id _
 
 /-- Quantum-function homs carry the published pointwise partial order. -/
-instance {P Q : QuantumPoset} : PartialOrder (QuantumFunction P Q) where
+instance instPartialOrderQuantumFunction {P Q : QuantumPoset} : PartialOrder (QuantumFunction P Q) where
   le_refl F := by
     calc
       F.rel = (QuantumRel.id Q.carrier).comp F.rel :=

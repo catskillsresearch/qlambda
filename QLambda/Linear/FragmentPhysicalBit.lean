@@ -378,7 +378,7 @@ physical qubit carrier `representable 2`. -/
 abbrev ClassicalBitCarrier (n : ℕ) := {x : Superoperator n 2 //
   Superoperator.comp bitDephaseSuperoperator x = x}
 
-noncomputable instance (n : ℕ) : Zero (ClassicalBitCarrier n) :=
+noncomputable instance instZeroClassicalBitCarrier (n : ℕ) : Zero (ClassicalBitCarrier n) :=
   ⟨⟨0, by simp [Superoperator.comp_zero_right]⟩⟩
 
 

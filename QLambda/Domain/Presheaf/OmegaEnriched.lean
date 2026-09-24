@@ -23,13 +23,13 @@ open scoped BigOperators ComplexOrder MatrixOrder
 
 namespace Superoperator
 
-instance {n m : ℕ} : PartialOrder (Superoperator n m) where
+instance instPartialOrderSuperoperator {n m : ℕ} : PartialOrder (Superoperator n m) where
   le f g := f.cp ≤ g.cp
   le_refl _ := le_rfl
   le_trans _ _ _ h k := h.trans k
   le_antisymm f g h k := ext (le_antisymm h k)
 
-instance {n m : ℕ} : OrderBot (Superoperator n m) where
+instance instOrderBotSuperoperator {n m : ℕ} : OrderBot (Superoperator n m) where
   bot := 0
   bot_le f := @bot_le (CPMap n m) _ _ f.cp
 

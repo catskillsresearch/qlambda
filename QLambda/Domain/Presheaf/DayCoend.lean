@@ -37,7 +37,7 @@ inductive Raw (M N : Module.{0}) (n : ℕ) where
 
 namespace Raw
 
-instance {M N : Module.{0}} {n : ℕ} : Zero (Raw M N n) :=
+instance instZeroDayRaw {M N : Module.{0}} {n : ℕ} : Zero (Raw M N n) :=
   ⟨.zero⟩
 
 /-- Relational evaluation of a raw coend term. -/
@@ -214,7 +214,7 @@ noncomputable def zeroTerm (M N : Module.{0}) (n : ℕ) : Term M N n :=
 noncomputable def zero (M N : Module.{0}) (n : ℕ) : Carrier M N n :=
   Quotient.mk _ (zeroTerm M N n)
 
-noncomputable instance (M N : Module.{0}) (n : ℕ) : Zero (Carrier M N n) :=
+noncomputable instance instZeroDayCarrier (M N : Module.{0}) (n : ℕ) : Zero (Carrier M N n) :=
   ⟨zero M N n⟩
 
 @[simp]
@@ -1238,7 +1238,7 @@ noncomputable def zero (M A N : Module) : Bilinear M A N where
     intro m' m n' n x y f g
     exact (N.act_zero_element _).symm
 
-noncomputable instance (M A N : Module) : Zero (Bilinear M A N) :=
+noncomputable instance instZeroBilinear (M A N : Module) : Zero (Bilinear M A N) :=
   ⟨zero M A N⟩
 
 noncomputable def partialCountableSum (M A N : Module) :

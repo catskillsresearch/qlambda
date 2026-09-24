@@ -36,11 +36,11 @@ structure ScottFunction (P Q : QuantumCPO) extends
 
 namespace ScottFunction
 
-instance {P Q : QuantumCPO} : Coe (ScottFunction P Q)
+instance instCoeScottFunction {P Q : QuantumCPO} : Coe (ScottFunction P Q)
     (QuantumFunction P.poset Q.poset) :=
   ⟨ScottFunction.toQuantumFunction⟩
 
-instance {P Q : QuantumCPO} : LE (ScottFunction P Q) where
+instance instLEScottFunction {P Q : QuantumCPO} : LE (ScottFunction P Q) where
   le F G := F.toQuantumFunction ≤ G.toQuantumFunction
 
 @[ext]
@@ -50,7 +50,7 @@ theorem ext {P Q : QuantumCPO} {F G : ScottFunction P Q}
   cases G
   congr
 
-instance {P Q : QuantumCPO} : PartialOrder (ScottFunction P Q) where
+instance instPartialOrderScottFunction {P Q : QuantumCPO} : PartialOrder (ScottFunction P Q) where
   le_refl F := by
     change F.toQuantumFunction ≤ F.toQuantumFunction
     exact le_rfl

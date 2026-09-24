@@ -101,7 +101,7 @@ def zero : Superoperator n m where
     rw [CPMap.applyMat_zero, Matrix.trace_zero, Complex.zero_re]
     exact (RCLike.nonneg_iff (K := ℂ).mp htr).1
 
-instance : Zero (Superoperator n m) := ⟨zero⟩
+instance instZeroSuperoperator : Zero (Superoperator n m) := ⟨zero⟩
 
 @[simp]
 theorem cp_zero : (0 : Superoperator n m).cp = 0 :=

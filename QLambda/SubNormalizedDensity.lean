@@ -32,7 +32,7 @@ theorem ext {ρ σ : SubNormalizedDensity n} (h : ρ.mat = σ.mat) : ρ = σ := 
   cases ρ; cases σ; congr
 
 /-- Loewner order: `ρ ≤ σ` iff `σ − ρ` is positive semidefinite. -/
-instance : PartialOrder (SubNormalizedDensity n) where
+instance instPartialOrderSubNormalizedDensity : PartialOrder (SubNormalizedDensity n) where
   le ρ σ := ρ.mat ≤ σ.mat
   le_refl ρ := le_refl ρ.mat
   le_trans ρ σ τ := le_trans
@@ -64,7 +64,7 @@ theorem re_trace_nonneg (ρ : SubNormalizedDensity n) :
   exact Finset.sum_nonneg fun i _ =>
     (RCLike.nonneg_iff (K := ℂ).mp (ρ.posSemidef.diag_nonneg (i := i))).1
 
-instance : OrderBot (SubNormalizedDensity n) where
+instance instOrderBotSubNormalizedDensity : OrderBot (SubNormalizedDensity n) where
   bot := ⟨0, PosSemidef.zero, by simp [Matrix.trace_zero]⟩
   bot_le ρ := by
     change (ρ.mat - 0).PosSemidef

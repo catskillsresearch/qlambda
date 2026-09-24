@@ -152,10 +152,10 @@ theorem ext {Φ Ψ : CPMap n m} (h : Φ.choi = Ψ.choi) : Φ = Ψ := by
   cases h
   rfl
 
-instance : LE (CPMap n m) :=
+instance instLECPMap : LE (CPMap n m) :=
   ⟨fun Φ Ψ => Φ.choi ≤ Ψ.choi⟩
 
-instance : PartialOrder (CPMap n m) where
+instance instPartialOrderCPMap : PartialOrder (CPMap n m) where
   le_refl Φ := by
     change Φ.choi ≤ Φ.choi
     exact le_rfl
@@ -305,7 +305,7 @@ theorem trace_nonincreasing_of_effect_le_one (Φ : CPMap n m)
 def zero : CPMap n m :=
   ofKraus KrausFamily.zero
 
-instance : Zero (CPMap n m) := ⟨zero⟩
+instance instZeroCPMap : Zero (CPMap n m) := ⟨zero⟩
 
 @[simp]
 theorem choi_zero : (0 : CPMap n m).choi = 0 := by
@@ -322,7 +322,7 @@ def add (Φ Ψ : CPMap n m) : CPMap n m where
   choi := Φ.choi + Ψ.choi
   choi_pos := Φ.choi_pos.add Ψ.choi_pos
 
-instance : Add (CPMap n m) := ⟨add⟩
+instance instAddCPMap : Add (CPMap n m) := ⟨add⟩
 
 @[simp]
 theorem choi_add (Φ Ψ : CPMap n m) :
@@ -346,7 +346,7 @@ theorem applyMat_add_map (Φ Ψ : CPMap n m)
   rw [h, applyMat_ofKraus, KrausFamily.applyMat_append]
   rfl
 
-instance : AddCommMonoid (CPMap n m) where
+instance instAddCommMonoidCPMap : AddCommMonoid (CPMap n m) where
   zero := 0
   add := (· + ·)
   zero_add Φ := ext (zero_add Φ.choi)
@@ -355,7 +355,7 @@ instance : AddCommMonoid (CPMap n m) where
   add_comm Φ Ψ := ext (add_comm Φ.choi Ψ.choi)
   nsmul := nsmulRec
 
-instance : OrderBot (CPMap n m) where
+instance instOrderBotCPMap : OrderBot (CPMap n m) where
   bot := 0
   bot_le Φ := by
     change (0 : Matrix (Fin m × Fin n) (Fin m × Fin n) ℂ) ≤ Φ.choi
@@ -398,7 +398,7 @@ noncomputable def nnsmul (c : NNReal) (Φ : CPMap n m) : CPMap n m where
     Φ.choi_pos.smul
       (Complex.nonneg_iff.mpr ⟨c.property, by simp⟩)
 
-noncomputable instance : SMul NNReal (CPMap n m) :=
+noncomputable instance instSMulNNRealCPMap : SMul NNReal (CPMap n m) :=
   ⟨nnsmul⟩
 
 @[simp]
@@ -406,7 +406,7 @@ theorem choi_nnsmul (c : NNReal) (Φ : CPMap n m) :
     (c • Φ).choi = (c : ℂ) • Φ.choi :=
   rfl
 
-noncomputable instance : Module NNReal (CPMap n m) where
+noncomputable instance instModuleNNRealCPMap : Module NNReal (CPMap n m) where
   one_smul Φ := by
     apply ext
     simp

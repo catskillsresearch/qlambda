@@ -110,7 +110,7 @@ def zero (M : Module.{u}) (N : Module.{v}) : Hom M N where
     intro m n x f
     exact (N.act_zero_element f).symm
 
-instance (M : Module.{u}) (N : Module.{v}) : Zero (Hom M N) :=
+instance instZeroHom (M : Module.{u}) (N : Module.{v}) : Zero (Hom M N) :=
   ⟨zero M N⟩
 
 @[simp]

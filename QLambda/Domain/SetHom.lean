@@ -19,7 +19,7 @@ structure SetHom (A B : Type u) where
 
 namespace SetHom
 
-instance {A B : Type u} : CoeFun (SetHom A B) (fun _ => A → B) :=
+instance instCoeFunSetHom {A B : Type u} : CoeFun (SetHom A B) (fun _ => A → B) :=
   ⟨SetHom.toFun⟩
 
 @[ext]
@@ -30,10 +30,10 @@ theorem ext {A B : Type u} {f g : SetHom A B}
   congr
   exact funext h
 
-instance {A B : Type u} : LE (SetHom A B) :=
+instance instLESetHom {A B : Type u} : LE (SetHom A B) :=
   ⟨fun f g => f = g⟩
 
-instance {A B : Type u} : PartialOrder (SetHom A B) where
+instance instPartialOrderSetHom {A B : Type u} : PartialOrder (SetHom A B) where
   le_refl _ := rfl
   le_trans _ _ _ := Eq.trans
   le_antisymm _ _ h _ := h
@@ -43,7 +43,7 @@ theorem chain_eq_zero {A B : Type u} (c : ℕ → SetHom A B)
     (hc : Monotone c) (n : ℕ) : c n = c 0 :=
   (hc (Nat.zero_le n)).symm
 
-noncomputable instance {A B : Type u} : OmegaComplete (SetHom A B) where
+noncomputable instance instOmegaCompleteSetHom {A B : Type u} : OmegaComplete (SetHom A B) where
   ωSup c _ := c 0
   le_ωSup c hc n := chain_eq_zero c hc n
   ωSup_le _ _ _ hx := hx 0

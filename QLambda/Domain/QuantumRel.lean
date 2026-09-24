@@ -28,10 +28,10 @@ namespace QuantumRel
 variable {X Y Z W : QuantumSet}
 
 /-- Pointwise inclusion of quantum relations. -/
-instance : LE (QuantumRel X Y) where
+instance instLEQuantumRel : LE (QuantumRel X Y) where
   le R S := ∀ x y, R.component x y ≤ S.component x y
 
-instance : PartialOrder (QuantumRel X Y) where
+instance instPartialOrderQuantumRel : PartialOrder (QuantumRel X Y) where
   le_refl _ _ _ := le_rfl
   le_trans _ _ _ hRS hST x y := (hRS x y).trans (hST x y)
   le_antisymm R S hRS hSR := by
@@ -49,30 +49,30 @@ def bot : QuantumRel X Y where
 def top : QuantumRel X Y where
   component := fun _ _ => ⊤
 
-instance : Bot (QuantumRel X Y) := ⟨bot⟩
-instance : Top (QuantumRel X Y) := ⟨top⟩
+instance instBotQuantumRel : Bot (QuantumRel X Y) := ⟨bot⟩
+instance instTopQuantumRel : Top (QuantumRel X Y) := ⟨top⟩
 
-instance : InfSet (QuantumRel X Y) where
+instance instInfSetQuantumRel : InfSet (QuantumRel X Y) where
   sInf s := ⟨fun x y => ⨅ R : s, R.1.component x y⟩
 
-instance : SupSet (QuantumRel X Y) where
+instance instSupSetQuantumRel : SupSet (QuantumRel X Y) where
   sSup s := ⟨fun x y => ⨆ R : s, R.1.component x y⟩
 
-instance : SemilatticeInf (QuantumRel X Y) where
+instance instSemilatticeInfQuantumRel : SemilatticeInf (QuantumRel X Y) where
   inf R S := ⟨fun x y => R.component x y ⊓ S.component x y⟩
   inf_le_left := fun _ _ _ _ => inf_le_left
   inf_le_right := fun _ _ _ _ => inf_le_right
   le_inf := fun _ _ _ hR hS x y => le_inf (hR x y) (hS x y)
 
-instance : SemilatticeSup (QuantumRel X Y) where
+instance instSemilatticeSupQuantumRel : SemilatticeSup (QuantumRel X Y) where
   sup R S := ⟨fun x y => R.component x y ⊔ S.component x y⟩
   le_sup_left := fun _ _ _ _ => le_sup_left
   le_sup_right := fun _ _ _ _ => le_sup_right
   sup_le := fun _ _ _ hR hS x y => sup_le (hR x y) (hS x y)
 
-instance : Lattice (QuantumRel X Y) where
+instance instLatticeQuantumRel : Lattice (QuantumRel X Y) where
 
-instance : BoundedOrder (QuantumRel X Y) where
+instance instBoundedOrderQuantumRel : BoundedOrder (QuantumRel X Y) where
   le_top := fun _ _ _ => le_top
   bot_le := fun _ _ _ => bot_le
 
@@ -96,7 +96,7 @@ theorem isGLB_sInf (s : Set (QuantumRel X Y)) :
     intro S
     exact (hR S.property) x y
 
-noncomputable instance : CompleteLattice (QuantumRel X Y) where
+noncomputable instance instCompleteLatticeQuantumRel : CompleteLattice (QuantumRel X Y) where
   isLUB_sSup := isLUB_sSup
   isGLB_sInf := isGLB_sInf
 

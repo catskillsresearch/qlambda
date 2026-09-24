@@ -78,7 +78,7 @@ theorem average_fixed_iff {A k n : ℕ}
   · intro hinv
     exact average_val { val := x, invariant := hinv }
 
-instance (A k n : ℕ) : Zero (SymmetricElement A k n) where
+instance instZeroSymmetricElement (A k n : ℕ) : Zero (SymmetricElement A k n) where
   zero :=
     { val := 0
       invariant := fun _σ => Superoperator.comp_zero_right _ }

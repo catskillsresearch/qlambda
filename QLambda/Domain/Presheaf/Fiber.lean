@@ -24,7 +24,7 @@ structure Fiber where
   zero : Carrier
   summation : @SigmaMon.PartialCountableSum Carrier ⟨zero⟩
 
-instance (X : Fiber) : Zero X.Carrier := ⟨X.zero⟩
+instance instZeroFiberCarrier (X : Fiber) : Zero X.Carrier := ⟨X.zero⟩
 
 /-- The relation saying that a family has the indicated partial sum in a
 fiber. -/

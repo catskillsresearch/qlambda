@@ -23,7 +23,7 @@ class OmegaComplete (D : Type u) [PartialOrder D] where
     (∀ n, c n ≤ x) → ωSup c hc ≤ x
 
 /-- Complete lattices are, in particular, pointed ωCPOs. -/
-noncomputable instance (D : Type u) [CompleteLattice D] : OmegaComplete D where
+noncomputable instance instOmegaCompleteOfCompleteLattice (D : Type u) [CompleteLattice D] : OmegaComplete D where
   ωSup c _ := ⨆ n, c n
   le_ωSup c _ n := le_iSup c n
   ωSup_le _ _ _ h := iSup_le h

@@ -80,33 +80,33 @@ def dual (X : QuantumSet) : QuantumSet where
   Atom := X.Atom
   dim := X.dim
 
-instance : Inhabited unit.Atom := ⟨PUnit.unit⟩
-instance : Inhabited qubit.Atom := ⟨PUnit.unit⟩
-instance : Inhabited (atomic n).Atom := ⟨PUnit.unit⟩
-instance : Unique unit.Atom := inferInstanceAs (Unique PUnit)
-instance : Unique qubit.Atom := inferInstanceAs (Unique PUnit)
-instance : Unique (atomic n).Atom := inferInstanceAs (Unique PUnit)
+instance instInhabitedUnitAtom : Inhabited unit.Atom := ⟨PUnit.unit⟩
+instance instInhabitedQubitAtom : Inhabited qubit.Atom := ⟨PUnit.unit⟩
+instance instInhabitedAtomicAtom : Inhabited (atomic n).Atom := ⟨PUnit.unit⟩
+instance instUniqueUnitAtom : Unique unit.Atom := inferInstanceAs (Unique PUnit)
+instance instUniqueQubitAtom : Unique qubit.Atom := inferInstanceAs (Unique PUnit)
+instance instUniqueAtomicAtom : Unique (atomic n).Atom := inferInstanceAs (Unique PUnit)
 
-instance [DecidableEq α] : DecidableEq (liftSet α).Atom :=
+instance instDecidableEqLiftSetAtom [DecidableEq α] : DecidableEq (liftSet α).Atom :=
   show DecidableEq α from inferInstance
 
-instance [Fintype α] : Fintype (liftSet α).Atom :=
+instance instFintypeLiftSetAtom [Fintype α] : Fintype (liftSet α).Atom :=
   show Fintype α from inferInstance
 
-instance [LE α] : LE (liftSet α).Atom :=
+instance instLELiftSetAtom [LE α] : LE (liftSet α).Atom :=
   show LE α from inferInstance
 
-instance [Preorder α] : Preorder (liftSet α).Atom :=
+instance instPreorderLiftSetAtom [Preorder α] : Preorder (liftSet α).Atom :=
   show Preorder α from inferInstance
 
-instance [PartialOrder α] : PartialOrder (liftSet α).Atom :=
+instance instPartialOrderLiftSetAtom [PartialOrder α] : PartialOrder (liftSet α).Atom :=
   show PartialOrder α from inferInstance
 
-instance [DecidableEq X.Atom] [DecidableEq Y.Atom] :
+instance instDecidableEqTensorAtom [DecidableEq X.Atom] [DecidableEq Y.Atom] :
     DecidableEq (tensor X Y).Atom :=
   show DecidableEq (X.Atom × Y.Atom) from inferInstance
 
-instance [DecidableEq X.Atom] [DecidableEq Y.Atom] :
+instance instDecidableEqSumAtom [DecidableEq X.Atom] [DecidableEq Y.Atom] :
     DecidableEq (sum X Y).Atom :=
   show DecidableEq (X.Atom ⊕ Y.Atom) from inferInstance
 

@@ -32,13 +32,13 @@ variable
   [PartialOrder F] [OmegaComplete F]
   [PartialOrder G] [OmegaComplete G]
 
-instance : CoeFun (OmegaMap D E) (fun _ => D → E) :=
+instance instCoeFunOmegaMap : CoeFun (OmegaMap D E) (fun _ => D → E) :=
   ⟨OmegaMap.toFun⟩
 
-instance : LE (OmegaMap D E) :=
+instance instLEOmegaMap : LE (OmegaMap D E) :=
   ⟨fun f g => ∀ x, f x ≤ g x⟩
 
-instance [OrderBot E] : OrderBot (OmegaMap D E) where
+instance instOrderBotOmegaMap [OrderBot E] : OrderBot (OmegaMap D E) where
   bot :=
     { toFun := fun _ => ⊥
       monotone := fun _ _ _ => le_rfl
@@ -56,7 +56,7 @@ theorem ext {f g : OmegaMap D E} (h : ∀ x, f x = g x) : f = g := by
   simp only [mk.injEq]
   exact funext h
 
-instance : PartialOrder (OmegaMap D E) where
+instance instPartialOrderOmegaMap : PartialOrder (OmegaMap D E) where
   le_refl _ _ := le_rfl
   le_trans _ _ _ hfg hgh x := (hfg x).trans (hgh x)
   le_antisymm f g hfg hgf := by
