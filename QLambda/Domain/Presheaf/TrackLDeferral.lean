@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Domain.Presheaf.DayBangBoundary
+import QLambda.Domain.Presheaf.AmbientCPGate8TestSuite
 import QLambda.Domain.Presheaf.LNL
 import QLambda.Linear.FragmentModel
 

@@ -5,6 +5,7 @@ Authors: Lars Warren Ericson.
 -/
 import QLambda.Linear.Denotation
 import QLambda.Domain.Presheaf.Superoperator
+import QLambda.Domain.Presheaf.SuperoperatorInstrument
 
 /-!
 # Intrinsic superoperator meaning of source primitives

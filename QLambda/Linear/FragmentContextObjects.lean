@@ -5,7 +5,7 @@ Authors: Lars Warren Ericson.
 -/
 import QLambda.Linear.FragmentModel
 import QLambda.Domain.Presheaf.DayCoend
-import QLambda.Domain.Presheaf.Comonoid
+import QLambda.Domain.Presheaf.DayComonoid
 
 /-!
 # Fragment context objects (Route A)

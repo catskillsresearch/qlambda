@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Domain.Presheaf.Superoperator
+import QLambda.Domain.Presheaf.SuperoperatorInstrument
 
 /-!
 # Relational partial countable-sum algebras

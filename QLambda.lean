@@ -22,6 +22,7 @@ import QLambda.Domain.QuantumSet
 import QLambda.Domain.QuantumRel
 import QLambda.Domain.QuantumRelational
 import QLambda.Domain.QuantumCPOCategory
+import QLambda.Domain.QObj
 import QLambda.Domain.QuantumCategory
 import QLambda.Domain.QuantumMonoidal
 import QLambda.Domain.DiscreteSet
@@ -29,6 +30,7 @@ import QLambda.Domain.QuantumClassical
 import QLambda.Domain.QuantumLNL
 import QLambda.Domain.Presheaf.CPMap
 import QLambda.Domain.Presheaf.Superoperator
+import QLambda.Domain.Presheaf.SuperoperatorInstrument
 import QLambda.Domain.Presheaf.SigmaMon
 import QLambda.Domain.Presheaf.SuperoperatorModule
 import QLambda.Domain.Presheaf.Yoneda
@@ -45,6 +47,8 @@ import QLambda.Domain.Presheaf.SymmetricPower
 import QLambda.Domain.Presheaf.ClosedGenerated
 import QLambda.Domain.Presheaf.Exponential
 import QLambda.Domain.Presheaf.Comonoid
+import QLambda.Domain.Presheaf.ComonoidHom
+import QLambda.Domain.Presheaf.DayComonoid
 import QLambda.Domain.Presheaf.LNL
 
 import QLambda.Linear.Syntax
@@ -72,6 +76,7 @@ import QLambda.Linear.FragmentCoherence
 import QLambda.Linear.FragmentRuntimeN
 import QLambda.Linear.FragmentSourceCircuitN
 import QLambda.Domain.Presheaf.DayBangBoundary
+import QLambda.Domain.Presheaf.AmbientCPGate8TestSuite
 import QLambda.Domain.Presheaf.AmbientCPBang
 import QLambda.Domain.Presheaf.TrackLDeferral
 

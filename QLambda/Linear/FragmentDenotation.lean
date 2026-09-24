@@ -8,6 +8,7 @@ import QLambda.Linear.FragmentContext
 import QLambda.Linear.Operational
 import QLambda.Domain.Presheaf.Yoneda
 import QLambda.Domain.Presheaf.ClassicalCategory
+import QLambda.Linear.FragmentBranching
 
 /-!
 # Concrete fragment denotation (Route A)
@@ -602,18 +603,6 @@ theorem denoteClosedBitLit_eq {b : Bool} (c : Closed (.bitLit b) .bit) :
 
 end FragCert
 
-/-- The sole effect not supplied by symmetric monoidal closed structure:
-selection between two already-denoted branches.  Keeping this interface
-explicit prevents a zero/fallback map from masquerading as `ite` semantics. -/
-structure FragmentBranching where
-  iteElim :
-    ∀ {A : Ty}, Ty.SemanticFragment A →
-      Hom
-        (dayTensor (fragmentModule .bit)
-          (additiveProduct (fragmentModule A) (fragmentModule A)))
-        (fragmentModule A)
-
-
 namespace FragCert
 
 /-- A primitive constant, curried into its source-language linear-arrow
@@ -751,23 +740,6 @@ noncomputable def denoteWith (branching : FragmentBranching) :
           (FragmentContext.combinedOSplit hΓ hs))
 
 end FragCert
-
-/-- Operations required for full compositional fragment denotation. -/
-structure FragmentDenotationModel where
-  /-- Open-term denotation on combined contexts. -/
-  denote :
-    ∀ {Γ Δ M A}, FragCert Γ Δ M A →
-      Hom (FragmentContext.combined Γ Δ) (fragmentModule A)
-  /-- Closed unit agrees with Route A. -/
-  denote_unit :
-    ∀ (c : FragCert.Closed .unit .unit),
-      denote c =
-        FragmentContext.closedPoint routeAFragmentModel.unitIntro
-  /-- Closed bit literals agree with Route A. -/
-  denote_bitLit :
-    ∀ (b : Bool) (c : FragCert.Closed (.bitLit b) .bit),
-      denote c =
-        FragmentContext.closedPoint (routeAFragmentModel.bitLit b)
 
 
 /-- Route A supplies closed unit/bit denotation into combined contexts. -/
