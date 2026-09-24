@@ -25,6 +25,12 @@
 \captionsetup{font=small,labelfont=bf,skip=6pt}
 \usepackage[colorlinks=true,linkcolor=blue!40!black,citecolor=blue!40!black,urlcolor=blue!40!black]{hyperref}
 \emergencystretch=2em
+\newcommand{\leansourcehref}[2]{%
+  \begingroup
+  \hypersetup{urlcolor=green!40!black}%
+  \href{#1}{\textbf{#2}}%
+  \endgroup
+}
 
 % Pandoc emits this on compact lists (including the AI model-card acknowledgments).
 \providecommand{\tightlist}{%
@@ -302,3 +308,41 @@
 \newunicodechar{✓}{\ensuremath{\checkmark}}
 \newunicodechar{æ}{\ae}
 \newunicodechar{ö}{\"o}
+% Extra glyphs from inline Lean blueprint prose / signatures
+\newunicodechar{²}{\textsuperscript{2}}
+\newunicodechar{č}{\v{c}}
+\newunicodechar{Φ}{\ensuremath{\Phi}}
+\newunicodechar{Χ}{\ensuremath{\mathrm{X}}}
+\newunicodechar{Ψ}{\ensuremath{\Psi}}
+\newunicodechar{Ω}{\ensuremath{\Omega}}
+\newunicodechar{γ}{\ensuremath{\gamma}}
+\newunicodechar{δ}{\ensuremath{\delta}}
+\newunicodechar{ε}{\ensuremath{\varepsilon}}
+\newunicodechar{θ}{\ensuremath{\theta}}
+\newunicodechar{κ}{\ensuremath{\kappa}}
+\newunicodechar{ξ}{\ensuremath{\xi}}
+\newunicodechar{π}{\ensuremath{\pi}}
+\newunicodechar{ᴴ}{\textsuperscript{H}}
+\newunicodechar{ᵣ}{\textsubscript{r}}
+\newunicodechar{ᵥ}{\textsubscript{v}}
+\newunicodechar{‖}{\ensuremath{\|} }
+\newunicodechar{“}{``}
+\newunicodechar{”}{''}
+\newunicodechar{†}{\ensuremath{\dagger}}
+\newunicodechar{•}{\textbullet{}}
+\newunicodechar{₄}{\textsubscript{4}}
+\newunicodechar{ₗ}{\textsubscript{l}}
+\newunicodechar{ℂ}{\ensuremath{\mathbb{C}}}
+\newunicodechar{ℓ}{\ensuremath{\ell}}
+\newunicodechar{ℚ}{\ensuremath{\mathbb{Q}}}
+\newunicodechar{ℝ}{\ensuremath{\mathbb{R}}}
+\newunicodechar{ℤ}{\ensuremath{\mathbb{Z}}}
+\newunicodechar{∑}{\ensuremath{\sum}}
+\newunicodechar{−}{\ensuremath{-}}
+\newunicodechar{√}{\ensuremath{\surd}}
+\newunicodechar{≰}{\ensuremath{\nleq}}
+\newunicodechar{⊗}{\ensuremath{\otimes}}
+\newunicodechar{⟦}{\ensuremath{\llbracket}}
+\newunicodechar{⟧}{\ensuremath{\rrbracket}}
+\newunicodechar{⪰}{\ensuremath{\succeq}}
+\newunicodechar{⬝}{\ensuremath{\cdot}}

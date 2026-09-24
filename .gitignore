@@ -21,6 +21,7 @@ lean-listings/
 figures/
 dist/
 00README.json
+build/
 
 # LaTeX build artifacts (the .tex/.pdf deliverables are kept)
 *.aux

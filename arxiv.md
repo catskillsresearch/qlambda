@@ -326,6 +326,8 @@ flowchart TD
 preservation/progress; `source_type_safety` packages the closed-program
 capstone.
 
+<!-- blueprints:sec2 -->
+
 ---
 
 ## 3. Finite Quantum Runtime
@@ -366,6 +368,8 @@ flowchart TD
 
 **Figure.** Section~3 theorem dependence: register dynamics support internal
 and measurement preservation, Born normalization, and runtime progress.
+
+<!-- blueprints:sec3 -->
 
 ---
 
@@ -460,6 +464,8 @@ flowchart TD
 
 **Figure.** Section~4 theorem dependence: quantum-relation algebra supports the
 concrete LNL packaging and the separate Scott-function qCPO category.
+
+<!-- blueprints:sec4 -->
 
 ---
 
@@ -684,6 +690,8 @@ flowchart TD
 **Figure.** Section~5 checked-fragment theorem dependence culminating in the
 $N$-qubit staging interface package.
 
+<!-- blueprints:sec5 -->
+
 ---
 
 ## 6. Deterministic Staging to Circuits
@@ -722,6 +730,8 @@ flowchart TD
 
 **Figure.** Section~6 theorem dependence: successful elaboration yields
 well-formed Composer commands, CQ compile agreement, and OpenQASM export.
+
+<!-- blueprints:sec6 -->
 
 ---
 
@@ -785,6 +795,8 @@ flowchart TD
 **Figure.** Section~7 theorem dependence: two-wire quotation capstone and the
 extended Hom$\Rightarrow$CQ covering-set spines.
 
+<!-- blueprints:sec7 -->
+
 ---
 
 ## 8. Composer and OpenQASM Interchange
@@ -822,6 +834,8 @@ flowchart TD
 
 **Figure.** Section~8 theorem dependence: canonical OpenQASM render/parse
 round trips on the declared structured subset.
+
+<!-- blueprints:sec8 -->
 
 ---
 
@@ -914,6 +928,10 @@ flowchart LR
 
 **Figure.** Section~9 claim-surface dependence among the Palomar-facing and
 $N$-bounded packaging theorems.
+
+<!-- blueprints:sec9 -->
+
+<!-- blueprints:palomar -->
 
 ---
 

@@ -108,6 +108,9 @@ FENCE_CAPTION_RE = re.compile(r"caption=(['\"])(.*?)\1", re.IGNORECASE)
 MANUAL_SECTION_NUM = re.compile(r"^(#{1,6})[ \t]+\d+(?:\.\d+)*\.?[ \t]+", re.MULTILINE)
 NARRATIVE_MARKER = "# Narrative (from arxiv.md)"
 LEAN_MODULE_RE = re.compile(r"^###\s+([A-Za-z0-9_./-]+\.lean)\s*$", re.MULTILINE)
+LEAN_PATH_RE = re.compile(
+    r"<!--\s*lean:\s*([A-Za-z0-9_./-]+\.lean)(?:#L(\d+)-L(\d+))?\s*-->"
+)
 
 
 def github_math_to_tex(text: str) -> str:
@@ -127,6 +130,41 @@ def drop_github_nav(text: str) -> str:
     if idx == -1:
         return text
     return text[idx + len(NARRATIVE_MARKER) :].lstrip("\n")
+
+
+def escape_latex_caption(text: str) -> str:
+    out: list[str] = []
+    for ch in text:
+        if ch in "&%$#_{}":
+            out.append(f"\\{ch}" if ch != "}" else "\\}")
+        elif ch == "~":
+            out.append(r"\textasciitilde{}")
+        elif ch == "^":
+            out.append(r"\textasciicircum{}")
+        elif ch == "\\":
+            out.append(r"\textbackslash{}")
+        else:
+            out.append(ch)
+    return "".join(out)
+
+
+def github_blob_url(rel: str, first: int | None = None, last: int | None = None) -> str:
+    url = f"{GITHUB_URL}/blob/main/{rel}"
+    if first is not None and last is not None:
+        url += f"\\#L{first}-L{last}"
+    return url
+
+
+def lean_label_tex(
+    label: str, github_rel: str | None, first: int, last: int, line_count: int
+) -> str:
+    if not github_rel:
+        return f"\\textcolor{{green!40!black}}{{\\textbf{{{label}}}}}"
+    if first == 1 and last == line_count:
+        url = github_blob_url(github_rel)
+    else:
+        url = github_blob_url(github_rel, first, last)
+    return f"\\leansourcehref{{{url}}}{{{label}}}"
 
 
 def normalize_appendix_headings(text: str) -> str:
@@ -202,47 +240,56 @@ def figure_latex(rel_path: str, caption: str, idx: int) -> str:
     )
 
 
-def lean_block_latex(code: str, listing_name: str) -> str:
+def lean_block_latex(code: str, listing_name: str, github_rel: str | None = None) -> str:
     rel_path, line_count = write_listing(code, listing_name)
     ranges = chunk_line_ranges(line_count, LISTING_CHUNK_LINES)
 
     parts: list[str] = []
     for first, last in ranges:
-        if first == 1 and last == line_count:
-            parts.append(
-                "\\vspace{0.5\\baselineskip}\n"
-                "\\noindent\\textcolor{green!40!black}{\\textbf{Lean 4 source}}"
-                "\\par\\vspace{0.25\\baselineskip}\n"
-                f"\\lstinputlisting[style=leanbox]{{{rel_path}}}\n"
-                "\\vspace{0.5\\baselineskip}\n\n"
-            )
-        else:
-            parts.append(
-                f"\\noindent\\textcolor{{green!40!black}}{{\\textbf{{Lean 4 source "
-                f"(lines {first}--{last})}}}}\\par\\vspace{{0.25\\baselineskip}}\n"
-                f"\\lstinputlisting[style=leanbox,firstline={first},lastline={last}]"
-                f"{{{rel_path}}}\n\n"
-            )
+        label = "Lean 4 source"
+        if github_rel:
+            label += f" \\texttt{{{escape_latex_caption(github_rel)}}}"
+        if not (first == 1 and last == line_count):
+            label += f" (lines {first}--{last})"
+        firstlast = (
+            "" if first == 1 and last == line_count else f",firstline={first},lastline={last}"
+        )
+        parts.append(
+            "\\vspace{0.5\\baselineskip}\n"
+            f"\\noindent{lean_label_tex(label, github_rel, first, last, line_count)}"
+            "\\par\\vspace{0.25\\baselineskip}\n"
+            f"\\lstinputlisting[style=leanbox{firstlast}]{{{rel_path}}}\n"
+            "\\vspace{0.5\\baselineskip}\n\n"
+        )
     return "".join(parts)
 
 
 def extract_lean_titles(text: str) -> dict[str, str]:
+    """Map LEANINCLUDE000 → github-relative path (optionally with #La-Lb)."""
     titles: dict[str, str] = {}
     lean_starts = [m.start() for m in re.finditer(r"^```lean\s*$", text, re.MULTILINE)]
     for idx, pos in enumerate(lean_starts):
-        prefix = text[:pos].rstrip("\n")
         module = None
-        for line in reversed(prefix.splitlines()[-4:]):
-            m = re.match(r"^###\s+([A-Za-z0-9_./-]+\.lean)", line.strip())
-            if m:
-                module = m.group(1)
+        for line in reversed(text[:pos].rstrip("\n").splitlines()[-8:]):
+            stripped = line.strip()
+            path_m = LEAN_PATH_RE.match(stripped)
+            if path_m:
+                rel = path_m.group(1)
+                a, b = path_m.group(2), path_m.group(3)
+                module = f"{rel}#L{a}-L{b}" if a and b else rel
                 break
-        titles[f"LEANINCLUDE{idx:03d}"] = module or f"module-{idx + 1}"
+            heading_m = re.match(r"^###\s+([A-Za-z0-9_./-]+\.lean)", stripped)
+            if heading_m:
+                module = heading_m.group(1)
+                break
+        titles[f"LEANINCLUDE{idx:05d}"] = module or f"module-{idx + 1}"
     return titles
 
 
-def replace_fences(text: str) -> tuple[str, dict[str, str]]:
-    lean_titles = extract_lean_titles(text)
+def replace_fences(
+    text: str, lean_titles: dict[str, str] | None = None
+) -> tuple[str, dict[str, str]]:
+    lean_titles = lean_titles if lean_titles is not None else extract_lean_titles(text)
     placeholders: dict[str, str] = {}
     lean_idx = 0
     other_idx = 0
@@ -254,13 +301,25 @@ def replace_fences(text: str) -> tuple[str, dict[str, str]]:
         body = match.group(2)
         following_caption = match.group(3)
         if lang == "lean":
-            key = f"LEANINCLUDE{lean_idx:03d}"
+            key = f"LEANINCLUDE{lean_idx:05d}"
             module = lean_titles.get(key, f"module-{lean_idx}")
             lean_idx += 1
-            safe_name = module.replace("/", "-")
+            github_rel = None
+            range_suffix = ""
+            if module.endswith(".lean") or "#L" in module:
+                if "#L" in module:
+                    github_rel, range_suffix = module.split("#L", 1)
+                    range_suffix = "L" + range_suffix
+                else:
+                    github_rel = module
+            safe_name = (github_rel or module).replace("/", "-")
+            if range_suffix:
+                safe_name = safe_name.removesuffix(".lean") + f"-{range_suffix}.lean"
             if not safe_name.endswith(".lean"):
                 safe_name += ".lean"
-            placeholders[key] = lean_block_latex(body, safe_name)
+            # uniquify in case of collisions
+            safe_name = f"{lean_idx:04d}-{safe_name}"
+            placeholders[key] = lean_block_latex(body, safe_name, github_rel)
             return f"\n\n{key}\n\n"
         if lang == "math":
             key = f"MATHINCLUDE{other_idx:03d}"
@@ -502,12 +561,14 @@ def main() -> int:
     raw = SRC.read_text(encoding="utf-8")
     body = drop_github_nav(raw)
     body = inject_model_cards(body)
+    # Capture Lean path headers before HTML comments are stripped.
+    lean_titles = extract_lean_titles(body)
     body = strip_html_comments(body)
     body = normalize_appendix_headings(body)
     abstract_md, body = extract_abstract(body)
     body = strip_manual_section_numbers(body)
     body = github_math_to_tex(body)
-    body, placeholders = replace_fences(body)
+    body, placeholders = replace_fences(body, lean_titles)
 
     latex_body = pandoc_to_latex(body, shift=True)
     latex_body = inject_placeholders(latex_body, placeholders)
