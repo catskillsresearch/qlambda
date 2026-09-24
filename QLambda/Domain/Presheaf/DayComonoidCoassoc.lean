@@ -69,12 +69,6 @@ theorem bang_coassociative_zero :
               (bangDegreeUnit 0 0) (bangDegreeUnit 0 0))) Φ := by
     rw [hδx,
       (DayTensor.map (Hom.id (bang 0)) bangComult_zero).naturality]
-    change
-      (dayTensor (bang 0) (dayTensor (bang 0) (bang 0))).act
-          ((DayTensor.map (Hom.id (bang 0)) bangComult_zero).app _
-            ((DayCoend.intro (bang 0) (bang 0)).app
-              (bangDegreeUnit 0 0) (bangDegreeUnit 0 0))) Φ =
-        _
     rw [DayTensor.map_intro, Hom.id_app, bangComult_degreeUnit_zero]
     rfl
   have hL_map :
@@ -87,12 +81,6 @@ theorem bang_coassociative_zero :
             (bangDegreeUnit 0 0)) Φ := by
     rw [hδx,
       (DayTensor.map bangComult_zero (Hom.id (bang 0))).naturality]
-    change
-      (dayTensor (dayTensor (bang 0) (bang 0)) (bang 0)).act
-          ((DayTensor.map bangComult_zero (Hom.id (bang 0))).app _
-            ((DayCoend.intro (bang 0) (bang 0)).app
-              (bangDegreeUnit 0 0) (bangDegreeUnit 0 0))) Φ =
-        _
     rw [DayTensor.map_intro, Hom.id_app, bangComult_degreeUnit_zero]
     rfl
   have hL :
@@ -114,10 +102,6 @@ theorem bang_coassociative_zero :
         ((DayCoend.intro (bang 0) (bang 0)).app
           (bangDegreeUnit 0 0) (bangDegreeUnit 0 0))
         (bangDegreeUnit 0 0)
-    change
-      (DayTensor.associator (bang 0) (bang 0) (bang 0)).app n
-          ((dayTensor (dayTensor (bang 0) (bang 0)) (bang 0)).act gen Φ) =
-        _
     rw [(DayTensor.associator (bang 0) (bang 0) (bang 0)).naturality gen Φ]
     rw [DayTensor.associator_intro_intro]
     exact (dayTensor (bang 0) (dayTensor (bang 0) (bang 0))).act_comp _ _ _
@@ -158,8 +142,6 @@ theorem bangComultComponent_degreeUnit_one (p q : ℕ) :
       (tensorPowerDimension_mul_add 1 p q) ▸
         ((DayCoend.intro (bang 1) (bang 1)).app
           (bangDegreeUnit 1 p) (bangDegreeUnit 1 q)) := by
-  have hp := tensorPowerDimension_one_eq p
-  have hq := tensorPowerDimension_one_eq q
   have hpq := tensorPowerDimension_one_eq (p + q)
   have hmul := tensorPowerDimension_mul_add 1 p q
   rw [eq_rec_act_ofEquivalence, bangComultComponent_eq_act]
@@ -176,7 +158,7 @@ theorem bangComultComponent_degreeUnit_one (p q : ℕ) :
   have hsplit :
       Superoperator.ofEquivalence (tensorSplitEquiv 1 p q) =
         Superoperator.ofEquivalence (finCongr hmul.symm) :=
-    ofEquivalence_dim_one hpq (by simp [hp, hq]) _ _
+    ofEquivalence_dim_one hpq (by simp) _ _
   rw [hsplit]
 
 theorem bangSplit_coassoc_channel_one (p q r n : ℕ)
@@ -197,14 +179,11 @@ theorem bangSplit_coassoc_channel_one (p q r n : ℕ)
           (Superoperator.ofEquivalence
             (finCongr (tensorPowerDimension_mul_add 1 q r).symm)))
         ((bangSplitComponent 1 p (q + r)).app n x) := by
-  have hp := tensorPowerDimension_one_eq p
-  have hq := tensorPowerDimension_one_eq q
-  have hr := tensorPowerDimension_one_eq r
   have hsrc : tensorPowerDimension 1 (p + (q + r)) = 1 :=
     tensorPowerDimension_one_eq _
   have htgt : tensorPowerDimension 1 p *
       (tensorPowerDimension 1 q * tensorPowerDimension 1 r) = 1 := by
-    simp [hp, hq, hr]
+    simp
   have hassoc : (p + q) + r = p + (q + r) := Nat.add_assoc p q r
   let eDeg := finCongr (congrArg (tensorPowerDimension 1) hassoc)
   have hx :

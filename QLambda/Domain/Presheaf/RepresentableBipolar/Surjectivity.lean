@@ -473,7 +473,7 @@ theorem pairing_eq_imp_app_id {A n : ℕ}
               (Superoperator.comp χ
                 (Superoperator.tensor σ (Superoperator.identity A)))) := by
       have h := hFσ.symm
-      simp only [α, hact] at h
+      simp only [hact] at h
       -- h : dayTensorUnit.act α (id⊗σ) = F.app ...
       exact (dayTensorUnit_act_eq_comp α
         (Superoperator.tensor (Superoperator.identity n) σ)).symm.trans h
@@ -486,7 +486,7 @@ theorem pairing_eq_imp_app_id {A n : ℕ}
               (Superoperator.comp χ
                 (Superoperator.tensor σ (Superoperator.identity A)))) := by
       have h := hUσ.symm
-      simp only [β, hact] at h
+      simp only [hact] at h
       exact (dayTensorUnit_act_eq_comp β
         (Superoperator.tensor (Superoperator.identity n) σ)).symm.trans h
     rw [hL, hR, hfiber]
@@ -732,7 +732,7 @@ theorem evaluationFiber_traceNonincreasing {A n : ℕ} (hA : 0 < A)
     have htr : (Matrix.trace (Ψ.applyMat ρ)).re =
         t * (Matrix.trace (Ψ.applyMat ρ')).re := by
       rw [hscale]
-      simp [Matrix.trace_smul, Complex.smul_re, smul_eq_mul]
+      simp [Matrix.trace_smul]
     rw [htr]
     simpa [mul_one] using mul_le_mul_of_nonneg_left hborn (le_of_lt hpos)
   · have hre0 : (Matrix.trace ρ).re = 0 := le_antisymm (not_lt.mp hpos) hre_nn
@@ -741,7 +741,7 @@ theorem evaluationFiber_traceNonincreasing {A n : ℕ} (hA : 0 < A)
     have happ0 : Ψ.applyMat ρ = 0 := by
       rw [hρ0, ← zero_smul ℂ (1 : Matrix (Fin n) (Fin n) ℂ), CPMap.applyMat_smul,
         zero_smul]
-    simpa [happ0, Matrix.trace_zero, htr0]
+    simp [happ0, Matrix.trace_zero, htr0]
 
 /-- Total fiber cup-evaluation as a superoperator (TNI from columns). -/
 noncomputable def evaluationFiberSO_total {A n : ℕ} (hA : 0 < A)

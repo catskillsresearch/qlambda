@@ -264,10 +264,7 @@ theorem fragCert_skip_quote_denote_independent
             cases cR with
             | varU hΓR hΔR hlU hDupU hNone hAb =>
               simp only [fragCert_skip_quote, fragCert_skip_lamL,
-                fragCert_skip_pair, fragCert_skip_varL, fragCert_skip_varU,
-                FragCert.denote_lamU_eq, FragCert.denote_lamL_eq,
-                FragCert.denote_pair_eq, FragCert.denote_varL_eq,
-                FragCert.denote_varU_eq]
+                fragCert_skip_pair, fragCert_skip_varL, fragCert_skip_varU]
               congr
         | right hs0 =>
             cases hs0
