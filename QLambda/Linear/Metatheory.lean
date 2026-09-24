@@ -262,11 +262,10 @@ theorem DropLin.var {k Δ Δ' n A V}
                   exact hd.noLookupTarget hl
                 by_cases hn : n < k
                 · simp [substLin, Nat.succ_lt_succ_iff, hn] at heq ⊢
-                  simpa [heq]
+                  simp [heq]
                 · have hnk : k < n :=
                     Nat.lt_of_le_of_ne (Nat.le_of_not_gt hn) (Ne.symm hne)
-                  simp [substLin, Nat.succ_lt_succ_iff, hn, hne,
-                    Nat.ne_of_gt hnk, Nat.succ_sub_one] at heq ⊢
+                  simp [substLin, Nat.succ_lt_succ_iff, hn, hne] at heq ⊢
                   have hpos : 0 < n :=
                     Nat.lt_of_le_of_lt (Nat.zero_le k) hnk
                   calc
@@ -394,12 +393,9 @@ theorem shiftLin_one_after {k cutoff M} :
       | lin =>
           by_cases hi : i < cutoff
           · simp [shiftLin, hi]
-          · have hi' : ¬i + k < cutoff :=
-              not_lt.mpr (Nat.le_trans (Nat.le_of_not_gt hi)
-                (Nat.le_add_right i k))
-            have hki : cutoff ≤ k + i :=
+          · have hki : cutoff ≤ k + i :=
               Nat.le_trans (Nat.le_of_not_gt hi) (Nat.le_add_left i k)
-            simp [shiftLin, hi, hi', not_lt.mpr hki,
+            simp [shiftLin, hi, not_lt.mpr hki,
               Nat.add_assoc, Nat.add_comm,
               Nat.add_left_comm]
   | lam κ A M ih =>
@@ -423,13 +419,13 @@ theorem shiftLin_substLin_var (k n : Nat) (V : Term) :
   · simp [substLin, shiftLin, hn, Nat.succ_lt_succ_iff]
   · by_cases heq : n = k
     · subst heq
-      simp [substLin, shiftLin, shiftLin_one_after]
+      simp [substLin, shiftLin_one_after]
     · have hkn : k < n :=
         Nat.lt_of_le_of_ne (Nat.le_of_not_gt hn) (Ne.symm heq)
       have hnpos : 0 < n :=
         Nat.lt_of_le_of_lt (Nat.zero_le k) hkn
       simp [substLin, shiftLin, hn, heq, Nat.succ_lt_succ_iff,
-        Nat.ne_of_gt hkn, Nat.sub_add_cancel
+        Nat.sub_add_cancel
           (Nat.one_le_iff_ne_zero.mpr (Nat.ne_of_gt hnpos))]
 
 theorem LinSubCtx.var {Γ A B k Δold Δv Δout V n}
@@ -566,12 +562,9 @@ theorem shiftUnres_one_after {k cutoff M} :
       | unres =>
           by_cases hi : i < cutoff
           · simp [shiftUnres, hi]
-          · have hi' : ¬i + k < cutoff :=
-              not_lt.mpr (Nat.le_trans (Nat.le_of_not_gt hi)
-                (Nat.le_add_right i k))
-            have hki : cutoff ≤ k + i :=
+          · have hki : cutoff ≤ k + i :=
               Nat.le_trans (Nat.le_of_not_gt hi) (Nat.le_add_left i k)
-            simp [shiftUnres, hi, hi', not_lt.mpr hki,
+            simp [shiftUnres, hi, not_lt.mpr hki,
               Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]
   | lam κ A M ih =>
       cases κ <;> simp [shiftUnres, ih]
@@ -611,13 +604,13 @@ theorem shiftUnres_substUnres_var (k n : Nat) (V : Term) :
   · simp [substUnres, shiftUnres, hn, Nat.succ_lt_succ_iff]
   · by_cases heq : n = k
     · subst heq
-      simp [substUnres, shiftUnres, shiftUnres_one_after]
+      simp [substUnres, shiftUnres_one_after]
     · have hkn : k < n :=
         Nat.lt_of_le_of_ne (Nat.le_of_not_gt hn) (Ne.symm heq)
       have hnpos : 0 < n :=
         Nat.lt_of_le_of_lt (Nat.zero_le k) hkn
       simp [substUnres, shiftUnres, hn, heq, Nat.succ_lt_succ_iff,
-        Nat.ne_of_gt hkn, Nat.sub_add_cancel
+        Nat.sub_add_cancel
           (Nat.one_le_iff_ne_zero.mpr (Nat.ne_of_gt hnpos))]
 
 theorem UnresSubCtx.var {A B Γ Γold Γout Δ Δv V k n}
