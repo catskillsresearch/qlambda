@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Domain.Presheaf.AmbientCPModuleInstances
-import QLambda.Domain.Presheaf.DayComonoid
+import QLambda.Domain.Presheaf.DayComonoidAdmissible
 
 /-!
 # Ambient-CP relative bang-comult admissibility (L9)

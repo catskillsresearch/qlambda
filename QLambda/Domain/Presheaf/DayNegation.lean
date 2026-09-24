@@ -5,7 +5,7 @@ Authors: Lars Warren Ericson.
 -/
 import QLambda.Domain.Presheaf.NegationData
 import QLambda.Domain.Presheaf.PseudoRepresentability
-import QLambda.Domain.Presheaf.DayCoendInstances
+import QLambda.Domain.Presheaf.DayInternalHom
 
 /-!
 # Concrete Day negation

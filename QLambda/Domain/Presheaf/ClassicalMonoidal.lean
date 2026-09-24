@@ -3,7 +3,7 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.Presheaf.RepresentableBipolar
+import QLambda.Domain.Presheaf.RepresentableBipolar.Surjectivity
 
 /-!
 # Classical monoidal and additive connectives (plan gate 2)

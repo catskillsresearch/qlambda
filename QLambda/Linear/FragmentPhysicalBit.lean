@@ -8,7 +8,7 @@ import QLambda.Linear.TypeInterpretation
 import QLambda.Linear.PrimitiveSuperoperator
 import QLambda.Domain.Presheaf.Yoneda
 import QLambda.Domain.Presheaf.ClosedGeneration
-import QLambda.Domain.Presheaf.DayCoendInstances
+import QLambda.Domain.Presheaf.DayInternalHom
 import QLambda.Domain.Presheaf.SuperoperatorModule
 
 /-!

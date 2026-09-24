@@ -38,17 +38,18 @@ import QLambda.Domain.Presheaf.Generated
 import QLambda.Domain.Presheaf.PseudoRepresentable
 import QLambda.Domain.Presheaf.Classical
 import QLambda.Domain.Presheaf.ClassicalCategory
-import QLambda.Domain.Presheaf.RepresentableBipolar
+import QLambda.Domain.Presheaf.RepresentableBipolar.Surjectivity
 import QLambda.Domain.Presheaf.ClassicalMonoidal
 import QLambda.Domain.Presheaf.Monoidal
-import QLambda.Domain.Presheaf.DayCoendInstances
+import QLambda.Domain.Presheaf.DayInternalHom
+import QLambda.Domain.Presheaf.DayTensorCoherence
 import QLambda.Domain.Presheaf.OmegaEnrichedInstances
 import QLambda.Domain.Presheaf.SymmetricPower
 import QLambda.Domain.Presheaf.ClosedGenerated
 import QLambda.Domain.Presheaf.Exponential
 import QLambda.Domain.Presheaf.Comonoid
 import QLambda.Domain.Presheaf.ComonoidHom
-import QLambda.Domain.Presheaf.DayComonoid
+import QLambda.Domain.Presheaf.DayComonoidCofree
 import QLambda.Domain.Presheaf.LNL
 
 import QLambda.Linear.Syntax

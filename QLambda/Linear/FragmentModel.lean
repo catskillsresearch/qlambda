@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Linear.FragmentPhysicalBitInstances
-import QLambda.Linear.FragmentClassicalBit
+import QLambda.Linear.FragmentClassicalBitModule
 import QLambda.Linear.PresheafFragmentModel
 
 /-!

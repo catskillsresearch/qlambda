@@ -6,7 +6,7 @@ Authors: Lars Warren Ericson.
 import QLambda.Domain.LinearNonlinear
 import QLambda.Domain.Presheaf.ClassicalMonoidal
 import QLambda.Domain.Presheaf.OmegaEnrichedInstances
-import QLambda.Domain.Presheaf.DayComonoid
+import QLambda.Domain.Presheaf.DayComonoidCofree
 
 /-!
 # Presheaf linear/nonlinear sketch (plan gate 4)

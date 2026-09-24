@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Domain.Presheaf.Exponential
-import QLambda.Domain.Presheaf.DayCoendInstances
+import QLambda.Domain.Presheaf.DayTensorCoherence
 
 /-!
 # Abstract commutative Day comonoids

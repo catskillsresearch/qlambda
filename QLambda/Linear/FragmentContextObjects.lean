@@ -4,8 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 import QLambda.Linear.FragmentModel
-import QLambda.Domain.Presheaf.DayCoendInstances
-import QLambda.Domain.Presheaf.DayComonoid
+import QLambda.Domain.Presheaf.DayTensorCoherence
 
 /-!
 # Fragment context objects (Route A)
