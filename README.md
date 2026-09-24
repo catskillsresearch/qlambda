@@ -75,33 +75,35 @@ joint-effect bound (Route A) is refuted at `A = 2`.
 carrier-membership predicate) and fails by excluding the degree-one identity
 series.  Scaling by `1/2` repairs the `(2,1)` matrix inequality, but
 left/right counit force the `(0,1)`/`(1,0)` boundary weights to remain `1`,
-so half-scaling is not a counital repair.  A
-`BangComultDayTransferWitness` would now kernel-checkably refute
-`BangComultComponentsAdmissible 2`; constructing the witness remains open.
-An all-dimensional cofree bang, general Day closure on based
-modules, a premise-free `presheafQuantumLNL`, and full-language adequacy remain
-objectives.  The **minimum fragment** (first-order data, linear arrows with
+so half-scaling is not a counital repair.  Any
+`BangComultDayTransferWitness` would kernel-checkably refute
+`BangComultComponentsAdmissible 2`, but no TNI/representable witness is
+constructed.  L8 instead publishes the ambient-CP replacement
+`AmbientCPDayBangCategory` with Gate-8 suite `ambientCP_gate8_testSuite`
+(terminal `day_bang_l8_resolved_by_ambientCP_replacement`).  An
+all-dimensional TNI cofree bang, general Day closure on based modules, a
+premise-free `presheafQuantumLNL`, and full-language adequacy remain
+objectives (Track L waits on a bang rebuilt in the replacement).  The **minimum fragment** (first-order data, linear arrows with
 first-order domain, unrestricted bit binders, primitives, measurement; no
-`mu`/`fix`) has a Route A `PresheafFragmentModel` (type objects and
-bit/prim/measure constant maps), closed unit/bit **literal** observations,
-and syntactic fragment step preservation — see
+`mu`/`fix`) has a Route A `PresheafFragmentModel`, compositional
+`FragCert.denote` via controlled `iteElim`
+(`routeAFragmentDenotationModel`), classical-bit comonoid contexts, closed
+unit/bit observations, N-bounded `fragment_observable_adequacy`, and
+source–quotation/elaboration squares — see
 `QLambda/Linear/SemanticFragment.lean`, `FragmentModel.lean`,
-`FragmentDenotation.lean`, `FragmentContext.lean`, `FragmentAdequacy.lean`,
-`FragmentRuntimeN.lean`.  Canonical `FragCert`/`FragmentJudgment` certificates,
-open Day-tensor fragment contexts and their Lookup/AllNone/OSplit maps,
-closed literal denotation into combined contexts, and N-bounded literal
-adequacy are checked.  The proposed copy/discard on physical
-`representable 2` is formally not counital; a dephasing-fixed classical-bit
-module now supplies replacement weakening/contraction maps, with its
-comonoid equations and semantic integration still open.  Full open-term
-curry/eval denotation, denotational β/η for open
-terms, and end-to-end N-bounded Born simulation remain Track F objectives.
-Track L (`presheafQuantumLNL`, recursion, full adequacy/abstraction) is
-deferred on the Day-bang architecture boundary
-(`day_bang_architecture_boundary`): raw `BangSplitEffectAdmissible 2` fails;
-the transfer-witness implication is proved, while witness construction
-remains open.  This release does
-not claim full abstraction or unrestricted higher-order adequacy.
+`FragmentDenotation.lean`, `FragmentIte.lean`, `FragmentContext.lean`,
+`FragmentAdequacy.lean`, `FragmentCoherence.lean`, `FragmentRuntimeN.lean`,
+`FragmentSourceCircuitN.lean`.  The proposed copy/discard on physical
+`representable 2` is formally not counital; `classicalBitModule` supplies
+the unrestricted carrier with a checked Day comonoid.  Incremental open-term
+β/η identities remain Track F lemmas.  Track L (`presheafQuantumLNL`,
+recursion, full adequacy/abstraction) is deferred on the Day-bang
+architecture boundary
+(`day_bang_architecture_boundary` / `day_bang_l8_resolved_by_ambientCP_replacement`):
+raw `BangSplitEffectAdmissible 2` fails; the transfer-witness implication is
+proved; L8 selects ambient CP as the named replacement rather than a TNI
+witness.  This release does not claim full abstraction or unrestricted
+higher-order adequacy.
 `docs/NOVELTY_AUDIT.md` records the distinction between published mathematics
 and new Lean proofs.
 

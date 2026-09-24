@@ -66,6 +66,7 @@ import QLambda.Linear.SemanticFragment
 import QLambda.Linear.FragmentModel
 import QLambda.Linear.FragmentContext
 import QLambda.Linear.FragmentDenotation
+import QLambda.Linear.FragmentIte
 import QLambda.Linear.FragmentAdequacy
 import QLambda.Linear.FragmentCoherence
 import QLambda.Linear.FragmentRuntimeN

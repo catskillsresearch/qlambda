@@ -7,6 +7,7 @@ import QLambda.Linear.FragmentModel
 import QLambda.Linear.FragmentContext
 import QLambda.Linear.Operational
 import QLambda.Domain.Presheaf.Yoneda
+import QLambda.Domain.Presheaf.ClassicalCategory
 
 /-!
 # Concrete fragment denotation (Route A)
@@ -19,8 +20,14 @@ derivations (context fragment, binder discipline, result fragment).
 
 namespace QLambda.Linear
 
+set_option maxHeartbeats 8000000
+
 open Domain.Presheaf.SuperoperatorModule
 open Domain.Presheaf
+open Domain.Presheaf.SigmaMon
+open DayTensor
+open FragmentContext
+open scoped ComplexOrder MatrixOrder
 
 /-- Type-valued fragment typing certificate (canonical derivation shape). -/
 inductive FragCert : List Ty → List (Option Ty) → Term → Ty → Type where
@@ -161,6 +168,7 @@ def FragmentBinders : Term → Prop
   | .unpair M K => FragmentBinders M ∧ FragmentBinders K
   | .ite B T E => FragmentBinders B ∧ FragmentBinders T ∧ FragmentBinders E
   | .measure Q K => FragmentBinders Q ∧ FragmentBinders K
+  | .fix _ _ | .fold _ _ | .unfold _ => False
   | _ => True
 
 namespace FragmentBinders
@@ -185,7 +193,98 @@ theorem ite_else {B T E : Term} (h : FragmentBinders (.ite B T E)) : FragmentBin
 theorem measure_qubit {Q K : Term} (h : FragmentBinders (.measure Q K)) : FragmentBinders Q := h.1
 theorem measure_cont {Q K : Term} (h : FragmentBinders (.measure Q K)) : FragmentBinders K := h.2
 
+theorem term_fragment :
+    ∀ {M : Term}, FragmentBinders M → Term.SemanticFragment M
+  | .var _ _, _ => .var
+  | .lam .lin A M, h =>
+      .lam (Ty.SemanticFragment.of_firstOrder h.1)
+        (term_fragment h.2)
+  | .lam .unres A M, h => by
+      change A = .bit ∧ FragmentBinders M at h
+      rw [h.1]
+      exact .lam Ty.SemanticFragment.bit (term_fragment h.2)
+  | .app F X, h => .app (term_fragment h.1) (term_fragment h.2)
+  | .unit, _ => .unit
+  | .bitLit _, _ => .bitLit
+  | .pair M N, h => .pair (term_fragment h.1) (term_fragment h.2)
+  | .unpair M K, h => .unpair (term_fragment h.1) (term_fragment h.2)
+  | .ite B T E, h =>
+      .ite (term_fragment h.1) (term_fragment h.2.1)
+        (term_fragment h.2.2)
+  | .prim _, _ => .prim
+  | .measure Q K, h => .measure (term_fragment h.1) (term_fragment h.2)
+  | .fix _ _, h => False.elim h
+  | .fold _ _, h => False.elim h
+  | .unfold _, h => False.elim h
+
 end FragmentBinders
+
+/-- Binder-shape information retained through result types.  Unlike
+`Ty.SemanticFragment`, this predicate deliberately imposes no condition on
+first-order leaves; it records exactly the domain facts needed while
+reconstructing certificates for application and unpairing. -/
+def FragmentArrowDomains : Ty → Prop
+  | .arrow .lin A B => Ty.FirstOrder A ∧ FragmentArrowDomains B
+  | .arrow .unres A B => A = .bit ∧ FragmentArrowDomains B
+  | _ => True
+
+namespace FragmentArrowDomains
+
+theorem of_semanticFragment {A : Ty} (h : Ty.SemanticFragment A) :
+    FragmentArrowDomains A := by
+  induction h with
+  | ofFirstOrder h =>
+      cases h <;> trivial
+  | arrowLin hA _ ih => exact ⟨hA, ih⟩
+  | arrowUnresBit _ ih => exact ⟨rfl, ih⟩
+
+theorem of_hasType :
+    ∀ {Γ Δ M A}, HasType Γ Δ M A →
+      CtxUAllBit Γ → CtxLAllSomeFragment Δ →
+      FragmentBinders M → FragmentArrowDomains A
+  | _, _, _, _, .varU hl _ _, hΓ, _, _ => by
+      rw [CtxUAllBit.lookup hΓ hl]
+      trivial
+  | _, _, _, _, .varL hl _, _, hΔ, _ =>
+      of_semanticFragment (CtxLAllSomeFragment.lookup hΔ hl)
+  | _, _, _, _, .lamU _ _ _ h, hΓ, hΔ, hb => by
+      change _ = Ty.bit ∧ _
+      exact ⟨FragmentBinders.lamUnres_bit hb,
+        of_hasType h
+          (FragmentBinders.lamUnres_bit hb ▸ CtxUAllBit.cons hΓ)
+          hΔ (FragmentBinders.lamUnres_body hb)⟩
+  | _, _, _, _, .lamL _ h, hΓ, hΔ, hb =>
+      ⟨FragmentBinders.lamLin_firstOrder hb,
+        of_hasType h hΓ
+          (CtxLAllSomeFragment.cons_some
+            (Ty.SemanticFragment.of_firstOrder
+              (FragmentBinders.lamLin_firstOrder hb)) hΔ)
+          (FragmentBinders.lamLin_body hb)⟩
+  | _, _, _, _, .appL hs hF _, hΓ, hΔ, hb =>
+      (of_hasType hF hΓ (CtxLAllSomeFragment.of_oSplit_left hΔ hs)
+        (FragmentBinders.app_left hb)).2
+  | _, _, _, _, .appU hs _ hF _, hΓ, hΔ, hb =>
+      (of_hasType hF hΓ (CtxLAllSomeFragment.of_oSplit_left hΔ hs)
+        (FragmentBinders.app_left hb)).2
+  | _, _, _, _, .unit _, _, _, _ => trivial
+  | _, _, _, _, .bitLit _, _, _, _ => trivial
+  | _, _, _, _, .pair _ _ _, _, _, _ => trivial
+  | _, _, _, _, .unpair hs _ hK, hΓ, hΔ, hb =>
+      (of_hasType hK hΓ (CtxLAllSomeFragment.of_oSplit_right hΔ hs)
+        (FragmentBinders.unpair_right hb)).2.2
+  | _, _, _, _, .ite hs _ hT _, hΓ, hΔ, hb =>
+      of_hasType hT hΓ (CtxLAllSomeFragment.of_oSplit_right hΔ hs)
+        (FragmentBinders.ite_then hb)
+  | _, _, _, _, .prim _, _, _, _ =>
+      of_semanticFragment (Ty.SemanticFragment.primTy_fragment _)
+  | _, _, _, _, .measure hs _ hK, hΓ, hΔ, hb =>
+      (of_hasType hK hΓ (CtxLAllSomeFragment.of_oSplit_right hΔ hs)
+        (FragmentBinders.measure_cont hb)).2.2
+  | _, _, _, _, .fix _ _ _ _, _, _, hb => False.elim hb
+  | _, _, _, _, .fold _ _, _, _, hb => False.elim hb
+  | _, _, _, _, .unfold _ _, _, _, hb => False.elim hb
+
+end FragmentArrowDomains
 
 /-- Propositional fragment judgment (mirror of `FragCert`). -/
 inductive FragmentJudgment : List Ty → List (Option Ty) → Term → Ty → Prop where
@@ -245,6 +344,114 @@ inductive FragmentJudgment : List Ty → List (Option Ty) → Term → Ty → Pr
       FragmentJudgment Γ Δ₁ Q .qubit →
       FragmentJudgment Γ Δ₂ K (.arrow .unres .bit (.arrow .lin .qubit A)) →
       FragmentJudgment Γ Δ (.measure Q K) A
+
+/-- Reconstruct the canonical fragment judgment from ordinary typing plus the
+explicit context, binder, and result-fragment side conditions. -/
+theorem fragmentJudgment_of_hasType :
+    ∀ {Γ Δ M A}, HasType Γ Δ M A →
+      CtxUAllBit Γ → CtxLAllSomeFragment Δ →
+      FragmentBinders M → Ty.SemanticFragment A →
+      FragmentJudgment Γ Δ M A
+  | _, _, _, _, .varU hl hd hn, hΓ, hΔ, _, hA =>
+      .varU hΓ hΔ hl hd hn hA
+  | _, _, _, _, .varL hl ho, hΓ, hΔ, _, hA =>
+      .varL hΓ hΔ hl ho hA
+  | _, _, _, _, .lamU had hd hn h, hΓ, hΔ, hb, hA => by
+      have hbit := FragmentBinders.lamUnres_bit hb
+      subst hbit
+      exact .lamU hΓ hΔ had hd hn hA
+        (fragmentJudgment_of_hasType h (CtxUAllBit.cons hΓ) hΔ
+          (FragmentBinders.lamUnres_body hb)
+          (Ty.SemanticFragment.arrow_unres_cod hA))
+  | _, _, _, _, .lamL had h, hΓ, hΔ, hb, hA => by
+      obtain ⟨hdom, hcod⟩ := Ty.SemanticFragment.arrow_lin_inv hA
+      exact .lamL hΓ hΔ had hdom hcod
+        (fragmentJudgment_of_hasType h hΓ
+          (CtxLAllSomeFragment.cons_some
+            (Ty.SemanticFragment.of_firstOrder hdom) hΔ)
+          (FragmentBinders.lamLin_body hb) hcod)
+  | _, _, _, _, .appL hs hF hX, hΓ, hΔ, hb, hB => by
+      have hdomains :=
+        FragmentArrowDomains.of_hasType hF hΓ
+          (CtxLAllSomeFragment.of_oSplit_left hΔ hs)
+          (FragmentBinders.app_left hb)
+      exact .appL hΓ hΔ hs hdomains.1 hB
+        (fragmentJudgment_of_hasType hF hΓ
+          (CtxLAllSomeFragment.of_oSplit_left hΔ hs)
+          (FragmentBinders.app_left hb)
+          (.arrowLin hdomains.1 hB))
+        (fragmentJudgment_of_hasType hX hΓ
+          (CtxLAllSomeFragment.of_oSplit_right hΔ hs)
+          (FragmentBinders.app_right hb)
+          (Ty.SemanticFragment.of_firstOrder hdomains.1))
+  | _, _, _, _, .appU hs hn hF hX, hΓ, hΔ, hb, hB => by
+      have hdomains :=
+        FragmentArrowDomains.of_hasType hF hΓ
+          (CtxLAllSomeFragment.of_oSplit_left hΔ hs)
+          (FragmentBinders.app_left hb)
+      have hbit := hdomains.1
+      subst hbit
+      exact .appU hΓ hΔ hs hn hB
+        (fragmentJudgment_of_hasType hF hΓ
+          (CtxLAllSomeFragment.of_oSplit_left hΔ hs)
+          (FragmentBinders.app_left hb) (.arrowUnresBit hB))
+        (fragmentJudgment_of_hasType hX hΓ
+          (CtxLAllSomeFragment.of_oSplit_right hΔ hs)
+          (FragmentBinders.app_right hb) Ty.SemanticFragment.bit)
+  | _, _, _, _, .unit hn, hΓ, hΔ, _, _ =>
+      .unit hΓ hΔ hn
+  | _, _, _, _, .bitLit hn, hΓ, hΔ, _, _ =>
+      .bitLit hΓ hΔ _ hn
+  | _, _, _, _, .pair hs hM hN, hΓ, hΔ, hb, hAB => by
+      obtain ⟨hA, hB⟩ := Ty.SemanticFragment.tensor_firstOrder hAB
+      exact .pair hΓ hΔ hs hA hB
+        (fragmentJudgment_of_hasType hM hΓ
+          (CtxLAllSomeFragment.of_oSplit_left hΔ hs)
+          (FragmentBinders.pair_left hb)
+          (Ty.SemanticFragment.of_firstOrder hA))
+        (fragmentJudgment_of_hasType hN hΓ
+          (CtxLAllSomeFragment.of_oSplit_right hΔ hs)
+          (FragmentBinders.pair_right hb)
+          (Ty.SemanticFragment.of_firstOrder hB))
+  | _, _, _, _, .unpair hs hM hK, hΓ, hΔ, hb, hC => by
+      have hdomains :=
+        FragmentArrowDomains.of_hasType hK hΓ
+          (CtxLAllSomeFragment.of_oSplit_right hΔ hs)
+          (FragmentBinders.unpair_right hb)
+      exact .unpair hΓ hΔ hs hdomains.1 hdomains.2.1 hC
+        (fragmentJudgment_of_hasType hM hΓ
+          (CtxLAllSomeFragment.of_oSplit_left hΔ hs)
+          (FragmentBinders.unpair_left hb)
+          (Ty.SemanticFragment.tensor hdomains.1 hdomains.2.1))
+        (fragmentJudgment_of_hasType hK hΓ
+          (CtxLAllSomeFragment.of_oSplit_right hΔ hs)
+          (FragmentBinders.unpair_right hb)
+          (.arrowLin hdomains.1 (.arrowLin hdomains.2.1 hC)))
+  | _, _, _, _, .ite hs hB hT hE, hΓ, hΔ, hb, hA =>
+      .ite hΓ hΔ hs hA
+        (fragmentJudgment_of_hasType hB hΓ
+          (CtxLAllSomeFragment.of_oSplit_left hΔ hs)
+          (FragmentBinders.ite_cond hb) Ty.SemanticFragment.bit)
+        (fragmentJudgment_of_hasType hT hΓ
+          (CtxLAllSomeFragment.of_oSplit_right hΔ hs)
+          (FragmentBinders.ite_then hb) hA)
+        (fragmentJudgment_of_hasType hE hΓ
+          (CtxLAllSomeFragment.of_oSplit_right hΔ hs)
+          (FragmentBinders.ite_else hb) hA)
+  | _, _, _, _, .prim hn, hΓ, hΔ, _, _ =>
+      .prim hΓ hΔ _ hn
+  | _, _, _, _, .measure hs hQ hK, hΓ, hΔ, hb, hA =>
+      .measure hΓ hΔ hs hA
+        (fragmentJudgment_of_hasType hQ hΓ
+          (CtxLAllSomeFragment.of_oSplit_left hΔ hs)
+          (FragmentBinders.measure_qubit hb) Ty.SemanticFragment.qubit)
+        (fragmentJudgment_of_hasType hK hΓ
+          (CtxLAllSomeFragment.of_oSplit_right hΔ hs)
+          (FragmentBinders.measure_cont hb)
+          (.arrowUnresBit (.arrowLin .qubit hA)))
+  | _, _, _, _, .fix _ _ _ _, _, _, hb, _ => False.elim hb
+  | _, _, _, _, .fold _ _, _, _, hb, _ => False.elim hb
+  | _, _, _, _, .unfold _ _, _, _, hb, _ => False.elim hb
 
 /-- Every fragment judgment yields a certificate (Gate 1 completeness). -/
 theorem exists_ofFragmentJudgment {Γ Δ M A}
@@ -395,6 +602,156 @@ theorem denoteClosedBitLit_eq {b : Bool} (c : Closed (.bitLit b) .bit) :
 
 end FragCert
 
+/-- The sole effect not supplied by symmetric monoidal closed structure:
+selection between two already-denoted branches.  Keeping this interface
+explicit prevents a zero/fallback map from masquerading as `ite` semantics. -/
+structure FragmentBranching where
+  iteElim :
+    ∀ {A : Ty}, Ty.SemanticFragment A →
+      Hom
+        (dayTensor (fragmentModule .bit)
+          (additiveProduct (fragmentModule A) (fragmentModule A)))
+        (fragmentModule A)
+
+
+namespace FragCert
+
+/-- A primitive constant, curried into its source-language linear-arrow
+type. -/
+noncomputable def denotePrimPoint (p : Prim) :
+    Hom dayTensorUnit (fragmentModule (primTy p)) := by
+  cases p with
+  | new0 =>
+      exact FragmentContext.curryFirstOrder 1
+        (Hom.comp (routeAFragmentModel.primMap .new0)
+          (DayTensor.leftUnitor (representable 1)))
+  | x =>
+      exact FragmentContext.curryFirstOrder 2
+        (Hom.comp (routeAFragmentModel.primMap .x)
+          (DayTensor.leftUnitor (representable 2)))
+  | h =>
+      exact FragmentContext.curryFirstOrder 2
+        (Hom.comp (routeAFragmentModel.primMap .h)
+          (DayTensor.leftUnitor (representable 2)))
+  | t =>
+      exact FragmentContext.curryFirstOrder 2
+        (Hom.comp (routeAFragmentModel.primMap .t)
+          (DayTensor.leftUnitor (representable 2)))
+  | ry θ =>
+      exact FragmentContext.curryFirstOrder 2
+        (Hom.comp (routeAFragmentModel.primMap (.ry θ))
+          (DayTensor.leftUnitor (representable 2)))
+  | cx =>
+      let inner :
+          Hom (representable 2)
+            (internalHomRepresentable 2 (representable 4)) :=
+        FragmentContext.curryFirstOrder 2
+          (Hom.comp (routeAFragmentModel.primMap .cx)
+            (dayTensorRepresentableIso 2 2).hom)
+      exact FragmentContext.curryFirstOrder 2
+        (Hom.comp inner (DayTensor.leftUnitor (representable 2)))
+  | reset =>
+      exact FragmentContext.curryFirstOrder 2
+        (Hom.comp (routeAFragmentModel.primMap .reset)
+          (DayTensor.leftUnitor (representable 2)))
+
+/-- Retained computational-basis measurement: the first output is the
+classical outcome and the second is the post-measurement qubit. -/
+noncomputable def retainedMeasurement :
+    Hom (representable 2)
+      (dayTensor (representable 2) (representable 2)) :=
+  Hom.comp (dayTensorRepresentableIso 2 2).inv
+    (yonedaMap
+      (Superoperator.comp bitCopySuperoperator bitDephaseSuperoperator))
+
+/-- Apply a measurement continuation to the retained outcome and qubit.
+The outcome crosses the explicit physical-to-classical boundary before
+unrestricted evaluation. -/
+noncomputable def measureElim (N : Module) :
+    Hom
+      (dayTensor (fragmentModule .qubit)
+        (dayInternalHom classicalBitModule
+          (internalHomRepresentable 2 N)))
+      N :=
+  Hom.comp (FragmentContext.evalFirstOrder 2 N)
+    (Hom.comp
+      (DayTensor.map
+        (FragmentContext.evalUnrestrictedBit
+          (internalHomRepresentable 2 N))
+        (Hom.id (representable 2)))
+      (Hom.comp
+        (DayTensor.associatorInv
+          (dayInternalHom classicalBitModule
+            (internalHomRepresentable 2 N))
+          (representable 2) (representable 2))
+        (Hom.comp
+          (DayTensor.map (Hom.id _) retainedMeasurement)
+          (DayTensor.braiding (representable 2)
+            (dayInternalHom classicalBitModule
+              (internalHomRepresentable 2 N))))))
+
+/-- Full compositional denotation relative only to a genuine `ite`
+eliminator.  All other constructors are concrete. -/
+noncomputable def denoteWith (branching : FragmentBranching) :
+    {Γ : List Ty} → {Δ : List (Option Ty)} → {M : Term} → {A : Ty} →
+      FragCert Γ Δ M A →
+        Hom (FragmentContext.combined Γ Δ) (fragmentModule A)
+  | _, _, _, _, .unit hΓ _ hΔ =>
+      FragmentContext.combinedPoint hΓ hΔ routeAFragmentModel.unitIntro
+  | _, _, _, _, .bitLit hΓ _ b hΔ =>
+      FragmentContext.combinedPoint hΓ hΔ (routeAFragmentModel.bitLit b)
+  | _, _, _, _, .prim hΓ _ p hΔ =>
+      FragmentContext.combinedPoint hΓ hΔ (denotePrimPoint p)
+  | _, _, _, _, .varU hΓ _ hl _ hΔ _ =>
+      FragmentContext.combinedLookupUnrestricted hΓ hl hΔ
+  | _, _, _, _, .varL hΓ _ hl ho _ =>
+      FragmentContext.combinedLookupLinear hΓ hl ho
+  | _, _, _, _, .lamU _ _ _ _ _ hArr c => by
+      have hdom : _ = Ty.bit := Ty.SemanticFragment.arrow_unres_eq hArr
+      subst hdom
+      exact FragmentContext.abstractUnrestricted (denoteWith branching c)
+  | _, _, _, _, .lamL _ _ _ hA _ c =>
+      FragmentContext.abstractLinear hA (denoteWith branching c)
+  | _, _, _, _, .appL hΓ _ hs hA _ cF cX =>
+      Hom.comp (FragmentContext.evalFragmentFirstOrder hA _)
+        (Hom.comp
+          (DayTensor.map (denoteWith branching cF)
+            (denoteWith branching cX))
+          (FragmentContext.combinedOSplit hΓ hs))
+  | _, _, _, _, .appU hΓ _ hs _ _ cF cX =>
+      Hom.comp (FragmentContext.evalUnrestrictedBit _)
+        (Hom.comp
+          (DayTensor.map (denoteWith branching cF)
+            (denoteWith branching cX))
+          (FragmentContext.combinedOSplit hΓ hs))
+  | _, _, _, _, .pair hΓ _ hs hA hB cM cN =>
+      Hom.comp (FragmentContext.tensorIntro hA hB)
+        (Hom.comp
+          (DayTensor.map (denoteWith branching cM)
+            (denoteWith branching cN))
+          (FragmentContext.combinedOSplit hΓ hs))
+  | _, _, _, _, .unpair hΓ _ hs hA hB _ cM cK =>
+      Hom.comp (FragmentContext.unpairApply hA hB _)
+        (Hom.comp
+          (DayTensor.map (denoteWith branching cM)
+            (denoteWith branching cK))
+          (FragmentContext.combinedOSplit hΓ hs))
+  | _, _, _, _, .ite hΓ _ hs hA cB cT cE =>
+      Hom.comp (branching.iteElim hA)
+        (Hom.comp
+          (DayTensor.map (denoteWith branching cB)
+            (additivePair (denoteWith branching cT)
+              (denoteWith branching cE)))
+          (FragmentContext.combinedOSplit hΓ hs))
+  | _, _, _, _, .measure hΓ _ hs _ cQ cK =>
+      Hom.comp (measureElim _)
+        (Hom.comp
+          (DayTensor.map (denoteWith branching cQ)
+            (denoteWith branching cK))
+          (FragmentContext.combinedOSplit hΓ hs))
+
+end FragCert
+
 /-- Operations required for full compositional fragment denotation. -/
 structure FragmentDenotationModel where
   /-- Open-term denotation on combined contexts. -/
@@ -411,6 +768,7 @@ structure FragmentDenotationModel where
     ∀ (b : Bool) (c : FragCert.Closed (.bitLit b) .bit),
       denote c =
         FragmentContext.closedPoint (routeAFragmentModel.bitLit b)
+
 
 /-- Route A supplies closed unit/bit denotation into combined contexts. -/
 noncomputable def routeAClosedDenotationCore :

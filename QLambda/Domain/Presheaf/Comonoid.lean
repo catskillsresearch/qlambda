@@ -31,15 +31,16 @@ interface for `A ≤ 1`** (`bangPromote`, `bangMap`, UP laws).
 (`A=2`, `k=1`, identity series): `2 I ≰ I`.
 
 **Gates 6–9 claim boundary:** Route A does not automatically yield
-`¬ BangComultComponentsAdmissible 2` (`BangComultDayTransferWitness` remains
-open). `BangSplitEffectAdmissible` is a **global universal joint-effect bound**,
+`¬ BangComultComponentsAdmissible 2` (`BangComultDayTransferWitness` is not
+constructed in TNI modules). `BangSplitEffectAdmissible` is a **global universal joint-effect bound**,
 not a carrier-membership predicate; it fails at `A = 2` because it excludes
 the degree-one identity series
 (`bangSplitEffectAdmissible_excludes_identity_two`). Scaling the degree-one
 joint effect by `1/2` repairs that matrix inequality
 (`bangNormalizedSplitFamilyEffect_two_one_eq_one`) but is **not** a counital
 repair: left/right counit force the `(0,1)` and `(1,0)` boundary weights to
-remain `1` (`half_scale_not_counital_bang_repair`).
+remain `1` (`half_scale_not_counital_bang_repair`). L8 resolves via the
+ambient-CP replacement `AmbientCPDayBangCategory` in `DayBangBoundary.lean`.
 
 ## Fiber support (critical)
 
@@ -80,7 +81,7 @@ namespace QLambda.Domain.Presheaf
 
 namespace SuperoperatorModule
 
-set_option maxHeartbeats 2000000
+set_option maxHeartbeats 8000000
 
 open Matrix
 open scoped BigOperators ComplexOrder MatrixOrder
@@ -855,13 +856,20 @@ record an explicit transfer obligation rather than claiming
 Route A bound over every series element — not a hereditary carrier-membership
 predicate for a subobject of `bang A`.  Its failure at `A = 2` therefore
 refutes that global bound, not “every hereditary subobject”.
+
+**L8 terminal route (replacement category):** no TNI/representable
+construction of `BangComultDayTransferWitness` is claimed.  The named
+replacement `AmbientCPDayBangCategory` (`cpmModule` fibers) restores
+`Fiber.HasSumAdd` and `HasActSumFromDim`; see `DayBangBoundary.lean` for the
+Gate-8 test suite `ambientCP_gate8_testSuite`.
 -/
 
 /-- Gate 6 transfer obligation: a bilinear into a TNI/representable module
 that recovers both ordered degree-one splits of the identity series in one
 fiber (so the fiber-2 / Route A obstruction applies to Day evaluation).
-Constructing this witness would imply `¬ BangComultComponentsAdmissible 2`;
-it is deliberately left open rather than assumed. -/
+A constructed witness would imply `¬ BangComultComponentsAdmissible 2`.
+No such TNI witness is constructed; L8 resolves via the ambient-CP
+replacement category in `DayBangBoundary.lean`. -/
 def BangComultDayTransferWitness : Prop :=
   ∃ (L : Module) (β : Bilinear (bang 2) (bang 2) L)
     (z₀₁ z₁₀ : (L.obj (tensorPowerDimension 2 1)).Carrier),
@@ -951,6 +959,17 @@ theorem bangComultDayTransferWitness_not_admissible :
           bif true then z₀₁ else z₁₀
       rw [hz₀₁]
       rfl
+
+/-- Any Day-transfer witness target must fail Bool-add at the obstruction
+fiber (so ambient-CP targets with `Fiber.HasSumAdd` cannot host it). -/
+theorem bangComultDayTransferWitness_requires_nonadditive_target :
+    BangComultDayTransferWitness →
+      ∃ L : Module.{0},
+        ¬ Fiber.HasSumAdd (L.obj (tensorPowerDimension 2 1)) := by
+  rintro ⟨L, β, z₀₁, z₁₀, hz₀₁, hz₁₀, hbad⟩
+  refine ⟨L, ?_⟩
+  intro hadd
+  exact hbad (hadd z₀₁ z₁₀)
 
 /-- Gate 6 (honest form): Route A alone closes a joint-effect bound, not the
 Day admissibility quantifier; the missing bridge is

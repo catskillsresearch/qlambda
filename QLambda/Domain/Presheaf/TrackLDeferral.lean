@@ -12,11 +12,17 @@ import QLambda.Linear.FragmentModel
 
 Full-language packages (`presheafQuantumLNL`, recursive `mu`/`fix`, full
 observable adequacy, full abstraction) require a positive all-dimensional bang
-or a replacement category.  The raw A=2 bound fails; Route A fragment work
-continues independently.
+or a bang rebuilt in a replacement category.  L8 selects
+`AmbientCPDayBangCategory` (`ambientCP_gate8_testSuite` /
+`day_bang_l8_resolved_by_ambientCP_replacement` in `DayBangBoundary.lean`) as
+the smallest ambient-CP replacement; Track L packaging still waits on an
+actual bang/comonoid in that setting.  The raw A=2 TNI bound fails; Route A
+fragment work continues independently.
 -/
 
 namespace QLambda.Domain.Presheaf
+
+set_option maxHeartbeats 8000000
 
 open SuperoperatorModule
 

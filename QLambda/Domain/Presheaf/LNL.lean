@@ -53,15 +53,19 @@ Fill these before packaging an `LNLModel` record (see
    (`bangSplitEffectAdmissible_excludes_identity_two`). Half-scaling repairs
    the `(2,1)` matrix bound but is not counital
    (`half_scale_not_counital_bang_repair`); Day transfer
-   (`BangComultDayTransferWitness`) remains open. Downstream LNL packaging
-   waits on a positive architecture branch or on the minimum-fragment Route A
-   direct semantics path.
+   (`BangComultDayTransferWitness`) is not constructed in TNI modules. L8
+   records the ambient-CP replacement `AmbientCPDayBangCategory` with Gate-8
+   suite `ambientCP_gate8_testSuite`. Downstream LNL packaging waits on a bang
+   rebuilt there (or another positive branch) or on the minimum-fragment
+   Route A direct semantics path.
 
 Until those close, use `presheafLinear` / `presheafNonlinear` as named
 ωCPO-enriched categories and the bang comonad interface in `Comonoid`.
 -/
 
 namespace QLambda.Domain.Presheaf
+
+set_option maxHeartbeats 8000000
 
 namespace SuperoperatorModule
 

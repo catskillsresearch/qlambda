@@ -408,9 +408,17 @@ These refutations do not by themselves prove failure of every Day-bilinear
 admissibility predicate: transferring the effect witness into
 `BangComultComponentsAdmissible` requires an explicit bilinear that recovers
 both ordered degree-one splits in one TNI fiber
-(`BangComultDayTransferWitness`, still open).  We now prove that any such
-witness implies $\neg\,\texttt{BangComultComponentsAdmissible}\ 2$ by
-extracting the selected two-term row through flattening and reindexing.
+(`BangComultDayTransferWitness`).  We prove that any such witness implies
+$\neg\,\texttt{BangComultComponentsAdmissible}\ 2$ by extracting the selected
+two-term row through flattening and reindexing, but no TNI/representable
+construction of the witness is given (fixed projection pairs recover only one
+ordering; product modules separate summands; unscaled addition of both
+orderings leaves the TNI carrier).  Gate~L8 therefore publishes the named
+replacement category `AmbientCPDayBangCategory` of unrestricted-CP fibers
+(`cpmModule`), which restores binary fiber sums and joint action at every
+dimension and cannot host the nonsummable Bool pair; the Gate~8 suite is
+`ambientCP_gate8_testSuite`, with terminal theorem
+`day_bang_l8_resolved_by_ambientCP_replacement`.
 `BangSplitEffectAdmissible` is
 the global universal Route~A bound, not a hereditary carrier-membership
 predicate; it fails at $A=2$ by excluding the degree-one identity series.
@@ -419,8 +427,9 @@ $I$, but left/right counit force the $(0,1)$ and $(1,0)$ boundary weights to
 remain $1$, so uniform half-scaling is not a counital repair.  The
 coefficientwise tensor-square object is still not the genuine Day tensor of
 two series modules.  General Day closure for based modules, an
-all-dimensional cofree exponential, the based double-dual classical
-subcategory, and the LNL package remain objectives.  Consequently unrestricted
+all-dimensional TNI cofree exponential, a bang rebuilt in the ambient-CP
+replacement, the based double-dual classical subcategory, and the LNL package
+remain objectives.  Consequently unrestricted
 arrows are not yet interpreted for $A\ge 2$.  The intended adequacy boundary
 is closed terms with first-order observable result: denotation should equal
 the supremum of finite-step subnormalized operational instruments.  Adequacy
@@ -635,32 +644,33 @@ split-family refutation, and the failure of the global raw split-effect
 bound at $A=2$.  Half-scaling repairs the $(2,1)$ joint-effect matrix
 bound but is not a counital repair (boundary weights remain $1$);
 the implication from `BangComultDayTransferWitness` to failure of
-dimension-two Day admissibility is checked, while witness construction
-remains open.  The remaining objective is the
-minimum first-order/quotation/runtime fragment denotation and adequacy,
-without requiring an all-dimensional bang or premise-free
+dimension-two Day admissibility is checked; no TNI witness is constructed,
+and L8 instead records `AmbientCPDayBangCategory` /
+`day_bang_l8_resolved_by_ambientCP_replacement`.  The remaining objective is
+the minimum first-order/quotation/runtime fragment denotation and adequacy,
+without requiring an all-dimensional TNI bang or premise-free
 `presheafQuantumLNL`.  The finite CP maps, TNI superoperators, representable
 Yoneda/Day fragment, first-order type objects, $A\le 1$ bang/cofreeness,
-Route~A/global-bound refutations, and primitive agreement are checked; they
-are not that all-dimensional LNL instance or full-language denotation.  On
-that basis we aim to prove operational soundness, first-order-observable
-adequacy by finite approximants, and source-denotation preservation for
-successful staging beyond the minimum fragment.  The minimum fragment
-(first-order data, linear FO-domain arrows, unrestricted bit binders,
-primitives, measurement) has a checked Route~A `PresheafFragmentModel`
-(type objects and bit/prim/measure constant maps), closed unit/bit
-**literal** observations, syntactic fragment step preservation, canonical
-`FragCert`/`FragmentJudgment` certificates, Day-tensor `FragmentContext`
-objects with Lookup/AllNone/OSplit maps, and N-bounded literal adequacy.
-The concrete physical-bit copy/discard is not counital; a dephasing-fixed
-classical-bit replacement has concrete weakening and contraction maps but
-does not yet have integrated comonoid laws.  Full open-term curry/eval
-denotation and end-to-end N-bounded Born simulation remain Track F goals.
-Track L packages are deferred on
-`day_bang_architecture_boundary` (raw A=2 split-effect bound fails;
-the witness implication is proved but witness construction remains open)
-and are not included in the
-checked theorem list as completed semantics.
+Route~A/global-bound refutations, ambient-CP Gate~8 replacement, and
+primitive agreement are checked; they are not that all-dimensional LNL
+instance or full-language denotation.  On that basis we aim to prove
+operational soundness, first-order-observable adequacy by finite
+approximants, and source-denotation preservation for successful staging
+beyond the minimum fragment.  The minimum fragment (first-order data, linear
+FO-domain arrows, unrestricted bit binders, primitives, measurement) has a
+checked Route~A `PresheafFragmentModel`, compositional `FragCert.denote`
+via controlled `iteElim` (`routeAFragmentDenotationModel`), classical-bit
+Day comonoid contexts (`classicalBitComonoid`), closed unit/bit
+observations, N-bounded `fragment_observable_adequacy`, Step/MeasStep
+denotational soundness packages, and source–quotation/elaboration
+commuting squares.  The concrete physical-bit copy/discard is not
+counital; `classicalBitModule` is the unrestricted carrier with checked
+comonoid laws.  Incremental open-term β/η identities remain Track F
+lemmas.  Track L packages are deferred on
+`day_bang_architecture_boundary` / ambient-CP replacement (raw A=2
+split-effect bound fails; witness implication proved; bang rebuild in
+`AmbientCPDayBangCategory` still open) and are not included in the checked
+theorem list as completed semantics.
 
 ---
 
