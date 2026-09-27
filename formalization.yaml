@@ -288,14 +288,14 @@ known_gaps:
   - "No theorem models calibration, noise, transpilation, or a physical backend."
 
 limitations:
-    - >-
+  - >-
     Challenge.lean contains 29 theorem holes and 51 definition holes under
     the Palomar convention. Solution.lean proves the theorems and supplies
     the library values of the definition holes without sorry.
   - >-
     Circuit completeness means canonical representability of supported
     well-formed circuits, not exact synthesis of every unitary.
-    - >-
+  - >-
     Source type safety is for the classical call-by-value relation.
     Applications of quantum primitives and measurements are a declared
     boundary (QuantumBlocked). The finite register machine's preservation,
