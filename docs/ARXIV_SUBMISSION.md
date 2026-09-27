@@ -1,8 +1,7 @@
-# arXiv / CMU-CS-TR submission metadata (typed linear qlambda formalization)
+# arXiv submission metadata (typed linear qlambda formalization)
 
 Copy-paste fields for the arXiv web form. Regenerate the PDF and zip with
 `bash scripts/build_arxiv_pdf.sh` before uploading `dist/arxiv_submit.zip`.
-See `docs/CMU_TECH_REPORT.md` for the CMU title-page / TOC / LoF checklist.
 
 ## Title (plain text for arXiv web form)
 
@@ -14,13 +13,13 @@ Mechanized Denotation and Circuit Staging for an N-Bounded Linear Quantum Lambda
 ```
 
 The PDF title still comes from `arxiv.md` / `\title{...}` with proper math and typography.
-The PDF uses CMU `cmu-titlepage2.sty` report mode with `\tableofcontents` and
-`\listoffigures` after `\maketitle`.
+The PDF is an ordinary article with `\tableofcontents` and `\listoffigures`
+after the abstract.
 
 ## Abstract (plain text, under 1920 characters)
 
 See the `## Abstract` section in `arxiv.md` (same text appears in the PDF
-via the CMU `\abstract{...}` front-matter command).
+via the article `abstract` environment).
 
 ## Categories
 

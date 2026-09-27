@@ -3,11 +3,8 @@
 **Author.** Lars Warren Ericson (independent researcher, d/b/a Catskills
 Research Company; lars.ericson@catskillsresearch.com; ORCID
 0000-0001-8299-9361).
-**Technical report.** CMU-CS-26-XXX, School of Computer Science, Carnegie
-Mellon University, Pittsburgh, PA 15213.
 **Repository.** https://github.com/catskillsresearch/qlambda
-**Cross-archive.** This report will also be deposited on arXiv in cs.LO,
-math.LO, and quant-ph.
+**arXiv.** cs.LO, math.LO, and quant-ph.
 
 ---
 
@@ -1198,7 +1195,7 @@ is recorded in `scripts/ai_model_cards.py` and expanded when building
 <!-- AI_MODEL_TOOL_BULLETS -->
 - **Cursor** **[Cur26]** — agent-assisted editing in the Cursor IDE for the typed linear calculus, quantum-relation and qCPO developments, the CP-presheaf substrate, circuit quotation, and drafting this narrative. Generated Lean was provisional until it compiled under the pinned toolchain.
 - **xAI Grok 4.7** **[Grk47]** — formalization and drafting in Cursor: typed linear syntax and metatheory, the intrinsic CP-map and superoperator-module substrate, first-order type objects, primitive agreement, fragment denotation packaging, and the proved-versus-objective boundary of this narrative. Every emitted proof term was checked by the Lean kernel.
-- **Anthropic Claude Opus 5.5** **[Cla55]** — formalization and refactoring in Cursor: Route A fragment denotation, quotation Hom-to-CQ covering-set bridges, N-qubit OpenQASM staging packaging, CMU report narrative alignment, and proof cleanup. Every emitted proof term was checked by the Lean kernel.
+- **Anthropic Claude Opus 5.5** **[Cla55]** — formalization and refactoring in Cursor: Route A fragment denotation, quotation Hom-to-CQ covering-set bridges, N-qubit OpenQASM staging packaging, narrative alignment, and proof cleanup. Every emitted proof term was checked by the Lean kernel.
 - **OpenAI GPT 5.6** **[Gpt56]** — substantive Palomar editorial and packaging passes in Cursor (`statement_alignment`, `definition_fidelity`, `literature_notability`, and `synthesis`), plus claim-boundary review against `THEOREMS.md`. Those passes review claims; they do not replace kernel-checked Lean.
 - **Cursor Composer 2.5** **[Cmp25]** — lighter Palomar editorial and codebase-navigation passes in Cursor (`classification`, `metadata`, and related packaging checks). Composer assists with repository-local edits; it does not replace kernel-checked Lean.
 <!-- /AI_MODEL_TOOL_BULLETS -->

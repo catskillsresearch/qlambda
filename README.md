@@ -152,7 +152,7 @@ alignment; no LLM editorial audit):
 PALOMAR_PROJECT_ROOT=$PWD python3 ../palomar-preflight/palomar_editorial_checks.py
 ```
 
-Before a Palomar / CMU-TR packaging candidate (still skip LLM editorial until ready):
+Before a Palomar packaging candidate (still skip LLM editorial until ready):
 
 ```bash
 bash scripts/palomar_preflight.sh --mechanical-only
@@ -160,8 +160,9 @@ PALOMAR_PROJECT_ROOT=$PWD python3 ../palomar-preflight/palomar_editorial_checks.
 bash scripts/build_arxiv_pdf.sh
 ```
 
-The PDF uses CMU `cmu-titlepage2.sty` with table of contents and list of
-figures; see `docs/CMU_TECH_REPORT.md`.
+The PDF is an ordinary article with a table of contents and a list of
+figures. The CMU technical-report title page is not used; see
+`docs/CMU_TECH_REPORT.md`.
 
 ## Provenance
 

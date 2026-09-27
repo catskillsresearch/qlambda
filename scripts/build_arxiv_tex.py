@@ -14,7 +14,7 @@ Pipeline:
       line (or `mermaid caption="..."` fence header) becomes the LaTeX caption.
   6. Inject AI model-card acknowledgements from `scripts/ai_model_cards.py` (before HTML-comment strip).
   7. pandoc → LaTeX, then splice the listing/math/figure placeholders back in.
-  8. Insert CMU front-matter \\tableofcontents and \\listoffigures after \\maketitle.
+  8. Insert \\tableofcontents and \\listoffigures after the abstract.
 """
 
 from __future__ import annotations
@@ -46,7 +46,6 @@ COMPANY = "Catskills Research Company"
 GITHUB_URL = r"https://github.com/catskillsresearch/qlambda"
 ORCID = "0000-0001-8299-9361"
 EMAIL = "lars.ericson@catskillsresearch.com"
-REPORT_NUMBER = "CMU-CS-26-XXX"
 REPORT_DATE = "September 2026"
 
 
@@ -425,15 +424,13 @@ def cleanup_pandoc_latex(latex: str) -> str:
 
 
 def insert_front_matter_lists(latex: str) -> str:
-    """Table of contents and list of figures after CMU front matter (unnumbered)."""
+    """Table of contents and list of figures after the abstract."""
     block = (
-        "{\\pagestyle{empty}\n"
+        "\\clearpage\n"
+        "\\setcounter{tocdepth}{2}\n"
         "\\tableofcontents\n"
-        "\\clearpage\n"
         "\\listoffigures\n"
-        "\\clearpage\n"
-        "}\n"
-        "\\pagestyle{plain}\n\n"
+        "\\clearpage\n\n"
     )
     return block + latex
 
@@ -497,8 +494,7 @@ def insert_appendix_command(latex: str) -> str:
 def cleanup_abstract_latex(latex: str) -> str:
     """Keep the abstract pdfLaTeX/arXiv-safe: ASCII plus standard LaTeX escapes.
 
-    CMU ``\\abstract{...}`` is not ``\\long``, so blank lines / ``\\par`` are
-    forbidden inside the argument; flatten to a single paragraph.
+    Flatten the abstract to a single paragraph so it stays pdfLaTeX-safe.
     """
     latex = latex.replace("\\pandocbounded{", "{")
     latex = latex.replace("\\textbf{{[}", "\\textbf{[")
@@ -517,28 +513,29 @@ def build_title_page(abstract_latex: str) -> str:
         \\title{{{TITLE}}}
 
         \\author{{
-          Lars Warren Ericson
+          Lars Warren Ericson\\\\
+          Independent researcher, d/b/a {COMPANY}\\\\
+          \\texttt{{{EMAIL}}}\\\\
+          ORCID {ORCID}
         }}
-        \\disclaimer{{Independent researcher, d/b/a {COMPANY}
-          (\\texttt{{{EMAIL}}}; ORCID {ORCID}).}}
-
         \\date{{{REPORT_DATE}}}
-        \\trnumber{{{REPORT_NUMBER}}}
-        \\keywords{{Lean 4; formal verification; quantum lambda calculus; linear types;
-          CP-presheaf semantics; OpenQASM; quantum relations; quantum CPO}}
-        \\abstract{{
-        {abstract_latex.strip()}
-        }}
         \\hypersetup{{
           pdftitle={{{TITLE}}},
           pdfauthor={{Lars Warren Ericson}},
-          pdfsubject={{Carnegie Mellon University School of Computer Science Technical Report {REPORT_NUMBER}}},
+          pdfsubject={{Mechanized denotation and circuit staging for a typed linear quantum lambda calculus}},
           pdfkeywords={{Lean 4, formal verification, quantum lambda calculus, OpenQASM}}
         }}
 
         \\begin{{document}}
 
         \\maketitle
+
+        \\begin{{abstract}}
+        {abstract_latex.strip()}
+        \\end{{abstract}}
+
+        \\noindent\\textbf{{Keywords.}} Lean 4; formal verification; quantum lambda calculus;
+        linear types; CP-presheaf semantics; OpenQASM; quantum relations; quantum CPO.
         """
     ).strip()
 

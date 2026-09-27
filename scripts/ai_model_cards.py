@@ -56,8 +56,8 @@ MODEL_CARDS: tuple[ModelCard, ...] = (
         tool_note=(
             "formalization and refactoring in Cursor: Route A fragment "
             "denotation, quotation Hom-to-CQ covering-set bridges, "
-            "N-qubit OpenQASM staging packaging, CMU report narrative "
-            "alignment, and proof cleanup. Every emitted proof term was "
+            "N-qubit OpenQASM staging packaging, narrative alignment, and "
+            "proof cleanup. Every emitted proof term was "
             "checked by the Lean kernel."
         ),
         reference=(
