@@ -8,6 +8,15 @@ fragment with Route A presheaf denotation, Composer/OpenQASM staging, and
 two-wire quotation completeness.  Full-language bang/LNL denotation remains an
 explicit objective behind AmbientCP Day-bang glue.
 
+The pin is `leanprover/lean4:v4.35.0-rc3` (`lean-toolchain`). Mathlib is
+required at `v4.35.0-rc3` (`lakefile.toml`).
+
+The Comparator selects `QLambda.Palomar.source_type_safety` and
+`QLambda.Palomar.quotation_capstone` (typing and compile reflection).
+Ideal CQ equality is the extra conjunct of
+`Command.GeneralQuotation.Quotation.quotation_capstone` and is not compared.
+`Challenge.lean` imports only Mathlib.
+
 The source judgment
 
 ```text

@@ -38,7 +38,7 @@ status:
     and measured new0 Born adequacy are likewise checked in-tree and staged
     for comparator expansion. The Set-to-qRel LNL model and the qCPO category
     are checked in the development but are not compared.
-  sorry_count: 0
+  sorry_count: 2
   sorry_in_definitions: 0
   axioms: ["propext", "Quot.sound", "Classical.choice"]
   main_results:
@@ -109,7 +109,7 @@ automation:
       role: >-
         The author selected the model and theorem boundary, reviewed the
         development, and takes responsibility for the mathematical claims.
-  notes: "Generated Lean was accepted only after compilation with Lean 4.33.0."
+  notes: "Generated Lean was accepted only after compilation with Lean v4.35.0-rc3, the pin in lean-toolchain and lakefile.toml."
 
 review:
   status: self-assessed

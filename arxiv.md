@@ -289,9 +289,11 @@ unrestricted substitution with empty linear support.  These results imply
 preservation for deterministic source reduction and for measurement-labelled
 transitions.
 
-For closed nonrecursive terms, progress yields either a value, a classical
-step, or a genuine quantum blocking point.  It is not the vacuous statement
-that a primitive is “stuck.”
+For every closed well-typed term, including terms that use $\mathsf{fix}$
+and $\mu$, progress yields either a value, a classical step, or a genuine
+quantum blocking point.  A primitive application is recorded as that quantum
+boundary.  Together with preservation and classical determinism, this is the
+compared theorem `QLambda.Palomar.source_type_safety`.
 
 ### 2.3 Theorem dependence
 
@@ -756,9 +758,15 @@ The checked circuit-level declarations have the following meanings:
   denotation;
 - `compile_reflect`: compiling a canonical representative returns the
   canonical circuit;
-- `quotation_capstone`: every `Quotable` command has a well-typed canonical
-  lambda representative whose compilation is the original command and whose
-  inherited CQ denotation is equal to the circuit denotation.
+- `Quotation.quotation_capstone`: every `Quotable` command has a well-typed
+  canonical lambda representative whose compilation is the original command
+  and whose inherited CQ denotation equals the circuit denotation;
+- `QLambda.Palomar.quotation_capstone`: the Comparator theorem. Its statement
+  is the typing conjunct and the compile-reflection conjunct of the library
+  theorem above. Ideal CQ equality stays on
+  `Quotation.quotation_capstone`, which is kernel-checked in
+  `QuotationGeneral.lean` and left unselected so the Mathlib-only Challenge
+  does not have to restate `Composer.Model`.
 
 These results give circuit-level completeness for the declared two-wire
 Quotable surface.  At the fragment level, closed quotations in the covering
@@ -778,22 +786,28 @@ flowchart TD
   DC["denote_compile"]
   DR["denote_reflect"]
   CR["compile_reflect"]
-  Cap["quotation_capstone"]
+  Lib["Quotation.quotation_capstone"]
+  Pal["QLambda.Palomar.quotation_capstone"]
   Spine["interpretQuoteSpine"]
   Ext["interpretQuoteSpineExt"]
   Cover["fragCert_spine_interprets_*"]
 
-  QT --> Cap
-  DC --> Cap
-  DR --> Cap
-  CR --> Cap
+  QT --> Lib
+  DC --> Lib
+  DR --> Lib
+  CR --> Lib
+  QT --> Pal
+  CR --> Pal
   Spine --> Ext
   Ext --> Cover
-  Cap --> Cover
+  Lib --> Cover
 ```
 
-**Figure.** Section~7 theorem dependence: two-wire quotation capstone and the
-extended Hom$\Rightarrow$CQ covering-set spines.
+**Figure.** Section~7 theorem dependence. `Quotation.quotation_capstone`
+packages typing, compile reflection, and inherited CQ equality. The compared
+theorem `QLambda.Palomar.quotation_capstone` packages typing and compile
+reflection. The Hom$\Rightarrow$CQ covering-set spines are separate library
+results.
 
 <!-- blueprints:sec7 -->
 
@@ -909,13 +923,40 @@ relative AmbientCP admissibility for $A\le 1$, a degree-row gate at 2, and
 blocked by `$\neg$ BangDegreeUnitRectangleHasSum 2`, so glued
 `BangComultAmbientCPAdmissible 2` remains open (absolute A=2 not claimed).
 
+### Palomar compared statements
+
+`comparator.json` selects two theorems. `Challenge.lean` imports only
+Mathlib and restates the supporting syntax; its proofs are the two `sorry`s.
+`Solution.lean` proves the same statements from `QLambda`. The statements are:
+
+```lean
+theorem source_type_safety {M : Term} {A : Ty} (h : HasType [] [] M A) :
+    MakesProgress M ∧
+      (∀ N, Step M N → HasType [] [] N A) ∧
+      (∀ b N, MeasStep M b N → HasType [] [] N A) ∧
+      (∀ N₁ N₂, Step M N₁ → Step M N₂ → N₁ = N₂)
+
+theorem quotation_capstone
+    (C : Command quantumSize classicalSize) (hC : Quotable C) :
+    HasType [] [] (Quotation.reflect C hC).term quotationTy ∧
+    (Quotation.reflect C hC).compile = C
+```
+
+`MakesProgress` is a value, a classical `Step`, or `QuantumBlocked`.
+`quotationTy` is the canonical curried type of one unrestricted bit and two
+linear qubits. The library theorem
+`Command.GeneralQuotation.Quotation.quotation_capstone` adds the conjunct
+`CQ.Eq ((reflect C hC).denote model) (C.denote model)` for a
+`Composer.Model`. That conjunct is kernel-checked and is not part of the
+compared statement.
+
 ### 9.1 Claim-surface dependence
 
 ```mermaid
 flowchart LR
-  STS["source_type_safety"]
+  STS["QLambda.Palomar.source_type_safety"]
   Frag["n_qubit_fragment_denotation_openqasm_interface"]
-  Cap["quotation_capstone / two_wire_quotation_typed"]
+  Cap["QLambda.Palomar.quotation_capstone"]
   Cover["quote CQ covering set"]
   OQ["OpenQASM round trips"]
 
@@ -926,8 +967,10 @@ flowchart LR
   Cover --> OQ
 ```
 
-**Figure.** Section~9 claim-surface dependence among the Palomar-facing and
-$N$-bounded packaging theorems.
+**Figure.** Section~9 claim-surface dependence. The Comparator selects
+`QLambda.Palomar.source_type_safety` and
+`QLambda.Palomar.quotation_capstone`. The $N$-bounded packaging theorems in
+the same figure are kernel-checked library results and are not compared.
 
 <!-- blueprints:sec9 -->
 

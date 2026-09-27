@@ -727,11 +727,11 @@ theorem effectPairingQuad_smul {A : ℕ}
     · have : (star c * c) * (star v ⬝ᵥ v) = 0 := by
         simpa [star_dotProduct_smul_self] using hcv
       have hc0 : star c * c = 0 := (mul_eq_zero.mp this).resolve_right hv
-      rw [dif_pos hcv, dif_neg hv, hc0, zero_mul]
+      rw [dite_eq_left hcv, dite_eq_right hv, hc0, zero_mul]
     · have hc0 : c ≠ 0 := fun hc => by
         simp [hc, zero_smul] at hcv
       have hproj := normalizeVec_smul_projector c v hc0 hv hcv
-      rw [dif_neg hcv, dif_neg hv, star_dotProduct_smul_self]
+      rw [dite_eq_right hcv, dite_eq_right hv, star_dotProduct_smul_self]
       have hof :
           ofEffect
               (Matrix.vecMulVec (normalizeVec (c • v) hcv)
@@ -897,7 +897,7 @@ theorem effectPairingQuad_eq_expectation {A : ℕ}
       effectExpectation_smul_doubleDual F (star v ⬝ᵥ v).re ht0 ht1
         (Matrix.vecMulVec û (star û))
         (Matrix.posSemidef_vecMulVec_self_star û) hû_le
-    rw [dif_neg hv]
+    rw [dite_eq_right hv]
     have hR :
         effectExpectation (doubleDualEffectPairing F)
           (Matrix.vecMulVec v (star v))

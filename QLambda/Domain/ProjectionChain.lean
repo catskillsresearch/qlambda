@@ -151,8 +151,7 @@ noncomputable def shiftBackwardMap :
     OmegaMap C.tail.bilimitOmegaObject C.bilimitOmegaObject where
   toFun := C.shiftBackward
   monotone := by
-    intro x y h
-    intro n
+    intro x y h n
     cases n with
     | zero =>
         have hxy : x.1 0 ⊔ y.1 0 = y.1 0 :=
@@ -176,8 +175,7 @@ noncomputable def shiftBackwardMap :
         simp only [projection, shiftBackward, CompleteSublattice.coe_iSup]
         rw [iSup_apply, iSup_apply]
         simp only
-        simpa [tail] using
-          (map_iSup (C.project 0) (fun i => (c i).1 0))
+        simp [tail]
     | succ n =>
         simp only [projection, shiftBackward, CompleteSublattice.coe_iSup]
         rw [iSup_apply, iSup_apply]

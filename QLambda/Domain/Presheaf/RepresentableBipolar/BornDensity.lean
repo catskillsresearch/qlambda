@@ -248,14 +248,14 @@ theorem diagonal_eq_sum_single {n : Type*} [Fintype n] [DecidableEq n] (f : n �
     Matrix.single, Matrix.of_apply]
   refine Eq.symm ?_
   by_cases hab : a = b
-  · rw [if_pos hab]
+  · rw [ite_eq_left hab]
     cases hab
     have hterm : ∀ i, f i * (if i = a ∧ i = a then (1 : ℂ) else 0) =
         if i = a then f a else 0 := by
       intro i; split_ifs <;> simp_all
     simp_rw [hterm]
     simp
-  · rw [if_neg hab]
+  · rw [ite_eq_right hab]
     refine Finset.sum_eq_zero fun i _ => ?_
     have : ¬(i = a ∧ i = b) := fun ⟨ha, hb⟩ => hab (ha.symm.trans hb)
     simp [this]

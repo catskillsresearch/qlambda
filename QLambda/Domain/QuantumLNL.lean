@@ -40,7 +40,7 @@ noncomputable def qRelStates :
     ⟨fun S => R.comp S⟩
   map_id := by
     intro A
-    letI := A.decidable
+    let := A.decidable
     apply SetHom.ext
     intro S
     exact QuantumRel.id_comp S

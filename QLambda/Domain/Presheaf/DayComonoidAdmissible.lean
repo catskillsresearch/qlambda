@@ -169,7 +169,7 @@ theorem bangComultComponent_eq_of_injection (A p q n : ℕ)
     funext k
     by_cases hk : k = p + q
     · subst hk; simp
-    · rw [hsupp k hk, if_neg hk]
+    · rw [hsupp k hk, ite_eq_right hk]
   have hx' :
       ((dayTensor (bang A) (bang A)).obj n).HasSum
         (fun k =>
@@ -564,7 +564,7 @@ theorem bangComultComponentsAdmissible_zero :
     by_cases hpq : pq = (0, 0)
     · subst hpq; simp
     · rw [bangComultComponentFamily_zero_of_pos_degree n x pq hpq,
-        if_neg hpq]
+        ite_eq_right hpq]
       exact DayCoend.evaluate_zero β
   rw [hfam]
   exact Fiber.hasSum_singleAt (L.obj n) (0, 0)
@@ -597,7 +597,7 @@ theorem bangComult_zero_eq_component (n : ℕ)
       by_cases hpq : pq = (0, 0)
       · subst hpq; rfl
       · rw [bangComultComponentFamily_zero_of_pos_degree n x pq hpq,
-          if_neg hpq]
+          ite_eq_right hpq]
         exact DayCoend.evaluate_zero β
     rw [hfam]
     exact Fiber.hasSum_singleAt (L.obj n) (0, 0) _
@@ -706,7 +706,7 @@ theorem symmetricAverage_of_le_one (A k : ℕ) (hA : A ≤ 1) :
       apply CPMap.ext
       ext a b
       have : IsEmpty (Fin (tensorPowerDimension 0 (k + 1))) := by
-        simp [tensorPowerDimension]; infer_instance
+        simp [tensorPowerDimension]
       exact isEmptyElim a.1
   · exact symmetricAverage_one k
 

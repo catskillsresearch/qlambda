@@ -227,7 +227,7 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
       | lin =>
           simp only [infer] at h
           by_cases hadm : Ty.admissible B = true
-          · rw [if_pos hadm] at h
+          · rw [ite_eq_left hadm] at h
             cases hM : infer Γ (B :: Δ) M with
             | none => simp [hM] at h
             | some p =>
@@ -245,7 +245,7 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
                           simpa [List.length_cons] using hlen
                         exact ⟨HasType.lamL (Ty.admissible_eq_true_iff.mp hadm) hC,
                           hlen'⟩
-          · rw [if_neg hadm] at h
+          · rw [ite_eq_right hadm] at h
             simp at h
   | app F X ihF ihX =>
       simp only [infer] at h
@@ -269,7 +269,7 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
                   dsimp at h
                   by_cases hA : A₀ = TX
                   · subst hA
-                    rw [if_pos rfl] at h
+                    rw [ite_eq_left rfl] at h
                     cases κ with
                     | lin =>
                         cases hzip : zipOr uF uX with
@@ -284,7 +284,7 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
                             exact ⟨HasType.appL hsplit hFty hXty, hlen.trans hFlen⟩
                     | unres =>
                         by_cases hnone : allFalse uX = true
-                        · rw [if_pos hnone] at h
+                        · rw [ite_eq_left hnone] at h
                           cases hzip : zipOr uF uX with
                           | none => simp [hzip] at h
                           | some u' =>
@@ -297,9 +297,9 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
                               obtain ⟨hlen, _⟩ := zipOr_length hzip
                               exact ⟨HasType.appU hsplit hXnone hFty hXty,
                                 hlen.trans hFlen⟩
-                        · rw [if_neg hnone] at h
+                        · rw [ite_eq_right hnone] at h
                           simp at h
-                  · rw [if_neg hA] at h
+                  · rw [ite_eq_right hA] at h
                     simp at h
   | unit =>
       simp only [infer] at h
@@ -374,7 +374,7 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
                                   dsimp at h
                                   by_cases hAB : A₀ = A₁ ∧ B₀ = B₁
                                   · rcases hAB with ⟨rfl, rfl⟩
-                                    rw [if_pos (And.intro rfl rfl)] at h
+                                    rw [ite_eq_left (And.intro rfl rfl)] at h
                                     cases hzip : zipOr uM uK with
                                     | none => simp [hzip] at h
                                     | some u' =>
@@ -387,7 +387,7 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
                                         exact ⟨HasType.unpair hsplit hMty hKty,
                                           hlen.trans hMlen⟩
                                   ·
-                                    rw [if_neg hAB] at h
+                                    rw [ite_eq_right hAB] at h
                                     simp at h
   | ite B T E ihB ihT ihE =>
       simp only [infer] at h
@@ -415,7 +415,7 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
                       dsimp at h
                       by_cases hbr : TT = TE ∧ uT = uE
                       · rcases hbr with ⟨rfl, rfl⟩
-                        rw [if_pos (And.intro rfl rfl)] at h
+                        rw [ite_eq_left (And.intro rfl rfl)] at h
                         cases hzip : zipOr uB uT with
                         | none => simp [hzip] at h
                         | some u' =>
@@ -428,7 +428,7 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
                             obtain ⟨hlen, _⟩ := zipOr_length hzip
                             exact ⟨HasType.ite hsplit hBty hTty hEty, hlen.trans hBlen⟩
                       ·
-                        rw [if_neg hbr] at h
+                        rw [ite_eq_right hbr] at h
                         simp at h
   | prim p =>
       simp only [infer] at h
@@ -524,7 +524,7 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
                   by_cases hfix :
                       Ty.admissible A₀ = true ∧ Ty.duplicable A₀ = true ∧
                         A₁ = A₀ ∧ A₂ = A₀ ∧ allFalse uM = true
-                  · rw [if_pos hfix] at h
+                  · rw [ite_eq_left hfix] at h
                     obtain ⟨rfl, rfl⟩ := h
                     rcases hfix with ⟨hadm, hdup, rfl, rfl, hu⟩
                     obtain ⟨hMty, hlen⟩ := ih hM
@@ -532,7 +532,7 @@ theorem infer_sound {Γ Δ : List Ty} {M : Term} {A : Ty} {u : List Bool}
                         (Ty.duplicable_eq_true_iff.mp hdup)
                         (allNone_of_allFalse hlen hu) hMty, hlen⟩
                   ·
-                    rw [if_neg hfix] at h
+                    rw [ite_eq_right hfix] at h
                     simp at h
   | fold A₀ M ih =>
       simp only [infer] at h

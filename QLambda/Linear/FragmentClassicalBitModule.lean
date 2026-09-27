@@ -30,7 +30,6 @@ noncomputable def classicalBitFiber (n : ℕ) : Fiber where
         convert (SigmaMon.ChoiSum.empty :
           SigmaMon.ChoiSum.HasSum (fun i : Empty => nomatch i)
             (0 : Superoperator n 2)) using 1
-        rfl
       singleton := fun a => SigmaMon.ChoiSum.singleton a.1
       remove_zero := by
         intro ι _ f s a hzero

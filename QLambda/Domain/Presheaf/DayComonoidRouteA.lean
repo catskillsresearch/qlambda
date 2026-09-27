@@ -308,7 +308,7 @@ theorem bangComultDayTransferWitness_not_admissible :
     intro b
     cases b <;> simp [κ]
     all_goals exact Set.to_countable _
-  letI (b : Bool) : Countable (κ b) := hκ b
+  let (b : Bool) : Countable (κ b) := hκ b
   have hzReindexed :
       (L.obj n).HasSum (F ∘ e) z :=
     ((L.obj n).summation.reindex e F z).mpr hzF

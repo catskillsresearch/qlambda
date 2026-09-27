@@ -39,7 +39,6 @@ noncomputable def symmetricPowerFiber (A k n : ℕ) : Fiber where
           SigmaMon.ChoiSum.HasSum
             (fun i : Empty => nomatch i)
             (0 : Superoperator n (tensorPowerDimension A k))) using 1
-        rfl
       singleton := fun x => SigmaMon.ChoiSum.singleton x.val
       remove_zero := by
         intro ι _ f s x hzero

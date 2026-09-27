@@ -172,7 +172,6 @@ noncomputable def countableProductFiber
       empty := by
         intro k
         convert (X k).summation.empty using 1
-        rfl
       singleton := by
         intro x k
         exact (X k).summation.singleton (x k)

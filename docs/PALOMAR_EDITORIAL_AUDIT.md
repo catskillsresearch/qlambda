@@ -65,14 +65,16 @@ minutes wall time per run.
 
 Before enabling LLM editorial on a submission candidate, confirm:
 
-1. **Research interest** — compared theorems are Scott 1964 headline results
-   (plus any separately labelled reconstructions), not incidental lemmas.
+1. **Research interest** — the compared theorems are
+   `QLambda.Palomar.source_type_safety` and
+   `QLambda.Palomar.quotation_capstone`, and `arxiv.md` states those same
+   types. The library theorem
+   `Command.GeneralQuotation.Quotation.quotation_capstone` adds ideal CQ
+   equality and is not the compared statement.
 2. **Definition pinning** — every material symbol in each compared theorem type
-   is either primitive, defined concretely in Challenge.lean, or listed in
-   `comparator.json` → `definition_names` with a precise semantic type and
-   docstring. Such listed `sorry` bodies are intentional definition holes:
-   Comparator checks the Solution implementation rather than requiring body
-   equality with Challenge's `sorryAx`.
+   is defined concretely in `Challenge.lean`. `definition_names` is empty.
+   Comparator compares those concrete values with the Solution elaboration,
+   including definitions reached only transitively.
 3. **Metadata sync** — `formalization.yaml` `status.scope`, `main_results`,
    `limitations`, and `alignment` match `comparator.json` and Challenge/Solution.
 4. **Sources** — `formalization.yaml` `sources:` records the primary paper and

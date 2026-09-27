@@ -390,7 +390,7 @@ theorem cxMatrix_isometry {q : ℕ} (control target : Fin q) :
   classical
   by_cases h : control = target
   · simp [cxMatrix, h]
-  · simp only [cxMatrix, dif_neg h]
+  · simp only [cxMatrix, dite_eq_right h]
     exact onWires_isometry control target h cx₄ cx₄_isometry
 
 @[simp] theorem projector_conjTranspose {q : ℕ} (w : Fin q) (b : Bool) :

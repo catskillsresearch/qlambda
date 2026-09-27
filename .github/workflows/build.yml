@@ -15,11 +15,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Read Palomar preflight pin
+        id: preflight_pin
+        run: echo "sha=$(tr -d '[:space:]' < vendor/PALOMAR_PREFLIGHT_PIN)" >> "$GITHUB_OUTPUT"
+
       - name: Checkout palomar-preflight
         uses: actions/checkout@v4
         with:
           repository: catskillsresearch/palomar-preflight
-          ref: bd5bc8f8cc386d7cd0afc16df7ba03a1c64a9fb1
+          ref: ${{ steps.preflight_pin.outputs.sha }}
           path: palomar-preflight
 
       - name: Install elan

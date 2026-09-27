@@ -220,17 +220,17 @@ theorem Lookup.insertAt {α : Type} {a b : α} {k n : Nat} {xs ys : List α}
   | @succ k xs ys b hi ih =>
       cases hl with
       | zero =>
-          rw [if_pos (Nat.zero_lt_succ k)]
+          rw [ite_eq_left (Nat.zero_lt_succ k)]
           exact Lookup.zero
       | @succ _ _ n _ hl =>
           have h := ih hl
           simp only [Nat.succ_lt_succ_iff]
           by_cases hn : n < k
-          · rw [if_pos hn]
-            rw [if_pos hn] at h
+          · rw [ite_eq_left hn]
+            rw [ite_eq_left hn] at h
             exact Lookup.succ h
-          · rw [if_neg hn]
-            rw [if_neg hn] at h
+          · rw [ite_eq_right hn]
+            rw [ite_eq_right hn] at h
             exact Lookup.succ h
 
 theorem AllNone.insertNone {Δ Δ' : List (Option Ty)} {k : Nat}
@@ -250,12 +250,12 @@ theorem OnlySomeAt.insertNone {Δ Δ' : List (Option Ty)} {k n : Nat}
     OnlySomeAt Δ' (if n < k then n else n + 1) := by
   induction hi generalizing n with
   | zero =>
-      simp only [Nat.not_lt_zero, if_false]
+      simp only [Nat.not_lt_zero, ite_false]
       simpa [OnlySomeAt] using ho
   | @succ k Δ Δ' cell hi ih =>
       cases n with
       | zero =>
-          rw [if_pos (Nat.zero_lt_succ k)]
+          rw [ite_eq_left (Nat.zero_lt_succ k)]
           cases cell with
           | none => simp [OnlySomeAt] at ho
           | some A =>
@@ -269,11 +269,11 @@ theorem OnlySomeAt.insertNone {Δ Δ' : List (Option Ty)} {k n : Nat}
               have h := ih ho
               simp only [Nat.succ_lt_succ_iff]
               by_cases hn : n < k
-              · rw [if_pos hn]
-                rw [if_pos hn] at h
+              · rw [ite_eq_left hn]
+                rw [ite_eq_left hn] at h
                 exact h
-              · rw [if_neg hn]
-                rw [if_neg hn] at h
+              · rw [ite_eq_right hn]
+                rw [ite_eq_right hn] at h
                 exact h
 
 /-- Inserting an unused cell into a split inserts it in both children. -/

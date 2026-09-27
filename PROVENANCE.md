@@ -60,4 +60,7 @@ proof authority.
 `Challenge.lean` imports only Mathlib. It restates the source syntax, typing,
 reduction, circuit normal form, and two-wire quotation verbatim and states
 these results with explicit holes under the Palomar convention.
-`Solution.lean` proves the same statements from `QLambda` without `sorry`.
+`QLambda.Palomar.quotation_capstone` is typing plus compile reflection.
+`Command.GeneralQuotation.Quotation.quotation_capstone` adds ideal CQ
+equality and is kernel-checked in the library, not selected.
+`Solution.lean` proves the same compared statements from `QLambda` without `sorry`.

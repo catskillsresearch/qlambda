@@ -131,8 +131,7 @@ private theorem tensorLeftUnitor_eq_rightUnitor_swap (a : ℕ) :
         (Superoperator.tensorSwap 1 a) =
       Superoperator.tensorLeftUnitor a := by
   simp only [Superoperator.tensorLeftUnitor, Superoperator.tensorRightUnitor,
-    Superoperator.tensorSwap, ← Superoperator.ofEquivalence_refl,
-    Superoperator.ofEquivalence_comp]
+    Superoperator.tensorSwap, Superoperator.ofEquivalence_comp]
   congr 1
   ext x
   simp [Superoperator.tensorLeftUnitorEquiv,

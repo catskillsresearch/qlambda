@@ -125,13 +125,11 @@ noncomputable def associatorBilinear (M N P : Module) :
       (DayCoend.intro M (dayTensor N P)).map_zero_right,
       (dayTensor M (dayTensor N P)).act_zero_element]
   map_sum_left := by
-    intro ι _ m n x s y h
-    intro k p r z
+    intro ι _ m n x s y h k p r z
     exact (dayTensor M (dayTensor N P)).act_sum_element _ <|
       (DayCoend.intro M (dayTensor N P)).map_sum_left _ h
   map_sum_right := by
-    intro ι _ m n x y s h
-    intro k p r z
+    intro ι _ m n x y s h k p r z
     exact (dayTensor M (dayTensor N P)).act_sum_element _ <|
       (DayCoend.intro M (dayTensor N P)).map_sum_right x <|
         (DayCoend.intro N P).map_sum_left z h

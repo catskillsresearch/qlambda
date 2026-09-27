@@ -46,9 +46,6 @@ theorem born_match_density {A : ℕ} (_hA : 0 < A)
     simpa [P, U] using isHermitian_eq_sum_eigenprojectors E hHerm
   have hexpR : E = ∑ i : Fin A, (hHerm.eigenvalues i : ℝ) • P i := by
     convert hexp using 1
-    refine Finset.sum_congr rfl fun i _ => ?_
-    ext a b
-    simp [Matrix.smul_apply, smul_eq_mul]
   have hExtβ : effectExpectationExt F E hpsd =
       effectExpectation (doubleDualEffectPairing F) E hpsd hle :=
     effectExpectationExt_of_le_one F E hpsd hle
@@ -97,7 +94,7 @@ theorem born_match_density {A : ℕ} (_hA : 0 < A)
             ext; simp
           simpa [effectExpectation, hz] using
             effectExpectation_zero_doubleDual (A := A) F
-        convert h0 <;> simp
+        convert h0
       | insert i s hs ih =>
         simp only [Finset.sum_insert hs]
         have hE := (hPpsd i).smul (hLam0 i)

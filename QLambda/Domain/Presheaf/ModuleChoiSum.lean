@@ -73,7 +73,7 @@ theorem effect_comp_from_one (f : CPMap 1 ℓ) (g : CPMap m 1) :
   change
       (∑ a : Fin ℓ, (CPMap.comp f g).choi (a, j) (a, i)) =
         (f.effect 0 0) * g.effect i j
-  simp only [CPMap.choi_comp_apply, Fin.default_eq_zero, CPMap.effect]
+  simp only [CPMap.choi_comp_apply, CPMap.effect]
   have hfactor :
       (∑ a : Fin ℓ, f.choi (a, 0) (a, 0) * g.choi (0, j) (0, i)) =
         (∑ a : Fin ℓ, f.choi (a, 0) (a, 0)) * g.choi (0, j) (0, i) := by
@@ -208,7 +208,7 @@ theorem comp_from_one {ι : Type} [Countable ι] {m ℓ : ℕ}
     by_cases hij : i = j
     · subst hij
       simpa using hα_sum
-    · simpa [hij] using hasSum_zero
+    · simp [hij]
   -- Difference family `α_k • (I - E_k)` sums to `(∑ α)•I - Ψcp.effect`.
   have hdiff :
       _root_.HasSum

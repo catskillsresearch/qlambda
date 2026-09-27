@@ -17,9 +17,9 @@ proves the same statements from the development.
 * `source_type_safety`: a closed well-typed term is a value, takes a
   classical step, or is blocked at a quantum primitive; classical steps are
   deterministic, and classical and measurement steps preserve its type.
-* `two_wire_quotation_typed`: every command in the supported two-qubit,
-  one-bit circuit fragment quotes to a closed source term of the canonical
-  curried register type.
+* `quotation_capstone`: every `Quotable` command in the supported two-qubit,
+  one-bit fragment has a canonical source term of `quotationTy` whose
+  compilation is that command.
 -/
 
 namespace QLambda.Linear

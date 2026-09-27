@@ -1,12 +1,15 @@
 # Palomar Challenge/Comparator style
 
 Palomar compares elaborated Lean constants, not merely mathematical
-equivalence or ordinary pretty-printed declarations. A `definition_names`
-entry is intentionally a definition hole: Challenge may give it a `sorry`
-body, while Solution supplies the implementation. Comparator checks the
-declaration name and kind, universe/safety level, type, allowed axiom closure,
-and kernel acceptance. It does not require the Challenge `sorryAx` value to
-equal the Solution implementation. Run this before every submission:
+equivalence or pretty-printed declaration types. This repository's
+`definition_names` list is empty. The compared holes are the two theorem
+`sorry`s in `Challenge.lean`: `QLambda.Palomar.source_type_safety` and
+`QLambda.Palomar.quotation_capstone`. Comparator still compares every concrete
+definition reachable from those theorems, including universe names and
+typeclass-instance paths inside the body. A matching parent body is
+insufficient when it refers to a named child definition whose value differs.
+`arxiv.md` must state these same theorem types: the reviewer reads the paper
+together with the code. Run this before every submission:
 
 ```bash
 scripts/palomar_preflight.sh
@@ -18,36 +21,28 @@ scripts/palomar_preflight.sh
   levels; pretty-printer-generated `u_1`/`u_3` labels are presentation noise.
 - Keep instance paths explicit where elaboration could choose different
   equivalent instances.
-- A `theorem_names` entry must be a theorem; a `definition_names` entry must be
-  a definition-valued constant (an ordinary definition or named instance),
-  not a structure declaration or theorem.
-- List every material opaque Challenge definition reachable from the selected
-  statement. Give each hole a precise docstring describing the intended
-  construction; the Solution implementation is what Comparator kernel-checks.
-- Keep concrete (non-hole) definitions used by the statement identical between
-  Challenge and Solution.
+- A `theorem_names` entry must be a theorem. This repository does not put
+  definition holes in `definition_names`.
+- Keep concrete Challenge and Solution definition bodies structurally
+  identical, including definitions reached transitively from a compared
+  theorem. Do not rely on proof irrelevance to make values compare.
+- `QLambda.Palomar.quotation_capstone` is typing and compile reflection.
+  Ideal CQ equality is `Quotation.quotation_capstone` in
+  `QuotationGeneral.lean` and is not the compared statement.
 - Write order operations with explicit `@LE.le` instance paths when Challenge
   and Solution import graphs can elaborate `≤` through different parent
   structures. This repository is exposed to that failure mode wherever a
   Boolean-algebra or linear-order instance can be reached by two routes.
-
-## Definition-hole boundary
-
-Prefer a compact, semantically strong type. For example, the type of
-`canonicalQDomainProjection` fixes both directions and both projection laws;
-its Challenge body may be `sorry`, and the name belongs in
-`definition_names`. Do not compare a `#print`ed Challenge body against the
-Solution body: that would compare `sorryAx` with real code and always reject a
-valid definition-hole submission.
 
 ## Submission checklist
 
 The preflight must confirm:
 
 1. the full project builds;
-2. compared theorem and definition-hole names, kinds, universe structures, and
-   types match;
-3. every material Challenge hole is listed in `definition_names`;
+2. compared theorem names, universe parameters, types, and transitively
+   locked definition values match;
+3. the two Challenge theorem holes are the only `sorry`s, and
+   `formalization.yaml` records `sorry_count: 2`;
 4. Solution sources contain no `sorry`;
 5. Solution theorem axioms are permitted by `comparator.json`; and
 6. the patch has no whitespace errors.

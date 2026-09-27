@@ -42,7 +42,7 @@ private theorem extend_encode {α : Type} [Countable α]
     {X : Type} [Zero X] (f : α → X) (i : α) :
     extend f (countableEmbedding α i) = f i := by
   rw [extend]
-  simp only [dif_pos
+  simp only [dite_eq_left
     (show ∃ j : α, countableEmbedding α j = countableEmbedding α i
       from ⟨i, rfl⟩)]
   have hc := Classical.choose_spec
@@ -59,7 +59,7 @@ private theorem extend_hasSum_iff {α : Type} [Countable α]
       ∀ k, k ∉ Set.range (countableEmbedding α) →
         extend f k = 0 := by
     intro k hk
-    rw [extend, dif_neg]
+    rw [extend, dite_eq_right]
     intro h
     exact hk h
   have hr :=
@@ -157,11 +157,11 @@ private theorem sumTerm_admissible_of {M N : Module}
       specialize hv k
       simp only [extend] at hv ⊢
       by_cases hk : ∃ i, countableEmbedding ι i = k
-      · simp only [dif_pos hk] at hv ⊢
+      · simp only [dite_eq_left hk] at hv ⊢
         exact (representative (f (Classical.choose hk))).1.eval_unique
           (representative (f (Classical.choose hk))).2.1 L β hv |>.trans
             (value_representative β _)
-      · simp only [dif_neg hk] at hv ⊢
+      · simp only [dite_eq_right hk] at hv ⊢
         exact (Raw.eval_unique (.zero : Raw M N n) Raw.admissible_zero
           L β hv).trans
             (Raw.eval_unique (.zero : Raw M N n) Raw.admissible_zero
@@ -332,8 +332,7 @@ noncomputable def action {M N : Module} {m n : ℕ}
     (x : Carrier M N n) (g : Superoperator m n) :
     Carrier M N m :=
   Quotient.map (mapTerm g) (by
-    intro s t h
-    intro L β
+    intro s t h L β
     rw [value_mapTerm, value_mapTerm, h L β]) x
 
 @[simp]
@@ -372,13 +371,11 @@ noncomputable def module (M N : Module) : Module where
     intro L β
     rw [evaluate_action, evaluate_action, evaluate_action, L.act_comp]
   act_sum_element := by
-    intro ι _ m n x s g h
-    intro L β
+    intro ι _ m n x s g h L β
     simp only [evaluate_action]
     exact L.act_sum_element g (h L β)
   act_sum_map := by
-    intro ι _ m n x f s h
-    intro L β
+    intro ι _ m n x f s h L β
     simp only [evaluate_action]
     exact L.act_sum_map (evaluate L β x) h
   act_sum_from_one := by

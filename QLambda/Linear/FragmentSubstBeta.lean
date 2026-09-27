@@ -47,9 +47,9 @@ private theorem basisBra_sandwich_basisKet (k i : Fin 2)
   rw [hfuse]
   by_cases h : k = i
   · subst h
-    rw [if_pos rfl, SigmaMon.ChoiSum.basisBra_mul_basisKet k]
+    rw [ite_eq_left rfl, SigmaMon.ChoiSum.basisBra_mul_basisKet k]
     simp
-  · rw [if_neg h, SigmaMon.ChoiSum.basisBra_mul_basisKet_of_ne h]
+  · rw [ite_eq_right h, SigmaMon.ChoiSum.basisBra_mul_basisKet_of_ne h]
     simp
 
 /-- Discarding a computational-basis preparation is the identity channel. -/

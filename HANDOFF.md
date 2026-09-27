@@ -13,10 +13,15 @@ trees have been removed.
 - Comparator metadata: `comparator.json`, `formalization.yaml`
 - Novelty evidence: `docs/NOVELTY_AUDIT.md`
 
+The pin is `leanprover/lean4:v4.35.0-rc3` in `lean-toolchain` and `lakefile.toml`.
+
 The compared declarations are:
 
 - `QLambda.Palomar.source_type_safety`
-- `QLambda.Palomar.quotation_capstone`
+- `QLambda.Palomar.quotation_capstone` (typing and compile reflection)
+
+`Command.GeneralQuotation.Quotation.quotation_capstone` adds ideal CQ equality
+and is not compared. `arxiv.md` must state these same types.
 
 `Challenge.lean` imports only Mathlib and restates the supporting definitions
 verbatim. Comparator compares their elaborated constants, including

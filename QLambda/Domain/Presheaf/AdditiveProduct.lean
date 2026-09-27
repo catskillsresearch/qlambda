@@ -33,9 +33,7 @@ noncomputable def additiveProductFiber (X Y : Fiber.{u}) : Fiber.{u} where
       empty := by
         constructor
         · convert X.summation.empty using 1
-          rfl
         · convert Y.summation.empty using 1
-          rfl
       singleton := fun s =>
         ⟨X.summation.singleton s.1, Y.summation.singleton s.2⟩
       remove_zero := by

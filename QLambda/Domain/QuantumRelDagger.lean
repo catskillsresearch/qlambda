@@ -152,8 +152,7 @@ theorem id_comp [DecidableEq Y.Atom] (R : QuantumRel X Y) :
     refine Submodule.subset_span
       ⟨m, (1 : Matrix (Fin (Y.dim z)) (Fin (Y.dim z)) ℂ), hm, ?_,
         Matrix.one_mul m⟩
-    simpa [id] using Submodule.subset_span
-      (Set.mem_singleton (1 : Matrix (Fin (Y.dim z)) (Fin (Y.dim z)) ℂ))
+    simp [id]
 
 theorem comp_id [DecidableEq X.Atom] (R : QuantumRel X Y) :
     R.comp (id X) = R := by
@@ -186,8 +185,7 @@ theorem comp_id [DecidableEq X.Atom] (R : QuantumRel X Y) :
     refine Submodule.subset_span
       ⟨(1 : Matrix (Fin (X.dim x)) (Fin (X.dim x)) ℂ), m, ?_, hm,
         Matrix.mul_one m⟩
-    simpa [id] using Submodule.subset_span
-      (Set.mem_singleton (1 : Matrix (Fin (X.dim x)) (Fin (X.dim x)) ℂ))
+    simp [id]
 
 theorem assoc (T : QuantumRel Z W) (S : QuantumRel Y Z) (R : QuantumRel X Y) :
     (T.comp S).comp R = T.comp (S.comp R) := by

@@ -478,7 +478,7 @@ theorem bangComultComponent_degreeUnit_of_ne (p q a : ℕ) (hne : p + q ≠ a) :
   rw [bangComultComponent_eq_act]
   simp only [bangSplitComponent]
   have hval : (bangDegreeUnit 1 a (p + q)).val = 0 := by
-    simp only [bangDegreeUnit_apply, dif_neg hne]
+    simp only [bangDegreeUnit_apply, dite_eq_right hne]
     rfl
   rw [hval, Superoperator.comp_zero_right]
   exact (dayTensor (bang 1) (bang 1)).act_zero_map _
