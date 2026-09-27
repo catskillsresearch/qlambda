@@ -15,13 +15,42 @@ trees have been removed.
 
 The pin is `leanprover/lean4:v4.35.0-rc3` in `lean-toolchain` and `lakefile.toml`.
 
-The compared declarations are:
+The compared declarations are the `QLambda.Palomar` theorems in
+`comparator.json`. `arxiv.md` states those same types and the Solution
+values of the definition holes.
 
 - `QLambda.Palomar.source_type_safety`
-- `QLambda.Palomar.quotation_capstone` (typing and compile reflection)
+- `QLambda.Palomar.quotation_capstone`
+- `QLambda.Palomar.runtime_born_normalizes`
+- `QLambda.Palomar.runtime_internal_preservation`
+- `QLambda.Palomar.runtime_measurement_preservation`
+- `QLambda.Palomar.runtime_progress`
+- `QLambda.Palomar.quantumRel_assoc`
+- `QLambda.Palomar.quantumRel_dagger_comp`
+- `QLambda.Palomar.quantumRel_comp_iSup_left`
+- `QLambda.Palomar.quantumRel_comp_iSup_right`
+- `QLambda.Palomar.quantumRel_id_comp`
+- `QLambda.Palomar.quantumRel_comp_id`
+- `QLambda.Palomar.qubit_isQuantumCPO`
+- `QLambda.Palomar.set_qRel_linear_objects`
+- `QLambda.Palomar.qCPO_category_objects`
+- `QLambda.Palomar.shift_forward_backward`
+- `QLambda.Palomar.shift_backward_forward`
+- `QLambda.Palomar.prim_cp_agreement`
+- `QLambda.Palomar.cx_cp_agreement`
+- `QLambda.Palomar.measure_elim_denotation`
+- `QLambda.Palomar.staging_deterministic`
+- `QLambda.Palomar.staging_well_formed`
+- `QLambda.Palomar.staging_compile_agreement`
+- `QLambda.Palomar.openqasm_render_roundTrip`
+- `QLambda.Palomar.openqasm_export_roundTrip`
+- `QLambda.Palomar.measured_new0_born_false`
+- `QLambda.Palomar.measured_new0_born_true`
+- `QLambda.Palomar.measured_new0_within_bound`
+- `QLambda.Palomar.measure_branch_agrees`
 
 `Command.GeneralQuotation.Quotation.quotation_capstone` adds ideal CQ equality
-and is not compared. `arxiv.md` must state these same types.
+and is not compared.
 
 `Challenge.lean` imports only Mathlib and restates the supporting definitions
 verbatim. Comparator compares their elaborated constants, including

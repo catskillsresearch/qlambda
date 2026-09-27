@@ -341,11 +341,11 @@ has two labelled branches whose weights are obtained from the Born rule.
 
 The runtime proves:
 
-- internal-transition preservation;
-- measurement-transition preservation;
+- internal-transition preservation (`QLambda.Palomar.runtime_internal_preservation`);
+- measurement-transition preservation (`QLambda.Palomar.runtime_measurement_preservation`);
 - nonnegativity and upper bounds of branch probabilities;
-- normalization of the two measurement outcomes;
-- progress modulo finite-wire exhaustion.
+- normalization of the two measurement outcomes (`QLambda.Palomar.runtime_born_normalizes`);
+- progress modulo finite-wire exhaustion (`QLambda.Palomar.runtime_progress`).
 
 The runtime does not add source-level probability.  Probabilities label
 physical measurement transitions only.
@@ -412,7 +412,15 @@ S\circ\left(\bigvee_n R_n\right)
 $$
 
 Each hom is a complete lattice.  Consequently quantum sets and quantum
-relations form an $\omega$CPO-enriched category `qRelCategory`.
+relations form an $\omega$CPO-enriched category `qRelCategory`. The compared
+statements are `QLambda.Palomar.quantumRel_assoc`,
+`QLambda.Palomar.quantumRel_dagger_comp`,
+`QLambda.Palomar.quantumRel_id_comp`,
+`QLambda.Palomar.quantumRel_comp_id`,
+`QLambda.Palomar.quantumRel_comp_iSup_left`, and
+`QLambda.Palomar.quantumRel_comp_iSup_right`. Identity laws take a
+`quantumDecEq` hypothesis, which Solution defines as `DecidableEq` of the
+quantum-set atoms.
 
 A relation is a quantum function when it satisfies the usual dagger
 inequalities.  Comparable quantum functions are equal, and quantum functions
@@ -427,6 +435,7 @@ quantum relation.  The qCPO condition is stated using increasing sequences of
 functions from atomic probes.  Discrete quantum posets are qCPOs because
 comparability forces equality, so every such chain is constant.  This gives
 the qubit, classical bit, and tensor-unit objects used by the finite fragment.
+`QLambda.Palomar.qubit_isQuantumCPO` is `IsQuantumCPO` of the discrete qubit.
 
 `QuantumMonoidal.lean` supplies tensor on homs, internal hom, evaluation,
 currying, unitors, associator, and braiding, and proves the required
@@ -437,9 +446,12 @@ the set of relations from the tensor unit.  This deliberately avoids the
 non-monotone graph map from pointwise-ordered continuous-function homs.
 
 Separately, `QuantumCPOCategory.lean` packages quantum CPOs and
-Scott-continuous quantum functions as an $\omega$CPO-enriched category.  The
-formalization does not identify that category with the linear category of the
-concrete `Set`--`qRel` adjunction. The published recursive LNL route instead
+Scott-continuous quantum functions as an $\omega$CPO-enriched category.
+`QLambda.Palomar.set_qRel_linear_objects` is the equality
+`quantumLNL.linear.Obj = qRelCategory.Obj`.
+`QLambda.Palomar.qCPO_category_objects` is
+`qCPOCategory.Obj = QuantumCPO`. The formalization does not identify that
+category with the linear category of the concrete `Set`--`qRel` adjunction. The published recursive LNL route instead
 uses the quantum lift monad and its Kleisli category; that construction is not
 yet present here.
 
@@ -496,7 +508,10 @@ $\llbracket\mu\alpha.A\rrbracket$ is the bilimit of its finite unfolding
 chain.  `QLambda/Domain/RecursiveTypes.lean` constructs the carrier of
 compatible approximants and its complete-lattice structure.  Dropping and
 restoring the zeroth approximation define inverse $\omega$-continuous maps,
-packaged as `ProjectionChain.shiftIso`.  It does not yet construct the
+packaged as `ProjectionChain.shiftIso`.
+`QLambda.Palomar.shift_forward_backward` and
+`QLambda.Palomar.shift_backward_forward` are the two inverse equations of
+that shift on an arbitrary `ProjectionChain`.  It does not yet construct the
 source-type functor or connect strict positivity to a concrete unfolding
 chain.
 
@@ -514,7 +529,11 @@ contain allocation, reset, gates, and measurement branches, and specialized
 modules have Yoneda, representable Day tensor, representable internal hom,
 and finite symmetric powers.  First-order source types (unit, bits, qubits,
 and their tensors) have representable objects, and every source primitive
-agrees with its intrinsic superoperator.  The symmetric series has weakening,
+agrees with its intrinsic superoperator
+(`QLambda.Palomar.prim_cp_agreement`, and
+`QLambda.Palomar.cx_cp_agreement` for `cx`).
+`QLambda.Palomar.measure_elim_denotation` equates
+`FragCert.denote closed_measure_new0_cert` with the `measureElim` spine.  The symmetric series has weakening,
 dereliction, contraction, and promotion along finite basis equivalences.
 
 A stronger fragment is now kernel checked for low dimensions.  For every
@@ -710,7 +729,11 @@ in the language semantics but are excluded from this finite compilation
 fragment.
 
 Lean proves successful staging is deterministic and preserves source type,
-resource typing, circuit well-formedness, and allocation bounds.  Regression
+resource typing, circuit well-formedness, and allocation bounds. The compared
+statements are `QLambda.Palomar.staging_deterministic`,
+`QLambda.Palomar.staging_well_formed`, and
+`QLambda.Palomar.staging_compile_agreement`. Solution defines
+`StagingSucceeds` as `Elaborates` and `circuitAgrees` as `CQ.Eq`.  Regression
 examples include Bell preparation, measurement-controlled gates, reset/reuse,
 and higher-order gate composition.
 
@@ -822,7 +845,12 @@ where the ideal semantics is defined.
 
 Rendering produces canonical OpenQASM text.  Parsing accepts exactly the
 declared canonical presentation and proves render/parse round trips under the
-`ParserCanonical` boundary.  This is deliberately not a parser for arbitrary
+`ParserCanonical` boundary.
+`QLambda.Palomar.openqasm_render_roundTrip` is
+`parseStructuredProgram_render_roundTrip`.
+`QLambda.Palomar.openqasm_export_roundTrip` is
+`parseStructuredProgram_toOpenQASM_roundTrip`.
+This is deliberately not a parser for arbitrary
 OpenQASM 3 text.
 
 Circuit denotation is an ideal classical--quantum instrument.  Sequencing is
@@ -925,9 +953,11 @@ blocked by `$\neg$ BangDegreeUnitRectangleHasSum 2`, so glued
 
 ### Palomar compared statements
 
-`comparator.json` selects two theorems. `Challenge.lean` imports only
-Mathlib and restates the supporting syntax; its proofs are the two `sorry`s.
-`Solution.lean` proves the same statements from `QLambda`. The statements are:
+`comparator.json` selects 29 theorems. `Challenge.lean` imports only
+Mathlib. Source syntax is restated. Runtime, relation, presheaf, staging,
+and OpenQASM carriers are definition holes, and every compared proof is
+`sorry`. `Solution.lean` fills those holes with the library constants and
+proves the same statements. The statements are:
 
 ```lean
 theorem source_type_safety {M : Term} {A : Ty} (h : HasType [] [] M A) :
@@ -940,6 +970,103 @@ theorem quotation_capstone
     (C : Command quantumSize classicalSize) (hC : Quotable C) :
     HasType [] [] (Quotation.reflect C hC).term quotationTy ∧
     (Quotation.reflect C hC).compile = C
+
+theorem runtime_born_normalizes {q : Nat} (ρ : RuntimeRegister q) (w : Fin q) :
+    runtimeMeasureProbability ρ w false + runtimeMeasureProbability ρ w true = 1
+
+theorem runtime_internal_preservation {q : Nat} {s s' : RuntimeConfig q} {A : Ty}
+    (ht : runtimeWellTyped s A) (hs : runtimeInternalStep s s') :
+    runtimeWellTyped s' A
+
+theorem runtime_measurement_preservation {q : Nat} {s s' : RuntimeConfig q}
+    {weight : Real} {outcome : Bool} {A : Ty}
+    (ht : runtimeWellTyped s A)
+    (hs : runtimeMeasurementStep s weight outcome s') :
+    runtimeWellTyped s' A
+
+theorem runtime_progress {q : Nat} {s : RuntimeConfig q} {A : Ty}
+    (ht : runtimeWellTyped s A) :
+    runtimeNormal s ∨ runtimeOutOfWires s ∨
+      (∃ s', runtimeInternalStep s s') ∨
+      (∃ weight outcome s', runtimeMeasurementStep s weight outcome s')
+
+theorem quantumRel_assoc {X Y Z W : QuantumSet}
+    (T : QuantumRel Z W) (S : QuantumRel Y Z) (R : QuantumRel X Y) :
+    relComp (relComp T S) R = relComp T (relComp S R)
+
+theorem quantumRel_dagger_comp {X Y Z : QuantumSet}
+    (S : QuantumRel Y Z) (R : QuantumRel X Y) :
+    relDagger (relComp S R) = relComp (relDagger R) (relDagger S)
+
+theorem quantumRel_comp_iSup_left {X Y Z : QuantumSet}
+    (S : Nat → QuantumRel Y Z) (R : QuantumRel X Y) :
+    relComp (relISup S) R = relISup (fun n => relComp (S n) R)
+
+theorem quantumRel_comp_iSup_right {X Y Z : QuantumSet}
+    (S : QuantumRel Y Z) (R : Nat → QuantumRel X Y) :
+    relComp S (relISup R) = relISup (fun n => relComp S (R n))
+
+theorem quantumRel_id_comp {X Y : QuantumSet} (hY : quantumDecEq Y)
+    (R : QuantumRel X Y) :
+    relComp (relId Y hY) R = R
+
+theorem quantumRel_comp_id {X Y : QuantumSet} (hX : quantumDecEq X)
+    (R : QuantumRel X Y) :
+    relComp R (relId X hX) = R
+
+theorem qubit_isQuantumCPO : isQuantumCPO qubitPoset
+
+theorem set_qRel_linear_objects : modelLinearObjects = qRelObjects
+
+theorem qCPO_category_objects : qCPOCategoryObjects = quantumCPOCarrier
+
+theorem shift_forward_backward {C : ProjChain} (x : TailPoint C) :
+    shiftForward (shiftBackward x) = x
+
+theorem shift_backward_forward {C : ProjChain} (x : ChainPoint C) :
+    shiftBackward (shiftForward x) = x
+
+theorem prim_cp_agreement (p : Prim) :
+    primSuperoperator p = primCompletedCP p
+
+theorem cx_cp_agreement : primSuperoperator .cx = primCompletedCP .cx
+
+theorem measure_elim_denotation :
+    denoteClosedMeasureNew0 = measureElimClosedNew0
+
+theorem staging_deterministic {q c fuel : Nat} {M : Term}
+    {P Q : StagingResult q c M}
+    (hP : StagingSucceeds fuel P) (hQ : StagingSucceeds fuel Q) : P = Q
+
+theorem staging_well_formed {q c fuel : Nat} {M : Term}
+    {P : StagingResult q c M} (h : StagingSucceeds fuel P) :
+    stagingWellFormed P
+
+theorem staging_compile_agreement {q c fuel : Nat} {M : Term}
+    {P : StagingResult q c M} (h : StagingSucceeds fuel P)
+    (model : CircuitModel q c) :
+    circuitAgrees (stagedDenotation P model) (compiledDenotation P model)
+
+theorem openqasm_render_roundTrip {q c : Nat} {text : String}
+    {P : OpenQASMProgram q c} (h : parseOpenQASM q c text = some P) :
+    renderOpenQASM P = text
+
+theorem openqasm_export_roundTrip {q c : Nat} {text : String}
+    {P : OpenQASMProgram q c} (hP : openQASMWellFormed P)
+    (h : parseOpenQASM q c text = some P) :
+    exportOpenQASM P hP = text
+
+theorem measured_new0_born_false :
+    runtimeMeasureProbability ketZeroRegister (0 : Fin 1) false = 1
+
+theorem measured_new0_born_true :
+    runtimeMeasureProbability ketZeroRegister (0 : Fin 1) true = 0
+
+theorem measured_new0_within_bound (N : Nat) (hN : 1 ≤ N) :
+    measuredNew0Within N
+
+theorem measure_branch_agrees (b : Bool) :
+    fragmentMeasureBranch b = yonedaMeasureBranch b
 ```
 
 `MakesProgress` is a value, a classical `Step`, or `QuantumBlocked`.
@@ -947,8 +1074,33 @@ theorem quotation_capstone
 linear qubits. The library theorem
 `Command.GeneralQuotation.Quotation.quotation_capstone` adds the conjunct
 `CQ.Eq ((reflect C hC).denote model) (C.denote model)` for a
-`Composer.Model`. That conjunct is kernel-checked and is not part of the
-compared statement.
+`Composer.Model`. That conjunct is kernel-checked and is not part of
+`QLambda.Palomar.quotation_capstone`.
+
+Solution defines the holes as follows. `RuntimeRegister` is
+`RegisterState`, `runtimeMeasureProbability` is
+`RegisterState.measureProbability`, and the configuration, typing, and step
+holes are `Config`, `Config.WellTyped`, `InternalStep`, `MeasurementStep`,
+`Config.Normal`, and `Config.OutOfWires`. `QuantumSet`, `QuantumRel`,
+`relComp`, `relDagger`, and `relId` are the domain quantum-relation
+operations; `relISup` is `iSup`; `qubitPoset` is `QuantumPoset.qubit`;
+`isQuantumCPO` is `IsQuantumCPO`; `modelLinearObjects` is
+`quantumLNL.linear.Obj`; `qRelObjects` is `qRelCategory.Obj`;
+`qCPOCategoryObjects` is `qCPOCategory.Obj`; `quantumCPOCarrier` is
+`QuantumCPO`. `ProjChain` is `ProjectionChain`, with `ChainPoint` its
+bilimit and `TailPoint` the tail bilimit. `primSuperoperator` is
+`(superoperator p).cp.toCompleted` and `primCompletedCP` is `completedCP p`.
+`denoteClosedMeasureNew0` is `FragCert.denote closed_measure_new0_cert`, and
+`measureElimClosedNew0` is the `measureElim` spine in
+`fragment_measured_observable_adequacy`. `StagingSucceeds` is `Elaborates`,
+`stagingWellFormed` is command well-formedness, and `circuitAgrees` is
+`CQ.Eq` of `denoteBlock` on the compiled block and `command.denote`.
+`parseOpenQASM` is `parseStructuredProgram` for the declared IBM Composer
+OpenQASM 3 version. `ketZeroRegister` is `registerKetZero`,
+`measuredNew0Within` is `UsesAtMostQubits` of `measureNew0Program`, and the
+branch holes are `routeAFragmentModel.measureBranch` and
+`measureBranchYoneda`. The Born and bound facts are the corresponding
+conjuncts of `fragment_measured_observable_adequacy`.
 
 ### 9.1 Claim-surface dependence
 
@@ -967,10 +1119,12 @@ flowchart LR
   Cover --> OQ
 ```
 
-**Figure.** Section~9 claim-surface dependence. The Comparator selects
-`QLambda.Palomar.source_type_safety` and
-`QLambda.Palomar.quotation_capstone`. The $N$-bounded packaging theorems in
-the same figure are kernel-checked library results and are not compared.
+**Figure.** Section~9 claim-surface dependence. The Comparator selects the
+29 `QLambda.Palomar` theorems in `comparator.json`, including source type
+safety, quotation typing and compile reflection, measured-`new0` Born
+masses, the `measureElim` equation, and the OpenQASM round trips.
+`n_qubit_fragment_denotation_openqasm_interface` remains a library packaging
+theorem and is not compared.
 
 <!-- blueprints:sec9 -->
 

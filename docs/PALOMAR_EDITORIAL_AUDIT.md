@@ -65,16 +65,16 @@ minutes wall time per run.
 
 Before enabling LLM editorial on a submission candidate, confirm:
 
-1. **Research interest** — the compared theorems are
-   `QLambda.Palomar.source_type_safety` and
-   `QLambda.Palomar.quotation_capstone`, and `arxiv.md` states those same
-   types. The library theorem
+1. **Research interest** — the compared theorems are the 29
+   `QLambda.Palomar` names in `comparator.json`, and `arxiv.md` states those
+   same types. The library theorem
    `Command.GeneralQuotation.Quotation.quotation_capstone` adds ideal CQ
    equality and is not the compared statement.
-2. **Definition pinning** — every material symbol in each compared theorem type
-   is defined concretely in `Challenge.lean`. `definition_names` is empty.
-   Comparator compares those concrete values with the Solution elaboration,
-   including definitions reached only transitively.
+2. **Definition pinning** — source syntax is defined concretely in
+   `Challenge.lean`. Runtime, relation, presheaf, staging, and OpenQASM
+   carriers are `definition_names` holes. Comparator compares every other
+   concrete value with the Solution elaboration, including definitions
+   reached only transitively.
 3. **Metadata sync** — `formalization.yaml` `status.scope`, `main_results`,
    `limitations`, and `alignment` match `comparator.json` and Challenge/Solution.
 4. **Sources** — `formalization.yaml` `sources:` records the primary paper and

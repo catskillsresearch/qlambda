@@ -409,21 +409,49 @@ evaluation in addition to the kernel.
 
 ## Palomar capstones
 
-`Solution.lean` proves:
+`Solution.lean` proves the compared statements. Definition holes in
+`Challenge.lean` are the carriers; their Solution values are the library
+constants named in `arxiv.md`.
 
-- `QLambda.Palomar.source_type_safety`: closed-program progress, preservation
-  under classical and measurement steps, and determinism of classical steps;
-- `QLambda.Palomar.quotation_capstone`: every supported two-wire `Quotable`
-  command has a typed canonical quotation whose compilation is the command.
+- `QLambda.Palomar.source_type_safety`
+- `QLambda.Palomar.quotation_capstone`
+- `QLambda.Palomar.runtime_born_normalizes`
+- `QLambda.Palomar.runtime_internal_preservation`
+- `QLambda.Palomar.runtime_measurement_preservation`
+- `QLambda.Palomar.runtime_progress`
+- `QLambda.Palomar.quantumRel_assoc`
+- `QLambda.Palomar.quantumRel_dagger_comp`
+- `QLambda.Palomar.quantumRel_comp_iSup_left`
+- `QLambda.Palomar.quantumRel_comp_iSup_right`
+- `QLambda.Palomar.quantumRel_id_comp`
+- `QLambda.Palomar.quantumRel_comp_id`
+- `QLambda.Palomar.qubit_isQuantumCPO`
+- `QLambda.Palomar.set_qRel_linear_objects`
+- `QLambda.Palomar.qCPO_category_objects`
+- `QLambda.Palomar.shift_forward_backward`
+- `QLambda.Palomar.shift_backward_forward`
+- `QLambda.Palomar.prim_cp_agreement`
+- `QLambda.Palomar.cx_cp_agreement`
+- `QLambda.Palomar.measure_elim_denotation`
+- `QLambda.Palomar.staging_deterministic`
+- `QLambda.Palomar.staging_well_formed`
+- `QLambda.Palomar.staging_compile_agreement`
+- `QLambda.Palomar.openqasm_render_roundTrip`
+- `QLambda.Palomar.openqasm_export_roundTrip`
+- `QLambda.Palomar.measured_new0_born_false`
+- `QLambda.Palomar.measured_new0_born_true`
+- `QLambda.Palomar.measured_new0_within_bound`
+- `QLambda.Palomar.measure_branch_agrees`
 
-Next comparator expansion (checked in-tree, not yet compared): full CQ
-`quotation_capstone`, `n_qubit_fragment_denotation_openqasm_interface`, and
-`fragment_measured_observable_adequacy`.
+`QLambda.Palomar.quotation_capstone` is typing and compile reflection. The
+library theorem `Quotation.quotation_capstone` adds ideal CQ equality and is
+not compared. `n_qubit_fragment_denotation_openqasm_interface` remains a
+library packaging theorem and is not compared.
 
-`Challenge.lean` imports only Mathlib and contains the matching statement
-holes by convention. The categorical existence results `quantumLNL` and
-`qCPOCategory` are not on the compared surface: `Nonempty` of either bundled
-structure is also witnessed by a one-object model with singleton homs.
+`Challenge.lean` imports only Mathlib. Theorem and definition holes follow
+the Palomar convention. `set_qRel_linear_objects` and
+`qCPO_category_objects` compare the object types of `quantumLNL.linear`,
+`qRelCategory`, and `qCPOCategory`; they are not `Nonempty` claims.
 
 ## Unmet semantic objectives
 

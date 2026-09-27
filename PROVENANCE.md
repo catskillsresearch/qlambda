@@ -54,13 +54,40 @@ proof authority.
 
 `comparator.json` selects:
 
-- `QLambda.Palomar.source_type_safety`;
-- `QLambda.Palomar.quotation_capstone`.
+- `QLambda.Palomar.source_type_safety`
+- `QLambda.Palomar.quotation_capstone`
+- `QLambda.Palomar.runtime_born_normalizes`
+- `QLambda.Palomar.runtime_internal_preservation`
+- `QLambda.Palomar.runtime_measurement_preservation`
+- `QLambda.Palomar.runtime_progress`
+- `QLambda.Palomar.quantumRel_assoc`
+- `QLambda.Palomar.quantumRel_dagger_comp`
+- `QLambda.Palomar.quantumRel_comp_iSup_left`
+- `QLambda.Palomar.quantumRel_comp_iSup_right`
+- `QLambda.Palomar.quantumRel_id_comp`
+- `QLambda.Palomar.quantumRel_comp_id`
+- `QLambda.Palomar.qubit_isQuantumCPO`
+- `QLambda.Palomar.set_qRel_linear_objects`
+- `QLambda.Palomar.qCPO_category_objects`
+- `QLambda.Palomar.shift_forward_backward`
+- `QLambda.Palomar.shift_backward_forward`
+- `QLambda.Palomar.prim_cp_agreement`
+- `QLambda.Palomar.cx_cp_agreement`
+- `QLambda.Palomar.measure_elim_denotation`
+- `QLambda.Palomar.staging_deterministic`
+- `QLambda.Palomar.staging_well_formed`
+- `QLambda.Palomar.staging_compile_agreement`
+- `QLambda.Palomar.openqasm_render_roundTrip`
+- `QLambda.Palomar.openqasm_export_roundTrip`
+- `QLambda.Palomar.measured_new0_born_false`
+- `QLambda.Palomar.measured_new0_born_true`
+- `QLambda.Palomar.measured_new0_within_bound`
+- `QLambda.Palomar.measure_branch_agrees`
 
 `Challenge.lean` imports only Mathlib. It restates the source syntax, typing,
-reduction, circuit normal form, and two-wire quotation verbatim and states
-these results with explicit holes under the Palomar convention.
+reduction, circuit normal form, and two-wire quotation verbatim. The runtime,
+relation, presheaf, staging, and OpenQASM carriers are definition holes.
 `QLambda.Palomar.quotation_capstone` is typing plus compile reflection.
 `Command.GeneralQuotation.Quotation.quotation_capstone` adds ideal CQ
 equality and is kernel-checked in the library, not selected.
-`Solution.lean` proves the same compared statements from `QLambda` without `sorry`.
+`Solution.lean` proves the compared statements from `QLambda` without `sorry`.

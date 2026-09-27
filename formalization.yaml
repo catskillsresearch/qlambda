@@ -24,22 +24,24 @@ classification:
 
 status:
   scope: >-
-    The compared surface contains two declarations over a Mathlib-only
-    Challenge that restates the source syntax, typing judgment,
-    call-by-value reduction, circuit normal form, and canonical quotation.
-    First, type safety for closed programs of the typed linear quantum
-    lambda-calculus: progress to a value, a classical step, or a quantum
-    primitive boundary; determinism of classical steps; and preservation of
-    the type by classical and measurement steps. Second, the two-wire
-    quotation_capstone (typing + exact compile reflection) for every Quotable
-    command in the supported two-qubit/one-bit fragment. Full CQ agreement is
-    proved in-tree as GeneralQuotation.Quotation.quotation_capstone and staged
-    for a later comparator expansion. N-bounded fragment denotation packaging
-    and measured new0 Born adequacy are likewise checked in-tree and staged
-    for comparator expansion. The Set-to-qRel LNL model and the qCPO category
-    are checked in the development but are not compared.
-  sorry_count: 2
-  sorry_in_definitions: 0
+    The compared surface contains 29 compared theorems over a Mathlib-only
+    Challenge. It restates the source syntax, typing judgment, call-by-value
+    reduction, circuit normal form, and canonical quotation, and leaves the
+    runtime, quantum-relation, presheaf, staging, and OpenQASM carriers as
+    definition holes whose Solution values are the library constants.
+    The theorems are closed source type safety; two-wire quotation typing
+    and compile reflection; finite-runtime preservation, progress, and Born
+    normalization; quantum-relation associativity, dagger, identity, and
+    countable-join continuity; the discrete qubit qCPO; identity of the
+    Set-to-qRel linear objects with qRelCategory and of qCPOCategory objects
+    with QuantumCPO; projection-chain shift inverses; primitive and cx
+    completed-CP agreement; the closed measure-new0 measureElim equation;
+    deterministic well-formed staging with CQ compile agreement; OpenQASM
+    render and export round trips; and measured-new0 qubit bound, Born
+    masses, and Yoneda branch agreement. Full CQ quotation agreement remains
+    the library theorem GeneralQuotation.Quotation.quotation_capstone.
+  sorry_count: 80
+  sorry_in_definitions: 51
   axioms: ["propext", "Quot.sound", "Classical.choice"]
   main_results:
     - declaration: "QLambda.Palomar.source_type_safety"
@@ -54,7 +56,168 @@ status:
       axioms: ["propext", "Quot.sound", "Classical.choice"]
       comparator_config: "comparator.json"
       literature_dependencies: []
-
+    - declaration: "QLambda.Palomar.runtime_born_normalizes"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.runtime_internal_preservation"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.runtime_measurement_preservation"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.runtime_progress"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.quantumRel_assoc"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.quantumRel_dagger_comp"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.quantumRel_comp_iSup_left"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.quantumRel_comp_iSup_right"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.quantumRel_id_comp"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.quantumRel_comp_id"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.qubit_isQuantumCPO"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.set_qRel_linear_objects"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.qCPO_category_objects"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.shift_forward_backward"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.shift_backward_forward"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.prim_cp_agreement"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.cx_cp_agreement"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.measure_elim_denotation"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.staging_deterministic"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.staging_well_formed"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.staging_compile_agreement"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.openqasm_render_roundTrip"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.openqasm_export_roundTrip"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.measured_new0_born_false"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.measured_new0_born_true"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.measured_new0_within_bound"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "QLambda.Palomar.measure_branch_agrees"
+      file: "Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Quot.sound", "Classical.choice"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
 fidelity:
   divergences: >-
     Composer/OpenQASM is a finite ideal interchange target, not the semantic
@@ -125,17 +288,20 @@ known_gaps:
   - "No theorem models calibration, noise, transpilation, or a physical backend."
 
 limitations:
-  - >-
-    Challenge.lean intentionally contains theorem holes under the Palomar
-    convention; Solution.lean proves the matching statements without sorry.
+    - >-
+    Challenge.lean contains 29 theorem holes and 51 definition holes under
+    the Palomar convention. Solution.lean proves the theorems and supplies
+    the library values of the definition holes without sorry.
   - >-
     Circuit completeness means canonical representability of supported
     well-formed circuits, not exact synthesis of every unitary.
-  - >-
+    - >-
     Source type safety is for the classical call-by-value relation.
     Applications of quantum primitives and measurements are a declared
-    boundary (QuantumBlocked) handled by staging or the register machine,
-    whose separate progress and preservation theorems are not compared.
+    boundary (QuantumBlocked). The finite register machine's preservation,
+    progress, and Born normalization are compared separately as
+    runtime_internal_preservation, runtime_measurement_preservation,
+    runtime_progress, and runtime_born_normalizes.
   - >-
     The formalization does not claim full abstraction or unrestricted
     computational adequacy for arbitrary recursive programs.
@@ -145,9 +311,117 @@ alignment:
   statements:
     - source: "Closed well-typed programs make progress, classical reduction is deterministic, and classical and measurement steps preserve types"
       lean: "source_type_safety"
-      module: "Challenge (statement), Solution / QLambda.Linear.Operational (proof)"
+      module: "Challenge (statement), Solution (proof)"
       status: proved
     - source: "Every supported two-wire Quotable command has a typed canonical quotation whose compile is the command"
       lean: "quotation_capstone"
-      module: "Challenge (statement), Solution / QLambda.Linear.QuotationGeneral (proof)"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "The two Born weights of one register wire sum to 1"
+      lean: "runtime_born_normalizes"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Internal register steps preserve the runtime type"
+      lean: "runtime_internal_preservation"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Measurement register steps preserve the runtime type"
+      lean: "runtime_measurement_preservation"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "A well-typed finite runtime is normal, out of wires, or takes an internal or measurement step"
+      lean: "runtime_progress"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Quantum-relation composition is associative"
+      lean: "quantumRel_assoc"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Dagger reverses quantum-relation composition"
+      lean: "quantumRel_dagger_comp"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Quantum-relation composition preserves countable joins on the left"
+      lean: "quantumRel_comp_iSup_left"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Quantum-relation composition preserves countable joins on the right"
+      lean: "quantumRel_comp_iSup_right"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Left identity for quantum relations when codomain atoms are decidable"
+      lean: "quantumRel_id_comp"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Right identity for quantum relations when domain atoms are decidable"
+      lean: "quantumRel_comp_id"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "The discrete qubit quantum poset is a quantum CPO"
+      lean: "qubit_isQuantumCPO"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "The linear objects of quantumLNL are the objects of qRelCategory"
+      lean: "set_qRel_linear_objects"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "The objects of qCPOCategory are quantum CPOs"
+      lean: "qCPO_category_objects"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "shiftForward is a left inverse of shiftBackward on every projection chain"
+      lean: "shift_forward_backward"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "shiftBackward is a left inverse of shiftForward on every projection chain"
+      lean: "shift_backward_forward"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Every primitive superoperator equals its completed CP map"
+      lean: "prim_cp_agreement"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "The cx primitive superoperator equals its completed CP map"
+      lean: "cx_cp_agreement"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "FragCert.denote of closed measure-new0 equals the measureElim spine"
+      lean: "measure_elim_denotation"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Successful elaboration is deterministic"
+      lean: "staging_deterministic"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Successful elaboration produces a well-formed command"
+      lean: "staging_well_formed"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "The staged command and its compiled block agree in CQ.Eq"
+      lean: "staging_compile_agreement"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "A successful structured OpenQASM parse renders to the same text"
+      lean: "openqasm_render_roundTrip"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "A successful structured OpenQASM parse exports through toOpenQASM to the same text"
+      lean: "openqasm_export_roundTrip"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Measuring register ket zero on the false branch has Born weight 1"
+      lean: "measured_new0_born_false"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Measuring register ket zero on the true branch has Born weight 0"
+      lean: "measured_new0_born_true"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "The measured new0 program uses at most N qubits whenever N is at least 1"
+      lean: "measured_new0_within_bound"
+      module: "Challenge (statement), Solution (proof)"
+      status: proved
+    - source: "Fragment measurement branches equal the Yoneda measurement branches"
+      lean: "measure_branch_agrees"
+      module: "Challenge (statement), Solution (proof)"
       status: proved

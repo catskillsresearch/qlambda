@@ -2,9 +2,9 @@
 
 Palomar compares elaborated Lean constants, not merely mathematical
 equivalence or pretty-printed declaration types. This repository's
-`definition_names` list is empty. The compared holes are the two theorem
-`sorry`s in `Challenge.lean`: `QLambda.Palomar.source_type_safety` and
-`QLambda.Palomar.quotation_capstone`. Comparator still compares every concrete
+`definition_names` lists the runtime, relation, presheaf, staging, and
+OpenQASM carriers. Theorem holes and those definition holes are the `sorry`s
+in `Challenge.lean`. Comparator still compares every concrete
 definition reachable from those theorems, including universe names and
 typeclass-instance paths inside the body. A matching parent body is
 insufficient when it refers to a named child definition whose value differs.
@@ -21,8 +21,8 @@ scripts/palomar_preflight.sh
   levels; pretty-printer-generated `u_1`/`u_3` labels are presentation noise.
 - Keep instance paths explicit where elaboration could choose different
   equivalent instances.
-- A `theorem_names` entry must be a theorem. This repository does not put
-  definition holes in `definition_names`.
+- A `theorem_names` entry must be a theorem. Definition holes used by those
+  theorems are listed in `definition_names`.
 - Keep concrete Challenge and Solution definition bodies structurally
   identical, including definitions reached transitively from a compared
   theorem. Do not rely on proof irrelevance to make values compare.
@@ -41,8 +41,9 @@ The preflight must confirm:
 1. the full project builds;
 2. compared theorem names, universe parameters, types, and transitively
    locked definition values match;
-3. the two Challenge theorem holes are the only `sorry`s, and
-   `formalization.yaml` records `sorry_count: 2`;
+3. Challenge `sorry`s are the compared theorem and definition holes, and
+   `formalization.yaml` records `sorry_count: 80` and
+   `sorry_in_definitions: 51`;
 4. Solution sources contain no `sorry`;
 5. Solution theorem axioms are permitted by `comparator.json`; and
 6. the patch has no whitespace errors.

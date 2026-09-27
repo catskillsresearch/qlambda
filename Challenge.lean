@@ -3,7 +3,7 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import Mathlib.Data.Rat.Defs
+import Mathlib.Basic.Real.Basic
 
 /-!
 # Palomar statement surface for the typed linear quantum λ-calculus
@@ -11,8 +11,9 @@ import Mathlib.Data.Rat.Defs
 This file depends only on Mathlib. It restates the source syntax, typing
 judgment, call-by-value reduction, the finite circuit normal form, and the
 canonical two-wire quotation exactly as they are defined in the `QLambda`
-development, and states the two capstone theorems as holes. `Solution.lean`
-proves the same statements from the development.
+development, and states the compared theorems as holes. The runtime,
+relation, presheaf, staging, and OpenQASM carriers are definition holes.
+`Solution.lean` proves the same statements from the development.
 
 * `source_type_safety`: a closed well-typed term is a value, takes a
   classical step, or is blocked at a quantum primitive; classical steps are
@@ -717,6 +718,235 @@ theorem quotation_capstone
     (C : Command quantumSize classicalSize) (hC : Quotable C) :
     HasType [] [] (Quotation.reflect C hC).term quotationTy ∧
     (Quotation.reflect C hC).compile = C := by
+  sorry
+
+/-! ## Section 3: finite runtime -/
+
+noncomputable def RuntimeRegister (q : Nat) : Type := sorry
+noncomputable def runtimeMeasureProbability {q : Nat}
+    (ρ : RuntimeRegister q) (w : Fin q) (b : Bool) : Real := sorry
+noncomputable def RuntimeConfig (q : Nat) : Type := sorry
+def runtimeWellTyped {q : Nat} (s : RuntimeConfig q) (A : Ty) : Prop := sorry
+def runtimeInternalStep {q : Nat} (s s' : RuntimeConfig q) : Prop := sorry
+def runtimeMeasurementStep {q : Nat} (s : RuntimeConfig q) (weight : Real)
+    (outcome : Bool) (s' : RuntimeConfig q) : Prop := sorry
+def runtimeNormal {q : Nat} (s : RuntimeConfig q) : Prop := sorry
+def runtimeOutOfWires {q : Nat} (s : RuntimeConfig q) : Prop := sorry
+
+/-- `RegisterState.measureProbability_false_add_true`. -/
+theorem runtime_born_normalizes {q : Nat} (ρ : RuntimeRegister q) (w : Fin q) :
+    runtimeMeasureProbability ρ w false + runtimeMeasureProbability ρ w true = 1 := by
+  sorry
+
+/-- `Runtime.internal_preservation`. -/
+theorem runtime_internal_preservation {q : Nat} {s s' : RuntimeConfig q} {A : Ty}
+    (ht : runtimeWellTyped s A) (hs : runtimeInternalStep s s') :
+    runtimeWellTyped s' A := by
+  sorry
+
+/-- `Runtime.measurement_preservation`. -/
+theorem runtime_measurement_preservation {q : Nat} {s s' : RuntimeConfig q}
+    {weight : Real} {outcome : Bool} {A : Ty}
+    (ht : runtimeWellTyped s A)
+    (hs : runtimeMeasurementStep s weight outcome s') :
+    runtimeWellTyped s' A := by
+  sorry
+
+/-- `Runtime.progress`. -/
+theorem runtime_progress {q : Nat} {s : RuntimeConfig q} {A : Ty}
+    (ht : runtimeWellTyped s A) :
+    runtimeNormal s ∨ runtimeOutOfWires s ∨
+      (∃ s', runtimeInternalStep s s') ∨
+      (∃ weight outcome s', runtimeMeasurementStep s weight outcome s') := by
+  sorry
+
+/-! ## Section 4: quantum relations, qCPOs, `Set ⊣ qRel` -/
+
+noncomputable def QuantumSet : Type 1 := sorry
+noncomputable def QuantumRel (X Y : QuantumSet) : Type := sorry
+noncomputable def relComp {X Y Z : QuantumSet}
+    (S : QuantumRel Y Z) (R : QuantumRel X Y) : QuantumRel X Z := sorry
+noncomputable def relDagger {X Y : QuantumSet}
+    (R : QuantumRel X Y) : QuantumRel Y X := sorry
+noncomputable def relISup {X Y : QuantumSet}
+    (S : Nat → QuantumRel X Y) : QuantumRel X Y := sorry
+def quantumDecEq (X : QuantumSet) : Type := sorry
+noncomputable def relId (X : QuantumSet) (_h : quantumDecEq X) : QuantumRel X X := sorry
+noncomputable def QuantumPoset : Type 1 := sorry
+noncomputable def qubitPoset : QuantumPoset := sorry
+def isQuantumCPO (P : QuantumPoset) : Prop := sorry
+noncomputable def modelLinearObjects : Type 1 := sorry
+noncomputable def qRelObjects : Type 1 := sorry
+noncomputable def qCPOCategoryObjects : Type 1 := sorry
+noncomputable def quantumCPOCarrier : Type 1 := sorry
+
+/-- `(T ∘ S) ∘ R = T ∘ (S ∘ R)`. -/
+theorem quantumRel_assoc {X Y Z W : QuantumSet}
+    (T : QuantumRel Z W) (S : QuantumRel Y Z) (R : QuantumRel X Y) :
+    relComp (relComp T S) R = relComp T (relComp S R) := by
+  sorry
+
+/-- `(S ∘ R)† = R† ∘ S†`. -/
+theorem quantumRel_dagger_comp {X Y Z : QuantumSet}
+    (S : QuantumRel Y Z) (R : QuantumRel X Y) :
+    relDagger (relComp S R) = relComp (relDagger R) (relDagger S) := by
+  sorry
+
+/-- `(⨆ S) ∘ R = ⨆ (S ∘ R)`. -/
+theorem quantumRel_comp_iSup_left {X Y Z : QuantumSet}
+    (S : Nat → QuantumRel Y Z) (R : QuantumRel X Y) :
+    relComp (relISup S) R = relISup (fun n => relComp (S n) R) := by
+  sorry
+
+/-- `S ∘ (⨆ R) = ⨆ (S ∘ R)`. -/
+theorem quantumRel_comp_iSup_right {X Y Z : QuantumSet}
+    (S : QuantumRel Y Z) (R : Nat → QuantumRel X Y) :
+    relComp S (relISup R) = relISup (fun n => relComp S (R n)) := by
+  sorry
+
+/-- `1 ∘ R = R`, when the codomain atoms are decidable. -/
+theorem quantumRel_id_comp {X Y : QuantumSet} (hY : quantumDecEq Y)
+    (R : QuantumRel X Y) :
+    relComp (relId Y hY) R = R := by
+  sorry
+
+/-- `R ∘ 1 = R`, when the domain atoms are decidable. -/
+theorem quantumRel_comp_id {X Y : QuantumSet} (hX : quantumDecEq X)
+    (R : QuantumRel X Y) :
+    relComp R (relId X hX) = R := by
+  sorry
+
+/-- The discrete qubit is a quantum CPO. -/
+theorem qubit_isQuantumCPO : isQuantumCPO qubitPoset := by
+  sorry
+
+/-- `quantumLNL.linear` is `qRelCategory`. -/
+theorem set_qRel_linear_objects : modelLinearObjects = qRelObjects := by
+  sorry
+
+/-- Objects of `qCPOCategory` are quantum CPOs. -/
+theorem qCPO_category_objects : qCPOCategoryObjects = quantumCPOCarrier := by
+  sorry
+
+/-! ## Section 5: presheaf denotation and recursive-type shift -/
+
+noncomputable def ProjChain : Type 1 := sorry
+noncomputable def ChainPoint (C : ProjChain) : Type := sorry
+noncomputable def TailPoint (C : ProjChain) : Type := sorry
+noncomputable def shiftForward {C : ProjChain} (x : ChainPoint C) : TailPoint C := sorry
+noncomputable def shiftBackward {C : ProjChain} (x : TailPoint C) : ChainPoint C := sorry
+def PrimCP (p : Prim) : Type := sorry
+noncomputable def primSuperoperator (p : Prim) : PrimCP p := sorry
+noncomputable def primCompletedCP (p : Prim) : PrimCP p := sorry
+def FragmentHom : Type := sorry
+def MeasureBranchHom : Type := sorry
+noncomputable def denoteClosedMeasureNew0 : FragmentHom := sorry
+noncomputable def measureElimClosedNew0 : FragmentHom := sorry
+
+/-- `shiftForward ∘ shiftBackward = id` on every projection chain. -/
+theorem shift_forward_backward {C : ProjChain} (x : TailPoint C) :
+    shiftForward (shiftBackward x) = x := by
+  sorry
+
+/-- `shiftBackward ∘ shiftForward = id` on every projection chain. -/
+theorem shift_backward_forward {C : ProjChain} (x : ChainPoint C) :
+    shiftBackward (shiftForward x) = x := by
+  sorry
+
+/-- Every primitive, including `cx`, has the same completed CP map as its superoperator. -/
+theorem prim_cp_agreement (p : Prim) :
+    primSuperoperator p = primCompletedCP p := by
+  sorry
+
+/-- `cx` agrees with its completed CP map. -/
+theorem cx_cp_agreement : primSuperoperator .cx = primCompletedCP .cx := by
+  sorry
+
+/-- `FragCert.denote` of closed measure-`new0` equals the `measureElim` spine. -/
+theorem measure_elim_denotation :
+    denoteClosedMeasureNew0 = measureElimClosedNew0 := by
+  sorry
+
+/-! ## Section 6: staging -/
+
+def StagingResult (q c : Nat) (M : Term) : Type := sorry
+def StagingSucceeds (fuel : Nat) {q c : Nat} {M : Term}
+    (P : StagingResult q c M) : Prop := sorry
+def stagingWellFormed {q c : Nat} {M : Term}
+    (P : StagingResult q c M) : Prop := sorry
+def CircuitModel (q c : Nat) : Type := sorry
+def CircuitSem (q c : Nat) : Type 1 := sorry
+noncomputable def stagedDenotation {q c : Nat} {M : Term}
+    (P : StagingResult q c M) (model : CircuitModel q c) : CircuitSem q c := sorry
+noncomputable def compiledDenotation {q c : Nat} {M : Term}
+    (P : StagingResult q c M) (model : CircuitModel q c) : CircuitSem q c := sorry
+def circuitAgrees {q c : Nat} (a b : CircuitSem q c) : Prop := sorry
+
+/-- `elaborates_deterministic`. -/
+theorem staging_deterministic {q c fuel : Nat} {M : Term}
+    {P Q : StagingResult q c M}
+    (hP : StagingSucceeds fuel P) (hQ : StagingSucceeds fuel Q) : P = Q := by
+  sorry
+
+/-- `elaborates_command_wellFormed`. -/
+theorem staging_well_formed {q c fuel : Nat} {M : Term}
+    {P : StagingResult q c M} (h : StagingSucceeds fuel P) :
+    stagingWellFormed P := by
+  sorry
+
+/-- `elaborates_compile_agreement`: staged command and compiled block agree. -/
+theorem staging_compile_agreement {q c fuel : Nat} {M : Term}
+    {P : StagingResult q c M} (h : StagingSucceeds fuel P)
+    (model : CircuitModel q c) :
+    circuitAgrees (stagedDenotation P model) (compiledDenotation P model) := by
+  sorry
+
+/-! ## Section 8: OpenQASM -/
+
+def OpenQASMProgram (q c : Nat) : Type := sorry
+def parseOpenQASM (q c : Nat) (text : String) : Option (OpenQASMProgram q c) := sorry
+def renderOpenQASM {q c : Nat} (P : OpenQASMProgram q c) : String := sorry
+def openQASMWellFormed {q c : Nat} (P : OpenQASMProgram q c) : Prop := sorry
+def exportOpenQASM {q c : Nat} (P : OpenQASMProgram q c)
+    (h : openQASMWellFormed P) : String := sorry
+
+/-- Successful parse renders back to the same text. -/
+theorem openqasm_render_roundTrip {q c : Nat} {text : String}
+    {P : OpenQASMProgram q c} (h : parseOpenQASM q c text = some P) :
+    renderOpenQASM P = text := by
+  sorry
+
+/-- Successful parse exports through `toOpenQASM` to the same text. -/
+theorem openqasm_export_roundTrip {q c : Nat} {text : String}
+    {P : OpenQASMProgram q c} (hP : openQASMWellFormed P)
+    (h : parseOpenQASM q c text = some P) :
+    exportOpenQASM P hP = text := by
+  sorry
+
+/-! ## Section 9: fragment adequacy -/
+
+noncomputable def ketZeroRegister : RuntimeRegister 1 := sorry
+def measuredNew0Within (N : Nat) : Prop := sorry
+noncomputable def fragmentMeasureBranch (b : Bool) : MeasureBranchHom := sorry
+noncomputable def yonedaMeasureBranch (b : Bool) : MeasureBranchHom := sorry
+
+/-- Measured `new0` in `|0⟩` has Born weight 1 on false and 0 on true. -/
+theorem measured_new0_born_false :
+    runtimeMeasureProbability ketZeroRegister (0 : Fin 1) false = 1 := by
+  sorry
+
+theorem measured_new0_born_true :
+    runtimeMeasureProbability ketZeroRegister (0 : Fin 1) true = 0 := by
+  sorry
+
+/-- The measured `new0` program uses at most `N` qubits for every `N ≥ 1`. -/
+theorem measured_new0_within_bound (N : Nat) (hN : 1 ≤ N) :
+    measuredNew0Within N := by
+  sorry
+
+/-- Fragment measurement branches are the Yoneda branches. -/
+theorem measure_branch_agrees (b : Bool) :
+    fragmentMeasureBranch b = yonedaMeasureBranch b := by
   sorry
 
 end QLambda.Palomar

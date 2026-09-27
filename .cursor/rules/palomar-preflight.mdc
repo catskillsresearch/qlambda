@@ -9,17 +9,17 @@ alwaysApply: false
 - Read `docs/PALOMAR_STYLE.md` before changing compared declarations.
 - Read `docs/PALOMAR_EDITORIAL_AUDIT.md` before submission packaging changes.
 - Pin explicit universe arity and make unstable instance paths explicit.
-- `definition_names` is empty. The holes are the two theorem `sorry`s in
-  `Challenge.lean`. Comparator still walks every concrete definition reachable
-  from a compared theorem and requires those values to match Solution, even
-  when the child is not listed in `comparator.json`.
+- `definition_names` lists the compared carrier holes. Comparator walks every
+  other concrete definition reachable from a compared theorem and requires
+  those values to match Solution.
 - Keep `arxiv.md` on the same statements as `Challenge.lean`. The reviewer
   reads the paper with the code. Name `QLambda.Palomar.quotation_capstone`
   for typing and compile reflection, and
   `Quotation.quotation_capstone` for the library theorem that also has CQ
   equality. Do not cite a declaration the repository does not contain.
-- Every material symbol in a compared theorem type must be defined without
-  `sorry` in `Challenge.lean`.
+- A compared theorem may mention a `sorry` definition only when that
+  definition is listed in `definition_names`. Every other symbol in the
+  theorem type is defined without `sorry` in `Challenge.lean`.
 - Keep `formalization.yaml` aligned with `comparator.json` (`main_results`,
   scope, limitations, sources) and with the Lean pin in `lean-toolchain`.
 - Challenge may contain proof holes; Solution and `QLambda/**/*.lean` may not.
