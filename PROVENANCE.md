@@ -33,9 +33,9 @@ adjunction, the Scott-function qCPO category, continuous projection-chain
 shift isomorphisms, deterministic staging, canonical two-wire lambda
 quotation, and structured OpenQASM round trips.
 
-These are claimed as novel formal proofs. Mathematical priority is asserted
-only where `arxiv.md` says “to our knowledge” and is limited by the documented
-literature search.
+These are Lean proofs of the selected representation. No priority among
+formalizations is claimed; a search for other proof-assistant formalizations
+has not been completed.
 
 The checked `Set ⊣ qRel` declaration is not identified with the published
 lifted-qCPO recursive model. See `docs/QCPO_LNL_DESIGN.md`.

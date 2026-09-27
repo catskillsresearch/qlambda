@@ -89,14 +89,15 @@ broader search exist:
   structured Composer/OpenQASM fragment and to an instantiated higher-order
   source denotation.
 
-If none survives the search, the abstract should say “new formal proofs” and
-“first mechanized integration,” not “new mathematical theorem.”
+Until that search is recorded, the abstract must not use priority language
+such as “first,” “to our knowledge,” or “new mathematical theorem.”
 
 ## Wording rule
 
-Use “to our knowledge” for priority language.  Never infer novelty merely from
-an omitted proof: *Quantum CPOs* explicitly says that most proofs were omitted
-for space, while still stating the categorical theorems.
+Do not use first-of-kind wording, including “to our knowledge,” until a
+proof-assistant search is recorded in this file. Never infer novelty merely
+from an omitted proof: *Quantum CPOs* explicitly says that most proofs were
+omitted for space, while still stating the categorical theorems.
 
 General state preparation, reset, and arbitrary CP instruments are not Weaver
 quantum functions. Their integration with the published qCPO LNL model is not

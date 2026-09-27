@@ -30,13 +30,10 @@ two-wire circuit completeness.  Full-language bang/LNL, recursive-type
 denotation, higher-order adequacy, and full abstraction remain objectives
 behind AmbientCP Day-bang glue.
 
-The mechanization gives new Lean proofs of quantum-relation complete-hom
+The mechanization contains Lean proofs of quantum-relation complete-hom
 lattices, bilateral join-continuity of composition, dagger reversal, quantum
-function composition, and discrete qCPO completeness.  To our knowledge this
-is the first machine-checked compact-closed $\mathsf{Set}\leftrightarrows
-\mathsf{qRel}$ adjunction in this representation, and the first certified
-typed lambda quotation theorem for the declared two-wire Composer fragment;
-priority wording is limited by the literature audit below.  Sources:
+function composition, and discrete qCPO completeness.  No priority among
+formalizations is claimed.  Sources:
 https://github.com/catskillsresearch/qlambda.
 
 ---
@@ -1142,12 +1139,11 @@ full-abstraction results.
 Those works are the semantic foundation and prove stronger paper-level
 results than claimed here: complete relation homs, arbitrary-join-preserving
 composition, dagger compactness, quantum-function order, qCPO enrichment, and
-the lifted recursive LNL model all have explicit literature support. Our
-novelty claim is therefore limited to Lean formalization of the selected
-representation and its integration with the typed source and finite circuit
-pipeline. We list exact declarations. Absence of another proof-assistant
-implementation from the sources checked is not itself a mathematical priority
-proof.
+the lifted recursive LNL model all have explicit literature support. This
+paper records Lean proofs of the selected representation and its integration
+with the typed source and finite circuit pipeline. A search for other
+proof-assistant formalizations has not been completed, so no priority among
+formalizations is claimed.
 
 ---
 
