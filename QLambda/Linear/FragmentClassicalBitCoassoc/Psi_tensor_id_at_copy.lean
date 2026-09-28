@@ -3,10 +3,15 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentClassicalBitCoassoc.bitCopy_comp_dephase_raw_choi_pair
-import QLambda.Linear.FragmentClassicalBitCoassoc.identity_choi_pair
-import QLambda.Linear.FragmentClassicalBitCoassoc.copyIdx
-import QLambda.Linear.FragmentClassicalBitCoassoc.tripleCopyChoi
+
+module
+
+public import QLambda.Linear.FragmentClassicalBitCoassoc.bitCopy_comp_dephase_raw_choi_pair
+public import QLambda.Linear.FragmentClassicalBitCoassoc.identity_choi_pair
+public import QLambda.Linear.FragmentClassicalBitCoassoc.copyIdx
+public import QLambda.Linear.FragmentClassicalBitCoassoc.tripleCopyChoi
+
+@[expose] public section
 
 /-!
 # `(Ψ ⊗ id)` at copy indices equals the triple-copy Choi formula

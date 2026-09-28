@@ -3,7 +3,12 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Composer.Syntax
+
+module
+
+public import QLambda.Composer.Syntax
+
+@[expose] public section
 
 /-!
 # Static well-formedness of frozen Composer circuits

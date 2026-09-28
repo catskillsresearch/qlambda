@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.DiscreteSet
-import QLambda.Domain.QuantumCategory
+
+module
+
+public import QLambda.Domain.DiscreteSet
+public import QLambda.Domain.QuantumCategory
+
+@[expose] public section
 
 /-!
 # Classical sets inside quantum relations

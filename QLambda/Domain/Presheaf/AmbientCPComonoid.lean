@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.Presheaf.AmbientCPBangAdmissible
-import QLambda.Domain.Presheaf.DayComonoidCoassoc
+
+module
+
+public import QLambda.Domain.Presheaf.AmbientCPBangAdmissible
+public import QLambda.Domain.Presheaf.DayComonoidCoassoc
+
+@[expose] public section
 
 /-!
 # Ambient-CP comonoid packaging (`A ≤ 1`)

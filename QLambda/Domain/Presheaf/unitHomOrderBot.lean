@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Presheaf.OmegaEnriched
-import QLambda.Domain.Presheaf.instOrderBotSuperoperator
-import QLambda.Domain.Presheaf.unitHomPartialOrder
+module
+
+public import QLambda.Domain.Presheaf.OmegaEnriched
+public import QLambda.Domain.Presheaf.instOrderBotSuperoperator
+public import QLambda.Domain.Presheaf.unitHomPartialOrder
+
+@[expose] public section
 
 /-!
 # Instance `unitHomOrderBot`

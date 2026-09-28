@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentModel
-import QLambda.Linear.FragmentContext
-import QLambda.Domain.Presheaf.AdditiveProduct
+
+module
+
+public import QLambda.Linear.FragmentModel
+public import QLambda.Linear.FragmentContext
+public import QLambda.Domain.Presheaf.AdditiveProduct
+
+@[expose] public section
 
 /-!
 # Explicit fragment `ite` branching interface

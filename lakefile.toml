@@ -6,6 +6,14 @@ defaultTargets = ["QLambda", "Challenge", "Solution"]
 # QLambda is the proof library. Challenge / Solution are the Palomar
 # Comparator pair.
 
+# Existing `private` helpers are referenced from public definitions. The module
+# system forbids that unless this porting option is on. Warnings stay off so
+# the build remains warning-free while the references are still in place.
+moreLeanArgs = [
+  "-Dbackward.privateInPublic=true",
+  "-Dbackward.privateInPublic.warn=false",
+]
+
 [leanOptions]
 pp.unicode.fun = true
 relaxedAutoImplicit = true

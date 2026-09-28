@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.CQ.Basic
-import QLambda.Composer.Syntax
+
+module
+
+public import QLambda.CQ.Basic
+public import QLambda.Composer.Syntax
+
+@[expose] public section
 
 /-!
 # Physical interpretation of Composer primitives

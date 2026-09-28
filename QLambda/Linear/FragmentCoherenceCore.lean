@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentIte
-import QLambda.Linear.FragmentAdequacy
-import QLambda.Linear.Operational
+
+module
+
+public import QLambda.Linear.FragmentIte
+public import QLambda.Linear.FragmentAdequacy
+public import QLambda.Linear.Operational
+
+@[expose] public section
 
 /-!
 # Fragment denotational coherence core (Route A)

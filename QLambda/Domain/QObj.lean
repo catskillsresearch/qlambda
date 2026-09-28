@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.LinearNonlinear
-import QLambda.Domain.QuantumRelational
+
+module
+
+public import QLambda.Domain.LinearNonlinear
+public import QLambda.Domain.QuantumRelational
+
+@[expose] public section
 
 /-!
 # Decidable quantum sets as linear objects

@@ -3,12 +3,17 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentModel
-import QLambda.Linear.FragmentContext
-import QLambda.Linear.Operational
-import QLambda.Domain.Presheaf.Yoneda
-import QLambda.Domain.Presheaf.ClassicalCategory
-import QLambda.Linear.FragmentBranching
+
+module
+
+public import QLambda.Linear.FragmentModel
+public import QLambda.Linear.FragmentContext
+public import QLambda.Linear.Operational
+public import QLambda.Domain.Presheaf.Yoneda
+public import QLambda.Domain.Presheaf.ClassicalCategory
+public import QLambda.Linear.FragmentBranching
+
+@[expose] public section
 
 /-!
 # Concrete fragment denotation (Route A)

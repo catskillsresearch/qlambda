@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.CQ.Domain
-import QLambda.Composer.Model
-import QLambda.Composer.WellFormed
+
+module
+
+public import QLambda.CQ.Domain
+public import QLambda.Composer.Model
+public import QLambda.Composer.WellFormed
+
+@[expose] public section
 
 /-!
 # Compositional denotation of Composer circuits

@@ -16,7 +16,10 @@ ROOT = Path(__file__).resolve().parent.parent
 DECLS = ROOT / "build" / "declarations.jsonl"
 OUT_DIR = ROOT / "build" / "section_dep_figures"
 
-IMPORT_RE = re.compile(r"^import\s+(\S+)\s*$", re.MULTILINE)
+IMPORT_RE = re.compile(
+    r"^(?:public\s+|meta\s+|public\s+meta\s+|meta\s+public\s+)?import\s+(?:all\s+)?(\S+)\s*$",
+    re.MULTILINE,
+)
 
 SECTION_LABELS = {
     "intro": "library root",
@@ -63,7 +66,13 @@ def is_import_only(code: str) -> bool:
         for ln in code.splitlines()
         if ln.strip() and not ln.strip().startswith("--") and not ln.strip().startswith("/-")
     ]
-    return bool(lines) and all(ln.startswith("import ") for ln in lines)
+    return bool(lines) and all(
+        ln == "module" or ln.startswith("module ")
+        or ln.startswith("import ") or ln.startswith("public import ")
+        or ln.startswith("meta import ") or ln.startswith("@[expose] public section")
+        or ln.startswith("public section")
+        for ln in lines
+    )
 
 
 def parse_imports(code: str) -> list[str]:

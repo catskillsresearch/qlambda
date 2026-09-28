@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.KrausFamily
-import QLambda.instIsPreorderResidualRefines
+module
+
+public import QLambda.KrausFamily
+public import QLambda.instIsPreorderResidualRefines
+
+@[expose] public section
 
 /-!
 # Instances from `KrausFamily`

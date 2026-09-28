@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.Presheaf.PartialCountableSum
-import QLambda.Domain.Presheaf.Summation
+
+module
+
+public import QLambda.Domain.Presheaf.PartialCountableSum
+public import QLambda.Domain.Presheaf.Summation
+
+@[expose] public section
 
 /-!
 # Partial countable sums of superoperators

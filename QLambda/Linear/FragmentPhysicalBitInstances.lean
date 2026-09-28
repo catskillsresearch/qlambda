@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Linear.FragmentPhysicalBit
-import QLambda.Linear.instZeroClassicalBitCarrier
+module
+
+public import QLambda.Linear.FragmentPhysicalBit
+public import QLambda.Linear.instZeroClassicalBitCarrier
+
+@[expose] public section
 
 /-!
 # Instances from `FragmentPhysicalBit`

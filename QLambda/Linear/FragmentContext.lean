@@ -3,10 +3,15 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentContextObjects
-import QLambda.Linear.FragmentContextDay
-import QLambda.Linear.FragmentContextSplit
-import QLambda.Linear.FragmentContextComonoid
+
+module
+
+public import QLambda.Linear.FragmentContextObjects
+public import QLambda.Linear.FragmentContextDay
+public import QLambda.Linear.FragmentContextSplit
+public import QLambda.Linear.FragmentContextComonoid
+
+@[expose] public section
 
 /-!
 # Open fragment context objects (Route A)

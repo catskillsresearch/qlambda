@@ -3,10 +3,15 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentContextSplit
-import QLambda.Linear.FragmentClassicalBitChannels
-import QLambda.Linear.FragmentClassicalBitCoassoc.bitCoassocLeft_eq_right
-import QLambda.Domain.Presheaf.Comonoid
+
+module
+
+public import QLambda.Linear.FragmentContextSplit
+public import QLambda.Linear.FragmentClassicalBitChannels
+public import QLambda.Linear.FragmentClassicalBitCoassoc.bitCoassocLeft_eq_right
+public import QLambda.Domain.Presheaf.Comonoid
+
+@[expose] public section
 
 /-!
 # Classical-bit Day comonoid for fragment contexts

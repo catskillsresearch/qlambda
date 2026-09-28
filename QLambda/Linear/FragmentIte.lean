@@ -3,10 +3,15 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentItePrep
-import QLambda.Linear.FragmentIteBeta
-import QLambda.Linear.FragmentIteBranching
-import QLambda.Linear.FragmentDenoteEq
+
+module
+
+public import QLambda.Linear.FragmentItePrep
+public import QLambda.Linear.FragmentIteBeta
+public import QLambda.Linear.FragmentIteBranching
+public import QLambda.Linear.FragmentDenoteEq
+
+@[expose] public section
 
 /-!
 # Fragment `ite` eliminator and Route A denotation

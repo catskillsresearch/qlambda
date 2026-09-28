@@ -3,11 +3,16 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentCoherence
-import QLambda.Linear.FragmentAdequacy
-import QLambda.Linear.Runtime
-import QLambda.Linear.Elaboration
-import QLambda.Domain.Presheaf.SuperoperatorInstrument
+
+module
+
+public import QLambda.Linear.FragmentCoherence
+public import QLambda.Linear.FragmentAdequacy
+public import QLambda.Linear.Runtime
+public import QLambda.Linear.Elaboration
+public import QLambda.Domain.Presheaf.SuperoperatorInstrument
+
+@[expose] public section
 
 /-!
 # N-bounded fragment execution (Track F)

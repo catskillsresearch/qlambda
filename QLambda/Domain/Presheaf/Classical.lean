@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.Presheaf.NegationData
-import QLambda.Domain.Presheaf.DayNegation
-import QLambda.Domain.Presheaf.ClassicalObject
+
+module
+
+public import QLambda.Domain.Presheaf.NegationData
+public import QLambda.Domain.Presheaf.DayNegation
+public import QLambda.Domain.Presheaf.ClassicalObject
+
+@[expose] public section
 
 /-!
 # Double-dual classical objects

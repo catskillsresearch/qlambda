@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.SetHom
-import QLambda.Domain.instCoeFunSetHom
+
+module
+
+public import QLambda.Domain.SetHom
+public import QLambda.Domain.instCoeFunSetHom
+
+@[expose] public section
 
 /-!
 # Instance `instLESetHom`

@@ -3,7 +3,12 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentPhysicalBitInstances
+
+module
+
+public import QLambda.Linear.FragmentPhysicalBitInstances
+
+@[expose] public section
 
 /-!
 # Classical bit module, inclusion, weakening, and contraction

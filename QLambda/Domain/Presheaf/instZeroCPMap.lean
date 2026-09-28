@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Presheaf.CPMap
-import QLambda.Domain.Presheaf.instLECPMap
-import QLambda.Domain.Presheaf.instPartialOrderCPMap
+module
+
+public import QLambda.Domain.Presheaf.CPMap
+public import QLambda.Domain.Presheaf.instLECPMap
+public import QLambda.Domain.Presheaf.instPartialOrderCPMap
+
+@[expose] public section
 
 /-!
 # Instance `instZeroCPMap`

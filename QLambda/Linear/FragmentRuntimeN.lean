@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentRuntimeCore
-import QLambda.Linear.FragmentWeightedSimulation
-import QLambda.Linear.FragmentMeasuredSimulation
+
+module
+
+public import QLambda.Linear.FragmentRuntimeCore
+public import QLambda.Linear.FragmentWeightedSimulation
+public import QLambda.Linear.FragmentMeasuredSimulation
+
+@[expose] public section
 
 /-!
 # N-bounded fragment execution (Track F)

@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Presheaf.OmegaEnriched
-import QLambda.Domain.Presheaf.instPartialOrderSuperoperator
-import QLambda.Domain.Presheaf.instOrderBotSuperoperator
+module
+
+public import QLambda.Domain.Presheaf.OmegaEnriched
+public import QLambda.Domain.Presheaf.instPartialOrderSuperoperator
+public import QLambda.Domain.Presheaf.instOrderBotSuperoperator
+
+@[expose] public section
 
 /-!
 # Instance `omegaComplete`

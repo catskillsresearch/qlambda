@@ -3,12 +3,17 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.Presheaf.ModuleChoiSum
-import QLambda.Domain.Presheaf.FiberInstances
-import QLambda.Domain.Presheaf.Module
-import QLambda.Domain.Presheaf.HasActSumFromDimInstances
-import QLambda.Domain.Presheaf.HomInstances
-import QLambda.Domain.Presheaf.ModuleIso
+
+module
+
+public import QLambda.Domain.Presheaf.ModuleChoiSum
+public import QLambda.Domain.Presheaf.FiberInstances
+public import QLambda.Domain.Presheaf.Module
+public import QLambda.Domain.Presheaf.HasActSumFromDimInstances
+public import QLambda.Domain.Presheaf.HomInstances
+public import QLambda.Domain.Presheaf.ModuleIso
+
+@[expose] public section
 
 /-!
 # Specialized modules over finite-dimensional superoperators

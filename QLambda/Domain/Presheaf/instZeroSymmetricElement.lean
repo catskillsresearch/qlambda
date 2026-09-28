@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Presheaf.SymmetricElement
-import QLambda.Domain.Presheaf.SuperoperatorInstances
+module
+
+public import QLambda.Domain.Presheaf.SymmetricElement
+public import QLambda.Domain.Presheaf.SuperoperatorInstances
+
+@[expose] public section
 
 /-!
 # Instance `instZeroSymmetricElement`

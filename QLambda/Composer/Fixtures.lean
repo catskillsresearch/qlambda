@@ -3,8 +3,17 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Composer.OpenQASMParser
-import QLambda.Composer.WellFormed
+
+module
+
+public import QLambda.Composer.OpenQASMParser
+public import QLambda.Composer.WellFormed
+public meta import QLambda.Composer.CircuitSyntax
+public meta import QLambda.Composer.OpenQASM
+public meta import QLambda.Composer.OpenQASMParser
+public meta import QLambda.Composer.WellFormed
+
+@[expose] public section
 
 /-!
 # Frozen Composer fixtures

@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentClassicalBitCoassoc.bitCoassocRight_choi_collapsed
-import QLambda.Linear.FragmentClassicalBitCoassoc.id_tensor_Psi_at_copy
+
+module
+
+public import QLambda.Linear.FragmentClassicalBitCoassoc.bitCoassocRight_choi_collapsed
+public import QLambda.Linear.FragmentClassicalBitCoassoc.id_tensor_Psi_at_copy
+
+@[expose] public section
 
 /-!
 # Right coassoc Choi (closed form)

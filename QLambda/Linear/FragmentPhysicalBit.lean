@@ -3,13 +3,18 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.SemanticFragment
-import QLambda.Linear.TypeInterpretation
-import QLambda.Linear.PrimitiveSuperoperator
-import QLambda.Domain.Presheaf.Yoneda
-import QLambda.Domain.Presheaf.ClosedGeneration
-import QLambda.Domain.Presheaf.DayInternalHom
-import QLambda.Domain.Presheaf.SuperoperatorModule
+
+module
+
+public import QLambda.Linear.SemanticFragment
+public import QLambda.Linear.TypeInterpretation
+public import QLambda.Linear.PrimitiveSuperoperator
+public import QLambda.Domain.Presheaf.Yoneda
+public import QLambda.Domain.Presheaf.ClosedGeneration
+public import QLambda.Domain.Presheaf.DayInternalHom
+public import QLambda.Domain.Presheaf.SuperoperatorModule
+
+@[expose] public section
 
 /-!
 # Physical bit copy/discard boundary

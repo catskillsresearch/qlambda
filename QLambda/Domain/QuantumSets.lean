@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.QuantumSetInstances
-import QLambda.Domain.FiniteInstances
+
+module
+
+public import QLambda.Domain.QuantumSetInstances
+public import QLambda.Domain.FiniteInstances
+
+@[expose] public section
 
 /-!
 # Quantum sets

@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Presheaf.OmegaEnriched
-import QLambda.Domain.Presheaf.unitHomOmegaComplete
-import QLambda.Domain.Presheaf.classicalHomPartialOrder
-import QLambda.Domain.Presheaf.classicalHomOrderBot
+module
+
+public import QLambda.Domain.Presheaf.OmegaEnriched
+public import QLambda.Domain.Presheaf.unitHomOmegaComplete
+public import QLambda.Domain.Presheaf.classicalHomPartialOrder
+public import QLambda.Domain.Presheaf.classicalHomOrderBot
+
+@[expose] public section
 
 /-!
 # Instance `classicalHomOmegaComplete`

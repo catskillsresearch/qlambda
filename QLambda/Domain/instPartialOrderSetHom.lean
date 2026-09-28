@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.SetHom
-import QLambda.Domain.instCoeFunSetHom
-import QLambda.Domain.instLESetHom
+
+module
+
+public import QLambda.Domain.SetHom
+public import QLambda.Domain.instCoeFunSetHom
+public import QLambda.Domain.instLESetHom
+
+@[expose] public section
 
 /-!
 # Instance `instPartialOrderSetHom`

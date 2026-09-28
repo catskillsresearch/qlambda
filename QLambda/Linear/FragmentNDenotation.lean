@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentQuoteBridgeExt
-import QLambda.Composer.OpenQASM
-import QLambda.Composer.WellFormed
+
+module
+
+public import QLambda.Linear.FragmentQuoteBridgeExt
+public import QLambda.Composer.OpenQASM
+public import QLambda.Composer.WellFormed
+
+@[expose] public section
 
 /-!
 # N-qubit fragment denotation + OpenQASM staging interface

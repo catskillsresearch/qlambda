@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.ScottFunction
-import QLambda.Domain.instCoeScottFunction
-import QLambda.Domain.instLEScottFunction
+module
+
+public import QLambda.Domain.ScottFunction
+public import QLambda.Domain.instCoeScottFunction
+public import QLambda.Domain.instLEScottFunction
+
+@[expose] public section
 
 /-!
 # Instance `instPartialOrderScottFunction`

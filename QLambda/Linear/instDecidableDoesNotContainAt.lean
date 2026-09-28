@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Linear.TypeFormation
-import QLambda.Linear.instDecidableWellScopedAt
+module
+
+public import QLambda.Linear.TypeFormation
+public import QLambda.Linear.instDecidableWellScopedAt
+
+@[expose] public section
 
 /-!
 # Instance `instDecidableDoesNotContainAt`

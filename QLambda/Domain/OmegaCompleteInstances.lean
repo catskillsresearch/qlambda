@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.OmegaComplete
-import QLambda.Domain.instOmegaCompleteOfCompleteLattice
-import QLambda.Domain.instOmegaCompleteProd
+module
+
+public import QLambda.Domain.OmegaComplete
+public import QLambda.Domain.instOmegaCompleteOfCompleteLattice
+public import QLambda.Domain.instOmegaCompleteProd
+
+@[expose] public section
 
 /-!
 # Instances from `OmegaComplete`

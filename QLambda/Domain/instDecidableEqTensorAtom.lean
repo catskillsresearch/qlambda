@@ -4,18 +4,22 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.QuantumSet
-import QLambda.Domain.instInhabitedUnitAtom
-import QLambda.Domain.instInhabitedQubitAtom
-import QLambda.Domain.instInhabitedAtomicAtom
-import QLambda.Domain.instUniqueUnitAtom
-import QLambda.Domain.instUniqueQubitAtom
-import QLambda.Domain.instUniqueAtomicAtom
-import QLambda.Domain.instDecidableEqLiftSetAtom
-import QLambda.Domain.instFintypeLiftSetAtom
-import QLambda.Domain.instLELiftSetAtom
-import QLambda.Domain.instPreorderLiftSetAtom
-import QLambda.Domain.instPartialOrderLiftSetAtom
+module
+
+public import QLambda.Domain.QuantumSet
+public import QLambda.Domain.instInhabitedUnitAtom
+public import QLambda.Domain.instInhabitedQubitAtom
+public import QLambda.Domain.instInhabitedAtomicAtom
+public import QLambda.Domain.instUniqueUnitAtom
+public import QLambda.Domain.instUniqueQubitAtom
+public import QLambda.Domain.instUniqueAtomicAtom
+public import QLambda.Domain.instDecidableEqLiftSetAtom
+public import QLambda.Domain.instFintypeLiftSetAtom
+public import QLambda.Domain.instLELiftSetAtom
+public import QLambda.Domain.instPreorderLiftSetAtom
+public import QLambda.Domain.instPartialOrderLiftSetAtom
+
+@[expose] public section
 
 /-!
 # Instance `instDecidableEqTensorAtom`

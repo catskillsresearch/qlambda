@@ -3,11 +3,16 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentCoherenceCore
-import QLambda.Linear.FragmentIdentityBeta
-import QLambda.Linear.FragmentStepCongruence
-import QLambda.Linear.FragmentUnpairBeta
-import QLambda.Linear.FragmentSubstBeta
+
+module
+
+public import QLambda.Linear.FragmentCoherenceCore
+public import QLambda.Linear.FragmentIdentityBeta
+public import QLambda.Linear.FragmentStepCongruence
+public import QLambda.Linear.FragmentUnpairBeta
+public import QLambda.Linear.FragmentSubstBeta
+
+@[expose] public section
 
 /-!
 # Fragment denotational coherence (Route A)

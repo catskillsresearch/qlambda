@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.QuantumClassical
-import QLambda.Domain.QuantumMonoidal
+
+module
+
+public import QLambda.Domain.QuantumClassical
+public import QLambda.Domain.QuantumMonoidal
+
+@[expose] public section
 
 /-!
 # The concrete `Set ⊣ qRel` linear/nonlinear model

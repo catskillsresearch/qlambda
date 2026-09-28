@@ -3,7 +3,12 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentClassicalBitCoassoc.tensorAssociatorEquiv_two_two_two
+
+module
+
+public import QLambda.Linear.FragmentClassicalBitCoassoc.tensorAssociatorEquiv_two_two_two
+
+@[expose] public section
 
 /-!
 # Tensor associator superoperator on `2⊗2⊗2`

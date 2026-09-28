@@ -3,10 +3,15 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.LinearNonlinear
-import QLambda.Domain.CompletedCP
-import QLambda.Domain.RecursiveTypes
-import QLambda.Linear.Operational
+
+module
+
+public import QLambda.Domain.LinearNonlinear
+public import QLambda.Domain.CompletedCP
+public import QLambda.Domain.RecursiveTypes
+public import QLambda.Linear.Operational
+
+@[expose] public section
 
 /-!
 # Denotation boundary for the typed linear calculus

@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Presheaf.HasActSumFromDim
+module
+
+public import QLambda.Domain.Presheaf.HasActSumFromDim
+
+@[expose] public section
 
 /-!
 # Instance `HasActSumFromDim.cpmModule`

@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Composer.MatrixSemantics
-import QLambda.QuantumRuntimeState
-import QLambda.Linear.Operational
+
+module
+
+public import QLambda.Composer.MatrixSemantics
+public import QLambda.QuantumRuntimeState
+public import QLambda.Linear.Operational
+
+@[expose] public section
 
 /-!
 # Finite-register runtime semantics for the linear calculus

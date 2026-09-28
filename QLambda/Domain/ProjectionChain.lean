@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import Mathlib.Order.CompleteSublattice
-import Mathlib.Order.Hom.CompleteLattice
-import QLambda.Domain.Enriched
+
+module
+
+public import Mathlib.Order.CompleteSublattice
+public import Mathlib.Order.Hom.CompleteLattice
+public import QLambda.Domain.Enriched
+
+@[expose] public section
 
 /-!
 # Projection chains and bilimits

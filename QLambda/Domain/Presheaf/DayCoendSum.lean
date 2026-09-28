@@ -3,10 +3,15 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.Presheaf.DayCoend
-import QLambda.Domain.Presheaf.instZeroDayRaw
-import QLambda.Domain.Presheaf.setoid
-import QLambda.Domain.Presheaf.instZeroDayCarrier
+
+module
+
+public import QLambda.Domain.Presheaf.DayCoend
+public import QLambda.Domain.Presheaf.instZeroDayRaw
+public import QLambda.Domain.Presheaf.setoid
+public import QLambda.Domain.Presheaf.instZeroDayCarrier
+
+@[expose] public section
 
 /-!
 # Day coend sums and `dayTensor` presentation

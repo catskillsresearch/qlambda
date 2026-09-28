@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Finite
-import QLambda.Domain.instFiniteEmpty
-import QLambda.Domain.instFiniteUnit
+module
+
+public import QLambda.Domain.Finite
+public import QLambda.Domain.instFiniteEmpty
+public import QLambda.Domain.instFiniteUnit
+
+@[expose] public section
 
 /-!
 # Instance `instFiniteQubit`

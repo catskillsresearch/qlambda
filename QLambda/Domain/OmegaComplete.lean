@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import Mathlib.Order.CompleteLattice.Basic
-import Mathlib.Order.FixedPoints
+
+module
+
+public import Mathlib.Order.CompleteLattice.Basic
+public import Mathlib.Order.FixedPoints
+
+@[expose] public section
 
 /-!
 # ω-complete partial orders

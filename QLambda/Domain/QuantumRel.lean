@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
-import Mathlib.Order.CompleteLattice.Basic
-import QLambda.Domain.QuantumSet
+
+module
+
+public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
+public import Mathlib.Order.CompleteLattice.Basic
+public import QLambda.Domain.QuantumSet
+
+@[expose] public section
 
 /-!
 # Quantum relations (definition and lattice order)

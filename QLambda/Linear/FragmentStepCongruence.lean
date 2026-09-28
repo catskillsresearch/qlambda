@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentSubstBeta
-import QLambda.Linear.FragmentUnpairBeta
+
+module
+
+public import QLambda.Linear.FragmentSubstBeta
+public import QLambda.Linear.FragmentUnpairBeta
+
+@[expose] public section
 
 /-!
 # Fragment Step denotational congruence

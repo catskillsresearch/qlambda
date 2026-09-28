@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.Denotation
-import QLambda.Linear.operationalSetoid
+
+module
+
+public import QLambda.Linear.Denotation
+public import QLambda.Linear.operationalSetoid
+
+@[expose] public section
 
 /-!
 # Instances from `Denotation`

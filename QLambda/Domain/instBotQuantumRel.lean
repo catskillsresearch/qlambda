@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.QuantumRel
-import QLambda.Domain.instLEQuantumRel
-import QLambda.Domain.instPartialOrderQuantumRel
+module
+
+public import QLambda.Domain.QuantumRel
+public import QLambda.Domain.instLEQuantumRel
+public import QLambda.Domain.instPartialOrderQuantumRel
+
+@[expose] public section
 
 /-!
 # Instance `instBotQuantumRel`

@@ -3,7 +3,12 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.Presheaf.HomInstances
+
+module
+
+public import QLambda.Domain.Presheaf.HomInstances
+
+@[expose] public section
 
 /-!
 # Isomorphisms of specialized superoperator modules

@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.Inverse
-import QLambda.Composer.Probability
+
+module
+
+public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Inverse
+public import QLambda.Composer.Probability
+
+@[expose] public section
 
 /-!
 # Frozen IBM Composer / OpenQASM inductive syntax

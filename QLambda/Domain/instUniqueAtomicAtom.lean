@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.QuantumSet
-import QLambda.Domain.instInhabitedUnitAtom
-import QLambda.Domain.instInhabitedQubitAtom
-import QLambda.Domain.instInhabitedAtomicAtom
-import QLambda.Domain.instUniqueUnitAtom
-import QLambda.Domain.instUniqueQubitAtom
+module
+
+public import QLambda.Domain.QuantumSet
+public import QLambda.Domain.instInhabitedUnitAtom
+public import QLambda.Domain.instInhabitedQubitAtom
+public import QLambda.Domain.instInhabitedAtomicAtom
+public import QLambda.Domain.instUniqueUnitAtom
+public import QLambda.Domain.instUniqueQubitAtom
+
+@[expose] public section
 
 /-!
 # Instance `instUniqueAtomicAtom`

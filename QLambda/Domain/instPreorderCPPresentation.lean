@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.CPPresentation
+module
+
+public import QLambda.Domain.CPPresentation
+
+@[expose] public section
 
 /-!
 # Instance `instPreorderCPPresentation`

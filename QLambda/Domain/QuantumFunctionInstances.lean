@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.QuantumFunction
-import QLambda.Domain.instLEQuantumFunction
-import QLambda.Domain.instPartialOrderQuantumFunction
+
+module
+
+public import QLambda.Domain.QuantumFunction
+public import QLambda.Domain.instLEQuantumFunction
+public import QLambda.Domain.instPartialOrderQuantumFunction
+
+@[expose] public section
 
 /-!
 # Instances from `QuantumFunction`

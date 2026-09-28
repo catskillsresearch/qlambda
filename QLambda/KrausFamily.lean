@@ -3,10 +3,15 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import Mathlib.Data.Fintype.Sigma
-import Mathlib.Analysis.Real.Sqrt
-import Mathlib.Analysis.InnerProductSpace.Positive
-import QLambda.QuantumStateSpace
+
+module
+
+public import Mathlib.Data.Fintype.Sigma
+public import Mathlib.Analysis.Real.Sqrt
+public import Mathlib.Analysis.InnerProductSpace.Positive
+public import QLambda.QuantumStateSpace
+
+@[expose] public section
 
 /-!
 # Finite Kraus families

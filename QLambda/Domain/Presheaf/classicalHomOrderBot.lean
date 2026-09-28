@@ -4,14 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Presheaf.OmegaEnriched
-import QLambda.Domain.Presheaf.instPartialOrderSuperoperator
-import QLambda.Domain.Presheaf.instOrderBotSuperoperator
-import QLambda.Domain.Presheaf.omegaComplete
-import QLambda.Domain.Presheaf.unitHomPartialOrder
-import QLambda.Domain.Presheaf.unitHomOrderBot
-import QLambda.Domain.Presheaf.unitHomOmegaComplete
-import QLambda.Domain.Presheaf.classicalHomPartialOrder
+module
+
+public import QLambda.Domain.Presheaf.OmegaEnriched
+public import QLambda.Domain.Presheaf.instPartialOrderSuperoperator
+public import QLambda.Domain.Presheaf.instOrderBotSuperoperator
+public import QLambda.Domain.Presheaf.omegaComplete
+public import QLambda.Domain.Presheaf.unitHomPartialOrder
+public import QLambda.Domain.Presheaf.unitHomOrderBot
+public import QLambda.Domain.Presheaf.unitHomOmegaComplete
+public import QLambda.Domain.Presheaf.classicalHomPartialOrder
+
+@[expose] public section
 
 /-!
 # Instance `classicalHomOrderBot`

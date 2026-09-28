@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Composer.MatrixSemantics
-import QLambda.Domain.QuantumFunctionInstances
-import QLambda.Domain.CompletedCP
+
+module
+
+public import QLambda.Composer.MatrixSemantics
+public import QLambda.Domain.QuantumFunctionInstances
+public import QLambda.Domain.CompletedCP
+
+@[expose] public section
 
 /-!
 # Quantum posets, functions, and circuit embedding

@@ -3,7 +3,12 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentIdentityBeta
+
+module
+
+public import QLambda.Linear.FragmentIdentityBeta
+
+@[expose] public section
 
 /-!
 # F4b: closed substitution β on `FragCert.denote` past identity bodies

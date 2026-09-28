@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentClassicalBitCoassoc.bitCoassocRight
-import QLambda.Linear.FragmentClassicalBitCoassoc.bitCopy_choi
-import QLambda.Linear.FragmentClassicalBitCoassoc.copyIdx
+
+module
+
+public import QLambda.Linear.FragmentClassicalBitCoassoc.bitCoassocRight
+public import QLambda.Linear.FragmentClassicalBitCoassoc.bitCopy_choi
+public import QLambda.Linear.FragmentClassicalBitCoassoc.copyIdx
+
+@[expose] public section
 
 /-!
 # Right coassoc Choi collapses to a single tensor entry

@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.Presheaf.AmbientCPModuleInstances
-import QLambda.Domain.Presheaf.DayComonoidAdmissible
+
+module
+
+public import QLambda.Domain.Presheaf.AmbientCPModuleInstances
+public import QLambda.Domain.Presheaf.DayComonoidAdmissible
+
+@[expose] public section
 
 /-!
 # Ambient-CP relative bang-comult admissibility (L9)

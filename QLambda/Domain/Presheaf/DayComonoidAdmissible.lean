@@ -3,7 +3,12 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.Presheaf.DayComonoidRouteA
+
+module
+
+public import QLambda.Domain.Presheaf.DayComonoidRouteA
+
+@[expose] public section
 
 /-!
 # Bang comult admissibility for `A ≤ 1`

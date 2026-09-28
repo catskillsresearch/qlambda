@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.SubNormalizedDensity
-import QLambda.instPartialOrderSubNormalizedDensity
+module
+
+public import QLambda.SubNormalizedDensity
+public import QLambda.instPartialOrderSubNormalizedDensity
+
+@[expose] public section
 
 /-!
 # Instance `instOrderBotSubNormalizedDensity`

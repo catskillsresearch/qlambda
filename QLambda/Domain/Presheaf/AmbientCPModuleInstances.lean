@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Presheaf.AmbientCPModule
-import QLambda.Domain.Presheaf.cpmModule_ambientCP
+module
+
+public import QLambda.Domain.Presheaf.AmbientCPModule
+public import QLambda.Domain.Presheaf.cpmModule_ambientCP
+
+@[expose] public section
 
 /-!
 # Instances from `AmbientCPModule`

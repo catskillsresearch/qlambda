@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.FragmentClassicalBitCoassoc.bitCoassocLeft_eq_pre
-import QLambda.Linear.FragmentClassicalBitCoassoc.bitCoassocLeftPre_choi
-import QLambda.Linear.FragmentClassicalBitCoassoc.bitCoassocRight_choi
+
+module
+
+public import QLambda.Linear.FragmentClassicalBitCoassoc.bitCoassocLeft_eq_pre
+public import QLambda.Linear.FragmentClassicalBitCoassoc.bitCoassocLeftPre_choi
+public import QLambda.Linear.FragmentClassicalBitCoassoc.bitCoassocRight_choi
+
+@[expose] public section
 
 /-!
 # Classical copy-after-dephase is coassociative

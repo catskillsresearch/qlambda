@@ -3,11 +3,16 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.KrausFamilyInstances
-import QLambda.QuantumOperation
-import QLambda.QuantumInstrument
-import QLambda.FiniteInstrumentComp
-import QLambda.QuantumQubit
+
+module
+
+public import QLambda.KrausFamilyInstances
+public import QLambda.QuantumOperation
+public import QLambda.QuantumInstrument
+public import QLambda.FiniteInstrumentComp
+public import QLambda.QuantumQubit
+
+@[expose] public section
 
 /-!
 # Finite quantum operations and instruments

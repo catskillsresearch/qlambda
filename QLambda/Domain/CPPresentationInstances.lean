@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import Mathlib.Order.Antisymmetrization
-import QLambda.QuantumInstruments
-import QLambda.Composer.MatrixSemantics
-import QLambda.Domain.CPPresentation
-import QLambda.Domain.instPreorderCPPresentation
+module
+
+public import Mathlib.Order.Antisymmetrization
+public import QLambda.QuantumInstruments
+public import QLambda.Composer.MatrixSemantics
+public import QLambda.Domain.CPPresentation
+public import QLambda.Domain.instPreorderCPPresentation
+
+@[expose] public section
 
 /-!
 # Instances from `CPPresentation`

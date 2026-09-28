@@ -3,7 +3,12 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.Presheaf.DayBangBoundary
+
+module
+
+public import QLambda.Domain.Presheaf.DayBangBoundary
+
+@[expose] public section
 
 /-!
 # Ambient-CP Gate-8 acceptance suite

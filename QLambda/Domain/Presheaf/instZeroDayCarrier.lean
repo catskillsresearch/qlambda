@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Presheaf.DayCoend
-import QLambda.Domain.Presheaf.instZeroDayRaw
-import QLambda.Domain.Presheaf.setoid
+module
+
+public import QLambda.Domain.Presheaf.DayCoend
+public import QLambda.Domain.Presheaf.instZeroDayRaw
+public import QLambda.Domain.Presheaf.setoid
+
+@[expose] public section
 
 /-!
 # Instance `instZeroDayCarrier`

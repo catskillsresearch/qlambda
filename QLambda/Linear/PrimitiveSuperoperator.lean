@@ -3,9 +3,14 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.DenotationInstances
-import QLambda.Domain.Presheaf.SuperoperatorInstances
-import QLambda.Domain.Presheaf.SuperoperatorInstrument
+
+module
+
+public import QLambda.Linear.DenotationInstances
+public import QLambda.Domain.Presheaf.SuperoperatorInstances
+public import QLambda.Domain.Presheaf.SuperoperatorInstrument
+
+@[expose] public section
 
 /-!
 # Intrinsic superoperator meaning of source primitives

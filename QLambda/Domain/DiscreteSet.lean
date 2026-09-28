@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.SetHomInstances
-import QLambda.Domain.CartesianClosed
+
+module
+
+public import QLambda.Domain.SetHomInstances
+public import QLambda.Domain.CartesianClosed
+
+@[expose] public section
 
 /-!
 # Sets as a discretely CPO-enriched category

@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.QuantumRelFunction
-import QLambda.Domain.QuantumSetInstances
+
+module
+
+public import QLambda.Domain.QuantumRelFunction
+public import QLambda.Domain.QuantumSetInstances
+@[expose] public section
+
 /-!
 # Atomic restriction and assembly
 -/

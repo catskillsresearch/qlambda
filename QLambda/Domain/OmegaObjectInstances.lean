@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.OmegaObject
-import QLambda.Domain.instCoeSortOmegaObject
+module
+
+public import QLambda.Domain.OmegaObject
+public import QLambda.Domain.instCoeSortOmegaObject
+
+@[expose] public section
 
 /-!
 # Instances from `OmegaObject`

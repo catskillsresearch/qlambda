@@ -4,15 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Finite
-import QLambda.Domain.instFiniteEmpty
-import QLambda.Domain.instFiniteUnit
-import QLambda.Domain.instFiniteQubit
-import QLambda.Domain.instFiniteBit
-import QLambda.Domain.instFiniteAtomic
-import QLambda.Domain.instFiniteTensor
-import QLambda.Domain.instFiniteSum
-import QLambda.Domain.instFiniteLiftSet
+module
+
+public import QLambda.Domain.Finite
+public import QLambda.Domain.instFiniteEmpty
+public import QLambda.Domain.instFiniteUnit
+public import QLambda.Domain.instFiniteQubit
+public import QLambda.Domain.instFiniteBit
+public import QLambda.Domain.instFiniteAtomic
+public import QLambda.Domain.instFiniteTensor
+public import QLambda.Domain.instFiniteSum
+public import QLambda.Domain.instFiniteLiftSet
+
+@[expose] public section
 
 /-!
 # Instances from `Finite`

@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Presheaf.Hom
+module
+
+public import QLambda.Domain.Presheaf.Hom
+
+@[expose] public section
 
 /-!
 # Instance `instZeroHom`

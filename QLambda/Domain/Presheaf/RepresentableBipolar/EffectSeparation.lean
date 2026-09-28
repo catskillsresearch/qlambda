@@ -3,16 +3,21 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.Presheaf.ClassicalCategory
-import Mathlib.Analysis.InnerProductSpace.LinearMap
-import Mathlib.Analysis.InnerProductSpace.PiL2
-import Mathlib.Analysis.Matrix.PosDef
-import Mathlib.Analysis.Matrix.Spectrum
-import Mathlib.Data.Matrix.Basis
-import Mathlib.Analysis.CStarAlgebra.Matrix
-import Mathlib.Topology.Instances.RealVectorSpace
-import Mathlib.Analysis.Normed.Module.Basic
-import Mathlib.Algebra.Module.LinearMap.Rat
+
+module
+
+public import QLambda.Domain.Presheaf.ClassicalCategory
+public import Mathlib.Analysis.InnerProductSpace.LinearMap
+public import Mathlib.Analysis.InnerProductSpace.PiL2
+public import Mathlib.Analysis.Matrix.PosDef
+public import Mathlib.Analysis.Matrix.Spectrum
+public import Mathlib.Data.Matrix.Basis
+public import Mathlib.Analysis.CStarAlgebra.Matrix
+public import Mathlib.Topology.Instances.RealVectorSpace
+public import Mathlib.Analysis.Normed.Module.Basic
+public import Mathlib.Algebra.Module.LinearMap.Rat
+
+@[expose] public section
 
 /-!
 # Effect separation for positive representables

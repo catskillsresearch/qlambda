@@ -1,8 +1,12 @@
-import QLambda.Domain.Enriched
-import QLambda.Domain.Presheaf.ClassicalCategory
-import QLambda.Domain.Presheaf.SuperoperatorInstances
-import QLambda.Domain.Presheaf.instPartialOrderSuperoperator
-import QLambda.Domain.Presheaf.instOrderBotSuperoperator
+module
+
+public import QLambda.Domain.Enriched
+public import QLambda.Domain.Presheaf.ClassicalCategory
+public import QLambda.Domain.Presheaf.SuperoperatorInstances
+public import QLambda.Domain.Presheaf.instPartialOrderSuperoperator
+public import QLambda.Domain.Presheaf.instOrderBotSuperoperator
+
+@[expose] public section
 
 /-!
 # Choi-order ωCPO enrichment

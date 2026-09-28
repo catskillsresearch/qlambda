@@ -4,14 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Presheaf.CPMap
-import QLambda.Domain.Presheaf.instLECPMap
-import QLambda.Domain.Presheaf.instPartialOrderCPMap
-import QLambda.Domain.Presheaf.instZeroCPMap
-import QLambda.Domain.Presheaf.instAddCPMap
-import QLambda.Domain.Presheaf.instAddCommMonoidCPMap
-import QLambda.Domain.Presheaf.instOrderBotCPMap
-import QLambda.Domain.Presheaf.instSMulNNRealCPMap
+module
+
+public import QLambda.Domain.Presheaf.CPMap
+public import QLambda.Domain.Presheaf.instLECPMap
+public import QLambda.Domain.Presheaf.instPartialOrderCPMap
+public import QLambda.Domain.Presheaf.instZeroCPMap
+public import QLambda.Domain.Presheaf.instAddCPMap
+public import QLambda.Domain.Presheaf.instAddCommMonoidCPMap
+public import QLambda.Domain.Presheaf.instOrderBotCPMap
+public import QLambda.Domain.Presheaf.instSMulNNRealCPMap
+
+@[expose] public section
 
 /-!
 # Instance `instModuleNNRealCPMap`

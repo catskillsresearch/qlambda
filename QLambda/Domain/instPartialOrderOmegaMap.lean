@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.OmegaMap
-import QLambda.Domain.instCoeFunOmegaMap
-import QLambda.Domain.instLEOmegaMap
-import QLambda.Domain.instOrderBotOmegaMap
+module
+
+public import QLambda.Domain.OmegaMap
+public import QLambda.Domain.instCoeFunOmegaMap
+public import QLambda.Domain.instLEOmegaMap
+public import QLambda.Domain.instOrderBotOmegaMap
+
+@[expose] public section
 
 /-!
 # Instance `instPartialOrderOmegaMap`

@@ -3,10 +3,15 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Linear.Typing
-import QLambda.Linear.Substitution
-import QLambda.Linear.Quotation
-import QLambda.Linear.QuotationGeneral
+
+module
+
+public import QLambda.Linear.Typing
+public import QLambda.Linear.Substitution
+public import QLambda.Linear.Quotation
+public import QLambda.Linear.QuotationGeneral
+
+@[expose] public section
 
 /-!
 # Minimum semantic source fragment

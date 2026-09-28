@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
 
-import QLambda.Domain.Presheaf.Superoperator
-import QLambda.Domain.Presheaf.CPMapInstances
+module
+
+public import QLambda.Domain.Presheaf.Superoperator
+public import QLambda.Domain.Presheaf.CPMapInstances
+
+@[expose] public section
 
 /-!
 # Instance `instPartialOrderSuperoperator`

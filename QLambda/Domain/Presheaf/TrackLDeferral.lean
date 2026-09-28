@@ -3,10 +3,15 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.Domain.Presheaf.DayBangBoundary
-import QLambda.Domain.Presheaf.AmbientCPGate8TestSuite
-import QLambda.Domain.Presheaf.LNL
-import QLambda.Linear.FragmentModel
+
+module
+
+public import QLambda.Domain.Presheaf.DayBangBoundary
+public import QLambda.Domain.Presheaf.AmbientCPGate8TestSuite
+public import QLambda.Domain.Presheaf.LNL
+public import QLambda.Linear.FragmentModel
+
+@[expose] public section
 
 /-!
 # Track L deferral under the Day-bang boundary

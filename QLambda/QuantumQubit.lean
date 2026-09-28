@@ -3,7 +3,12 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import QLambda.FiniteInstrumentComp
+
+module
+
+public import QLambda.FiniteInstrumentComp
+
+@[expose] public section
 
 /-!
 # Qubit operations and computational-basis measurement

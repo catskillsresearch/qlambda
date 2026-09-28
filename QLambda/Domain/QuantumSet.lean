@@ -3,8 +3,13 @@ Copyright (c) 2026  Lars Warren Ericson.  All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Lars Warren Ericson.
 -/
-import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
-import QLambda.QuantumInstruments
+
+module
+
+public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
+public import QLambda.QuantumInstruments
+
+@[expose] public section
 
 /-!
 # Quantum sets
