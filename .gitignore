@@ -33,3 +33,4 @@ build/
 *.lof
 texput.log
 view.pdf
+lean4export
