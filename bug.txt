@@ -1,0 +1,61 @@
+The following Lean 4 file `problem.lean` checks in `lake build`:
+```
+module
+
+@[expose] public section
+
+theorem t : True := by
+  native_decide
+```
+using commands
+```
+$ lake build problem
+Build completed successfully (3 jobs).
+```
+
+The same file run through `con-ron --verified` gets rejected, because the native decide introduces an axiom:
+```
+$ lake env ./lean4export/.lake/build/bin/lean4export problem > problem.ndjson
+$ con-ron --verified problem.ndjson
+con-ron: 1 inductive blocks modelled in-process: Lean.Syntax (30 generated records, checked by the fold as declarations and not counted as records of the file)
+con-ron: declined: non-standard axiom [at axiom _private.problem.0.t._native.native_decide.ax_1_1, fold position 46993] (--verified) t=3.351s
+```
+
+Here is a Lean 4 file `workaround.lean` which avoids `native_decide` in favor of `decide`:
+```
+module
+
+@[expose] public section
+
+theorem t : True := by
+  decide +kernel
+```
+
+This passes both `lake build` and `con-ron`:
+```
+$ lake build workaround.lean 
+Build completed successfully (2 jobs).
+
+$ lake env ./lean4export/.lake/build/bin/lean4export workaround > /tmp/workaround.ndjson
+$ /home/catskills/con-ron/target/release/con-ron --verified /tmp/workaround.ndjson
+con-ron: 1 inductive blocks modelled in-process: Lean.Syntax (30 generated records, checked by the fold as declarations and not counted as records of the file)
+con-ron: accepted 57921 declarations (--verified)
+```
+
+This run which uses `native_decide` is in the queue and is in failed status with advice "This is a fault at our end, no with your submission".
+```
+Repository
+catskillsresearch/qlambda
+Commit
+c445d4610c3ce9137933e6e93f084ffb6d51c91b
+Comparator configuration
+comparator.json
+Submitted
+2026-09-28T07:22:49Z
+Verification run
+36391338184
+```
+
+**Question for Palomar maintainers**: I do not with to withdraw and close the submission.  Should I:
+* Wait for you to change con-ron to accept `native_decide` with `--verified`.
+* Replace `native_decide` with `decide`, withdraw the run and resubmit it with an updated repo

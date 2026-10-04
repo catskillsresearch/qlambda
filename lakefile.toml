@@ -32,3 +32,9 @@ name = "Challenge"
 
 [[lean_lib]]
 name = "Solution"
+
+[[lean_lib]]
+name = "problem"
+
+[[lean_lib]]
+name = "workaround"
