@@ -38,17 +38,17 @@ def dynamicX : Program .openQASM3_0_ibmComposer_2026_09 1 1 where
 
 theorem bell_wellFormed : bell.WellFormed := by
   unfold Program.WellFormed bell
-  apply Block.WellFormedAt.cons
-  · apply Instr.WellFormedAt.gate
+  apply WellFormedAt.cons
+  · apply WellFormedAt.gate
     trivial
-  apply Block.WellFormedAt.cons
-  · apply Instr.WellFormedAt.gate
+  apply WellFormedAt.cons
+  · apply WellFormedAt.gate
     simp [Gate.WellFormed]
-  apply Block.WellFormedAt.cons
-  · apply Instr.WellFormedAt.measure
-  apply Block.WellFormedAt.cons
-  · apply Instr.WellFormedAt.measure
-  exact Block.WellFormedAt.nil
+  apply WellFormedAt.cons
+  · apply WellFormedAt.measure
+  apply WellFormedAt.cons
+  · apply WellFormedAt.measure
+  exact WellFormedAt.nil
 
 example :
     bell.toOpenQASM bell_wellFormed =
@@ -62,10 +62,10 @@ theorem bell_openQASM_parse_succeeds :
 
 theorem dynamicX_wellFormed : dynamicX.WellFormed := by
   unfold Program.WellFormed dynamicX
-  apply Block.WellFormedAt.cons
+  apply WellFormedAt.cons
   · exact .measure
-  apply Block.WellFormedAt.cons
-  · apply Instr.WellFormedAt.ite
+  apply WellFormedAt.cons
+  · apply WellFormedAt.ite
     · exact .cons (.gate trivial) .nil
     · exact .cons (.barrier (by simp)) .nil
   exact .nil

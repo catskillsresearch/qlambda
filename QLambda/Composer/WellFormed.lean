@@ -25,52 +25,69 @@ def Gate.WellFormed {q : ℕ} : Gate q → Prop
   | .cx control target => control ≠ target
   | _ => True
 
-mutual
+/-- Which judgment a `WellFormedAt` constructor inhabits. -/
+inductive WFArm where
+  | instr
+  | block
 
-  /-- Instruction well-formedness at a given structured-loop depth. -/
-  inductive Instr.WellFormedAt {q c : ℕ} : Nat → Instr q c → Prop
-    | gate {depth g} :
-        g.WellFormed →
-        Instr.WellFormedAt depth (.gate g)
-    | measure {depth qbit cbit} :
-        Instr.WellFormedAt depth (.measure qbit cbit)
-    | reset {depth qbit} :
-        Instr.WellFormedAt depth (.reset qbit)
-    | store {depth cbit e} :
-        Instr.WellFormedAt depth (.store cbit e)
-    | barrier {depth qs} :
-        qs.Nodup →
-        Instr.WellFormedAt depth (.barrier qs)
-    | delay {depth duration qs} :
-        qs.Nodup →
-        Instr.WellFormedAt depth (.delay duration qs)
-    | ite {depth guard yes no} :
-        Block.WellFormedAt depth yes →
-        Block.WellFormedAt depth no →
-        Instr.WellFormedAt depth (.ite guard yes no)
-    | switch {depth guard cases} :
-        (cases.map Prod.fst).Nodup →
-        (∀ branch ∈ cases, Block.WellFormedAt depth branch.2) →
-        Instr.WellFormedAt depth (.switch guard cases)
-    | forLoop {depth count body} :
-        Block.WellFormedAt (depth + 1) body →
-        Instr.WellFormedAt depth (.forLoop count body)
-    | whileLoop {depth fuel guard body} :
-        Block.WellFormedAt (depth + 1) body →
-        Instr.WellFormedAt depth (.whileLoop fuel guard body)
-    | box {depth label body} :
-        label ≠ "" →
-        Block.WellFormedAt depth body →
-        Instr.WellFormedAt depth (.box label body)
-  /-- Every instruction of a block is well formed at the same loop depth. -/
-  inductive Block.WellFormedAt {q c : ℕ} : Nat → List (Instr q c) → Prop
-    | nil {depth} : Block.WellFormedAt depth []
-    | cons {depth i is} :
-        Instr.WellFormedAt depth i →
-        Block.WellFormedAt depth is →
-        Block.WellFormedAt depth (i :: is)
+/-- Payload of one `WellFormedAt` arm. -/
+abbrev WFTarget (q c : ℕ) : WFArm → Type
+  | .instr => Instr q c
+  | .block => List (Instr q c)
 
-end
+/-- Instruction and block well-formedness at a structured-loop depth.
+
+The two judgments mention each other, including through the `switch`
+quantifier. They are one inductive indexed by `WFArm`, rather than a mutual
+block. -/
+inductive WellFormedAt {q c : ℕ} : (arm : WFArm) → Nat → WFTarget q c arm → Prop where
+  | gate {depth g} :
+      g.WellFormed →
+      WellFormedAt .instr depth (.gate g)
+  | measure {depth qbit cbit} :
+      WellFormedAt .instr depth (.measure qbit cbit)
+  | reset {depth qbit} :
+      WellFormedAt .instr depth (.reset qbit)
+  | store {depth cbit e} :
+      WellFormedAt .instr depth (.store cbit e)
+  | barrier {depth qs} :
+      qs.Nodup →
+      WellFormedAt .instr depth (.barrier qs)
+  | delay {depth duration qs} :
+      qs.Nodup →
+      WellFormedAt .instr depth (.delay duration qs)
+  | ite {depth guard yes no} :
+      WellFormedAt .block depth yes →
+      WellFormedAt .block depth no →
+      WellFormedAt .instr depth (.ite guard yes no)
+  | switch {depth guard cases} :
+      (cases.map Prod.fst).Nodup →
+      (∀ branch ∈ cases, WellFormedAt .block depth branch.2) →
+      WellFormedAt .instr depth (.switch guard cases)
+  | forLoop {depth count body} :
+      WellFormedAt .block (depth + 1) body →
+      WellFormedAt .instr depth (.forLoop count body)
+  | whileLoop {depth fuel guard body} :
+      WellFormedAt .block (depth + 1) body →
+      WellFormedAt .instr depth (.whileLoop fuel guard body)
+  | box {depth label body} :
+      label ≠ "" →
+      WellFormedAt .block depth body →
+      WellFormedAt .instr depth (.box label body)
+  | nil {depth} :
+      WellFormedAt .block depth []
+  | cons {depth i is} :
+      WellFormedAt .instr depth i →
+      WellFormedAt .block depth is →
+      WellFormedAt .block depth (i :: is)
+
+/-- Instruction well-formedness at a given structured-loop depth. -/
+abbrev Instr.WellFormedAt {q c : ℕ} (depth : Nat) (i : Instr q c) : Prop :=
+  QLambda.Composer.WellFormedAt WFArm.instr depth i
+
+/-- Every instruction of a block is well formed at the same loop depth. -/
+abbrev Block.WellFormedAt {q c : ℕ} (depth : Nat) (is : List (Instr q c)) : Prop :=
+  QLambda.Composer.WellFormedAt WFArm.block depth is
 
 /-- A top-level program has no unhandled structured-control transfer. -/
 def Program.WellFormed {v q c} (P : Program v q c) : Prop :=

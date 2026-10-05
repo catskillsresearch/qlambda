@@ -9,9 +9,13 @@ module
 @[expose] public section
 
 /-!
-Smallest proof the Lean kernel accepts and `con-ron --verified` declines.
-`native_decide` adds an axiom `decide True = true`.
+Smallest true mutual induction Lean accepts and the toolchain `con-ron --verified` declines.
+`I.sw` takes a function returning `B`, and `B.b` takes an `I`, so neither can be defined first.
 -/
 
-theorem t : True := by
-  native_decide
+mutual
+  inductive I : Prop where
+    | sw : (Nat → B) → I
+  inductive B : Prop where
+    | b : I → B
+end
