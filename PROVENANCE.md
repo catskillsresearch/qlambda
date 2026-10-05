@@ -10,14 +10,18 @@ quantum-CPO infrastructure, and finite circuit interchange.
   quantum relations.
 - Kornell, Lindenhovius, and Mislove, *Quantum CPOs* (2021): quantum posets,
   quantum functions, and quantum CPO continuity.
-- Jenča and Lindenhovius, *Monoidal Quantaloids* (2025): complete
-  relation-hom lattices, arbitrary-join-preserving composition, and dagger
-  compactness.
-- Kornell, Lindenhovius, and Mislove, *A Category of Quantum Posets* (2023)
-  and *Categories of Quantum CPOs* (2026): function order, explicit qCPO
-  limits, and the lifted Kleisli LNL construction.
-- Selinger and Valiron, *A linear-non-linear model for a quantum lambda
-  calculus* (2009): LNL semantic architecture.
+- Jenča and Lindenhovius, *Monoidal Quantaloids*, Theory and Applications
+  of Categories 45(25):988–1067, 2026: complete relation-hom lattices,
+  arbitrary-join-preserving composition, and dagger compactness.
+- Kornell, Lindenhovius, and Mislove, *A Category of Quantum Posets*,
+  Indagationes Mathematicae 33:1137–1171, 2022, and *Categories of Quantum
+  CPOs*, Mathematical Structures in Computer Science, 2026: function order,
+  explicit qCPO limits, and the lifted Kleisli LNL construction.
+- Selinger and Valiron, *A linear-non-linear model for a computational
+  call-by-value lambda calculus*, FoSSaCS 2008, Lecture Notes in Computer
+  Science 4962:81–96: LNL semantic architecture. Their *Quantum lambda
+  calculus* chapter, Cambridge University Press, 2009, pp. 135–172, is the
+  account of the calculus and its categorical semantics.
 - Smyth and Plotkin, *The category-theoretic solution of recursive domain
   equations* (1982): projection-chain and bilimit method.
 

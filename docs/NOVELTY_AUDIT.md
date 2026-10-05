@@ -13,10 +13,10 @@ working bibliographic audit, not a claim of priority.
    Mathematical Structures in Computer Science (2026),
    arXiv:2406.01816; DOI: 10.1017/S096012952610053X.
 4. Nik Weaver, *Quantum relations*, Memoirs of the AMS 215(1010), 2012.
-5. The quantaloid presentation developed by
-   Jenča and Lindenhovius, *Monoidal Quantaloids* (2025).
+5. Gejza Jenča and Bert Lindenhovius, *Monoidal Quantaloids*, Theory and
+   Applications of Categories 45(25):988–1067, 2026. arXiv:2504.18266.
 6. Kornell, Lindenhovius, and Mislove, *A Category of Quantum Posets*,
-   Indagationes Mathematicae 34 (2023).
+   Indagationes Mathematicae 33:1137–1171, 2022.
 7. Lindenhovius, Mislove, and Zamdzhiev, *LNL-FPC* (LMCS 2021), and
    Rios and Selinger, *A Categorical Model for a Quantum Circuit Description
    Language* (2017).

@@ -241,8 +241,10 @@ sources:
       selected matrix representation are Lean proofs of published
       quantum-relation mathematics.
   - title: "Monoidal Quantaloids"
-    authors: ["A. Jenča", "Bert Lindenhovius"]
+    authors: ["Gejza Jenča", "Bert Lindenhovius"]
     type: paper
+    location: "Theory and Applications of Categories 45(25):988–1067, 2026"
+    id: "https://arxiv.org/abs/2504.18266"
     relationship: adapts
     note: >-
       Complete relation-hom order and dagger compactness are stronger
@@ -259,12 +261,15 @@ sources:
   - title: "A Category of Quantum Posets"
     authors: ["Andre Kornell", "Bert Lindenhovius", "Michael Mislove"]
     type: paper
+    location: "Indagationes Mathematicae 33:1137–1171, 2022"
+    id: "https://arxiv.org/abs/2101.11184"
     relationship: background
     note: >-
       Quantum-poset context for the qCPO development. Not formalized here.
   - title: "Categories of Quantum CPOs"
     authors: ["Andre Kornell", "Bert Lindenhovius", "Michael Mislove"]
     type: paper
+    location: "Mathematical Structures in Computer Science, 2026"
     id: "https://arxiv.org/abs/2406.01816"
     relationship: background
     note: >-
@@ -273,19 +278,28 @@ sources:
   - title: "A lambda calculus for quantum computation with classical control"
     authors: ["Peter Selinger", "Benoît Valiron"]
     type: paper
-    location: "Mathematical Structures in Computer Science 16(3), 2006"
+    location: "Mathematical Structures in Computer Science 16(3):527–552, 2006"
     relationship: adapts
     note: >-
       The source judgment is in this classical-control lineage. The compared
       metatheory is for the calculus defined in this repository.
-  - title: "A linear-non-linear model for a quantum lambda calculus"
+  - title: "A linear-non-linear model for a computational call-by-value lambda calculus"
     authors: ["Peter Selinger", "Benoît Valiron"]
     type: paper
-    location: "Information and Computation 207(5):603–629, 2009"
+    location: "FoSSaCS 2008, Lecture Notes in Computer Science 4962:81–96"
+    id: "https://arxiv.org/abs/0801.0813"
     relationship: background
     note: >-
       The published LNL model is context for the semantic objective. The
       checked Set-to-qRel adjunction is not that model.
+  - title: "Quantum lambda calculus"
+    authors: ["Peter Selinger", "Benoît Valiron"]
+    type: paper
+    location: "Semantic Techniques in Quantum Computation, Cambridge University Press, 2009, pp. 135–172"
+    relationship: background
+    note: >-
+      This chapter is their account of the calculus and its categorical
+      semantics. The checked fragment denotation is not that semantics.
   - title: "The category-theoretic solution of recursive domain equations"
     authors: ["Michael B. Smyth", "Gordon D. Plotkin"]
     type: paper

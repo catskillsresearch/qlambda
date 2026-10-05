@@ -1159,19 +1159,30 @@ formalizations is claimed.
   arXiv:2109.02196.
 - N. Weaver, *Quantum relations*, Memoirs of the American Mathematical
   Society 215(1010), 2012.
-- A. Jenča and B. Lindenhovius, *Monoidal Quantaloids*, 2025.
-- A. Kornell et al., *A Category of Quantum Posets*, 2023.
-- A. Kornell et al., *Categories of Quantum CPOs*, arXiv:2406.01816.
+- G. Jenča and B. Lindenhovius, *Monoidal Quantaloids*, Theory and
+  Applications of Categories 45(25):988–1067, 2026. arXiv:2504.18266.
+- A. Kornell, B. Lindenhovius, and M. Mislove, *A Category of Quantum
+  Posets*, Indagationes Mathematicae 33:1137–1171, 2022.
+- A. Kornell, B. Lindenhovius, and M. Mislove, *Categories of Quantum
+  CPOs*, Mathematical Structures in Computer Science, 2026.
+  arXiv:2406.01816.
 - P. Selinger and B. Valiron, *A lambda calculus for quantum computation with
-  classical control*, Mathematical Structures in Computer Science 16(3),
-  2006.
-- P. Selinger and B. Valiron, *A linear-non-linear model for a quantum lambda
-  calculus*, Information and Computation 207(5):603–629, 2009.
+  classical control*, Mathematical Structures in Computer Science
+  16(3):527–552, 2006.
+- P. Selinger and B. Valiron, *A linear-non-linear model for a computational
+  call-by-value lambda calculus*, FoSSaCS 2008, Lecture Notes in Computer
+  Science 4962:81–96.
+- P. Selinger and B. Valiron, *Quantum lambda calculus*, in *Semantic
+  Techniques in Quantum Computation*, Cambridge University Press, 2009,
+  pp. 135–172.
 - M. B. Smyth and G. D. Plotkin, *The category-theoretic solution of recursive
   domain equations*, Theoretical Computer Science 23(3):257–274, 1982.
 - M. Pagani, P. Selinger, and B. Valiron, *Applying quantitative semantics to
-  higher-order quantum computing*, POPL, 2014.
-- T. Tsukada and K. Asada, *Enriched presheaf model of quantum FPC*, 2024.
+  higher-order quantum computing*, Proceedings of the 41st ACM
+  SIGPLAN-SIGACT Symposium on Principles of Programming Languages, 2014,
+  pp. 647–658.
+- T. Tsukada and K. Asada, *Enriched presheaf model of quantum FPC*,
+  Proceedings of the ACM on Programming Languages 8(POPL):362–392, 2024.
 - Committee on Publication Ethics (COPE). *Authorship and AI tools: COPE
   position statement*. 2024.
   <https://publicationethics.org/guidance/cope-position/authorship-and-ai-tools>
