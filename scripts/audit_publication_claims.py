@@ -15,13 +15,6 @@ PUBLIC_DOCS = ["arxiv.md", "README.md", "HANDOFF.md", "PROVENANCE.md",
                "THEOREMS.md", "formalization.yaml"]
 PALOMAR_DOCS = ["HANDOFF.md", "PROVENANCE.md"]
 PERMITTED_AXIOMS = {"propext", "Quot.sound", "Classical.choice"}
-# Concrete OpenQASM fixtures are evaluated by compiled code, not the kernel.
-# THEOREMS.md must disclose this; no other declaration may use native axioms.
-NATIVE_FIXTURES = {
-    "QLambda.Composer.Fixtures.bell_openQASM_parse_succeeds",
-    "QLambda.Composer.Fixtures.dynamicX_openQASM_parse_succeeds",
-}
-NATIVE_DISCLOSURE = "checked by `native_decide`"
 
 # These names describe the planned semantic capstones.  They must not enter
 # the proved theorem index before matching declarations compile.
@@ -101,8 +94,6 @@ def main() -> None:
                 raise SystemExit(f"error: overclaim in {doc}: {phrase!r} ({reason})")
 
     palomar = check_palomar_surface(theorem_text)
-    if NATIVE_FIXTURES.intersection(declarations) and NATIVE_DISCLOSURE not in theorem_text:
-        raise SystemExit("error: THEOREMS.md lists native_decide fixtures without disclosure")
 
     commands = "\n".join(
         f"#check {name}\n#print axioms {name}" for name in declarations
@@ -132,8 +123,6 @@ def main() -> None:
         r"'([^']+)' depends on axioms: \[([^\]]*)\]", result.stdout
     ):
         used = {a.strip() for a in axioms.split(",") if a.strip()}
-        if name in NATIVE_FIXTURES:
-            used = {a for a in used if "._native.native_decide." not in a}
         if used - PERMITTED_AXIOMS:
             raise SystemExit(
                 f"error: {name} uses axioms {sorted(used - PERMITTED_AXIOMS)}"

@@ -290,16 +290,16 @@ theorem staging_compile_agreement {q c fuel : Nat} {M : Term}
 def OpenQASMProgram (q c : Nat) : Type :=
   QLambda.Composer.Program QLambda.Composer.Version.openQASM3_0_ibmComposer_2026_09 q c
 
-def parseOpenQASM (q c : Nat) (text : String) : Option (OpenQASMProgram q c) :=
+noncomputable def parseOpenQASM (q c : Nat) (text : String) : Option (OpenQASMProgram q c) :=
   QLambda.Composer.parseStructuredProgram q c text
 
-def renderOpenQASM {q c : Nat} (P : OpenQASMProgram q c) : String :=
+noncomputable def renderOpenQASM {q c : Nat} (P : OpenQASMProgram q c) : String :=
   P.renderOpenQASM
 
 def openQASMWellFormed {q c : Nat} (P : OpenQASMProgram q c) : Prop :=
   P.WellFormed
 
-def exportOpenQASM {q c : Nat} (P : OpenQASMProgram q c)
+noncomputable def exportOpenQASM {q c : Nat} (P : OpenQASMProgram q c)
     (h : openQASMWellFormed P) : String :=
   P.toOpenQASM h
 

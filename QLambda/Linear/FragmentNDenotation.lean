@@ -49,7 +49,7 @@ theorem commandAsProgram_wellFormed {q c : ℕ} {C : Command q c}
   change Composer.Block.WellFormedAt 0 C.compile
   exact Command.compile_wellFormed hC
 
-def commandToOpenQASM {q c : ℕ} (C : Command q c) (hC : C.WellFormed) :
+noncomputable def commandToOpenQASM {q c : ℕ} (C : Command q c) (hC : C.WellFormed) :
     String :=
   Program.toOpenQASM (commandAsProgram C) (commandAsProgram_wellFormed hC)
 

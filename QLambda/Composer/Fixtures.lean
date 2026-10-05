@@ -8,10 +8,6 @@ module
 
 public import QLambda.Composer.OpenQASMParser
 public import QLambda.Composer.WellFormed
-public meta import QLambda.Composer.CircuitSyntax
-public meta import QLambda.Composer.OpenQASM
-public meta import QLambda.Composer.OpenQASMParser
-public meta import QLambda.Composer.WellFormed
 
 @[expose] public section
 
@@ -58,11 +54,11 @@ example :
     bell.toOpenQASM bell_wellFormed =
       "OPENQASM 3.0;\ninclude \"stdgates.inc\";\nqubit[2] q;\nbit[2] c;\n" ++
       "h q[0];\ncx q[0], q[1];\nc[0] = measure q[0];\nc[1] = measure q[1];" := by
-  native_decide
+  decide +kernel
 
 theorem bell_openQASM_parse_succeeds :
     (parseFlatProgram 2 2 (bell.toOpenQASM bell_wellFormed)).isSome = true := by
-  native_decide
+  decide +kernel
 
 theorem dynamicX_wellFormed : dynamicX.WellFormed := by
   unfold Program.WellFormed dynamicX
@@ -77,6 +73,6 @@ theorem dynamicX_wellFormed : dynamicX.WellFormed := by
 theorem dynamicX_openQASM_parse_succeeds :
     (parseStructuredProgram 1 1
       (dynamicX.toOpenQASM dynamicX_wellFormed)).isSome = true := by
-  native_decide
+  decide +kernel
 
 end QLambda.Composer.Fixtures

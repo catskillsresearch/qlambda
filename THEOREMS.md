@@ -404,8 +404,7 @@ equalities, not source-denotation preservation theorems.
 
 The parser theorem covers the declared canonical structured subset, not
 arbitrary OpenQASM 3 text.
-The two fixture parses are checked by `native_decide`, which trusts compiled
-evaluation in addition to the kernel.
+The two fixture parses are checked by `decide +kernel`.
 
 ## Palomar capstones
 

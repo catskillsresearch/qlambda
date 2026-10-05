@@ -35,23 +35,120 @@ boundary for two-sided round trips.
 
 namespace QLambda.Composer
 
-private def parseFin (bound : ℕ) (pre : String) (s : String) :
+def ofChars : List Char → String
+  | [] => ""
+  | c :: cs => String.singleton c ++ ofChars cs
+
+def startsWithStr (pre s : String) : Bool :=
+  pre.toList.isPrefixOf s.toList
+
+def dropStr (n : Nat) (s : String) : String :=
+  ofChars (s.toList.drop n)
+
+def dropEndStr (n : Nat) (s : String) : String :=
+  let xs := s.toList
+  ofChars (xs.take (xs.length - n))
+
+def endsWithStr (post s : String) : Bool :=
+  let xs := s.toList
+  let ps := post.toList
+  xs.drop (xs.length - ps.length) == ps
+
+def trimLeft : List Char → List Char
+  | [] => []
+  | ' ' :: cs => trimLeft cs
+  | '\t' :: cs => trimLeft cs
+  | '\n' :: cs => trimLeft cs
+  | '\r' :: cs => trimLeft cs
+  | cs => cs
+
+def trimStr (s : String) : String :=
+  ofChars (trimLeft (trimLeft s.toList.reverse).reverse)
+
+def digit? (c : Char) : Option Nat :=
+  if c = '0' then some 0 else if c = '1' then some 1 else if c = '2' then some 2
+  else if c = '3' then some 3 else if c = '4' then some 4 else if c = '5' then some 5
+  else if c = '6' then some 6 else if c = '7' then some 7 else if c = '8' then some 8
+  else if c = '9' then some 9 else none
+
+def parseNatChars (acc : Nat) : List Char → Option Nat
+  | [] => some acc
+  | c :: cs =>
+    match digit? c with
+    | some d => parseNatChars (acc * 10 + d) cs
+    | none => none
+
+def parseNatStr (s : String) : Option Nat :=
+  match s.toList with
+  | [] => none
+  | cs => parseNatChars 0 cs
+
+/-- Split on one character. Structural on the character list, so the kernel reduces it. -/
+def splitChar (sep : Char) : String → List Char → List String
+  | acc, [] => [acc]
+  | acc, c :: cs =>
+    if c = sep then
+      acc :: splitChar sep "" cs
+    else
+      splitChar sep (acc ++ String.singleton c) cs
+
+/-- Split on a two-character separator. Every recursive call is on the tail. -/
+def splitTwo (a b : Char) : Bool → String → List Char → List String
+  | _, acc, [] => [acc]
+  | false, acc, c :: cs =>
+    if c = a then
+      splitTwo a b true acc cs
+    else
+      splitTwo a b false (acc ++ String.singleton c) cs
+  | true, acc, c :: cs =>
+    if c = b then
+      acc :: splitTwo a b false "" cs
+    else if c = a then
+      splitTwo a b true (acc ++ String.singleton a) cs
+    else
+      splitTwo a b false (acc ++ String.singleton a ++ String.singleton c) cs
+
+/-- Split on a three-character separator. Every recursive call is on the tail. -/
+def splitThree (a b c : Char) : Nat → String → List Char → List String
+  | _, acc, [] => [acc]
+  | 0, acc, x :: xs =>
+    if x = a then
+      splitThree a b c 1 acc xs
+    else
+      splitThree a b c 0 (acc ++ String.singleton x) xs
+  | 1, acc, x :: xs =>
+    if x = b then
+      splitThree a b c 2 acc xs
+    else if x = a then
+      splitThree a b c 1 (acc ++ String.singleton a) xs
+    else
+      splitThree a b c 0 (acc ++ String.singleton a ++ String.singleton x) xs
+  | _, acc, x :: xs =>
+    if x = c then
+      acc :: splitThree a b c 0 "" xs
+    else if x = a then
+      splitThree a b c 1 (acc ++ String.singleton a ++ String.singleton b) xs
+    else
+      splitThree a b c 0
+        (acc ++ String.singleton a ++ String.singleton b ++ String.singleton x) xs
+
+def parseFin (bound : ℕ) (pre : String) (s : String) :
     Option (Fin bound) := do
-  if !(s.startsWith (pre ++ "[")) || !(s.endsWith "]") then
+  if !(startsWithStr (pre ++ "[") s) || !(endsWithStr "]" s) then
     none
   else
-    let digits := ((s.drop (pre.length + 1)).toString.dropEnd 1).toString
-    let n ← digits.toNat?
+    let digits := dropEndStr 1 (dropStr (pre.length + 1) s)
+    let n ← parseNatStr digits
     if h : n < bound then some ⟨n, h⟩ else none
 
-private def parseQRef (q : ℕ) : String → Option (Fin q) :=
+def parseQRef (q : ℕ) : String → Option (Fin q) :=
   parseFin q "q"
 
-private def parseCRef (c : ℕ) : String → Option (Fin c) :=
+def parseCRef (c : ℕ) : String → Option (Fin c) :=
   parseFin c "c"
 
-private def parseRat (s : String) : Option ℚ :=
-  match s.splitOn "/" with
+def parseRat (s : String) : Option ℚ :=
+  match splitChar '/' "" s.toList with
   | [n] => Rat.ofInt <$> n.toInt?
   | [n, d] => do
       let numerator ← n.toInt?
@@ -60,9 +157,9 @@ private def parseRat (s : String) : Option ℚ :=
       else some (Rat.normalize numerator denominator h)
   | _ => none
 
-private def parseAngle (s : String) : Option AngleExpr :=
-  if s.startsWith "2*acos(sqrt(" && s.endsWith "))" then do
-    let body := ((s.drop 12).toString.dropEnd 2).toString
+def parseAngle (s : String) : Option AngleExpr :=
+  if startsWithStr "2*acos(sqrt(" s && endsWithStr "))" s then do
+    let body := dropEndStr 2 (dropStr 12 s)
     let p ← parseRat body
     if h0 : 0 ≤ p then
       if h1 : p ≤ 1 then some (.coin ⟨p, h0, h1⟩) else none
@@ -70,19 +167,23 @@ private def parseAngle (s : String) : Option AngleExpr :=
   else
     .rational <$> parseRat s
 
-private def withoutSemi (s : String) : Option String :=
-  if s.endsWith ";" then some (s.dropEnd 1).toString else none
+def withoutSemi (s : String) : Option String :=
+  if endsWithStr ";" s then some (dropEndStr 1 s) else none
 
-private def stripAffixes (pre post s : String) : Option String :=
-  if s.startsWith pre && s.endsWith post then
-    some ((s.drop pre.length).toString.dropEnd post.length).toString
+def stripAffixes (pre post s : String) : Option String :=
+  if startsWithStr pre s && endsWithStr post s then
+    some (dropEndStr post.length (dropStr pre.length s))
   else
     none
 
-private def dropChars (pre xs : List Char) : Option (List Char) :=
+def dropChars (pre xs : List Char) : Option (List Char) :=
   if pre.isPrefixOf xs then some (xs.drop pre.length) else none
 
-private partial def parseCChars (c : ℕ) :
+def takeUntil (stop : Char) : List Char → List Char
+  | [] => []
+  | c :: cs => if c = stop then [] else c :: takeUntil stop cs
+
+def parseCChars (c : ℕ) :
     Nat → List Char → Option (CExpr c × List Char)
   | 0, _ => none
   | fuel + 1, xs =>
@@ -91,10 +192,10 @@ private partial def parseCChars (c : ℕ) :
       else if let some rest := dropChars "false".toList xs then
         some (.lit false, rest)
       else if let some rest := dropChars "c[".toList xs then
-        let digits := rest.takeWhile (· != ']')
+        let digits := takeUntil ']' rest
         match rest.drop digits.length with
         | ']' :: tail => do
-            let i ← parseCRef c ("c[" ++ String.ofList digits ++ "]")
+            let i ← parseCRef c ("c[" ++ ofChars digits ++ "]")
             pure (.bit i, tail)
         | _ => none
       else if let some rest := dropChars "!(".toList xs then do
@@ -126,14 +227,14 @@ def parseCExpr (c : ℕ) (s : String) : Option (CExpr c) := do
   let (e, rest) ← parseCChars c (s.length + 1) s.toList
   if rest = [] then some e else none
 
-private def parseRefs (q : ℕ) (s : String) : Option (List (Fin q)) :=
+def parseRefs (q : ℕ) (s : String) : Option (List (Fin q)) :=
   if s = "" then some []
-  else (s.splitOn ", ").mapM (parseQRef q)
+  else (splitTwo ',' ' ' false "" s.toList).mapM (parseQRef q)
 
 /-- Parse one non-structured instruction in the interchange fragment. -/
 def parseSimpleInstr (q c : ℕ) (line : String) : Option (Instr q c) := do
-  let s ← withoutSemi line.trimAscii.toString
-  match s.splitOn " " with
+  let s ← withoutSemi (trimStr line)
+  match splitChar ' ' "" s.toList with
   | ["x", w] => return .gate (.x (← parseQRef q w))
   | ["h", w] => return .gate (.h (← parseQRef q w))
   | ["t", w] => return .gate (.t (← parseQRef q w))
@@ -141,43 +242,43 @@ def parseSimpleInstr (q c : ℕ) (line : String) : Option (Instr q c) := do
   | ["break"] => return .break
   | ["continue"] => return .continue
   | ["cx", control, target] =>
-      if !control.endsWith "," then none
+      if !endsWithStr "," control then none
       else
         return .gate (.cx
-          (← parseQRef q (control.dropEnd 1).toString)
+          (← parseQRef q (dropEndStr 1 control))
           (← parseQRef q target))
   | [lhs, "=", "measure", rhs] =>
       return .measure (← parseQRef q rhs) (← parseCRef c lhs)
   | _ =>
-      if s.startsWith "ry(" then
-        match s.splitOn ") " with
+      if startsWithStr "ry(" s then
+        match splitTwo ')' ' ' false "" s.toList with
         | [angle, w] =>
             return .gate (.ry
-              (← parseAngle (angle.dropPrefix "ry(").toString)
+              (← parseAngle (dropStr 3 angle))
               (← parseQRef q w))
         | _ => none
-      else if s.startsWith "barrier " then
-        return .barrier (← parseRefs q (s.drop 8).toString)
-      else if s.startsWith "delay[" then
-        match s.splitOn "] " with
+      else if startsWithStr "barrier " s then
+        return .barrier (← parseRefs q (dropStr 8 s))
+      else if startsWithStr "delay[" s then
+        match splitTwo ']' ' ' false "" s.toList with
         | [duration, refs] =>
-            if !duration.endsWith "dt" then none
+            if !endsWithStr "dt" duration then none
             else
-              let n ← ((duration.drop 6).toString.dropEnd 2).toString.toNat?
+              let n ← parseNatStr (dropEndStr 2 (dropStr 6 duration))
               return .delay n (← parseRefs q refs)
         | _ => none
       else
-        match s.splitOn " = " with
+        match splitThree ' ' '=' ' ' 0 "" s.toList with
         | [lhs, rhs] =>
             return .store (← parseCRef c lhs) (← parseCExpr c rhs)
         | _ => none
 
-private inductive ParsedInstr (q c : ℕ) where
+inductive ParsedInstr (q c : ℕ) where
   | instr : Instr q c → ParsedInstr q c
   | whileEnd : ParsedInstr q c
   | whileStep : Nat → CExpr c → List (Instr q c) → ParsedInstr q c
 
-private def finishParsed {q c : ℕ} :
+def finishParsed {q c : ℕ} :
     List (ParsedInstr q c) → Option (List (Instr q c))
   | [] => some []
   | .instr i :: rest => return i :: (← finishParsed rest)
@@ -185,7 +286,7 @@ private def finishParsed {q c : ℕ} :
       return .whileLoop fuel guard body :: (← finishParsed rest)
   | .whileEnd :: _ => none
 
-private def finishWhile {q c : ℕ} (guard : CExpr c)
+def finishWhile {q c : ℕ} (guard : CExpr c)
     (body : List (ParsedInstr q c)) : Option (ParsedInstr q c) :=
   match body.reverse with
   | .whileEnd :: prefixLines =>
@@ -194,88 +295,120 @@ private def finishWhile {q c : ℕ} (guard : CExpr c)
       return .whileStep (fuel + 1) guard (← finishParsed prefixLines.reverse)
   | _ => none
 
-mutual
+/-- Fuel-indexed parser. `partial` mutual recursion has no kernel body. -/
+def parseGo {q c : ℕ} (fuel : Nat) (casesMode : Bool) (ls : List String) :
+    Option (Sum (List (ParsedInstr q c) × List String)
+                (List (Bool × List (Instr q c)) × List String)) :=
+  match fuel with
+  | 0 => none
+  | fuel + 1 =>
+    if casesMode then
+      match ls with
+      | [] => none
+      | "" :: rest => parseGo fuel true rest
+      | "}" :: rest => some (.inr ([], rest))
+      | line :: rest => do
+          let label ← stripAffixes "case " " {" line
+          let value ← if label = "true" then some true
+            else if label = "false" then some false else none
+          let some (.inl (body, rest)) := parseGo fuel false rest | none
+          let body ← finishParsed body
+          let rest ← match rest with
+            | "}" :: rest => some rest
+            | _ => none
+          let some (.inr (cases, rest)) := parseGo fuel true rest | none
+          some (.inr ((value, body) :: cases, rest))
+    else
+      match ls with
+      | [] => some (.inl ([], []))
+      | line :: rest =>
+          if line = "" then
+            parseGo fuel false rest
+          else if line = "}" || line = "} else {" then
+            some (.inl ([], line :: rest))
+          else if line = "// bounded while exhausted" then
+            match parseGo fuel false rest with
+            | some (.inl (is, rest)) => some (.inl (.whileEnd :: is, rest))
+            | _ => none
+          else if line = "// zero-iteration for loop" then
+            match parseGo fuel false rest with
+            | some (.inl (is, rest)) => some (.inl (.instr (.forLoop 0 []) :: is, rest))
+            | _ => none
+          else if let some guardText := stripAffixes "if (" ") {" line then
+            match parseCExpr c guardText with
+            | none => none
+            | some guard =>
+              match parseGo fuel false rest with
+              | some (.inl (yes, "} else {" :: rest)) =>
+                match parseGo fuel false rest with
+                | some (.inl (no, "}" :: rest)) => do
+                    let yes ← finishParsed yes
+                    let no ← finishParsed no
+                    match parseGo fuel false rest with
+                    | some (.inl (is, rest)) =>
+                      some (.inl (.instr (.ite guard yes no) :: is, rest))
+                    | _ => none
+                | _ => none
+              | some (.inl (yes, "}" :: rest)) => do
+                  let i ← finishWhile guard yes
+                  match parseGo fuel false rest with
+                  | some (.inl (is, rest)) => some (.inl (i :: is, rest))
+                  | _ => none
+              | _ => none
+          else if let some guardText := stripAffixes "switch (" ") {" line then
+            match parseCExpr c guardText with
+            | none => none
+            | some guard =>
+              match parseGo fuel true rest with
+              | some (.inr (cases, rest)) =>
+                match parseGo fuel false rest with
+                | some (.inl (is, rest)) =>
+                  some (.inl (.instr (.switch guard cases) :: is, rest))
+                | _ => none
+              | _ => none
+          else if let some last := stripAffixes "for uint _i in [0:" "] {" line then
+            match parseNatStr last with
+            | none => none
+            | some last =>
+              match parseGo fuel false rest with
+              | some (.inl (body, "}" :: rest)) => do
+                  let body ← finishParsed body
+                  match parseGo fuel false rest with
+                  | some (.inl (is, rest)) =>
+                    some (.inl (.instr (.forLoop (last + 1) body) :: is, rest))
+                  | _ => none
+              | _ => none
+          else if let some label := stripAffixes "box { // " "" line then
+            match parseGo fuel false rest with
+            | some (.inl (body, "}" :: rest)) => do
+                let body ← finishParsed body
+                match parseGo fuel false rest with
+                | some (.inl (is, rest)) =>
+                  some (.inl (.instr (.box label body) :: is, rest))
+                | _ => none
+            | _ => none
+          else
+            match parseSimpleInstr q c line with
+            | none => none
+            | some i =>
+              match parseGo fuel false rest with
+              | some (.inl (is, rest)) => some (.inl (.instr i :: is, rest))
+              | _ => none
 
-private partial def parseBlock (q c : ℕ) :
-    List String → Option (List (ParsedInstr q c) × List String)
-  | [] => some ([], [])
-  | line :: rest =>
-      if line = "" then
-        parseBlock q c rest
-      else if line = "}" || line = "} else {" then
-        some ([], line :: rest)
-      else do
-        let (i, rest) ← parseStructuredInstr q c line rest
-        let (is, rest) ← parseBlock q c rest
-        pure (i :: is, rest)
+def parseBlock (q c : ℕ) (ls : List String) :
+    Option (List (ParsedInstr q c) × List String) :=
+  match parseGo (ls.length * 4 + 4) false ls with
+  | some (.inl parsed) => some parsed
+  | _ => none
 
-private partial def parseCases (q c : ℕ) :
-    List String → Option (List (Bool × List (Instr q c)) × List String)
-  | [] => none
-  | "" :: rest => parseCases q c rest
-  | "}" :: rest => some ([], rest)
-  | line :: rest => do
-      let label ← stripAffixes "case " " {" line
-      let value ← if label = "true" then some true
-        else if label = "false" then some false else none
-      let (body, rest) ← parseBlock q c rest
-      let body ← finishParsed body
-      let rest ← match rest with
-        | "}" :: rest => some rest
-        | _ => none
-      let (cases, rest) ← parseCases q c rest
-      pure ((value, body) :: cases, rest)
-
-private partial def parseStructuredInstr (q c : ℕ)
-    (line : String) (rest : List String) :
-    Option (ParsedInstr q c × List String) :=
-  if line = "// bounded while exhausted" then
-    some (.whileEnd, rest)
-  else if line = "// zero-iteration for loop" then
-    some (.instr (.forLoop 0 []), rest)
-  else if let some guardText := stripAffixes "if (" ") {" line then do
-    let guard ← parseCExpr c guardText
-    let (yes, rest) ← parseBlock q c rest
-    match rest with
-    | "} else {" :: rest => do
-        let (no, rest) ← parseBlock q c rest
-        let rest ← match rest with
-          | "}" :: rest => some rest
-          | _ => none
-        pure (.instr (.ite guard (← finishParsed yes) (← finishParsed no)), rest)
-    | "}" :: rest =>
-        pure (← finishWhile guard yes, rest)
-    | _ => none
-  else if let some guardText := stripAffixes "switch (" ") {" line then do
-    let guard ← parseCExpr c guardText
-    let (cases, rest) ← parseCases q c rest
-    pure (.instr (.switch guard cases), rest)
-  else if let some last := stripAffixes "for uint _i in [0:" "] {" line then do
-    let last ← last.toNat?
-    let (body, rest) ← parseBlock q c rest
-    let rest ← match rest with
-      | "}" :: rest => some rest
-      | _ => none
-    pure (.instr (.forLoop (last + 1) (← finishParsed body)), rest)
-  else if let some label := stripAffixes "box { // " "" line then do
-    let (body, rest) ← parseBlock q c rest
-    let rest ← match rest with
-      | "}" :: rest => some rest
-      | _ => none
-    pure (.instr (.box label (← finishParsed body)), rest)
-  else
-    return (.instr (← parseSimpleInstr q c line), rest)
-
-end
-
-private def parseCandidate (q c : ℕ) (text : String) :
+def parseCandidate (q c : ℕ) (text : String) :
     Option (Program .openQASM3_0_ibmComposer_2026_09 q c) :=
-  match text.splitOn "\n" with
+  match splitChar '\n' "" text.toList with
   | version :: includeLine :: qdecl :: cdecl :: body =>
       if version = "OPENQASM 3.0;" ∧
           includeLine = "include \"stdgates.inc\";" ∧
-          qdecl = "qubit[" ++ toString q ++ "] q;" ∧
-          cdecl = "bit[" ++ toString c ++ "] c;" then do
+          qdecl = "qubit[" ++ natStr q ++ "] q;" ∧
+          cdecl = "bit[" ++ natStr c ++ "] c;" then do
         let (instructions, rest) ← parseBlock q c body
         if rest ≠ [] then none
         let instructions ← finishParsed instructions
@@ -283,7 +416,7 @@ private def parseCandidate (q c : ℕ) (text : String) :
       else none
   | _ => none
 
-private def acceptRendered {q c : ℕ} (text : String)
+noncomputable def acceptRendered {q c : ℕ} (text : String)
     (P : Program .openQASM3_0_ibmComposer_2026_09 q c) :
     Option (Program .openQASM3_0_ibmComposer_2026_09 q c) :=
   if P.renderOpenQASM = text then some P else none
@@ -297,7 +430,7 @@ private theorem acceptRendered_sound {q c : ℕ} {text : String}
 
 /-- Parse the complete, structured, canonical interchange grammar documented
 at the top of this module. -/
-def parseStructuredProgram (q c : ℕ) (text : String) :
+noncomputable def parseStructuredProgram (q c : ℕ) (text : String) :
     Option (Program .openQASM3_0_ibmComposer_2026_09 q c) :=
   match parseCandidate q c text with
   | none => none
@@ -348,6 +481,6 @@ theorem parseStructuredProgram_toOpenQASM_roundTrip {q c : ℕ} {text : String}
 abbrev parseFlatInstr := parseSimpleInstr
 
 /-- Backwards-compatible entry point; it now accepts the structured grammar. -/
-abbrev parseFlatProgram := parseStructuredProgram
+noncomputable def parseFlatProgram := parseStructuredProgram
 
 end QLambda.Composer
