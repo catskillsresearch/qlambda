@@ -442,8 +442,12 @@ constants named in `arxiv.md`.
 - `QLambda.Palomar.measured_new0_within_bound`
 - `QLambda.Palomar.measure_branch_agrees`
 
-`QLambda.Palomar.quotation_capstone` is typing and compile reflection. The
-library theorem `Quotation.quotation_capstone` adds ideal CQ equality and is
+`QLambda.Palomar.quotation_capstone` types the generated term and extracts
+the command stored in the quotation wrapper. It does not compile the lambda
+term. The source measurement conjunct of
+`QLambda.Palomar.source_type_safety` is vacuous under the present source
+values. The library theorem `Quotation.quotation_capstone` adds ideal CQ
+equality and is
 not compared. `n_qubit_fragment_denotation_openqasm_interface` remains a
 library packaging theorem and is not compared.
 

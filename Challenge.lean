@@ -22,10 +22,13 @@ relation, presheaf, staging, and OpenQASM carriers are definition holes.
 
 * `source_type_safety`: a closed well-typed term is a value, takes a
   classical step, or is blocked at a quantum primitive; classical steps are
-  deterministic, and classical and measurement steps preserve its type.
+  deterministic and preserve its type. The measurement conjunct is vacuous:
+  source values do not include qubits, so no well-typed measurement operand
+  meets `MeasStep`. The substantive measurement guarantee is the runtime.
 * `quotation_capstone`: every `Quotable` command in the supported two-qubit,
-  one-bit fragment has a canonical source term of `quotationTy` whose
-  compilation is that command.
+  one-bit fragment has a canonical source term of `quotationTy`. The compile
+  conjunct extracts the command stored in that proof-carrying wrapper; it
+  does not compile the lambda term.
 -/
 
 namespace QLambda.Linear
@@ -706,7 +709,10 @@ open QLambda.Linear.Command.GeneralQuotation
 /-- Type safety of the typed linear quantum λ-calculus for closed programs.
 A closed well-typed term is a value, takes a classical call-by-value step, or
 has reached a quantum primitive; classical reduction is deterministic; and
-both classical and measurement transitions preserve the type. -/
+classical transitions preserve the type. The measurement conjunct is vacuous
+under the present source values: a value cannot have type `qubit`, so no
+well-typed measurement operand satisfies `MeasStep`. The substantive
+measurement-preservation theorem is the runtime one. -/
 theorem source_type_safety {M : Term} {A : Ty} (h : HasType [] [] M A) :
     MakesProgress M ∧
       (∀ N, Step M N → HasType [] [] N A) ∧
@@ -714,9 +720,10 @@ theorem source_type_safety {M : Term} {A : Ty} (h : HasType [] [] M A) :
       (∀ N₁ N₂, Step M N₁ → Step M N₂ → N₁ = N₂) := by
   sorry
 
-/-- Two-wire quotation capstone (typing + exact compile): every `Quotable`
-command has a well-typed canonical lambda representative whose compilation is
-the original command. Ideal CQ agreement is proved in-tree as
+/-- Two-wire quotation capstone. Every `Quotable` command has a well-typed
+canonical lambda representative. The second conjunct extracts the command
+stored in that proof-carrying wrapper; `Quotation.compile` does not consume
+the quoted term. Ideal CQ agreement is proved in-tree as
 `Command.GeneralQuotation.Quotation.quotation_capstone` and staged for a later
 comparator expansion that can expose `Composer.Model` without a structure hole. -/
 theorem quotation_capstone

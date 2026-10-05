@@ -46,7 +46,7 @@ COMPANY = "Catskills Research Company"
 GITHUB_URL = r"https://github.com/catskillsresearch/qlambda"
 ORCID = "0000-0001-8299-9361"
 EMAIL = "lars.ericson@catskillsresearch.com"
-REPORT_DATE = "September 2026"
+REPORT_DATE = "October 5, 2026"
 
 
 def find_chrome() -> str | None:

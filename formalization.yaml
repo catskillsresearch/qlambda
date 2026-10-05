@@ -29,8 +29,10 @@ status:
     reduction, circuit normal form, and canonical quotation, and leaves the
     runtime, quantum-relation, presheaf, staging, and OpenQASM carriers as
     definition holes whose Solution values are the library constants.
-    The theorems are closed source type safety; two-wire quotation typing
-    and compile reflection; finite-runtime preservation, progress, and Born
+    The theorems are closed source progress, classical preservation, and
+    classical determinism, with a vacuous source measurement conjunct;
+    two-wire quotation typing and extraction of the stored command;
+    finite-runtime preservation, progress, and Born
     normalization; quantum-relation associativity, dagger, identity, and
     countable-join continuity; the discrete qubit qCPO; identity of the
     Set-to-qRel linear objects with qRelCategory and of qCPOCategory objects
@@ -233,26 +235,74 @@ sources:
     authors: ["Nik Weaver"]
     type: paper
     location: "Memoirs of the American Mathematical Society 215(1010), 2012"
-    relationship: background
+    relationship: independently-proves
+    note: >-
+      Identity, associativity, dagger, and countable-join laws for the
+      selected matrix representation are Lean proofs of published
+      quantum-relation mathematics.
+  - title: "Monoidal Quantaloids"
+    authors: ["A. Jenča", "Bert Lindenhovius"]
+    type: paper
+    relationship: adapts
+    note: >-
+      Complete relation-hom order and dagger compactness are stronger
+      published results. The compared theorems use countable joins for the
+      selected representation and do not reproduce that quantaloid.
   - title: "Quantum CPOs"
     authors: ["Andre Kornell", "Bert Lindenhovius", "Michael Mislove"]
     type: paper
     id: "https://arxiv.org/abs/2109.02196"
+    relationship: adapts
+    note: >-
+      The compared discrete qubit qCPO adapts this development. It is not
+      the published lifted-qCPO Kleisli LNL model.
+  - title: "A Category of Quantum Posets"
+    authors: ["Andre Kornell", "Bert Lindenhovius", "Michael Mislove"]
+    type: paper
     relationship: background
+    note: >-
+      Quantum-poset context for the qCPO development. Not formalized here.
+  - title: "Categories of Quantum CPOs"
+    authors: ["Andre Kornell", "Bert Lindenhovius", "Michael Mislove"]
+    type: paper
+    id: "https://arxiv.org/abs/2406.01816"
+    relationship: background
+    note: >-
+      Explicit qCPO constructions and the lifted recursive model. Not
+      formalized here.
+  - title: "A lambda calculus for quantum computation with classical control"
+    authors: ["Peter Selinger", "Benoît Valiron"]
+    type: paper
+    location: "Mathematical Structures in Computer Science 16(3), 2006"
+    relationship: adapts
+    note: >-
+      The source judgment is in this classical-control lineage. The compared
+      metatheory is for the calculus defined in this repository.
   - title: "A linear-non-linear model for a quantum lambda calculus"
     authors: ["Peter Selinger", "Benoît Valiron"]
     type: paper
     location: "Information and Computation 207(5):603–629, 2009"
     relationship: background
+    note: >-
+      The published LNL model is context for the semantic objective. The
+      checked Set-to-qRel adjunction is not that model.
+  - title: "The category-theoretic solution of recursive domain equations"
+    authors: ["Michael B. Smyth", "Gordon D. Plotkin"]
+    type: paper
+    location: "Theoretical Computer Science 23(3):257–274, 1982"
+    relationship: adapts
+    note: >-
+      The compared projection-chain shift inverses adapt this method.
   - title: "Typed linear qlambda formalization"
     authors: ["Lars Warren Ericson"]
-    type: original-proof
+    type: other
     relationship: other
     author_endorsement: participated
     note: >-
-      Original Lean proofs for the selected representation of quantum
-      relations, its compact-closed structure and Set adjunction, recursive
-      chain shift isomorphism, and certified two-wire circuit quotation.
+      The Lean proofs are new. The two-wire quotation packaging and the
+      OpenQASM interchange are developments of this repository. The
+      quantum-relation, qCPO, and domain-equation mathematics is prior, so
+      this entry is not an original-proof.
 
 automation:
   methods:
@@ -298,10 +348,16 @@ limitations:
   - >-
     Source type safety is for the classical call-by-value relation.
     Applications of quantum primitives and measurements are a declared
-    boundary (QuantumBlocked). The finite register machine's preservation,
-    progress, and Born normalization are compared separately as
-    runtime_internal_preservation, runtime_measurement_preservation,
-    runtime_progress, and runtime_born_normalizes.
+    boundary (QuantumBlocked). Source values do not include qubits, so no
+    well-typed measurement operand meets MeasStep and the source
+    measurement-preservation conjunct is vacuous. The substantive measurement
+    guarantee is the runtime theorem runtime_measurement_preservation.
+    Quotation compile returns the command stored in the proof-carrying
+    wrapper; it does not compile the quoted term. The finite register
+    machine's preservation, progress, and Born normalization are compared
+    separately as runtime_internal_preservation,
+    runtime_measurement_preservation, runtime_progress, and
+    runtime_born_normalizes.
   - >-
     The formalization does not claim full abstraction or unrestricted
     computational adequacy for arbitrary recursive programs.
@@ -309,11 +365,11 @@ limitations:
 alignment:
   namespace: "QLambda.Palomar"
   statements:
-    - source: "Closed well-typed programs make progress, classical reduction is deterministic, and classical and measurement steps preserve types"
+    - source: "Closed well-typed programs make progress, classical reduction is deterministic, and classical steps preserve types. The measurement-preservation conjunct is vacuous because no well-typed source value has type qubit"
       lean: "source_type_safety"
       module: "Challenge (statement), Solution (proof)"
       status: proved
-    - source: "Every supported two-wire Quotable command has a typed canonical quotation whose compile is the command"
+    - source: "Every supported two-wire Quotable command has a typed canonical quotation, and the quotation wrapper extracts the command it stores"
       lean: "quotation_capstone"
       module: "Challenge (statement), Solution (proof)"
       status: proved

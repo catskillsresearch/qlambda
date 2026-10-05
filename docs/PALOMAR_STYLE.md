@@ -26,7 +26,9 @@ scripts/palomar_preflight.sh
 - Keep concrete Challenge and Solution definition bodies structurally
   identical, including definitions reached transitively from a compared
   theorem. Do not rely on proof irrelevance to make values compare.
-- `QLambda.Palomar.quotation_capstone` is typing and compile reflection.
+- `QLambda.Palomar.quotation_capstone` types the generated term and extracts
+  the stored command. It does not compile the lambda term. The source
+  measurement conjunct of `source_type_safety` is vacuous.
   Ideal CQ equality is `Quotation.quotation_capstone` in
   `QuotationGeneral.lean` and is not the compared statement.
 - Write order operations with explicit `@LE.le` instance paths when Challenge

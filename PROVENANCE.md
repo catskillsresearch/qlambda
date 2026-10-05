@@ -87,7 +87,13 @@ proof authority.
 `Challenge.lean` imports only Mathlib. It restates the source syntax, typing,
 reduction, circuit normal form, and two-wire quotation verbatim. The runtime,
 relation, presheaf, staging, and OpenQASM carriers are definition holes.
-`QLambda.Palomar.quotation_capstone` is typing plus compile reflection.
+`QLambda.Palomar.quotation_capstone` types the generated term and extracts
+the command stored in the quotation wrapper. That extraction is not
+compilation of the lambda term. The source measurement conjunct of
+`QLambda.Palomar.source_type_safety` is vacuous: source values do not
+include qubits, so no well-typed measurement operand meets `MeasStep`.
+Substantive measurement preservation is
+`QLambda.Palomar.runtime_measurement_preservation`.
 `Command.GeneralQuotation.Quotation.quotation_capstone` adds ideal CQ
 equality and is kernel-checked in the library, not selected.
 `Solution.lean` proves the compared statements from `QLambda` without `sorry`.

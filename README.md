@@ -11,11 +11,17 @@ explicit objective behind AmbientCP Day-bang glue.
 The pin is `leanprover/lean4:v4.35.0-rc3` (`lean-toolchain`). Mathlib is
 required at `v4.35.0-rc3` (`lakefile.toml`).
 
-The Comparator selects `QLambda.Palomar.source_type_safety` and
-`QLambda.Palomar.quotation_capstone` (typing and compile reflection).
-Ideal CQ equality is the extra conjunct of
-`Command.GeneralQuotation.Quotation.quotation_capstone` and is not compared.
-`Challenge.lean` imports only Mathlib.
+The Comparator selects the 29 theorems listed in `PROVENANCE.md`.
+`QLambda.Palomar.source_type_safety` is closed progress, classical
+preservation, and classical determinism. Its measurement-preservation
+conjunct is vacuous: source values do not include qubits, so no well-typed
+measurement operand meets `MeasStep`. Substantive measurement preservation
+is `QLambda.Palomar.runtime_measurement_preservation`.
+`QLambda.Palomar.quotation_capstone` is typing of the generated term together
+with extraction of the command stored in the quotation wrapper. That
+extraction is not compilation of the lambda term. Ideal CQ equality is the
+extra conjunct of `Command.GeneralQuotation.Quotation.quotation_capstone`
+and is not compared. `Challenge.lean` imports only Mathlib.
 
 The source judgment
 

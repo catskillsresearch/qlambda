@@ -280,14 +280,17 @@ unrestricted function.
 The formal substitution proof distinguishes used and unused linear variables.
 It includes split rotation, all-`none` transport, linear substitution, and
 unrestricted substitution with empty linear support.  These results imply
-preservation for deterministic source reduction and for measurement-labelled
-transitions.
+preservation for deterministic classical source reduction.
 
 For every closed well-typed term, including terms that use $\mathsf{fix}$
 and $\mu$, progress yields either a value, a classical step, or a genuine
 quantum blocking point.  A primitive application is recorded as that quantum
-boundary.  Together with preservation and classical determinism, this is the
-compared theorem `QLambda.Palomar.source_type_safety`.
+boundary.  Together with classical preservation and classical determinism,
+this is the substantive content of `QLambda.Palomar.source_type_safety`.
+Source values do not include qubits, so no well-typed measurement operand
+meets `MeasStep`, and that theorem's measurement-preservation conjunct is
+vacuous.  The substantive measurement guarantee is
+`QLambda.Palomar.runtime_measurement_preservation`.
 
 ### 2.3 Theorem dependence
 
@@ -776,11 +779,13 @@ The checked circuit-level declarations have the following meanings:
 - `compile_reflect`: compiling a canonical representative returns the
   canonical circuit;
 - `Quotation.quotation_capstone`: every `Quotable` command has a well-typed
-  canonical lambda representative whose compilation is the original command
-  and whose inherited CQ denotation equals the circuit denotation;
+  canonical lambda representative. Its command conjunct extracts the command
+  stored in the proof-carrying wrapper, and its inherited CQ denotation
+  equals the circuit denotation. The extraction does not compile the lambda
+  term;
 - `QLambda.Palomar.quotation_capstone`: the Comparator theorem. Its statement
-  is the typing conjunct and the compile-reflection conjunct of the library
-  theorem above. Ideal CQ equality stays on
+  is the typing conjunct and that stored-command extraction. Ideal CQ
+  equality stays on
   `Quotation.quotation_capstone`, which is kernel-checked in
   `QuotationGeneral.lean` and left unselected so the Mathlib-only Challenge
   does not have to restate `Composer.Model`.
@@ -821,9 +826,9 @@ flowchart TD
 ```
 
 **Figure.** Section~7 theorem dependence. `Quotation.quotation_capstone`
-packages typing, compile reflection, and inherited CQ equality. The compared
-theorem `QLambda.Palomar.quotation_capstone` packages typing and compile
-reflection. The Hom$\Rightarrow$CQ covering-set spines are separate library
+packages typing, stored-command extraction, and inherited CQ equality. The
+compared theorem `QLambda.Palomar.quotation_capstone` packages typing and
+that extraction. The Hom$\Rightarrow$CQ covering-set spines are separate library
 results.
 
 <!-- blueprints:sec7 -->
@@ -1114,8 +1119,9 @@ flowchart LR
 ```
 
 **Figure.** Section~9 claim-surface dependence. The Comparator selects the
-29 `QLambda.Palomar` theorems in `comparator.json`, including source type
-safety, quotation typing and compile reflection, measured-`new0` Born
+29 `QLambda.Palomar` theorems in `comparator.json`, including source
+progress and classical safety, quotation typing and stored-command
+extraction, measured-`new0` Born
 masses, the `measureElim` equation, and the OpenQASM round trips.
 `n_qubit_fragment_denotation_openqasm_interface` remains a library packaging
 theorem and is not compared.
@@ -1159,6 +1165,10 @@ formalizations is claimed.
 - P. Selinger and B. Valiron, *A lambda calculus for quantum computation with
   classical control*, Mathematical Structures in Computer Science 16(3),
   2006.
+- P. Selinger and B. Valiron, *A linear-non-linear model for a quantum lambda
+  calculus*, Information and Computation 207(5):603–629, 2009.
+- M. B. Smyth and G. D. Plotkin, *The category-theoretic solution of recursive
+  domain equations*, Theoretical Computer Science 23(3):257–274, 1982.
 - M. Pagani, P. Selinger, and B. Valiron, *Applying quantitative semantics to
   higher-order quantum computing*, POPL, 2014.
 - T. Tsukada and K. Asada, *Enriched presheaf model of quantum FPC*, 2024.
